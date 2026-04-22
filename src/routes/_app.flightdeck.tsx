@@ -140,7 +140,13 @@ function FlightdeckPage() {
     const d = new Date(r.next_action_due);
     return d >= new Date(today.toDateString()) && d <= week;
   });
-  const atRisk = (rows ?? []).filter((r) => r.drift_risk || r.current_blocker);
+  const atRisk = filteredRows.filter((r) => r.drift_risk || r.current_blocker);
+
+  const filterChips: Array<"All" | ServicePackage | "Unscoped"> = [
+    "All",
+    ...SERVICE_PACKAGE,
+    "Unscoped",
+  ];
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-6 p-6">
@@ -156,11 +162,26 @@ function FlightdeckPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-[10px] uppercase tracking-wider text-muted-foreground">Package</span>
+        {filterChips.map((p) => (
+          <Button
+            key={p}
+            size="sm"
+            variant={pkgFilter === p ? "default" : "outline"}
+            onClick={() => setPkgFilter(p)}
+            className="h-6 px-2 text-[11px]"
+          >
+            {p}
+          </Button>
+        ))}
+      </div>
+
       <Card className="p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold tracking-tight">Stage swimlanes</h2>
           <span className="text-[11px] text-muted-foreground">
-            {rows?.length ?? 0} relationships · {isLoading ? "loading…" : "drag to advance"}
+            {filteredRows.length} of {rows?.length ?? 0} relationships · {isLoading ? "loading…" : "drag to advance"}
           </span>
         </div>
         <StageSwimlanes
@@ -168,40 +189,51 @@ function FlightdeckPage() {
           hints={STAGE_HINTS}
           items={items}
           onMove={(id, newStage) => moveStage.mutate({ id, value: newStage })}
-          renderCard={({ row: r }) => (
-            <div
-              onClick={() => navigate({ to: "/relationships/$id", params: { id: r.relationship_id } })}
-              className="rounded-lg border border-border/50 bg-background p-2 text-xs shadow-sm transition-all hover:border-iris/40"
-            >
-              <div className="line-clamp-1 font-medium">{r.name}</div>
-              <div className="mt-1 flex items-center justify-between gap-1">
-                <span className="line-clamp-1 text-[10px] text-muted-foreground">
-                  {r.primary_service ?? "—"}
-                </span>
-                <OwnerPill owner={r.next_action_owner} />
-              </div>
-              {r.next_action_due && (
-                <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <Clock className="h-2.5 w-2.5" />
-                  {r.next_action_due}
+          renderCard={({ row: r }) => {
+            const pkg = pkgById.get(r.relationship_id) as ServicePackage | null;
+            return (
+              <div
+                onClick={() => navigate({ to: "/relationships/$id", params: { id: r.relationship_id } })}
+                className="rounded-lg border border-border/50 bg-background p-2 text-xs shadow-sm transition-all hover:border-iris/40"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <div className="line-clamp-1 font-medium">{r.name}</div>
+                  {pkg && (
+                    <Badge variant="secondary" className="h-4 text-[9px]">
+                      {SERVICE_PACKAGE_BADGE[pkg]}
+                    </Badge>
+                  )}
                 </div>
-              )}
-              {r.latest_portal_url && (
-                <a
-                  href={r.latest_portal_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="mt-1 inline-flex items-center gap-1 text-[10px] text-[color:var(--iris-violet)] hover:underline"
-                >
-                  <ExternalLink className="h-2.5 w-2.5" />
-                  Portal
-                </a>
-              )}
-            </div>
-          )}
+                <div className="mt-1 flex items-center justify-between gap-1">
+                  <span className="line-clamp-1 text-[10px] text-muted-foreground">
+                    {r.primary_service ?? "—"}
+                  </span>
+                  <OwnerPill owner={r.next_action_owner} />
+                </div>
+                {r.next_action_due && (
+                  <div className="mt-1">
+                    <DueDateChip due={r.next_action_due} />
+                  </div>
+                )}
+                {r.latest_portal_url && (
+                  <a
+                    href={r.latest_portal_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1 inline-flex items-center gap-1 text-[10px] text-[color:var(--iris-violet)] hover:underline"
+                  >
+                    <ExternalLink className="h-2.5 w-2.5" />
+                    Portal
+                  </a>
+                )}
+              </div>
+            );
+          }}
         />
       </Card>
+
+      <DueThisWeekPanel />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4">
