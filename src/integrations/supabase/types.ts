@@ -2327,6 +2327,84 @@ export type Database = {
         }
         Relationships: []
       }
+      lens_canon: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          key_questions: string[]
+          lens_id: string
+          next_actions: string[]
+          notes: string | null
+          perspective_md: string | null
+          promoted_from_perspective_id: string | null
+          quick_facts: string[]
+          source: string
+          stages_breakdown: Json
+          status: string
+          subject_id: string
+          subject_kind: string
+          updated_at: string
+          updated_by: string | null
+          watch_outs: string[]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_questions?: string[]
+          lens_id: string
+          next_actions?: string[]
+          notes?: string | null
+          perspective_md?: string | null
+          promoted_from_perspective_id?: string | null
+          quick_facts?: string[]
+          source?: string
+          stages_breakdown?: Json
+          status?: string
+          subject_id: string
+          subject_kind: string
+          updated_at?: string
+          updated_by?: string | null
+          watch_outs?: string[]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_questions?: string[]
+          lens_id?: string
+          next_actions?: string[]
+          notes?: string | null
+          perspective_md?: string | null
+          promoted_from_perspective_id?: string | null
+          quick_facts?: string[]
+          source?: string
+          stages_breakdown?: Json
+          status?: string
+          subject_id?: string
+          subject_kind?: string
+          updated_at?: string
+          updated_by?: string | null
+          watch_outs?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lens_canon_lens_id_fkey"
+            columns: ["lens_id"]
+            isOneToOne: false
+            referencedRelation: "lenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lens_canon_promoted_from_perspective_id_fkey"
+            columns: ["promoted_from_perspective_id"]
+            isOneToOne: false
+            referencedRelation: "lens_perspectives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lens_curators: {
         Row: {
           created_at: string
@@ -2393,6 +2471,7 @@ export type Database = {
           stages_breakdown: Json
           subject_id: string
           subject_kind: Database["public"]["Enums"]["lens_subject_kind"]
+          tier: string
           updated_at: string
           version: number
           watch_outs: string[]
@@ -2413,6 +2492,7 @@ export type Database = {
           stages_breakdown?: Json
           subject_id: string
           subject_kind: Database["public"]["Enums"]["lens_subject_kind"]
+          tier?: string
           updated_at?: string
           version?: number
           watch_outs?: string[]
@@ -2433,6 +2513,7 @@ export type Database = {
           stages_breakdown?: Json
           subject_id?: string
           subject_kind?: Database["public"]["Enums"]["lens_subject_kind"]
+          tier?: string
           updated_at?: string
           version?: number
           watch_outs?: string[]
