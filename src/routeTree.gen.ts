@@ -76,6 +76,7 @@ import { Route as AppOutcomesIdRouteImport } from './routes/_app.outcomes.$id'
 import { Route as AppOperatorsIdRouteImport } from './routes/_app.operators.$id'
 import { Route as AppOperateOcdaRouteImport } from './routes/_app.operate.ocda'
 import { Route as AppMissionsIdRouteImport } from './routes/_app.missions.$id'
+import { Route as AppLibraryKtisRouteImport } from './routes/_app.library.ktis'
 import { Route as AppLibraryJtbdRouteImport } from './routes/_app.library.jtbd'
 import { Route as AppJourneysIdRouteImport } from './routes/_app.journeys.$id'
 import { Route as AppEngagementPlansIdRouteImport } from './routes/_app.engagement-plans.$id'
@@ -86,8 +87,10 @@ import { Route as AppDelegationIdRouteImport } from './routes/_app.delegation.$i
 import { Route as AppDecisionsIdRouteImport } from './routes/_app.decisions.$id'
 import { Route as AppComponentsIdRouteImport } from './routes/_app.components.$id'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
+import { Route as ApiPublicHooksScanKtisRouteImport } from './routes/api/public/hooks/scan-ktis'
 import { Route as AppSettingsLensesIdRouteImport } from './routes/_app.settings.lenses.$id'
 import { Route as AppRelationshipsIdSparkpathRouteImport } from './routes/_app.relationships.$id.sparkpath'
+import { Route as AppLibraryKtisIdRouteImport } from './routes/_app.library.ktis.$id'
 import { Route as AppLibraryJtbdIdRouteImport } from './routes/_app.library.jtbd.$id'
 import { Route as AppWorkflowsIdRunsRunIdRouteImport } from './routes/_app.workflows.$id.runs.$runId'
 
@@ -430,6 +433,11 @@ const AppMissionsIdRoute = AppMissionsIdRouteImport.update({
   path: '/missions/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLibraryKtisRoute = AppLibraryKtisRouteImport.update({
+  id: '/library/ktis',
+  path: '/library/ktis',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppLibraryJtbdRoute = AppLibraryJtbdRouteImport.update({
   id: '/library/jtbd',
   path: '/library/jtbd',
@@ -480,6 +488,11 @@ const AppCampaignsIdRoute = AppCampaignsIdRouteImport.update({
   path: '/campaigns/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicHooksScanKtisRoute = ApiPublicHooksScanKtisRouteImport.update({
+  id: '/api/public/hooks/scan-ktis',
+  path: '/api/public/hooks/scan-ktis',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSettingsLensesIdRoute = AppSettingsLensesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -491,6 +504,11 @@ const AppRelationshipsIdSparkpathRoute =
     path: '/sparkpath',
     getParentRoute: () => AppRelationshipsIdRoute,
   } as any)
+const AppLibraryKtisIdRoute = AppLibraryKtisIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppLibraryKtisRoute,
+} as any)
 const AppLibraryJtbdIdRoute = AppLibraryJtbdIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -530,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/journeys/$id': typeof AppJourneysIdRoute
   '/library/jtbd': typeof AppLibraryJtbdRouteWithChildren
+  '/library/ktis': typeof AppLibraryKtisRouteWithChildren
   '/missions/$id': typeof AppMissionsIdRoute
   '/operate/ocda': typeof AppOperateOcdaRoute
   '/operators/$id': typeof AppOperatorsIdRoute
@@ -580,8 +599,10 @@ export interface FileRoutesByFullPath {
   '/tenets/': typeof AppTenetsIndexRoute
   '/workflows/': typeof AppWorkflowsIndexRoute
   '/library/jtbd/$id': typeof AppLibraryJtbdIdRoute
+  '/library/ktis/$id': typeof AppLibraryKtisIdRoute
   '/relationships/$id/sparkpath': typeof AppRelationshipsIdSparkpathRoute
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
+  '/api/public/hooks/scan-ktis': typeof ApiPublicHooksScanKtisRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRoutesByTo {
@@ -611,6 +632,7 @@ export interface FileRoutesByTo {
   '/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/journeys/$id': typeof AppJourneysIdRoute
   '/library/jtbd': typeof AppLibraryJtbdRouteWithChildren
+  '/library/ktis': typeof AppLibraryKtisRouteWithChildren
   '/missions/$id': typeof AppMissionsIdRoute
   '/operate/ocda': typeof AppOperateOcdaRoute
   '/operators/$id': typeof AppOperatorsIdRoute
@@ -661,8 +683,10 @@ export interface FileRoutesByTo {
   '/tenets': typeof AppTenetsIndexRoute
   '/workflows': typeof AppWorkflowsIndexRoute
   '/library/jtbd/$id': typeof AppLibraryJtbdIdRoute
+  '/library/ktis/$id': typeof AppLibraryKtisIdRoute
   '/relationships/$id/sparkpath': typeof AppRelationshipsIdSparkpathRoute
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
+  '/api/public/hooks/scan-ktis': typeof ApiPublicHooksScanKtisRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRoutesById {
@@ -695,6 +719,7 @@ export interface FileRoutesById {
   '/_app/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/_app/journeys/$id': typeof AppJourneysIdRoute
   '/_app/library/jtbd': typeof AppLibraryJtbdRouteWithChildren
+  '/_app/library/ktis': typeof AppLibraryKtisRouteWithChildren
   '/_app/missions/$id': typeof AppMissionsIdRoute
   '/_app/operate/ocda': typeof AppOperateOcdaRoute
   '/_app/operators/$id': typeof AppOperatorsIdRoute
@@ -745,8 +770,10 @@ export interface FileRoutesById {
   '/_app/tenets/': typeof AppTenetsIndexRoute
   '/_app/workflows/': typeof AppWorkflowsIndexRoute
   '/_app/library/jtbd/$id': typeof AppLibraryJtbdIdRoute
+  '/_app/library/ktis/$id': typeof AppLibraryKtisIdRoute
   '/_app/relationships/$id/sparkpath': typeof AppRelationshipsIdSparkpathRoute
   '/_app/settings/lenses/$id': typeof AppSettingsLensesIdRoute
+  '/api/public/hooks/scan-ktis': typeof ApiPublicHooksScanKtisRoute
   '/_app/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRouteTypes {
@@ -779,6 +806,7 @@ export interface FileRouteTypes {
     | '/engagement-plans/$id'
     | '/journeys/$id'
     | '/library/jtbd'
+    | '/library/ktis'
     | '/missions/$id'
     | '/operate/ocda'
     | '/operators/$id'
@@ -829,8 +857,10 @@ export interface FileRouteTypes {
     | '/tenets/'
     | '/workflows/'
     | '/library/jtbd/$id'
+    | '/library/ktis/$id'
     | '/relationships/$id/sparkpath'
     | '/settings/lenses/$id'
+    | '/api/public/hooks/scan-ktis'
     | '/workflows/$id/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -860,6 +890,7 @@ export interface FileRouteTypes {
     | '/engagement-plans/$id'
     | '/journeys/$id'
     | '/library/jtbd'
+    | '/library/ktis'
     | '/missions/$id'
     | '/operate/ocda'
     | '/operators/$id'
@@ -910,8 +941,10 @@ export interface FileRouteTypes {
     | '/tenets'
     | '/workflows'
     | '/library/jtbd/$id'
+    | '/library/ktis/$id'
     | '/relationships/$id/sparkpath'
     | '/settings/lenses/$id'
+    | '/api/public/hooks/scan-ktis'
     | '/workflows/$id/runs/$runId'
   id:
     | '__root__'
@@ -943,6 +976,7 @@ export interface FileRouteTypes {
     | '/_app/engagement-plans/$id'
     | '/_app/journeys/$id'
     | '/_app/library/jtbd'
+    | '/_app/library/ktis'
     | '/_app/missions/$id'
     | '/_app/operate/ocda'
     | '/_app/operators/$id'
@@ -993,8 +1027,10 @@ export interface FileRouteTypes {
     | '/_app/tenets/'
     | '/_app/workflows/'
     | '/_app/library/jtbd/$id'
+    | '/_app/library/ktis/$id'
     | '/_app/relationships/$id/sparkpath'
     | '/_app/settings/lenses/$id'
+    | '/api/public/hooks/scan-ktis'
     | '/_app/workflows/$id/runs/$runId'
   fileRoutesById: FileRoutesById
 }
@@ -1003,6 +1039,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   PSlugSeedRoute: typeof PSlugSeedRoute
+  ApiPublicHooksScanKtisRoute: typeof ApiPublicHooksScanKtisRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1476,6 +1513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMissionsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/library/ktis': {
+      id: '/_app/library/ktis'
+      path: '/library/ktis'
+      fullPath: '/library/ktis'
+      preLoaderRoute: typeof AppLibraryKtisRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/library/jtbd': {
       id: '/_app/library/jtbd'
       path: '/library/jtbd'
@@ -1546,6 +1590,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampaignsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/hooks/scan-ktis': {
+      id: '/api/public/hooks/scan-ktis'
+      path: '/api/public/hooks/scan-ktis'
+      fullPath: '/api/public/hooks/scan-ktis'
+      preLoaderRoute: typeof ApiPublicHooksScanKtisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/settings/lenses/$id': {
       id: '/_app/settings/lenses/$id'
       path: '/$id'
@@ -1559,6 +1610,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/relationships/$id/sparkpath'
       preLoaderRoute: typeof AppRelationshipsIdSparkpathRouteImport
       parentRoute: typeof AppRelationshipsIdRoute
+    }
+    '/_app/library/ktis/$id': {
+      id: '/_app/library/ktis/$id'
+      path: '/$id'
+      fullPath: '/library/ktis/$id'
+      preLoaderRoute: typeof AppLibraryKtisIdRouteImport
+      parentRoute: typeof AppLibraryKtisRoute
     }
     '/_app/library/jtbd/$id': {
       id: '/_app/library/jtbd/$id'
@@ -1628,6 +1686,18 @@ const AppLibraryJtbdRouteWithChildren = AppLibraryJtbdRoute._addFileChildren(
   AppLibraryJtbdRouteChildren,
 )
 
+interface AppLibraryKtisRouteChildren {
+  AppLibraryKtisIdRoute: typeof AppLibraryKtisIdRoute
+}
+
+const AppLibraryKtisRouteChildren: AppLibraryKtisRouteChildren = {
+  AppLibraryKtisIdRoute: AppLibraryKtisIdRoute,
+}
+
+const AppLibraryKtisRouteWithChildren = AppLibraryKtisRoute._addFileChildren(
+  AppLibraryKtisRouteChildren,
+)
+
 interface AppRelationshipsIdRouteChildren {
   AppRelationshipsIdSparkpathRoute: typeof AppRelationshipsIdSparkpathRoute
 }
@@ -1677,6 +1747,7 @@ interface AppRouteChildren {
   AppEngagementPlansIdRoute: typeof AppEngagementPlansIdRoute
   AppJourneysIdRoute: typeof AppJourneysIdRoute
   AppLibraryJtbdRoute: typeof AppLibraryJtbdRouteWithChildren
+  AppLibraryKtisRoute: typeof AppLibraryKtisRouteWithChildren
   AppMissionsIdRoute: typeof AppMissionsIdRoute
   AppOperateOcdaRoute: typeof AppOperateOcdaRoute
   AppOperatorsIdRoute: typeof AppOperatorsIdRoute
@@ -1744,6 +1815,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEngagementPlansIdRoute: AppEngagementPlansIdRoute,
   AppJourneysIdRoute: AppJourneysIdRoute,
   AppLibraryJtbdRoute: AppLibraryJtbdRouteWithChildren,
+  AppLibraryKtisRoute: AppLibraryKtisRouteWithChildren,
   AppMissionsIdRoute: AppMissionsIdRoute,
   AppOperateOcdaRoute: AppOperateOcdaRoute,
   AppOperatorsIdRoute: AppOperatorsIdRoute,
@@ -1792,6 +1864,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   PSlugSeedRoute: PSlugSeedRoute,
+  ApiPublicHooksScanKtisRoute: ApiPublicHooksScanKtisRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
