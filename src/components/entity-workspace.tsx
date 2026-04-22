@@ -94,10 +94,16 @@ function fmtCell(field: FieldDef, value: unknown, refMap?: Record<string, string
   return <span className="truncate">{String(value)}</span>;
 }
 
-export function EntityListPage({ entityKey }: { entityKey: string }) {
+export function EntityListPage({
+  entityKey,
+  rowFilter,
+}: {
+  entityKey: string;
+  rowFilter?: (row: Record<string, unknown>) => boolean;
+}) {
   const entity = ENTITIES[entityKey];
   if (!entity) return <div className="p-6">Unknown entity: {entityKey}</div>;
-  return <EntityList entity={entity} />;
+  return <EntityList entity={entity} rowFilter={rowFilter} />;
 }
 
 export function EntityDetailPage({ entityKey }: { entityKey: string }) {
@@ -138,7 +144,13 @@ const DEFAULT_VIEW: Record<string, ViewMode> = {
   playbooks: "cards",
 };
 
-function EntityList({ entity }: { entity: EntityDef }) {
+function EntityList({
+  entity,
+  rowFilter,
+}: {
+  entity: EntityDef;
+  rowFilter?: (row: Record<string, unknown>) => boolean;
+}) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
@@ -179,15 +191,17 @@ function EntityList({ entity }: { entity: EntityDef }) {
 
   const filtered = useMemo(() => {
     if (!data) return [];
-    if (!search.trim()) return data;
+    let rows = data as Row[];
+    if (rowFilter) rows = rows.filter((r) => rowFilter(r as unknown as Record<string, unknown>));
+    if (!search.trim()) return rows;
     const q = search.toLowerCase();
-    return data.filter((row) =>
+    return rows.filter((row) =>
       entity.fields.some((f) => {
         const v = row[f.key];
         return v != null && String(v).toLowerCase().includes(q);
       }),
     );
-  }, [data, search, entity]);
+  }, [data, search, entity, rowFilter]);
 
   const listFields = entity.fields.filter((f) => f.inList);
 
