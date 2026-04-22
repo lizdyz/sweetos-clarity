@@ -541,6 +541,7 @@ export type Database = {
       }
       components: {
         Row: {
+          component_kind: Database["public"]["Enums"]["component_kind"]
           created_at: string
           created_by: string
           created_from_session_id: string | null
@@ -566,6 +567,7 @@ export type Database = {
           used_in_offerings: string[]
         }
         Insert: {
+          component_kind?: Database["public"]["Enums"]["component_kind"]
           created_at?: string
           created_by?: string
           created_from_session_id?: string | null
@@ -591,6 +593,7 @@ export type Database = {
           used_in_offerings?: string[]
         }
         Update: {
+          component_kind?: Database["public"]["Enums"]["component_kind"]
           created_at?: string
           created_by?: string
           created_from_session_id?: string | null
@@ -2764,6 +2767,7 @@ export type Database = {
       }
       outcomes: {
         Row: {
+          auto_completed_at: string | null
           client_id: string | null
           component_id: string | null
           created_at: string
@@ -2774,6 +2778,8 @@ export type Database = {
           measured_date: string | null
           measured_value: string | null
           outcome_type: string
+          source_id: string | null
+          source_kind: Database["public"]["Enums"]["outcome_source_kind"]
           tagged_components: string[]
           tagged_domains: string[]
           tagged_tenets: string[]
@@ -2781,6 +2787,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_completed_at?: string | null
           client_id?: string | null
           component_id?: string | null
           created_at?: string
@@ -2791,6 +2798,8 @@ export type Database = {
           measured_date?: string | null
           measured_value?: string | null
           outcome_type: string
+          source_id?: string | null
+          source_kind?: Database["public"]["Enums"]["outcome_source_kind"]
           tagged_components?: string[]
           tagged_domains?: string[]
           tagged_tenets?: string[]
@@ -2798,6 +2807,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_completed_at?: string | null
           client_id?: string | null
           component_id?: string | null
           created_at?: string
@@ -2808,6 +2818,8 @@ export type Database = {
           measured_date?: string | null
           measured_value?: string | null
           outcome_type?: string
+          source_id?: string | null
+          source_kind?: Database["public"]["Enums"]["outcome_source_kind"]
           tagged_components?: string[]
           tagged_domains?: string[]
           tagged_tenets?: string[]
@@ -5911,6 +5923,7 @@ export type Database = {
         | "Tests"
         | "Documents"
         | "Retires"
+      component_kind: "user" | "platform" | "internal"
       drift_risk: "None" | "Low" | "Medium" | "High"
       engagement_plan_status:
         | "Proposed"
@@ -5973,6 +5986,7 @@ export type Database = {
         | "engagement_service"
         | "session"
       operator_kind: "human" | "workflow" | "agent"
+      outcome_source_kind: "quest" | "journey" | "mission" | "spark" | "manual"
       phase_owner: "client" | "us" | "both"
       portal_kind:
         | "Pre-Engagement"
@@ -6216,6 +6230,7 @@ export const Constants = {
         "Documents",
         "Retires",
       ],
+      component_kind: ["user", "platform", "internal"],
       drift_risk: ["None", "Low", "Medium", "High"],
       engagement_plan_status: [
         "Proposed",
@@ -6280,6 +6295,7 @@ export const Constants = {
         "session",
       ],
       operator_kind: ["human", "workflow", "agent"],
+      outcome_source_kind: ["quest", "journey", "mission", "spark", "manual"],
       phase_owner: ["client", "us", "both"],
       portal_kind: [
         "Pre-Engagement",

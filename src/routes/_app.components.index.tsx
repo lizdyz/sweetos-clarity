@@ -19,6 +19,7 @@ import { TENETS_BY_CATEGORY } from "@/lib/tenets";
 import { Filter, Search, Blocks, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RollupStatChip } from "@/components/rollup-stat-chip";
+import { ComponentKindToggle, type ComponentKind } from "@/components/component-kind-toggle";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 export const Route = createFileRoute("/_app/components/")({
@@ -34,7 +35,10 @@ interface ComponentRow {
   related_domains: string[] | null;
   related_tenets: string[] | null;
   updated_at: string;
+  component_kind: ComponentKind | null;
+  journey_id: string | null;
 }
+interface JourneyRow { id: string; name: string; }
 interface PipelineRow {
   component_id: string;
   active_project_count: number | null;
