@@ -5,7 +5,6 @@ import {
   Sparkles,
   Users,
   Workflow,
-  Inbox,
   Compass,
   Settings,
   ChevronDown,
