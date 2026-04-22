@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, Sparkles, Plus, Save, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -90,6 +90,13 @@ function ExcellenceSettings() {
     },
   });
 
+  // Default-select first subject of the chosen kind so the page never looks blank
+  useEffect(() => {
+    if (!subjectId && (subjectsQ.data?.length ?? 0) > 0) {
+      setSubjectId(subjectsQ.data![0]!.id);
+    }
+  }, [subjectId, subjectsQ.data]);
+
   const cellsQ = useQuery({
     queryKey: ["settings-cells", kind, subjectId],
     enabled: !!subjectId,
@@ -112,14 +119,16 @@ function ExcellenceSettings() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-8">
-      <div className="mb-6 flex items-center gap-3">
+      <div className="mb-6 flex items-start gap-3">
         <div className="grid h-10 w-10 place-items-center rounded-2xl bg-iris text-white shadow-[var(--shadow-glow)]">
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h1 className="text-xl font-semibold tracking-tight">Excellence Editor</h1>
-          <p className="text-sm text-muted-foreground">
-            Define what excellent looks like at L1→L5 across the 5 Ps for each Domain, Tenet, and Component.
+          <h1 className="text-xl font-semibold tracking-tight">Excellence Rubric</h1>
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+            Define what <em>excellent</em> looks like at <strong>L1 → L5</strong> across the{" "}
+            <strong>5 Ps</strong> for each Domain, Tenet, and Component. The rubric you build here
+            is the canon every relationship is scored against.
           </p>
         </div>
         <Link to="/settings" className="text-sm text-muted-foreground hover:text-foreground">

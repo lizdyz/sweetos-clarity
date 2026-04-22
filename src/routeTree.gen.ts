@@ -16,6 +16,7 @@ import { Route as AppTodayRouteImport } from './routes/_app.today'
 import { Route as AppSweetcycleRouteImport } from './routes/_app.sweetcycle'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppQueueRouteImport } from './routes/_app.queue'
+import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppPeopleRouteImport } from './routes/_app.people'
 import { Route as AppMyTasksRouteImport } from './routes/_app.my-tasks'
@@ -23,6 +24,7 @@ import { Route as AppMeasuresRouteImport } from './routes/_app.measures'
 import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
+import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
 import { Route as AppTenetsIndexRouteImport } from './routes/_app.tenets.index'
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
@@ -107,6 +109,11 @@ const AppQueueRoute = AppQueueRouteImport.update({
   path: '/queue',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPlannerRoute = AppPlannerRouteImport.update({
+  id: '/planner',
+  path: '/planner',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPipelineRoute = AppPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
@@ -140,6 +147,11 @@ const AppFlightdeckRoute = AppFlightdeckRouteImport.update({
 const AppCaptureRoute = AppCaptureRouteImport.update({
   id: '/capture',
   path: '/capture',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AppRoute,
 } as any)
 const AppWorkflowsIndexRoute = AppWorkflowsIndexRouteImport.update({
@@ -394,6 +406,7 @@ const AppWorkflowsIdRunsRunIdRoute = AppWorkflowsIdRunsRunIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
   '/journey': typeof AppJourneyRoute
@@ -401,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
+  '/planner': typeof AppPlannerRoute
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
@@ -458,6 +472,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
   '/journey': typeof AppJourneyRoute
@@ -465,6 +480,7 @@ export interface FileRoutesByTo {
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
+  '/planner': typeof AppPlannerRoute
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
@@ -524,6 +540,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/calendar': typeof AppCalendarRoute
   '/_app/capture': typeof AppCaptureRoute
   '/_app/flightdeck': typeof AppFlightdeckRoute
   '/_app/journey': typeof AppJourneyRoute
@@ -531,6 +548,7 @@ export interface FileRoutesById {
   '/_app/my-tasks': typeof AppMyTasksRoute
   '/_app/people': typeof AppPeopleRoute
   '/_app/pipeline': typeof AppPipelineRoute
+  '/_app/planner': typeof AppPlannerRoute
   '/_app/queue': typeof AppQueueRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/sweetcycle': typeof AppSweetcycleRoute
@@ -590,6 +608,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/calendar'
     | '/capture'
     | '/flightdeck'
     | '/journey'
@@ -597,6 +616,7 @@ export interface FileRouteTypes {
     | '/my-tasks'
     | '/people'
     | '/pipeline'
+    | '/planner'
     | '/queue'
     | '/settings'
     | '/sweetcycle'
@@ -654,6 +674,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/calendar'
     | '/capture'
     | '/flightdeck'
     | '/journey'
@@ -661,6 +682,7 @@ export interface FileRouteTypes {
     | '/my-tasks'
     | '/people'
     | '/pipeline'
+    | '/planner'
     | '/queue'
     | '/settings'
     | '/sweetcycle'
@@ -719,6 +741,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/calendar'
     | '/_app/capture'
     | '/_app/flightdeck'
     | '/_app/journey'
@@ -726,6 +749,7 @@ export interface FileRouteTypes {
     | '/_app/my-tasks'
     | '/_app/people'
     | '/_app/pipeline'
+    | '/_app/planner'
     | '/_app/queue'
     | '/_app/settings'
     | '/_app/sweetcycle'
@@ -838,6 +862,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppQueueRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/planner': {
+      id: '/_app/planner'
+      path: '/planner'
+      fullPath: '/planner'
+      preLoaderRoute: typeof AppPlannerRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/pipeline': {
       id: '/_app/pipeline'
       path: '/pipeline'
@@ -885,6 +916,13 @@ declare module '@tanstack/react-router' {
       path: '/capture'
       fullPath: '/capture'
       preLoaderRoute: typeof AppCaptureRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/calendar': {
+      id: '/_app/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/workflows/': {
@@ -1258,6 +1296,7 @@ const AppWorkflowsIdRouteWithChildren = AppWorkflowsIdRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppCalendarRoute: typeof AppCalendarRoute
   AppCaptureRoute: typeof AppCaptureRoute
   AppFlightdeckRoute: typeof AppFlightdeckRoute
   AppJourneyRoute: typeof AppJourneyRoute
@@ -1265,6 +1304,7 @@ interface AppRouteChildren {
   AppMyTasksRoute: typeof AppMyTasksRoute
   AppPeopleRoute: typeof AppPeopleRoute
   AppPipelineRoute: typeof AppPipelineRoute
+  AppPlannerRoute: typeof AppPlannerRoute
   AppQueueRoute: typeof AppQueueRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppSweetcycleRoute: typeof AppSweetcycleRoute
@@ -1319,6 +1359,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCalendarRoute: AppCalendarRoute,
   AppCaptureRoute: AppCaptureRoute,
   AppFlightdeckRoute: AppFlightdeckRoute,
   AppJourneyRoute: AppJourneyRoute,
@@ -1326,6 +1367,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMyTasksRoute: AppMyTasksRoute,
   AppPeopleRoute: AppPeopleRoute,
   AppPipelineRoute: AppPipelineRoute,
+  AppPlannerRoute: AppPlannerRoute,
   AppQueueRoute: AppQueueRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppSweetcycleRoute: AppSweetcycleRoute,

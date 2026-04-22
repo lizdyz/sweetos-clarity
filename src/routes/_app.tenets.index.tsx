@@ -18,9 +18,9 @@ interface TenetRow {
   description: string | null;
   category: string | null;
   industry_id: string | null;
-  domain_id: string | null;
   industries?: { name: string } | null;
   domains?: { name: string; color: string } | null;
+  domainCount?: number;
 }
 
 function TenetsIndex() {
@@ -29,15 +29,35 @@ function TenetsIndex() {
   const { data: tenets = [], isLoading } = useQuery({
     queryKey: ["tenets-index"],
     queryFn: async () => {
-      const { data, error } = await sb
-        .from("tenets")
-        .select(
-          "id, slug, name, description, category, industry_id, domain_id, industries (name), domains (name, color)",
-        )
-        .eq("enabled", true)
-        .order("sort_order");
-      if (error) throw error;
-      return (data ?? []) as TenetRow[];
+      const [tenetRes, joinRes, domainRes] = await Promise.all([
+        sb
+          .from("tenets")
+          .select("id, slug, name, description, category, industry_id, industries (name)")
+          .eq("enabled", true)
+          .order("sort_order"),
+        sb.from("domain_tenets").select("tenet_id, domain_id"),
+        sb.from("domains").select("id, name, color"),
+      ]);
+      if (tenetRes.error) throw tenetRes.error;
+      if (joinRes.error) throw joinRes.error;
+      if (domainRes.error) throw domainRes.error;
+      const dById = new Map<string, { name: string; color: string }>(
+        (domainRes.data ?? []).map((d: { id: string; name: string; color: string }) => [
+          d.id,
+          { name: d.name, color: d.color },
+        ]),
+      );
+      const byTenet = new Map<string, string[]>();
+      (joinRes.data ?? []).forEach((j: { tenet_id: string; domain_id: string }) => {
+        const arr = byTenet.get(j.tenet_id) ?? [];
+        arr.push(j.domain_id);
+        byTenet.set(j.tenet_id, arr);
+      });
+      return ((tenetRes.data ?? []) as TenetRow[]).map((t) => {
+        const ids = byTenet.get(t.id) ?? [];
+        const first = ids[0] ? dById.get(ids[0]) ?? null : null;
+        return { ...t, domains: first, domainCount: ids.length };
+      });
     },
   });
 
@@ -135,6 +155,11 @@ function TenetsIndex() {
                             style={{ background: t.domains.color }}
                           />
                           {t.domains.name}
+                          {(t.domainCount ?? 0) > 1 && (
+                            <span className="ml-1 rounded bg-muted/60 px-1 text-[9px]">
+                              +{(t.domainCount ?? 1) - 1}
+                            </span>
+                          )}
                         </div>
                       )}
                       <p className="line-clamp-3 text-xs text-muted-foreground">
