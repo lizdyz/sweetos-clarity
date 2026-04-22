@@ -17,13 +17,8 @@ import { Route as AppTodayRouteImport } from './routes/_app.today'
 import { Route as AppSweetsyncRouteImport } from './routes/_app.sweetsync'
 import { Route as AppSweetcycleRouteImport } from './routes/_app.sweetcycle'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppQueueRouteImport } from './routes/_app.queue'
-import { Route as AppPlannerRouteImport } from './routes/_app.planner'
-import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppPeopleRouteImport } from './routes/_app.people'
-import { Route as AppMyTasksRouteImport } from './routes/_app.my-tasks'
 import { Route as AppMeasuresRouteImport } from './routes/_app.measures'
-import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
@@ -130,39 +125,14 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppQueueRoute = AppQueueRouteImport.update({
-  id: '/queue',
-  path: '/queue',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPlannerRoute = AppPlannerRouteImport.update({
-  id: '/planner',
-  path: '/planner',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPipelineRoute = AppPipelineRouteImport.update({
-  id: '/pipeline',
-  path: '/pipeline',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppPeopleRoute = AppPeopleRouteImport.update({
   id: '/people',
   path: '/people',
   getParentRoute: () => AppRoute,
 } as any)
-const AppMyTasksRoute = AppMyTasksRouteImport.update({
-  id: '/my-tasks',
-  path: '/my-tasks',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppMeasuresRoute = AppMeasuresRouteImport.update({
   id: '/measures',
   path: '/measures',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppJourneyRoute = AppJourneyRouteImport.update({
-  id: '/journey',
-  path: '/journey',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFlightdeckRoute = AppFlightdeckRouteImport.update({
@@ -509,13 +479,8 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
-  '/journey': typeof AppJourneyRoute
   '/measures': typeof AppMeasuresRoute
-  '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
-  '/pipeline': typeof AppPipelineRoute
-  '/planner': typeof AppPlannerRoute
-  '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
   '/sweetsync': typeof AppSweetsyncRoute
@@ -591,13 +556,8 @@ export interface FileRoutesByTo {
   '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
-  '/journey': typeof AppJourneyRoute
   '/measures': typeof AppMeasuresRoute
-  '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
-  '/pipeline': typeof AppPipelineRoute
-  '/planner': typeof AppPlannerRoute
-  '/queue': typeof AppQueueRoute
   '/sweetcycle': typeof AppSweetcycleRoute
   '/sweetsync': typeof AppSweetsyncRoute
   '/today': typeof AppTodayRoute
@@ -674,13 +634,8 @@ export interface FileRoutesById {
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/capture': typeof AppCaptureRoute
   '/_app/flightdeck': typeof AppFlightdeckRoute
-  '/_app/journey': typeof AppJourneyRoute
   '/_app/measures': typeof AppMeasuresRoute
-  '/_app/my-tasks': typeof AppMyTasksRoute
   '/_app/people': typeof AppPeopleRoute
-  '/_app/pipeline': typeof AppPipelineRoute
-  '/_app/planner': typeof AppPlannerRoute
-  '/_app/queue': typeof AppQueueRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/sweetcycle': typeof AppSweetcycleRoute
   '/_app/sweetsync': typeof AppSweetsyncRoute
@@ -758,13 +713,8 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/capture'
     | '/flightdeck'
-    | '/journey'
     | '/measures'
-    | '/my-tasks'
     | '/people'
-    | '/pipeline'
-    | '/planner'
-    | '/queue'
     | '/settings'
     | '/sweetcycle'
     | '/sweetsync'
@@ -840,13 +790,8 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/capture'
     | '/flightdeck'
-    | '/journey'
     | '/measures'
-    | '/my-tasks'
     | '/people'
-    | '/pipeline'
-    | '/planner'
-    | '/queue'
     | '/sweetcycle'
     | '/sweetsync'
     | '/today'
@@ -922,13 +867,8 @@ export interface FileRouteTypes {
     | '/_app/calendar'
     | '/_app/capture'
     | '/_app/flightdeck'
-    | '/_app/journey'
     | '/_app/measures'
-    | '/_app/my-tasks'
     | '/_app/people'
-    | '/_app/pipeline'
-    | '/_app/planner'
-    | '/_app/queue'
     | '/_app/settings'
     | '/_app/sweetcycle'
     | '/_app/sweetsync'
@@ -1063,27 +1003,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/queue': {
-      id: '/_app/queue'
-      path: '/queue'
-      fullPath: '/queue'
-      preLoaderRoute: typeof AppQueueRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/planner': {
-      id: '/_app/planner'
-      path: '/planner'
-      fullPath: '/planner'
-      preLoaderRoute: typeof AppPlannerRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/pipeline': {
-      id: '/_app/pipeline'
-      path: '/pipeline'
-      fullPath: '/pipeline'
-      preLoaderRoute: typeof AppPipelineRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/people': {
       id: '/_app/people'
       path: '/people'
@@ -1091,25 +1010,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPeopleRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/my-tasks': {
-      id: '/_app/my-tasks'
-      path: '/my-tasks'
-      fullPath: '/my-tasks'
-      preLoaderRoute: typeof AppMyTasksRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/measures': {
       id: '/_app/measures'
       path: '/measures'
       fullPath: '/measures'
       preLoaderRoute: typeof AppMeasuresRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/journey': {
-      id: '/_app/journey'
-      path: '/journey'
-      fullPath: '/journey'
-      preLoaderRoute: typeof AppJourneyRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/flightdeck': {
@@ -1654,13 +1559,8 @@ interface AppRouteChildren {
   AppCalendarRoute: typeof AppCalendarRoute
   AppCaptureRoute: typeof AppCaptureRoute
   AppFlightdeckRoute: typeof AppFlightdeckRoute
-  AppJourneyRoute: typeof AppJourneyRoute
   AppMeasuresRoute: typeof AppMeasuresRoute
-  AppMyTasksRoute: typeof AppMyTasksRoute
   AppPeopleRoute: typeof AppPeopleRoute
-  AppPipelineRoute: typeof AppPipelineRoute
-  AppPlannerRoute: typeof AppPlannerRoute
-  AppQueueRoute: typeof AppQueueRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppSweetcycleRoute: typeof AppSweetcycleRoute
   AppSweetsyncRoute: typeof AppSweetsyncRoute
@@ -1722,13 +1622,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppCalendarRoute: AppCalendarRoute,
   AppCaptureRoute: AppCaptureRoute,
   AppFlightdeckRoute: AppFlightdeckRoute,
-  AppJourneyRoute: AppJourneyRoute,
   AppMeasuresRoute: AppMeasuresRoute,
-  AppMyTasksRoute: AppMyTasksRoute,
   AppPeopleRoute: AppPeopleRoute,
-  AppPipelineRoute: AppPipelineRoute,
-  AppPlannerRoute: AppPlannerRoute,
-  AppQueueRoute: AppQueueRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppSweetcycleRoute: AppSweetcycleRoute,
   AppSweetsyncRoute: AppSweetsyncRoute,
