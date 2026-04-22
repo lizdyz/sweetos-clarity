@@ -45,7 +45,7 @@ export function OCDACockpit() {
           kind: "proposal",
           title: readTitle(p.payload) ?? `(${p.entity_type})`,
           meta: p.entity_type,
-          href: "/queue",
+          href: "/capture",
         });
       }
       for (const s of (sparks.data ?? []) as Array<{ id: string; name: string; origin_event: string | null }>) {

@@ -23,7 +23,6 @@ import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppPeopleRouteImport } from './routes/_app.people'
 import { Route as AppMyTasksRouteImport } from './routes/_app.my-tasks'
 import { Route as AppMeasuresRouteImport } from './routes/_app.measures'
-import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
@@ -158,11 +157,6 @@ const AppMyTasksRoute = AppMyTasksRouteImport.update({
 const AppMeasuresRoute = AppMeasuresRouteImport.update({
   id: '/measures',
   path: '/measures',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppJourneyRoute = AppJourneyRouteImport.update({
-  id: '/journey',
-  path: '/journey',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFlightdeckRoute = AppFlightdeckRouteImport.update({
@@ -509,7 +503,6 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
-  '/journey': typeof AppJourneyRoute
   '/measures': typeof AppMeasuresRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
@@ -591,7 +584,6 @@ export interface FileRoutesByTo {
   '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
-  '/journey': typeof AppJourneyRoute
   '/measures': typeof AppMeasuresRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
@@ -674,7 +666,6 @@ export interface FileRoutesById {
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/capture': typeof AppCaptureRoute
   '/_app/flightdeck': typeof AppFlightdeckRoute
-  '/_app/journey': typeof AppJourneyRoute
   '/_app/measures': typeof AppMeasuresRoute
   '/_app/my-tasks': typeof AppMyTasksRoute
   '/_app/people': typeof AppPeopleRoute
@@ -758,7 +749,6 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/capture'
     | '/flightdeck'
-    | '/journey'
     | '/measures'
     | '/my-tasks'
     | '/people'
@@ -840,7 +830,6 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/capture'
     | '/flightdeck'
-    | '/journey'
     | '/measures'
     | '/my-tasks'
     | '/people'
@@ -922,7 +911,6 @@ export interface FileRouteTypes {
     | '/_app/calendar'
     | '/_app/capture'
     | '/_app/flightdeck'
-    | '/_app/journey'
     | '/_app/measures'
     | '/_app/my-tasks'
     | '/_app/people'
@@ -1103,13 +1091,6 @@ declare module '@tanstack/react-router' {
       path: '/measures'
       fullPath: '/measures'
       preLoaderRoute: typeof AppMeasuresRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/journey': {
-      id: '/_app/journey'
-      path: '/journey'
-      fullPath: '/journey'
-      preLoaderRoute: typeof AppJourneyRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/flightdeck': {
@@ -1654,7 +1635,6 @@ interface AppRouteChildren {
   AppCalendarRoute: typeof AppCalendarRoute
   AppCaptureRoute: typeof AppCaptureRoute
   AppFlightdeckRoute: typeof AppFlightdeckRoute
-  AppJourneyRoute: typeof AppJourneyRoute
   AppMeasuresRoute: typeof AppMeasuresRoute
   AppMyTasksRoute: typeof AppMyTasksRoute
   AppPeopleRoute: typeof AppPeopleRoute
@@ -1722,7 +1702,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppCalendarRoute: AppCalendarRoute,
   AppCaptureRoute: AppCaptureRoute,
   AppFlightdeckRoute: AppFlightdeckRoute,
-  AppJourneyRoute: AppJourneyRoute,
   AppMeasuresRoute: AppMeasuresRoute,
   AppMyTasksRoute: AppMyTasksRoute,
   AppPeopleRoute: AppPeopleRoute,
