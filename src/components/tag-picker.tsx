@@ -177,7 +177,7 @@ export function TagPicker({ label, variant, value, onChange }: Props) {
                       <Row
                         key={o.id}
                         option={o}
-                        active={value.includes(o.id)}
+                        active={safeValue.includes(o.id)}
                         onClick={() => toggle(o.id)}
                       />
                     ))}
@@ -187,7 +187,7 @@ export function TagPicker({ label, variant, value, onChange }: Props) {
                   <Row
                     key={o.id}
                     option={o}
-                    active={value.includes(o.id)}
+                    active={safeValue.includes(o.id)}
                     onClick={() => toggle(o.id)}
                   />
                 ))}
