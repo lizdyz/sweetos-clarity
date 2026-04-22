@@ -54,7 +54,8 @@ function PipelinePage() {
                 {items.map((r) => (
                   <Link
                     key={r.id}
-                    to={`/relationships/${r.id}`}
+                    to="/relationships/$id"
+                    params={{ id: r.id }}
                     className="block panel p-3 text-left transition-all hover:shadow-[var(--shadow-elevated)]"
                   >
                     <div className="flex items-start justify-between gap-2">
