@@ -52,6 +52,7 @@ import { Route as AppWorkflowsIdRouteImport } from './routes/_app.workflows.$id'
 import { Route as AppTenetsSlugRouteImport } from './routes/_app.tenets.$slug'
 import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
 import { Route as AppSparksIdRouteImport } from './routes/_app.sparks.$id'
+import { Route as AppSettingsLensesRouteImport } from './routes/_app.settings.lenses'
 import { Route as AppSettingsExcellenceRouteImport } from './routes/_app.settings.excellence'
 import { Route as AppSessionsIdRouteImport } from './routes/_app.sessions.$id'
 import { Route as AppSessionTemplatesIdRouteImport } from './routes/_app.session-templates.$id'
@@ -73,6 +74,7 @@ import { Route as AppDelegationIdRouteImport } from './routes/_app.delegation.$i
 import { Route as AppDecisionsIdRouteImport } from './routes/_app.decisions.$id'
 import { Route as AppComponentsIdRouteImport } from './routes/_app.components.$id'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
+import { Route as AppSettingsLensesIdRouteImport } from './routes/_app.settings.lenses.$id'
 import { Route as AppWorkflowsIdRunsRunIdRouteImport } from './routes/_app.workflows.$id.runs.$runId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -291,6 +293,11 @@ const AppSparksIdRoute = AppSparksIdRouteImport.update({
   path: '/sparks/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsLensesRoute = AppSettingsLensesRouteImport.update({
+  id: '/lenses',
+  path: '/lenses',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsExcellenceRoute = AppSettingsExcellenceRouteImport.update({
   id: '/excellence',
   path: '/excellence',
@@ -397,6 +404,11 @@ const AppCampaignsIdRoute = AppCampaignsIdRouteImport.update({
   path: '/campaigns/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsLensesIdRoute = AppSettingsLensesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppSettingsLensesRoute,
+} as any)
 const AppWorkflowsIdRunsRunIdRoute = AppWorkflowsIdRunsRunIdRouteImport.update({
   id: '/runs/$runId',
   path: '/runs/$runId',
@@ -440,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
+  '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
@@ -467,6 +480,7 @@ export interface FileRoutesByFullPath {
   '/tasks/': typeof AppTasksIndexRoute
   '/tenets/': typeof AppTenetsIndexRoute
   '/workflows/': typeof AppWorkflowsIndexRoute
+  '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRoutesByTo {
@@ -506,6 +520,7 @@ export interface FileRoutesByTo {
   '/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
+  '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
@@ -533,6 +548,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof AppTasksIndexRoute
   '/tenets': typeof AppTenetsIndexRoute
   '/workflows': typeof AppWorkflowsIndexRoute
+  '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRoutesById {
@@ -574,6 +590,7 @@ export interface FileRoutesById {
   '/_app/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/_app/sessions/$id': typeof AppSessionsIdRoute
   '/_app/settings/excellence': typeof AppSettingsExcellenceRoute
+  '/_app/settings/lenses': typeof AppSettingsLensesRouteWithChildren
   '/_app/sparks/$id': typeof AppSparksIdRoute
   '/_app/tasks/$id': typeof AppTasksIdRoute
   '/_app/tenets/$slug': typeof AppTenetsSlugRoute
@@ -601,6 +618,7 @@ export interface FileRoutesById {
   '/_app/tasks/': typeof AppTasksIndexRoute
   '/_app/tenets/': typeof AppTenetsIndexRoute
   '/_app/workflows/': typeof AppWorkflowsIndexRoute
+  '/_app/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/_app/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRouteTypes {
@@ -642,6 +660,7 @@ export interface FileRouteTypes {
     | '/session-templates/$id'
     | '/sessions/$id'
     | '/settings/excellence'
+    | '/settings/lenses'
     | '/sparks/$id'
     | '/tasks/$id'
     | '/tenets/$slug'
@@ -669,6 +688,7 @@ export interface FileRouteTypes {
     | '/tasks/'
     | '/tenets/'
     | '/workflows/'
+    | '/settings/lenses/$id'
     | '/workflows/$id/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -708,6 +728,7 @@ export interface FileRouteTypes {
     | '/session-templates/$id'
     | '/sessions/$id'
     | '/settings/excellence'
+    | '/settings/lenses'
     | '/sparks/$id'
     | '/tasks/$id'
     | '/tenets/$slug'
@@ -735,6 +756,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/tenets'
     | '/workflows'
+    | '/settings/lenses/$id'
     | '/workflows/$id/runs/$runId'
   id:
     | '__root__'
@@ -775,6 +797,7 @@ export interface FileRouteTypes {
     | '/_app/session-templates/$id'
     | '/_app/sessions/$id'
     | '/_app/settings/excellence'
+    | '/_app/settings/lenses'
     | '/_app/sparks/$id'
     | '/_app/tasks/$id'
     | '/_app/tenets/$slug'
@@ -802,6 +825,7 @@ export interface FileRouteTypes {
     | '/_app/tasks/'
     | '/_app/tenets/'
     | '/_app/workflows/'
+    | '/_app/settings/lenses/$id'
     | '/_app/workflows/$id/runs/$runId'
   fileRoutesById: FileRoutesById
 }
@@ -1114,6 +1138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSparksIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/lenses': {
+      id: '/_app/settings/lenses'
+      path: '/lenses'
+      fullPath: '/settings/lenses'
+      preLoaderRoute: typeof AppSettingsLensesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/excellence': {
       id: '/_app/settings/excellence'
       path: '/excellence'
@@ -1261,6 +1292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampaignsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/lenses/$id': {
+      id: '/_app/settings/lenses/$id'
+      path: '/$id'
+      fullPath: '/settings/lenses/$id'
+      preLoaderRoute: typeof AppSettingsLensesIdRouteImport
+      parentRoute: typeof AppSettingsLensesRoute
+    }
     '/_app/workflows/$id/runs/$runId': {
       id: '/_app/workflows/$id/runs/$runId'
       path: '/runs/$runId'
@@ -1271,12 +1309,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppSettingsLensesRouteChildren {
+  AppSettingsLensesIdRoute: typeof AppSettingsLensesIdRoute
+}
+
+const AppSettingsLensesRouteChildren: AppSettingsLensesRouteChildren = {
+  AppSettingsLensesIdRoute: AppSettingsLensesIdRoute,
+}
+
+const AppSettingsLensesRouteWithChildren =
+  AppSettingsLensesRoute._addFileChildren(AppSettingsLensesRouteChildren)
+
 interface AppSettingsRouteChildren {
   AppSettingsExcellenceRoute: typeof AppSettingsExcellenceRoute
+  AppSettingsLensesRoute: typeof AppSettingsLensesRouteWithChildren
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsExcellenceRoute: AppSettingsExcellenceRoute,
+  AppSettingsLensesRoute: AppSettingsLensesRouteWithChildren,
 }
 
 const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(

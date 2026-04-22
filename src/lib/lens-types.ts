@@ -18,6 +18,17 @@ export interface Lens {
   icon_key: string | null;
   accent_color: string;
   sort_order: number;
+  system_prompt?: string | null;
+  user_prompt_template?: string | null;
+  model?: string | null;
+}
+
+export interface LensStageBreakdown {
+  stage: string;
+  summary: string;
+  bullets: string[];
+  watch_outs: string[];
+  next_actions: string[];
 }
 
 export interface LensPerspective {
@@ -30,6 +41,7 @@ export interface LensPerspective {
   key_questions: string[];
   watch_outs: string[];
   next_actions: string[];
+  stages_breakdown: LensStageBreakdown[];
   generated_at: string;
   generated_by_model: string | null;
   version: number;

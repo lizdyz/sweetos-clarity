@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { ChevronDown, Pin, PinOff, RefreshCcw } from "lucide-react";
+import { ChevronDown, Pin, PinOff } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { sb } from "@/lib/sb";
 import { cn } from "@/lib/utils";
 import { BizzybotAvatar } from "./bizzybot-avatar";
+import { LensStageStepper } from "./lens-stage-stepper";
 import type { Lens, LensPerspective, LensSubjectKind } from "@/lib/lens-types";
 import { toast } from "sonner";
 
@@ -21,6 +21,7 @@ interface Props {
 
 export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId, defaultOpen = true }: Props) {
   const [open, setOpen] = useState(defaultOpen);
+  const [stageIndex, setStageIndex] = useState(0);
   const qc = useQueryClient();
 
   const togglePin = useMutation({
@@ -40,6 +41,9 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
   });
 
   const accent = lens.accent_color;
+  const stagesBreakdown = perspective?.stages_breakdown ?? [];
+  const hasStages = stagesBreakdown.length > 0;
+  const activeStage = hasStages ? stagesBreakdown[Math.min(stageIndex, stagesBreakdown.length - 1)] : null;
 
   return (
     <div
@@ -48,7 +52,6 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
         backgroundImage: `linear-gradient(180deg, color-mix(in oklab, ${accent} 6%, transparent) 0%, transparent 60%)`,
       }}
     >
-      {/* Header */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -72,37 +75,22 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
         />
       </button>
 
-      {/* Stage strip */}
-      <div className="flex flex-wrap items-center gap-1 border-t border-border/50 bg-card/60 px-4 py-2">
-        {lens.stages.map((stage, i) => (
-          <TooltipProvider key={stage} delayDuration={150}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge
-                  variant="outline"
-                  className="border-transparent text-[10px] font-normal"
-                  style={{ color: accent, background: `color-mix(in oklab, ${accent} 8%, transparent)` }}
-                >
-                  {stage}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs text-xs">
-                Stage {i + 1} of {lens.stages.length} in {lens.name}
-              </TooltipContent>
-            </Tooltip>
-            {i < lens.stages.length - 1 && <span className="text-[10px] text-muted-foreground">→</span>}
-          </TooltipProvider>
-        ))}
-      </div>
+      {open && hasStages && (
+        <LensStageStepper
+          stages={stagesBreakdown}
+          activeIndex={Math.min(stageIndex, stagesBreakdown.length - 1)}
+          onChange={setStageIndex}
+          accent={accent}
+        />
+      )}
 
-      {/* Body */}
       {open && (
-        <div className="border-t border-border/50 p-4">
+        <div className="p-4">
           {!perspective ? (
             <p className="text-xs italic text-muted-foreground">
               Not yet generated. Click <em>Generate Lens perspectives</em> at the top.
             </p>
-          ) : (
+          ) : hasStages && activeStage ? (
             <>
               {perspective.quick_facts.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-1">
@@ -114,6 +102,51 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
                 </div>
               )}
 
+              <h4 className="mb-1 text-sm font-semibold tracking-tight" style={{ color: accent }}>
+                {activeStage.stage}
+              </h4>
+              {activeStage.summary && (
+                <p className="mb-3 text-sm leading-relaxed text-foreground/85">{activeStage.summary}</p>
+              )}
+
+              {activeStage.bullets.length > 0 && (
+                <BulletList items={activeStage.bullets} accent={accent} />
+              )}
+
+              {(activeStage.watch_outs.length > 0 || activeStage.next_actions.length > 0) && (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {activeStage.watch_outs.length > 0 && (
+                    <div>
+                      <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Watch-outs
+                      </div>
+                      <BulletList items={activeStage.watch_outs} warn />
+                    </div>
+                  )}
+                  {activeStage.next_actions.length > 0 && (
+                    <div>
+                      <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Next actions
+                      </div>
+                      <BulletList items={activeStage.next_actions} accent={accent} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Footer perspective={perspective} togglePin={() => togglePin.mutate()} pinning={togglePin.isPending} />
+            </>
+          ) : (
+            <>
+              {perspective.quick_facts.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-1">
+                  {perspective.quick_facts.map((f, i) => (
+                    <Badge key={i} variant="secondary" className="text-[10px] font-normal">
+                      {f}
+                    </Badge>
+                  ))}
+                </div>
+              )}
               <Tabs defaultValue="perspective" className="w-full">
                 <TabsList className="h-8">
                   <TabsTrigger value="perspective" className="text-xs">Perspective</TabsTrigger>
@@ -121,7 +154,6 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
                   <TabsTrigger value="watch" className="text-xs">Watch-outs</TabsTrigger>
                   <TabsTrigger value="actions" className="text-xs">Next</TabsTrigger>
                 </TabsList>
-
                 <TabsContent value="perspective" className="mt-3">
                   <div className="prose prose-sm max-w-none text-sm leading-relaxed text-foreground/85 [&_p]:my-2 [&_ul]:my-2 [&_li]:my-0.5">
                     <RenderMarkdown md={perspective.perspective_md ?? ""} />
@@ -137,34 +169,35 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
                   <BulletList items={perspective.next_actions} accent={accent} />
                 </TabsContent>
               </Tabs>
-
-              <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] text-muted-foreground">
-                <span>
-                  v{perspective.version} · {new Date(perspective.generated_at).toLocaleDateString()} ·{" "}
-                  {perspective.generated_by_model ?? "AI"}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 gap-1 px-2 text-[10px]"
-                  onClick={() => togglePin.mutate()}
-                  disabled={togglePin.isPending}
-                >
-                  {perspective.is_pinned ? (
-                    <>
-                      <PinOff className="h-3 w-3" /> Unpin
-                    </>
-                  ) : (
-                    <>
-                      <Pin className="h-3 w-3" /> Pin
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Footer perspective={perspective} togglePin={() => togglePin.mutate()} pinning={togglePin.isPending} />
             </>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function Footer({ perspective, togglePin, pinning }: { perspective: LensPerspective; togglePin: () => void; pinning: boolean }) {
+  return (
+    <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] text-muted-foreground">
+      <span>
+        v{perspective.version} · {new Date(perspective.generated_at).toLocaleDateString()} ·{" "}
+        {perspective.generated_by_model ?? "AI"}
+      </span>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 gap-1 px-2 text-[10px]"
+        onClick={togglePin}
+        disabled={pinning}
+      >
+        {perspective.is_pinned ? (
+          <><PinOff className="h-3 w-3" /> Unpin</>
+        ) : (
+          <><Pin className="h-3 w-3" /> Pin</>
+        )}
+      </Button>
     </div>
   );
 }
@@ -186,7 +219,6 @@ function BulletList({ items, warn, accent }: { items: string[]; warn?: boolean; 
   );
 }
 
-// Tiny markdown renderer — paragraph + bullet support, no deps.
 function RenderMarkdown({ md }: { md: string }) {
   const blocks = md.split(/\n\n+/);
   return (

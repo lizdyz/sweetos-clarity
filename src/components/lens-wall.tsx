@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Sparkles, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,14 @@ interface LensWallProps {
   subjectKind: LensSubjectKind;
   subjectId: string;
   subjectLabel: string;
+  /** When true, automatically generate on mount if no perspectives exist. Defaults to true. */
+  autoRunOnEmpty?: boolean;
 }
 
-export function LensWall({ subjectKind, subjectId, subjectLabel }: LensWallProps) {
+export function LensWall({ subjectKind, subjectId, subjectLabel, autoRunOnEmpty = true }: LensWallProps) {
   const qc = useQueryClient();
   const [allOpen, setAllOpen] = useState(true);
+  const autoRanRef = useRef(false);
 
   const { data: lenses } = useQuery({
     queryKey: ["lenses"],
@@ -42,11 +45,10 @@ export function LensWall({ subjectKind, subjectId, subjectLabel }: LensWallProps
         .eq("subject_id", subjectId)
         .order("version", { ascending: false });
       if (error) throw error;
-      return data as LensPerspective[];
+      return data as unknown as LensPerspective[];
     },
   });
 
-  // Pick latest version per lens
   const latestByLens = useMemo(() => {
     const map = new Map<string, LensPerspective>();
     (perspectives ?? []).forEach((p) => {
@@ -80,13 +82,26 @@ export function LensWall({ subjectKind, subjectId, subjectLabel }: LensWallProps
   const hasAny = (perspectives?.length ?? 0) > 0;
   const isGenerating = generate.isPending;
 
+  // Auto-run on first visit when there are no perspectives yet.
+  useEffect(() => {
+    if (!autoRunOnEmpty) return;
+    if (autoRanRef.current) return;
+    if (loadingP) return;
+    if (hasAny) return;
+    if (!lenses?.length) return;
+    autoRanRef.current = true;
+    toast.info(`First time on this ${subjectKind} — running all BizzyBots…`);
+    generate.mutate(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRunOnEmpty, loadingP, hasAny, lenses?.length, subjectKind]);
+
   return (
     <Card className="panel-raised p-5">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold tracking-tight">Lens wall</h2>
           <p className="text-xs text-muted-foreground">
-            Eight BizzyBots, each looking at <span className="font-medium text-foreground/80">{subjectLabel}</span> through their own lens.
+            Eight BizzyBots, each looking at <span className="font-medium text-foreground/80">{subjectLabel}</span> through their own lens — broken down stage-by-stage.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -113,12 +128,13 @@ export function LensWall({ subjectKind, subjectId, subjectLabel }: LensWallProps
         </div>
       </header>
 
-      {loadingP ? (
+      {loadingP || (isGenerating && !hasAny) ? (
         <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading perspectives…
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {isGenerating ? "Running all BizzyBots… this can take 30-60 seconds." : "Loading perspectives…"}
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
           {(lenses ?? []).map((lens) => (
             <LensPerspectiveCard
               key={lens.id}
