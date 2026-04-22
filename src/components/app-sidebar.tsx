@@ -25,6 +25,7 @@ import {
   Wand2,
   Vault,
   Target as TargetIcon,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -137,6 +138,7 @@ const GROUPS: NavGroup[] = [
     collapsible: true,
     items: [
       { to: "/settings/prompts", label: "Prompt Console", icon: Wand2, hint: "Every editable AI prompt in one place" },
+      { to: "/settings/spark-templates", label: "Spark Library", icon: BookOpen, hint: "Curated, reusable Spark templates" },
       { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "L1→L5 across the 5 Ps" },
       { to: "/settings/lenses", label: "BizzyBot prompts", icon: Bot, hint: "Edit AI instructions per Lens" },
       { to: "/settings/open-decisions", label: "Open decisions", icon: FileText, hint: "Architecture decisions we have not yet settled" },
