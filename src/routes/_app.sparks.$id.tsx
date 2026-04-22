@@ -7,6 +7,7 @@ import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { TimeControls } from "@/components/time-controls";
 import { SparkProvenanceChip } from "@/components/spark-provenance-chip";
+import { ScopeChip } from "@/components/scope-chip";
 import { Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/sparks/$id")({
@@ -27,6 +28,8 @@ interface SparkRow {
   origin_event: string | null;
   generator_operator_id: string | null;
   quest_id: string | null;
+  scope: string | null;
+  relationship_id: string | null;
 }
 
 function SparkDetail() {
@@ -37,7 +40,7 @@ function SparkDetail() {
       const { data, error } = await supabase
         .from("sparks" as never)
         .select(
-          "id, name, spark_type, created_at, scheduled_for, not_before, due_date, recurrence_rule, done_at, generated_by_kind, origin_event, generator_operator_id, quest_id",
+          "id, name, spark_type, created_at, scheduled_for, not_before, due_date, recurrence_rule, done_at, generated_by_kind, origin_event, generator_operator_id, quest_id, scope, relationship_id",
         )
         .eq("id", id)
         .maybeSingle();
@@ -102,12 +105,13 @@ function SparkDetail() {
   return (
     <div className="space-y-5">
       {data && (
-        <div className="px-6 pt-4">
+        <div className="flex flex-wrap items-center gap-2 px-6 pt-4">
           <SparkProvenanceChip
             kind={data.generated_by_kind}
             generatorName={operator?.name}
             originEvent={data.origin_event}
           />
+          <ScopeChip scope={data.scope} relationshipId={data.relationship_id} size="sm" />
         </div>
       )}
       {data && (quest || components.length > 0) && (
