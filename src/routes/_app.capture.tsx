@@ -156,6 +156,24 @@ function CapturePage() {
           components: p.tagged_components ?? [],
         },
       });
+
+      // Route into SweetScan inbound signals if there's substantive content (file or long text)
+      if (text.trim().length > 40 || attachments.length > 0) {
+        try {
+          await supabase.from("inbound_signals").insert({
+            source_kind: attachments.length > 0 ? "screenshot" : "text",
+            source_url: null,
+            raw_payload: { text: text.trim(), attachments: attachments.map((a) => a.original_name) },
+            capture_attachment_id: null,
+            summary: text.trim().slice(0, 500),
+            status: "pending",
+          });
+        } catch (e) {
+          // Non-fatal — proposal is already staged
+          console.warn("inbound_signals insert failed", e);
+        }
+      }
+
       setText("");
       setFiles([]);
       baseTextRef.current = "";

@@ -24,11 +24,19 @@ KTIs are first-class entities that track **forward-facing signals** — they tel
 
 ## Edge function
 
-`scan-signals` has two modes:
-- `mode: 'rubric'` — proposes Excellence checklist items (existing)
+`scan-signals` has three modes:
+- `mode: 'rubric'` — proposes Excellence checklist items
 - `mode: 'kti'` — evaluates threshold against signals, writes `kti_scans` row, sets direction/fired
+- `mode: 'classify_inbound'` — classifies `inbound_signals` rows from Capture (kind, subject)
 
 Cron via `/api/public/hooks/scan-ktis` evaluates `scan_frequency` against last scan time and fans out invocations.
+
+## Auto-dispatch on fire
+
+When a scan writes `fired=true`, trigger `trg_kti_scan_fired` reads the parent KTI's `trigger_action` and dispatches:
+- `task` or `all` → inserts a Task with `spawned_by_kind='kti'`, `spawned_by_id=<scan.id>`, status `To Do`, due in 3 days. Deduped per scan.
+- `bot_alert` or `all` → inserts a `bot_alerts` row (topbar bell).
+- `flightdeck_flag` → handled at read time via the KTI's `fired` status.
 
 ## What KTI is NOT
 
