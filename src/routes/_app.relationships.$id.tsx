@@ -142,15 +142,15 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
         <JourneyStripAndBoard relationshipId={relationshipId} />
       </div>
       <div className="grid gap-5 px-6 lg:grid-cols-2">
-      {/* Funnel */}
+      {/* Funnel — inline editors */}
       <section className="panel-raised p-5">
         <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           Funnel
         </h2>
         <div className="grid grid-cols-3 gap-3">
-          <FunnelStat label="Awareness" value={rel.awareness_tier} tone="iris" />
-          <FunnelStat label="Temperature" value={rel.temperature} tone={tempTone(rel.temperature)} />
-          <FunnelStat label="Drift risk" value={rel.drift_risk} tone={driftTone(rel.drift_risk)} />
+          <FunnelEditor relationshipId={relationshipId} field="awareness_tier" label="Awareness" value={rel.awareness_tier} options={AWARENESS_TIER} tone="iris" />
+          <FunnelEditor relationshipId={relationshipId} field="temperature" label="Temperature" value={rel.temperature} options={RELATIONSHIP_TEMPERATURE} tone={tempTone(rel.temperature)} />
+          <FunnelEditor relationshipId={relationshipId} field="drift_risk" label="Drift risk" value={rel.drift_risk} options={DRIFT_RISK} tone={driftTone(rel.drift_risk)} />
         </div>
       </section>
 
