@@ -63,6 +63,11 @@ function TodayPage() {
         </div>
       </div>
 
+      <div className="mb-5 grid gap-3 lg:grid-cols-[2fr_1fr]">
+        <OcdaTileStrip />
+        <DecisionQueueWidget />
+      </div>
+
       <div className="grid gap-5 lg:grid-cols-2">
         <Section title="Overdue" icon={CheckSquare} tone="warning" count={overdue.length}>
           {overdue.length === 0 ? <Empty>Nothing overdue. Beautiful.</Empty> : overdue.map((t) => (
