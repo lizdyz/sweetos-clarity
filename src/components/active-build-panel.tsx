@@ -35,13 +35,13 @@ export function ActiveBuildPanel({ componentId, className }: ActiveBuildPanelPro
   const { data: projects = [] } = useQuery({
     queryKey: ["component_projects_resolve", projectIds.join(",")],
     queryFn: async () => {
-      if (projectIds.length === 0) return [];
+      if (projectIds.length === 0) return [] as Array<{ id: string; name: string; status: string | null; deadline: string | null; scheduled_for: string | null }>;
       const { data, error } = await supabase
         .from("projects")
         .select("id, name, status, deadline, scheduled_for")
         .in("id", projectIds);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Array<{ id: string; name: string; status: string | null; deadline: string | null; scheduled_for: string | null }>;
     },
     enabled: projectIds.length > 0,
   });
@@ -62,13 +62,13 @@ export function ActiveBuildPanel({ componentId, className }: ActiveBuildPanelPro
   const { data: tasks = [] } = useQuery({
     queryKey: ["component_tasks_resolve", taskIds.join(",")],
     queryFn: async () => {
-      if (taskIds.length === 0) return [];
+      if (taskIds.length === 0) return [] as Array<{ id: string; name: string; status: string | null; due_date: string | null; scheduled_for: string | null; updated_at: string }>;
       const { data, error } = await supabase
         .from("tasks")
         .select("id, name, status, due_date, scheduled_for, updated_at")
         .in("id", taskIds);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Array<{ id: string; name: string; status: string | null; due_date: string | null; scheduled_for: string | null; updated_at: string }>;
     },
     enabled: taskIds.length > 0,
   });
