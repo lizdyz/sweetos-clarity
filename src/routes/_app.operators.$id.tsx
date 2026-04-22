@@ -69,7 +69,7 @@ function OperatorDetailPage() {
     },
   });
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [] } = useQuery<{ id: string; name: string; status: string | null; due_date: string | null; blocked: boolean | null }[]>({
     queryKey: ["operator-tasks", id],
     queryFn: async () => {
       const { data, error } = await sb
