@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, GitBranch, ShieldCheck, ArrowDown, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type * as _react from "react";
 import { WorkflowStepSheet, type WorkflowStepRow } from "./workflow-step-sheet";
 
 interface Props {

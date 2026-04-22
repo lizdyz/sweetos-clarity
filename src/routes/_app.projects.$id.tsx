@@ -7,6 +7,7 @@ import { Chip } from "@/components/chips";
 import { Plus, ArrowRight, AlertCircle } from "lucide-react";
 import { ComponentLinkPanel } from "@/components/component-link-panel";
 import { WorkContextStrip } from "@/components/work-context-strip";
+import { MeasuresPanel } from "@/components/measures-panel";
 
 export const Route = createFileRoute("/_app/projects/$id")({
   component: ProjectDetail,
@@ -22,6 +23,9 @@ function ProjectDetail() {
       <ComponentLinkPanel projectId={id} />
       <ProjectPanels projectId={id} />
       <EntityDetailPage entityKey="projects" />
+      <div className="px-6 pb-8">
+        <MeasuresPanel subjectType="project" subjectId={id} />
+      </div>
     </div>
   );
 }
