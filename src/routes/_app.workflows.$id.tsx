@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { sb as supabase } from "@/lib/sb";
 import { activateWorkflow } from "@/utils/workflows.functions";
 import { format } from "date-fns";
+import { WorkflowStepCanvas } from "@/components/workflow-step-canvas";
+import { MeasuresPanel } from "@/components/measures-panel";
 
 export const Route = createFileRoute("/_app/workflows/$id")({
   component: WorkflowDetail,
@@ -118,7 +120,9 @@ function WorkflowDetail() {
           )}
         </section>
 
+        <WorkflowStepCanvas workflowId={id} />
         <WorkflowStatesPanel workflowId={id} />
+        <MeasuresPanel subjectType="workflow" subjectId={id} />
       </div>
 
       {activateOpen && (
