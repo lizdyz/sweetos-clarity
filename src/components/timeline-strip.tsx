@@ -34,9 +34,13 @@ function formatNice(iso: string | null | undefined): string {
 export function TimelineStrip({
   createdAt,
   startedAt,
+  scheduledFor,
+  notBefore,
   dueAt,
   doneAt,
   onChangeStarted,
+  onChangeScheduled,
+  onChangeNotBefore,
   onChangeDue,
   onChangeDone,
   className,
@@ -55,6 +59,20 @@ export function TimelineStrip({
         value={startedAt}
         editable={!!onChangeStarted}
         onChange={onChangeStarted}
+      />
+      <Cell
+        icon={<Lock className="h-3 w-3" />}
+        label="Not before"
+        value={notBefore}
+        editable={!!onChangeNotBefore}
+        onChange={onChangeNotBefore}
+      />
+      <Cell
+        icon={<CalendarClock className="h-3 w-3" />}
+        label="Scheduled"
+        value={scheduledFor}
+        editable={!!onChangeScheduled}
+        onChange={onChangeScheduled}
       />
       <Cell
         icon={<Calendar className="h-3 w-3" />}
