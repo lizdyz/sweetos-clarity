@@ -1,49 +1,101 @@
 import { useState } from "react";
-import { ChevronDown, Pin, PinOff } from "lucide-react";
+import { ChevronDown, Pin, PinOff, Sparkles, BookOpenCheck, ArrowUpToLine, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { sb } from "@/lib/sb";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { BizzybotAvatar } from "./bizzybot-avatar";
 import { LensStageStepper } from "./lens-stage-stepper";
-import type { Lens, LensPerspective, LensSubjectKind } from "@/lib/lens-types";
+import type { Lens, LensCardEntry, LensSubjectKind } from "@/lib/lens-types";
 import { toast } from "sonner";
 
 interface Props {
   lens: Lens;
-  perspective: LensPerspective | null;
+  entry: LensCardEntry | null;
   subjectKind: LensSubjectKind;
   subjectId: string;
   defaultOpen?: boolean;
 }
 
-export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId, defaultOpen = true }: Props) {
+export function LensPerspectiveCard({ lens, entry, subjectKind, subjectId, defaultOpen = true }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const [stageIndex, setStageIndex] = useState(0);
   const qc = useQueryClient();
 
-  const togglePin = useMutation({
+  const accent = lens.accent_color;
+  const stagesBreakdown = entry?.stages_breakdown ?? [];
+  const hasStages = stagesBreakdown.length > 0;
+  const activeStage = hasStages ? stagesBreakdown[Math.min(stageIndex, stagesBreakdown.length - 1)] : null;
+
+  const generateOne = useMutation({
     mutationFn: async () => {
-      if (!perspective) return;
-      const { error } = await sb
-        .from("lens_perspectives")
-        .update({ is_pinned: !perspective.is_pinned })
-        .eq("id", perspective.id);
+      const { data, error } = await supabase.functions.invoke("generate-lens-perspectives", {
+        body: { subject_kind: subjectKind, subject_id: subjectId, lens_codes: [lens.code], force: true },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["lens-perspectives", subjectKind, subjectId] });
-      toast.success(perspective?.is_pinned ? "Unpinned" : "Pinned — AI re-runs will skip this lens");
+      toast.success(`${lens.name} — fresh AI perspective generated`);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const accent = lens.accent_color;
-  const stagesBreakdown = perspective?.stages_breakdown ?? [];
-  const hasStages = stagesBreakdown.length > 0;
-  const activeStage = hasStages ? stagesBreakdown[Math.min(stageIndex, stagesBreakdown.length - 1)] : null;
+  const promoteToCanon = useMutation({
+    mutationFn: async () => {
+      if (entry?.tier !== "generated" || !entry.perspective) return;
+      const p = entry.perspective;
+      // Upsert into lens_canon for this (lens, subject) pair
+      const { error } = await sb
+        .from("lens_canon")
+        .upsert(
+          {
+            lens_id: lens.id,
+            subject_kind: subjectKind,
+            subject_id: subjectId,
+            quick_facts: p.quick_facts,
+            perspective_md: p.perspective_md,
+            key_questions: p.key_questions,
+            watch_outs: p.watch_outs,
+            next_actions: p.next_actions,
+            stages_breakdown: p.stages_breakdown,
+            source: "promoted_from_ai",
+            promoted_from_perspective_id: p.id,
+            status: "active",
+          },
+          { onConflict: "lens_id,subject_kind,subject_id" },
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["lens-canon", subjectKind, subjectId] });
+      toast.success(`${lens.name} — promoted to canon`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const togglePin = useMutation({
+    mutationFn: async () => {
+      if (entry?.tier !== "generated" || !entry.perspective) return;
+      const { error } = await sb
+        .from("lens_perspectives")
+        .update({ is_pinned: !entry.perspective.is_pinned })
+        .eq("id", entry.perspective.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["lens-perspectives", subjectKind, subjectId] });
+      toast.success(entry?.perspective?.is_pinned ? "Unpinned" : "Pinned — AI re-runs will skip this lens");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const tier = entry?.tier ?? "empty";
 
   return (
     <div
@@ -64,6 +116,7 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
               {lens.code}
             </span>
             <h3 className="truncate text-sm font-semibold tracking-tight">{lens.name}</h3>
+            <TierChip tier={tier} canonStatus={entry?.canon?.status} />
           </div>
           <p className="truncate text-xs text-muted-foreground">{lens.tagline}</p>
         </div>
@@ -86,15 +139,31 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
 
       {open && (
         <div className="p-4">
-          {!perspective ? (
-            <p className="text-xs italic text-muted-foreground">
-              Not yet generated. Click <em>Generate Lens perspectives</em> at the top.
-            </p>
+          {!entry ? (
+            <div className="space-y-3">
+              <p className="text-xs italic text-muted-foreground">
+                No canonical perspective yet. Author one in <span className="font-medium">Settings → Lens Canon</span>, or generate an AI take below.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1 text-xs"
+                onClick={() => generateOne.mutate()}
+                disabled={generateOne.isPending}
+              >
+                {generateOne.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3" />
+                )}
+                Generate with AI
+              </Button>
+            </div>
           ) : hasStages && activeStage ? (
             <>
-              {perspective.quick_facts.length > 0 && (
+              {entry.quick_facts.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-1">
-                  {perspective.quick_facts.map((f, i) => (
+                  {entry.quick_facts.map((f, i) => (
                     <Badge key={i} variant="secondary" className="text-[10px] font-normal">
                       {f}
                     </Badge>
@@ -134,13 +203,21 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
                 </div>
               )}
 
-              <Footer perspective={perspective} togglePin={() => togglePin.mutate()} pinning={togglePin.isPending} />
+              <Footer
+                entry={entry}
+                onTogglePin={() => togglePin.mutate()}
+                pinning={togglePin.isPending}
+                onPromote={() => promoteToCanon.mutate()}
+                promoting={promoteToCanon.isPending}
+                onGenerate={() => generateOne.mutate()}
+                generating={generateOne.isPending}
+              />
             </>
           ) : (
             <>
-              {perspective.quick_facts.length > 0 && (
+              {entry.quick_facts.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-1">
-                  {perspective.quick_facts.map((f, i) => (
+                  {entry.quick_facts.map((f, i) => (
                     <Badge key={i} variant="secondary" className="text-[10px] font-normal">
                       {f}
                     </Badge>
@@ -156,20 +233,28 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
                 </TabsList>
                 <TabsContent value="perspective" className="mt-3">
                   <div className="prose prose-sm max-w-none text-sm leading-relaxed text-foreground/85 [&_p]:my-2 [&_ul]:my-2 [&_li]:my-0.5">
-                    <RenderMarkdown md={perspective.perspective_md ?? ""} />
+                    <RenderMarkdown md={entry.perspective_md ?? ""} />
                   </div>
                 </TabsContent>
                 <TabsContent value="questions" className="mt-3">
-                  <BulletList items={perspective.key_questions} />
+                  <BulletList items={entry.key_questions} />
                 </TabsContent>
                 <TabsContent value="watch" className="mt-3">
-                  <BulletList items={perspective.watch_outs} warn />
+                  <BulletList items={entry.watch_outs} warn />
                 </TabsContent>
                 <TabsContent value="actions" className="mt-3">
-                  <BulletList items={perspective.next_actions} accent={accent} />
+                  <BulletList items={entry.next_actions} accent={accent} />
                 </TabsContent>
               </Tabs>
-              <Footer perspective={perspective} togglePin={() => togglePin.mutate()} pinning={togglePin.isPending} />
+              <Footer
+                entry={entry}
+                onTogglePin={() => togglePin.mutate()}
+                pinning={togglePin.isPending}
+                onPromote={() => promoteToCanon.mutate()}
+                promoting={promoteToCanon.isPending}
+                onGenerate={() => generateOne.mutate()}
+                generating={generateOne.isPending}
+              />
             </>
           )}
         </div>
@@ -178,26 +263,116 @@ export function LensPerspectiveCard({ lens, perspective, subjectKind, subjectId,
   );
 }
 
-function Footer({ perspective, togglePin, pinning }: { perspective: LensPerspective; togglePin: () => void; pinning: boolean }) {
+function TierChip({ tier, canonStatus }: { tier: "canon" | "generated" | "empty"; canonStatus?: string }) {
+  if (tier === "canon") {
+    const isDraft = canonStatus === "draft";
+    return (
+      <Badge
+        variant="outline"
+        className={cn(
+          "h-5 gap-1 px-1.5 text-[10px]",
+          isDraft
+            ? "border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-300"
+            : "border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300",
+        )}
+        title={isDraft ? "Starter canon — refine to make it real." : "Curated best-practice canon"}
+      >
+        <BookOpenCheck className="h-3 w-3" />
+        {isDraft ? "Canon · draft" : "Canon"}
+      </Badge>
+    );
+  }
+  if (tier === "generated") {
+    return (
+      <Badge
+        variant="outline"
+        className="h-5 gap-1 border-violet-500/40 bg-violet-500/5 px-1.5 text-[10px] text-violet-700 dark:text-violet-300"
+        title="AI-generated. Promote to canon if it's good enough to keep."
+      >
+        <Sparkles className="h-3 w-3" />
+        AI
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="h-5 px-1.5 text-[10px] text-muted-foreground" title="No perspective yet">
+      Empty
+    </Badge>
+  );
+}
+
+function Footer({
+  entry,
+  onTogglePin,
+  pinning,
+  onPromote,
+  promoting,
+  onGenerate,
+  generating,
+}: {
+  entry: LensCardEntry;
+  onTogglePin: () => void;
+  pinning: boolean;
+  onPromote: () => void;
+  promoting: boolean;
+  onGenerate: () => void;
+  generating: boolean;
+}) {
+  if (entry.tier === "canon") {
+    const c = entry.canon!;
+    const updated = new Date(c.updated_at).toLocaleDateString();
+    return (
+      <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] text-muted-foreground">
+        <span title={c.notes ?? undefined}>
+          Curated · {c.source === "promoted_from_ai" ? "promoted from AI" : "hand-authored"} · updated {updated}
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 gap-1 px-2 text-[10px]"
+          onClick={onGenerate}
+          disabled={generating}
+          title="Generate a fresh AI take alongside the canon (costs credits)."
+        >
+          {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+          Fresh AI angle
+        </Button>
+      </div>
+    );
+  }
+  const p = entry.perspective!;
   return (
     <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] text-muted-foreground">
       <span>
-        v{perspective.version} · {new Date(perspective.generated_at).toLocaleDateString()} ·{" "}
-        {perspective.generated_by_model ?? "AI"}
+        AI v{p.version} · {new Date(p.generated_at).toLocaleDateString()} ·{" "}
+        {p.generated_by_model ?? "AI"}
       </span>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-6 gap-1 px-2 text-[10px]"
-        onClick={togglePin}
-        disabled={pinning}
-      >
-        {perspective.is_pinned ? (
-          <><PinOff className="h-3 w-3" /> Unpin</>
-        ) : (
-          <><Pin className="h-3 w-3" /> Pin</>
-        )}
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 gap-1 px-2 text-[10px]"
+          onClick={onPromote}
+          disabled={promoting}
+          title="Promote this AI take into the curated canon for this subject."
+        >
+          {promoting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowUpToLine className="h-3 w-3" />}
+          Promote to canon
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 gap-1 px-2 text-[10px]"
+          onClick={onTogglePin}
+          disabled={pinning}
+        >
+          {p.is_pinned ? (
+            <><PinOff className="h-3 w-3" /> Unpin</>
+          ) : (
+            <><Pin className="h-3 w-3" /> Pin</>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

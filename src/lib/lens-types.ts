@@ -6,6 +6,8 @@ export type LensSubjectKind =
   | "mission"
   | "project";
 
+export type LensTier = "canon" | "generated";
+
 export interface Lens {
   id: string;
   code: string;
@@ -46,4 +48,41 @@ export interface LensPerspective {
   generated_by_model: string | null;
   version: number;
   is_pinned: boolean;
+  tier?: LensTier;
+}
+
+export interface LensCanon {
+  id: string;
+  lens_id: string;
+  subject_kind: LensSubjectKind;
+  subject_id: string;
+  quick_facts: string[];
+  perspective_md: string | null;
+  key_questions: string[];
+  watch_outs: string[];
+  next_actions: string[];
+  stages_breakdown: LensStageBreakdown[];
+  source: "curated" | "promoted_from_ai";
+  promoted_from_perspective_id: string | null;
+  status: "active" | "draft" | "retired";
+  notes: string | null;
+  updated_by: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Unified shape so the LensPerspectiveCard can render either tier. */
+export interface LensCardEntry {
+  tier: LensTier;
+  /** present when tier === 'generated' */
+  perspective?: LensPerspective | null;
+  /** present when tier === 'canon' */
+  canon?: LensCanon | null;
+  quick_facts: string[];
+  perspective_md: string | null;
+  key_questions: string[];
+  watch_outs: string[];
+  next_actions: string[];
+  stages_breakdown: LensStageBreakdown[];
 }
