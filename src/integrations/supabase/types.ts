@@ -152,11 +152,15 @@ export type Database = {
           key_deliverables: string | null
           next_executable_action: string | null
           next_milestone: string | null
+          not_before: string | null
           notes: string | null
           owner: string | null
           prompt_status: string | null
           proposal_id: string | null
+          recurrence_parent_id: string | null
+          recurrence_rule: string | null
           revenue_target_usd: number | null
+          scheduled_for: string | null
           source: Database["public"]["Enums"]["proposal_source"] | null
           source_ref: string | null
           status: string | null
@@ -182,11 +186,15 @@ export type Database = {
           key_deliverables?: string | null
           next_executable_action?: string | null
           next_milestone?: string | null
+          not_before?: string | null
           notes?: string | null
           owner?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           revenue_target_usd?: number | null
+          scheduled_for?: string | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           status?: string | null
@@ -212,11 +220,15 @@ export type Database = {
           key_deliverables?: string | null
           next_executable_action?: string | null
           next_milestone?: string | null
+          not_before?: string | null
           notes?: string | null
           owner?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           revenue_target_usd?: number | null
+          scheduled_for?: string | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           status?: string | null
@@ -233,6 +245,13 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -637,6 +656,13 @@ export type Database = {
             foreignKeyName: "documents_component_template_fk"
             columns: ["component_template_for"]
             isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "documents_component_template_fk"
+            columns: ["component_template_for"]
+            isOneToOne: false
             referencedRelation: "components"
             referencedColumns: ["id"]
           },
@@ -919,9 +945,13 @@ export type Database = {
           created_by: string
           end_date: string | null
           id: string
+          not_before: string | null
           notes: string | null
           plan_id: string | null
+          recurrence_parent_id: string | null
+          recurrence_rule: string | null
           relationship_id: string
+          scheduled_for: string | null
           service_type: Database["public"]["Enums"]["engagement_service_type"]
           sessions_purchased: number | null
           sessions_used: number | null
@@ -936,9 +966,13 @@ export type Database = {
           created_by?: string
           end_date?: string | null
           id?: string
+          not_before?: string | null
           notes?: string | null
           plan_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           relationship_id: string
+          scheduled_for?: string | null
           service_type: Database["public"]["Enums"]["engagement_service_type"]
           sessions_purchased?: number | null
           sessions_used?: number | null
@@ -953,9 +987,13 @@ export type Database = {
           created_by?: string
           end_date?: string | null
           id?: string
+          not_before?: string | null
           notes?: string | null
           plan_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           relationship_id?: string
+          scheduled_for?: string | null
           service_type?: Database["public"]["Enums"]["engagement_service_type"]
           sessions_purchased?: number | null
           sessions_used?: number | null
@@ -971,6 +1009,20 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "engagement_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_services_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_service_rollup"
+            referencedColumns: ["service_id"]
+          },
+          {
+            foreignKeyName: "engagement_services_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_services"
             referencedColumns: ["id"]
           },
           {
@@ -1468,6 +1520,13 @@ export type Database = {
             foreignKeyName: "outcomes_component_id_fkey"
             columns: ["component_id"]
             isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "outcomes_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
             referencedRelation: "components"
             referencedColumns: ["id"]
           },
@@ -1729,6 +1788,80 @@ export type Database = {
         }
         Relationships: []
       }
+      project_components: {
+        Row: {
+          component_id: string
+          contribution_type: Database["public"]["Enums"]["component_contribution_type"]
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          project_id: string
+          target_date: string | null
+          target_maturity_level:
+            | Database["public"]["Enums"]["maturity_level"]
+            | null
+          updated_at: string
+        }
+        Insert: {
+          component_id: string
+          contribution_type?: Database["public"]["Enums"]["component_contribution_type"]
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          project_id: string
+          target_date?: string | null
+          target_maturity_level?:
+            | Database["public"]["Enums"]["maturity_level"]
+            | null
+          updated_at?: string
+        }
+        Update: {
+          component_id?: string
+          contribution_type?: Database["public"]["Enums"]["component_contribution_type"]
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          project_id?: string
+          target_date?: string | null
+          target_maturity_level?:
+            | Database["public"]["Enums"]["maturity_level"]
+            | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "project_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_components_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_rollup"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_components_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client_id: string | null
@@ -1745,13 +1878,17 @@ export type Database = {
           next_action: string | null
           next_action_due: string | null
           next_deliverable_specific: string | null
+          not_before: string | null
           owner: string | null
           priority: string | null
           project_brief: string | null
           prompt_status: string | null
           proposal_id: string | null
+          recurrence_parent_id: string | null
+          recurrence_rule: string | null
           relationship_id: string | null
           revenue_potential_usd: number | null
+          scheduled_for: string | null
           source: Database["public"]["Enums"]["proposal_source"] | null
           source_ref: string | null
           sprint: string | null
@@ -1777,13 +1914,17 @@ export type Database = {
           next_action?: string | null
           next_action_due?: string | null
           next_deliverable_specific?: string | null
+          not_before?: string | null
           owner?: string | null
           priority?: string | null
           project_brief?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           relationship_id?: string | null
           revenue_potential_usd?: number | null
+          scheduled_for?: string | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           sprint?: string | null
@@ -1809,13 +1950,17 @@ export type Database = {
           next_action?: string | null
           next_action_due?: string | null
           next_deliverable_specific?: string | null
+          not_before?: string | null
           owner?: string | null
           priority?: string | null
           project_brief?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           relationship_id?: string | null
           revenue_potential_usd?: number | null
+          scheduled_for?: string | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           sprint?: string | null
@@ -1846,6 +1991,20 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "project_rollup"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "projects_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
@@ -2471,6 +2630,13 @@ export type Database = {
             foreignKeyName: "session_components_component_id_fkey"
             columns: ["component_id"]
             isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "session_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
             referencedRelation: "components"
             referencedColumns: ["id"]
           },
@@ -2549,6 +2715,7 @@ export type Database = {
           maturity_lift_to: Database["public"]["Enums"]["maturity_level"] | null
           name: string
           next_recommended_service: string | null
+          not_before: string | null
           outcome_findings: string | null
           persona_id: string | null
           phase_blocker: string | null
@@ -2559,7 +2726,10 @@ export type Database = {
             | Database["public"]["Enums"]["progression_state"]
             | null
           reality_assessment_summary: string | null
+          recurrence_parent_id: string | null
+          recurrence_rule: string | null
           relationship_id: string | null
+          scheduled_for: string | null
           seed_status: string | null
           seed_submitted: boolean | null
           sequence: number | null
@@ -2605,6 +2775,7 @@ export type Database = {
             | null
           name: string
           next_recommended_service?: string | null
+          not_before?: string | null
           outcome_findings?: string | null
           persona_id?: string | null
           phase_blocker?: string | null
@@ -2615,7 +2786,10 @@ export type Database = {
             | Database["public"]["Enums"]["progression_state"]
             | null
           reality_assessment_summary?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           relationship_id?: string | null
+          scheduled_for?: string | null
           seed_status?: string | null
           seed_submitted?: boolean | null
           sequence?: number | null
@@ -2661,6 +2835,7 @@ export type Database = {
             | null
           name?: string
           next_recommended_service?: string | null
+          not_before?: string | null
           outcome_findings?: string | null
           persona_id?: string | null
           phase_blocker?: string | null
@@ -2671,7 +2846,10 @@ export type Database = {
             | Database["public"]["Enums"]["progression_state"]
             | null
           reality_assessment_summary?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           relationship_id?: string | null
+          scheduled_for?: string | null
           seed_status?: string | null
           seed_submitted?: boolean | null
           sequence?: number | null
@@ -2742,6 +2920,20 @@ export type Database = {
             columns: ["playbook_id"]
             isOneToOne: false
             referencedRelation: "playbooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["current_session_id"]
+          },
+          {
+            foreignKeyName: "sessions_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
           {
@@ -2834,10 +3026,14 @@ export type Database = {
           due_date: string | null
           id: string
           name: string
+          not_before: string | null
           progression_state:
             | Database["public"]["Enums"]["progression_state"]
             | null
           quest_id: string | null
+          recurrence_parent_id: string | null
+          recurrence_rule: string | null
+          scheduled_for: string | null
           sequence_order: number | null
           source_of_advancement:
             | Database["public"]["Enums"]["source_of_advancement"]
@@ -2860,10 +3056,14 @@ export type Database = {
           due_date?: string | null
           id?: string
           name: string
+          not_before?: string | null
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
           quest_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
+          scheduled_for?: string | null
           sequence_order?: number | null
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
@@ -2886,10 +3086,14 @@ export type Database = {
           due_date?: string | null
           id?: string
           name?: string
+          not_before?: string | null
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
           quest_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
+          scheduled_for?: string | null
           sequence_order?: number | null
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
@@ -2903,6 +3107,59 @@ export type Database = {
             columns: ["quest_id"]
             isOneToOne: false
             referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sparks_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "sparks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_components: {
+        Row: {
+          component_id: string
+          created_at: string
+          created_by: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          component_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          component_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "task_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_components_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -2951,6 +3208,7 @@ export type Database = {
           frameworks_lenses: string[] | null
           id: string
           name: string
+          not_before: string | null
           notes: string | null
           operator_id: string | null
           output_format: string | null
@@ -2960,9 +3218,12 @@ export type Database = {
           project_id: string | null
           prompt_status: string | null
           proposal_id: string | null
+          recurrence_parent_id: string | null
+          recurrence_rule: string | null
           recurring: boolean | null
           recurring_cadence: string | null
           relationship_id: string | null
+          scheduled_for: string | null
           source: Database["public"]["Enums"]["proposal_source"] | null
           source_ref: string | null
           status: string | null
@@ -2989,6 +3250,7 @@ export type Database = {
           frameworks_lenses?: string[] | null
           id?: string
           name: string
+          not_before?: string | null
           notes?: string | null
           operator_id?: string | null
           output_format?: string | null
@@ -2998,9 +3260,12 @@ export type Database = {
           project_id?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           recurring?: boolean | null
           recurring_cadence?: string | null
           relationship_id?: string | null
+          scheduled_for?: string | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           status?: string | null
@@ -3027,6 +3292,7 @@ export type Database = {
           frameworks_lenses?: string[] | null
           id?: string
           name?: string
+          not_before?: string | null
           notes?: string | null
           operator_id?: string | null
           output_format?: string | null
@@ -3036,9 +3302,12 @@ export type Database = {
           project_id?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_rule?: string | null
           recurring?: boolean | null
           recurring_cadence?: string | null
           relationship_id?: string | null
+          scheduled_for?: string | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           status?: string | null
@@ -3090,6 +3359,13 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
           {
@@ -3196,6 +3472,13 @@ export type Database = {
           workflow_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workflow_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
           {
             foreignKeyName: "workflow_components_component_id_fkey"
             columns: ["component_id"]
@@ -3460,6 +3743,20 @@ export type Database = {
       }
     }
     Views: {
+      component_build_pipeline: {
+        Row: {
+          active_project_count: number | null
+          active_project_ids: string[] | null
+          active_task_count: number | null
+          active_task_ids: string[] | null
+          component_id: string | null
+          component_name: string | null
+          current_maturity_level:
+            | Database["public"]["Enums"]["maturity_level"]
+            | null
+        }
+        Relationships: []
+      }
       engagement_service_rollup: {
         Row: {
           completion_pct: number | null
@@ -3652,6 +3949,44 @@ export type Database = {
         }
         Relationships: []
       }
+      time_grid: {
+        Row: {
+          done_at: string | null
+          due_date: string | null
+          entity_id: string | null
+          entity_type: string | null
+          name: string | null
+          not_before: string | null
+          recurrence_rule: string | null
+          relationship_id: string | null
+          scheduled_for: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
+      work_context: {
+        Row: {
+          blocked_by_tasks: string[] | null
+          blocking_tasks: string[] | null
+          building_components: string[] | null
+          done_at: string | null
+          due_date: string | null
+          entity_id: string | null
+          entity_type: string | null
+          for_relationship: string | null
+          name: string | null
+          not_before: string | null
+          parent_campaign_id: string | null
+          parent_project_id: string | null
+          recurrence_rule: string | null
+          scheduled_for: string | null
+          status: string | null
+          tagged_components: string[] | null
+          tagged_domains: string[] | null
+          tagged_tenets: string[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       default_phase_owner: {
@@ -3666,6 +4001,10 @@ export type Database = {
         Returns: boolean
       }
       is_team_member: { Args: { _user_id: string }; Returns: boolean }
+      next_recurrence: {
+        Args: { _anchor: string; _rule: string }
+        Returns: string
+      }
       recompute_task_blocked: { Args: { _task_id: string }; Returns: undefined }
       seed_excellence_defaults: {
         Args: {
@@ -3683,6 +4022,12 @@ export type Database = {
         | "Solution-aware"
         | "Product-aware"
         | "Most-aware"
+      component_contribution_type:
+        | "Builds"
+        | "Refines"
+        | "Tests"
+        | "Documents"
+        | "Retires"
       drift_risk: "None" | "Low" | "Medium" | "High"
       engagement_plan_status:
         | "Proposed"
@@ -3942,6 +4287,13 @@ export const Constants = {
         "Solution-aware",
         "Product-aware",
         "Most-aware",
+      ],
+      component_contribution_type: [
+        "Builds",
+        "Refines",
+        "Tests",
+        "Documents",
+        "Retires",
       ],
       drift_risk: ["None", "Low", "Medium", "High"],
       engagement_plan_status: [
