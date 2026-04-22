@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AWARENESS_TIER, RELATIONSHIP_TEMPERATURE, DRIFT_RISK } from "@/lib/enums";
+import { ServiceShapeStrip } from "@/components/service-shape-strip";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
@@ -24,6 +25,7 @@ function RelationshipDetail() {
   const { id } = Route.useParams();
   return (
     <div className="space-y-5">
+      <ServiceShapeStrip relationshipId={id} />
       <RelationshipPanels relationshipId={id} />
       <EntityDetailPage entityKey="relationships" />
     </div>
