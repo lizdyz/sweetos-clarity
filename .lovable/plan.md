@@ -1,166 +1,156 @@
 
 
-# Phase 2.10w — Seed the full Library: Journeys, Quests, Missions, Sessions Templates, Playbooks, Workflows, Personas, JTBDs, Outcomes
+# Phase 2.10x — Replace bad Journey seed · Add canonical Components per Journey · Wire the Angela relationship + Session 1 SweetCycle as a real example
 
-You said "I wanted you to bring components, journeys, quests, mission etc." — meaning the previous seed only filled Components. The whole Library layer should be populated with solid, client-ready ideas that map to the SweetBOS platform we just seeded. Otherwise `/journeys`, `/quests`, `/missions`, `/session-templates`, `/playbooks`, `/library/jtbd`, `/personas`, `/outcomes` are all dead lists.
-
-This pass seeds **all of them** with cohesive content anchored to the 10 SweetBOS Components and the canonical 5 Ps / 5 Ls.
+You're right — the Journeys I seeded were generic transformations, not the **12 canonical SweetBOS journeys** you'd actually use with clients. And the sample data has no real client to demonstrate the system on. This pass fixes both, plus seeds the canonical Components-per-Journey list and the Session 1 Interview-Map session as a worked example.
 
 ---
 
-## What gets seeded (all idempotent — `ON CONFLICT (name) DO NOTHING`)
+## What I got wrong (and will undo)
 
-### Journeys (long-arc transformations) — **5 records**
-The five canonical advisor transformations:
-1. **Solo → Systematized Practice** — L2 → L4 across People + Process
-2. **Generalist → Niche Authority** — Strategy + Marketing maturity
-3. **Founder-led → Team-led Delivery** — delegation + operators
-4. **Service Business → Productized IP** — Product + Profit maturity
-5. **Practice → Sellable Asset** — succession-ready, multi-year arc
-
-Each: name · description · target_maturity · expected_duration · related_components (joined to seeded Components) · related_domains.
-
-### Quests (SweetSync working questions) — **8 records**
-Cross-cutting "what are we actually trying to figure out" prompts:
-- *"What is my one-sentence positioning?"*
-- *"Which 3 client types deserve a dedicated offer?"*
-- *"What does a perfect first-90-days look like?"*
-- *"What's the smallest viable Portal experience?"*
-- *"Which decisions am I the only one who can make?"*
-- *"What rituals would make my week un-skippable?"*
-- *"What proof do I need to charge 2x?"*
-- *"What would I keep if I had to delete 80% of my offerings?"*
-
-Each: prompt · scope (`org`) · framing · expected output kind.
-
-### Missions (focused 30–90 day campaigns) — **6 records**
-Outcome-bound execution arcs:
-1. **Q1 Niche Lock** — pick + commit
-2. **Portal MVP Launch** — first 3 client portals live
-3. **Onboarding Automation** — 50% time reduction
-4. **Recurring Revenue Engine** — first 5 subscriptions
-5. **Team Hire #1** — operator onboarded
-6. **Annual Retreat Prep** — IP consolidation
-
-Each: name · objective · target_date · success_criteria · related_components.
-
-### Session Templates (canonical session types) — **9 records**
-The Mirror / Map / Machine / SweetSync catalog:
-- **Mirror — 5 P Audit** (90 min)
-- **Mirror — Annual Reflection** (120 min)
-- **Map — Niche Discovery** (90 min)
-- **Map — Service Architecture** (90 min)
-- **Map — Portal Wireframe** (60 min)
-- **Machine — Workflow Build** (120 min)
-- **Machine — Component Build** (90 min)
-- **SweetSync — Spark Triage** (45 min)
-- **SweetSync — Quest Working Session** (60 min)
-
-Each: name · service_type · default_duration · pre_work · session_purpose · default_outputs.
-
-### Playbooks (repeatable methodologies) — **5 records**
-1. **The 5 P Audit Playbook** — full Mirror methodology
-2. **The Niche Lock Playbook** — discovery → commitment in 4 sessions
-3. **The Portal Build Playbook** — wireframe → live in 6 weeks
-4. **The Onboarding Automation Playbook** — manual → workflow in 3 sprints
-5. **The Subscription Conversion Playbook** — one-off → recurring
-
-Each: name · summary · stages (JSON) · related_components · related_session_templates.
-
-### JTBDs (Jobs To Be Done — canonical advisor jobs) — **8 records**
-Functional/emotional/social jobs advisors hire SweetBOS for:
-- *"Help me see my whole business clearly"*
-- *"Help me stop reinventing the wheel for each client"*
-- *"Help me sell my expertise without selling my time"*
-- *"Help me prove my value in concrete deliverables"*
-- *"Help me delegate without losing quality"*
-- *"Help me decide what to say no to"*
-- *"Help me make this practice sellable"*
-- *"Help me work fewer hours without earning less"*
-
-Each: job_statement · job_type · trigger · current_solution · success_definition.
-
-### Personas (canonical advisor segments) — **6 records**
-Anchored to the seeded `PERSONA_SECTOR` enum:
-1. **Solo Wealth Advisor — Generalist** (IIROC, $50–150M AUM)
-2. **Wealth Advisor — Niche Specialist** (post-niche, $150M+)
-3. **Insurance Advisor — Estate Focus** (multi-rep team)
-4. **Multi-Discipline Family Office Lead**
-5. **Tech Consultant — Solo Operator** (independent strategist)
-6. **Accounting Practice Owner — Succession Stage**
-
-Each with sector · structure · autonomy · registration · primary_jtbd_ids · pain_signals.
-
-### Outcomes (measurable wins) — **8 records**
-Anchored to `OUTCOME_TYPE` enum:
-- *"10 hrs/week reclaimed via automation"* (Time Saved)
-- *"Recurring revenue ≥ 30% of total"* (Revenue Increased)
-- *"NPS ≥ 70 from active clients"* (Satisfaction Improved)
-- *"Onboarding time cut from 4h → 1h"* (Efficiency Gained)
-- *"Tech stack cost down 40%"* (Cost Reduced)
-- *"Portal adoption ≥ 80% of clients"* (Quality Improved)
-- *"First operator hire successful at 90 days"* (Efficiency Gained)
-- *"Practice valuation methodology established"* (Revenue Increased)
-
-Each: name · outcome_type · target_metric · how_we_know · related_components.
+The 5 "transformation arcs" I seeded last pass (Solo→Systematized, Generalist→Niche, etc.) are **maturity narratives**, not Journeys. Your real Journeys are the **12 universal practice domains** every advisor business has to operate in. I'll delete the 5 wrong rows and replace them.
 
 ---
 
-## How everything links
+## What I will seed
 
-The seed isn't 8 disconnected lists — entries cross-reference using the IDs of records seeded earlier in the same migration (CTEs):
+### A. The 12 canonical Journeys (replacing the 5 wrong ones)
 
-- Each **Journey** references the **Components** + **Outcomes** that mark its completion.
-- Each **Mission** references the **Components** it builds + the **Outcomes** it targets.
-- Each **Playbook** references the **Session Templates** it sequences + **Components** it produces.
-- Each **Persona** references the **JTBDs** it hires us for.
-- Each **JTBD** references the **Outcomes** that satisfy it.
+Exactly the list from your spreadsheet:
 
-Result: clicking any seeded Journey on `/journeys/$id` will show real component anchors, outcome targets, and recommended playbooks — not stubs.
+1. Strategic Vision & Positioning
+2. Client Acquisition
+3. Service Design
+4. Team Development
+5. Technology Integration
+6. Financial Planning (Business)
+7. Client Service Delivery
+8. Operations Management
+9. Compliance & Risk
+10. Time Management
+11. Knowledge Management
+12. Performance Tracking
+
+Each gets: name · description · related_domains (mapped to the canonical 5 Ps) · expected_duration · target_maturity (`L4 Leveraging`) · `created_by` = platform owner.
+
+### B. The 72 canonical Components (6 per Journey)
+
+Every Component listed in the spreadsheet seeded into `public.components` with:
+- `name` (e.g. "Mission statement", "Lead generation")
+- `description` — one-line plain-English purpose I'll write per component
+- `related_domains` — mapped to 5 Ps based on the journey it belongs to
+- `current_maturity_level` = `L1 Lacking` (default for unbuilt components)
+- `quality_status` = `Approved`
+- A new column-or-link tying the Component back to its Journey
+
+  **Tying mechanism:** I'll check if `journeys` already has a `related_component_ids[]` array (likely, given prior schema). If yes, I'll backfill the array with the freshly-seeded Component IDs. If no, I'll add `journey_id uuid` to `components` (nullable, FK to `journeys.id`) in a tiny migration before the seed.
+
+The 8 pre-existing "Recruiter Intelligence Dashboard"-style components and the 10 SweetBOS platform components stay untouched — they remain as project-specific or platform-layer components alongside the new universal ones.
+
+### C. The Angela D'Angelo relationship — fully populated
+
+This becomes the worked example every screen can demonstrate against.
+
+**Relationship row:**
+- Name: *Angela D'Angelo · Scotia Wealth Management*
+- Sector: Wealth · Structure: Solo within enterprise
+- Pipeline stage: **Cancelled** (was Booked → cancelled, no response)
+- Temperature: **Cold**
+- Drift: **High** (no response after cancellation)
+- Awareness: Personal intro · Source: Scott Parsons referral
+- Notes: "Booked clarity call for April 17 → cancelled → no response. Blocker: Scott Parsons. Portal published with full proposal."
+- Recommended package: *Mirror + 3 Machines* ($6,100)
+- Primary persona: *Wealth Advisor — Niche Specialist*
+
+**Linked records:**
+- One **Project** — *Recruiter Intelligence System (Angela)* — status `Stalled`, declares contributions to the 5 system layers via `project_components`.
+- One **Decision** — *"Re-engage Angela or close out?"* — status `Open`.
+- One **Document** — *Angela Portal — April 2026* — links to your portal copy as the artifact.
+- A **Note/Audit entry** — captures the cancellation chain and Scott Parsons block.
+
+This single relationship will make `/relationships`, `/pipeline`, `/projects`, `/decisions`, and the SweetCycle view all light up with realistic data the moment you open them.
+
+### D. The Session 1 · Client Interviews · Map — as a real Session
+
+Your Seed/Synthesize/Session/Sync/Ship copy is **already a perfect SweetCycle session spec**. I'll seed it as:
+
+**A Session Template** — *"Map — Client Voice-of-Customer Interviews"*
+- service_type: Map
+- default_duration: 90 min (orchestration) + 20–30 min × N interviews
+- pre_work: the Seed checklist (confirm client list · send warm intros · review framework)
+- session_purpose: "Capture voice-of-customer intelligence from 4–6 client interviews to fuel positioning sharpening"
+- default_outputs: Voice-of-customer bank · Approval-ready testimonials · Positioning seeds
+
+**A Workflow** — *"Voice-of-Customer Interview Map"* with 5 sequential `workflow_steps` matching your SweetCycle stages (Seed → Synthesize → Session → Sync → Ship), each with:
+- `position`, `name`, `description` (your exact copy condensed)
+- `requires_human_approval = true` on Seed (client confirms list) and Ship (revision window)
+- `default_operator_kind`: client for Seed, human (Liz) for Synthesize/Session/Ship, conditional for Sync
+
+**A Playbook** — *"The Voice-of-Customer Playbook"* sequencing this template + the existing Mirror playbook.
+
+This becomes the canonical session template that every future "interview a client's clients" engagement runs from.
 
 ---
 
-## What this builds
+## Schema changes (minimal)
 
-**One migration file.**
-`supabase/migrations/<timestamp>_seed_sweetbos_library.sql` — ~55 inserts across 8 tables, all `ON CONFLICT (name|prompt|job_statement) DO NOTHING`, using CTEs to wire cross-references using freshly-inserted IDs.
+Only if needed after I check current schema:
 
-**No code changes.** Index pages and detail routes for all 8 entity types already exist; they'll just suddenly have content.
+1. **Possibly:** add `components.journey_id uuid REFERENCES journeys(id)` (nullable) if no array link exists on `journeys`. Decided after a column inspection.
+2. **No other schema changes.**
 
 ---
 
-## What I'll verify first (before writing the migration)
+## Migration plan (single migration file)
 
-1. The actual columns + required fields on each table (`journeys`, `quests`, `missions`, `session_templates`, `playbooks`, `jtbds`, `personas`, `outcomes`) so every insert hits the schema cleanly.
-2. Existing rows so duplicates are skipped.
-3. Whether any of these tables have NOT NULL `created_by` / `owner_id` columns — I'll attribute to the same platform owner ID used in the Components seed (`65f0dbf1-...`).
-4. RLS — confirm seed inserts succeed under the migration role.
+`supabase/migrations/<timestamp>_seed_canonical_journeys_components_angela.sql`
 
-If any table has a column shape that doesn't fit my plan, I'll adjust the field mapping for that table before inserting (no schema changes — pure data).
+Order of operations:
+
+1. (If needed) `ALTER TABLE components ADD COLUMN journey_id uuid REFERENCES journeys(id)`.
+2. `DELETE FROM journeys WHERE name IN (...the 5 wrong names...)` — guarded by exact-name match so nothing else gets touched.
+3. CTE-style insert of the 12 canonical Journeys.
+4. CTE-style insert of the 72 Components, each tied to its Journey via the link mechanism. `WHERE NOT EXISTS` on `(name, journey_id)` so re-runs are safe.
+5. Insert Angela relationship + linked project, decision, document, audit note. All guarded by `WHERE NOT EXISTS` on stable keys.
+6. Insert the Session Template, Workflow + 5 workflow_steps, and Playbook for Session 1. Guarded by name.
+
+All inserts attribute to platform owner ID `65f0dbf1-d933-43cd-ae2a-50b12b7e9962`.
+
+---
+
+## Verification I'll run BEFORE writing the migration
+
+1. Inspect `journeys` table for an existing related-components array column.
+2. Inspect `relationships`, `projects`, `decisions`, `documents`, `audit_log` schemas to confirm column names + required fields.
+3. Inspect `session_templates`, `workflows`, `workflow_steps`, `playbooks` schemas.
+4. Confirm RLS allows the platform-owner inserts (likely yes — same owner ID worked for last two seeds).
+
+Any field shape mismatch → I adjust the seed values, never the schema (except the one possible `journey_id` column).
 
 ---
 
 ## What this is NOT
 
-- Not seeding **Operators** (humans/agents/workflows) — needs your input on real names.
-- Not seeding **Relationships** or **Engagement Plans** — these are per-client, not library.
-- Not seeding **Domains / Tenets** — those already exist as canonical taxonomies.
+- Not modifying the 10 SweetBOS platform Components or the 8 pre-existing project Components.
+- Not seeding Domains/Tenets — they're canonical and already in place.
+- Not touching the existing Personas, Outcomes, JTBDs, Quests, Missions seeded last pass — those were anchored correctly.
 - Not finishing 2.10v Steps 4–5 (Blockers/Wins routes, Ready-to-advance badges) — resumes after.
-- Not modifying the 8 pre-existing components from your earlier work.
+- Not seeding more relationships beyond Angela. One real worked example is enough; you'll add more from the UI.
 
 ---
 
-## Why now
+## Why this order matters
 
-You just populated 10 Components. Without Journeys/Missions/Playbooks/Templates pointing at those Components, the build-pipeline view `/components/$id` shows "0 active projects, 0 active tasks, 0 sessions" forever. Seeding the surrounding Library makes the **Components page light up** retroactively, and gives every relationship a real catalog to assign work from.
-
-This is also the cheapest pass possible — one migration, no code, no AI cost, idempotent re-runs.
+1. **Journeys are the spine.** Every Component, every Tenet score, every Project rolls up to a Journey. Seeding the wrong 5 corrupted the rollups. Replacing them with the canonical 12 makes `/journeys` and every "which Journey is this Component in?" query correct.
+2. **72 universal Components turn `/components` into a reference library**, not just a project log. Every advisor's business has a Mission statement and a Lead generation system whether they've built them or not. They should exist as records at `L1 Lacking` until proven otherwise.
+3. **Angela makes everything demonstrable.** Right now `/relationships` is empty, `/pipeline` is empty, the SweetCycle view has nothing to show. With Angela's full record + project + decision + portal document seeded, every screen has a live, real, instantly-understandable example to render.
+4. **Session 1 as a Workflow proves the SweetCycle.** Your interview-map copy is already production-grade — it deserves to be the canonical Workflow that the system runs, not a doc sitting in a chat.
 
 ## Suggested order
 
-1. **This pass** — seed all 8 Library tables in one migration.
-2. **Resume 2.10v Step 4** — `/think/blockers` + `/think/wins` routes + sidebar entries.
-3. **2.10v Step 5** — Engagement-plan rollups, subscription card on rollup, Ready-to-advance badges.
+1. **This pass** — verification queries → single migration with all of the above.
+2. **Resume 2.10v Step 4** — `/think/blockers` + `/think/wins` routes (Angela will be the first row in Blockers).
+3. **2.10v Step 5** — Engagement-plan rollups, Ready-to-advance badges.
 
-Approve and I run the verification queries + migration in a single pass.
+Approve and I run verification + migration in one pass.
 
