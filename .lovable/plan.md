@@ -1,55 +1,64 @@
 
 
-# Phase 2.7.1: Reseed canonical 5 Ps + 5 Ls from your Notion
+# Phase 2.8: Reconcile audit + add Engagement Plans, Maturity rollup, Funnel fields
 
-## What I got wrong
+You said "I don't actually know" on the A/B/C path question. That's fair — those options mixed scope and tooling. Let me pick for you based on what's lowest-risk and highest-leverage, and you can redirect after seeing it.
 
-I seeded `excellence_perspectives` with placeholder names (Purpose, People, Process, Performance, Progress). Your Notion Decision Log (dated 2026-03-25, status Closed) confirms the canonical set is different. The earlier "Performance/Platform" variant is explicitly marked **deprecated** in your own Decision page.
+## My pick: **Path A** (Phase 2.8 only, no Notion runtime sync, Agents next)
 
-## Canonical values from your Notion (verbatim)
+Why:
+- Notion runtime sync is a separate concern with its own failure modes (token rotation, rate limits, conflict resolution). Bolting it onto a schema migration doubles the surface area you'd review.
+- Agents are net-new behavior; reconciliation is fixing what's already half-built. Fix the foundation first.
+- You can still use Notion MCP at build time for me to mirror structure when you ask — that doesn't need Phase 2.8.5.
 
-**5 Ps** — from the "5Ps = Purpose / People / Process / Product / Profit" decision page:
+If you want runtime sync or Agents folded in, say so and I'll re-cut.
 
-| Code | Name |
-|------|------|
-| P1 | Purpose |
-| P2 | People |
-| P3 | Process |
-| P4 | Product |
-| P5 | Profit |
+## What lands in Phase 2.8
 
-**5 Ls** — already correct in your `maturity_level` enum, confirmed by the "5Ls order" decision page (L1 Lacking, L2 Learning, L3 Launching, L4 Leveraging, L5 Leading). No change needed.
+### Migration 1 — Funnel fields on `relationships`
+Add: `awareness_tier`, `temperature`, `drift_risk` (enums), `proposal_document_id` (FK→documents), `proposal_sent_at`, `proposal_expires_at`, `proposal_version`, `service_start_date`, `service_end_date`, `primary_service`, `service_status`.
+Add generated column `days_since_last_contact` (computed from `last_contact`).
 
-## What I'll change
+### Migration 2 — `engagement_plans` + `engagement_services`
+- `engagement_plans`: relationship_id, plan_name, status (Proposed/Accepted/In Progress/Completed), start_date, end_date, total_revenue_usd, map_roadmap (text), machine_roadmap (text), expected_domains (text[]).
+- `engagement_services`: plan_id, relationship_id, service_type (Mirror/Map/Machine/SweetSync/SweetConnect), start_date, end_date, status, total_value_usd. Replaces flat `active_services` array semantically (array stays for back-compat read).
+- Sessions get `engagement_plan_id` FK so each session ladders up to a plan.
 
-### Single data migration on `excellence_perspectives`
-- Update the 5 existing rows in place (don't delete — `excellence_rubric` already references them via `perspective_id`):
-  - P3: rename `Process` → keep as `Process` (no change)
-  - P4: rename `Performance` → `Product`
-  - P5: rename `Progress` → `Profit`
-  - P1, P2: confirm `Purpose`, `People` (no change)
-- Update `description` text on each row to reflect the canonical lens definition.
-- Existing `excellence_rubric` rows (any seeded checklist content tied to the placeholder P4/P5) keep their `perspective_id` link — only the human-readable label/description changes. Nothing is orphaned.
+### Migration 3 — Maturity rollup view (no new table)
+SQL view `relationship_domain_maturity` joining `excellence_scores` → `excellence_rubric` → `domains`, returning `(relationship_id, domain_slug, current_level, last_assessed_at, last_score_id)`. Reads from existing data, no duplication, auto-updates as scores change.
 
-### Settings UI label
-- `/settings/excellence` already reads `excellence_perspectives` live, so the new names appear automatically. No code change required there.
+### Migration 4 — Audit reconciliation on existing tables
+- `sessions`: add `sequence`, `domain_covered`, `outcome_findings`, `maturity_lift_from`, `maturity_lift_to` if missing.
+- `components`: add `questions_it_answers`, `typical_session_length`, `prerequisite_component_ids` (uuid[]), `used_in_offerings` (text[]) if missing.
+- `documents`: add `related_session_id`, `session_phase` (Pre-Engagement/Deliverable/Follow-up), `component_template_for` (uuid), `reusability_tier` (One-Time/Relationship/Org/System) if missing.
 
-### Memory
-- Save `mem://design/canon-5ps` and update `mem://index.md` Core so I never re-introduce the deprecated Platform/Performance variant in any future seed.
+All new columns nullable; no data loss. RLS policies cloned from existing patterns on each table.
 
-## Files touched
+### UI deliverables
+- New routes: `/_app/engagement-plans/index.tsx` and `/_app/engagement-plans/$id.tsx` via `EntityListPage`/`EntityDetailPage`.
+- Add `engagement_plans` to `src/lib/entities.ts` with column config, kanban by status, filter by relationship.
+- Add to sidebar under "Pipeline" group.
+- On `/_app/relationships/$id.tsx`: new "Funnel" card (awareness/temperature/drift), "Proposal" card (doc link + dates), "Maturity Map" panel reading the new view, "Engagement Plans" list filtered by relationship.
 
-- New migration: `<ts>_phase2.7.1_canonical_5ps.sql` — UPDATE statements on `excellence_perspectives` rows by `code` (P1–P5).
-- `mem://design/canon-5ps` (new memory file).
-- `mem://index.md` (append Core line).
+### What I'm NOT doing in 2.8
+- Notion runtime sync (Phase 2.8.5, separate)
+- Agents — standalone prompt + workflow-bound (Phase 2.9, next)
+- Touching cadence, queue, capture, kanban, workflows, excellence rubric, the 22 Domains/Tenets
 
-## What I'm NOT touching
+### Files touched
+- 4 new migrations under `supabase/migrations/`
+- `src/lib/entities.ts` (add engagement_plans entity)
+- `src/components/app-sidebar.tsx` (add nav item)
+- `src/routes/_app.engagement-plans.index.tsx` + `.$id.tsx` (new)
+- `src/routes/_app.relationships.$id.tsx` (add Funnel/Proposal/Maturity/Plans panels)
 
-- `maturity_level` enum (5 Ls already correct).
-- `excellence_rubric` rows, scores, RLS, or any UI route — labels propagate via FK.
-- The 22 Domains, 22 Tenets, industries, capture flow, queue, sidebar — all stay.
+### Memory write
+- `mem://features/engagement-funnel` — funnel field semantics (awareness tiers, temperature, drift), proposal lifecycle, and the plan→service→session hierarchy.
+- `mem://features/maturity-rollup` — view definition, why it's a view not a table.
+- Append index Core line: "Engagement = Plan → Services → Sessions. Maturity Map is a view over excellence_scores, never a duplicate table."
 
-## Note for next round
+## After 2.8 ships
+Next prompt I'll plan **Phase 2.9: Agents** (standalone prompt agents + workflow-bound agents, attachable to tasks/projects/workflows, runs feed the Queue). Then Phase 2.8.5 if you still want runtime Notion sync.
 
-Your Notion also documents 8 Frameworks as **queryable lenses, not modules** (OCDA, Gestalt, 4Ds, 5Ps, 3Cs, 5Ls, Co-Evolution, Rhetorical) and 9 BizzyBots as orientation signals. The current schema only models 5Ps as a perspective table. If you want the other 7 frameworks and the 9 BizzyBots as first-class lenses against rubric/quest/spark rows, that's a separate small migration — flag it and I'll plan it next. Not doing it in this pass.
+Approve this and I'll build it. If you want Agents first instead, say "Agents first" and I'll re-cut.
 
