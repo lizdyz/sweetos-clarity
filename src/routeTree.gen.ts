@@ -25,6 +25,7 @@ import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
+import { Route as AppBizzybotsRouteImport } from './routes/_app.bizzybots'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
 import { Route as AppTenetsIndexRouteImport } from './routes/_app.tenets.index'
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
@@ -52,6 +53,7 @@ import { Route as AppWorkflowsIdRouteImport } from './routes/_app.workflows.$id'
 import { Route as AppTenetsSlugRouteImport } from './routes/_app.tenets.$slug'
 import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
 import { Route as AppSparksIdRouteImport } from './routes/_app.sparks.$id'
+import { Route as AppSettingsPromptsRouteImport } from './routes/_app.settings.prompts'
 import { Route as AppSettingsLensesRouteImport } from './routes/_app.settings.lenses'
 import { Route as AppSettingsExcellenceRouteImport } from './routes/_app.settings.excellence'
 import { Route as AppSessionsIdRouteImport } from './routes/_app.sessions.$id'
@@ -64,6 +66,7 @@ import { Route as AppPlaybooksIdRouteImport } from './routes/_app.playbooks.$id'
 import { Route as AppPersonasIdRouteImport } from './routes/_app.personas.$id'
 import { Route as AppOutcomesIdRouteImport } from './routes/_app.outcomes.$id'
 import { Route as AppOperatorsIdRouteImport } from './routes/_app.operators.$id'
+import { Route as AppOperateOcdaRouteImport } from './routes/_app.operate.ocda'
 import { Route as AppMissionsIdRouteImport } from './routes/_app.missions.$id'
 import { Route as AppJourneysIdRouteImport } from './routes/_app.journeys.$id'
 import { Route as AppEngagementPlansIdRouteImport } from './routes/_app.engagement-plans.$id'
@@ -154,6 +157,11 @@ const AppCaptureRoute = AppCaptureRouteImport.update({
 const AppCalendarRoute = AppCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBizzybotsRoute = AppBizzybotsRouteImport.update({
+  id: '/bizzybots',
+  path: '/bizzybots',
   getParentRoute: () => AppRoute,
 } as any)
 const AppWorkflowsIndexRoute = AppWorkflowsIndexRouteImport.update({
@@ -293,6 +301,11 @@ const AppSparksIdRoute = AppSparksIdRouteImport.update({
   path: '/sparks/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsPromptsRoute = AppSettingsPromptsRouteImport.update({
+  id: '/prompts',
+  path: '/prompts',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsLensesRoute = AppSettingsLensesRouteImport.update({
   id: '/lenses',
   path: '/lenses',
@@ -352,6 +365,11 @@ const AppOutcomesIdRoute = AppOutcomesIdRouteImport.update({
 const AppOperatorsIdRoute = AppOperatorsIdRouteImport.update({
   id: '/operators/$id',
   path: '/operators/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOperateOcdaRoute = AppOperateOcdaRouteImport.update({
+  id: '/operate/ocda',
+  path: '/operate/ocda',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMissionsIdRoute = AppMissionsIdRouteImport.update({
@@ -418,6 +436,7 @@ const AppWorkflowsIdRunsRunIdRoute = AppWorkflowsIdRunsRunIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/bizzybots': typeof AppBizzybotsRoute
   '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
@@ -441,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/journeys/$id': typeof AppJourneysIdRoute
   '/missions/$id': typeof AppMissionsIdRoute
+  '/operate/ocda': typeof AppOperateOcdaRoute
   '/operators/$id': typeof AppOperatorsIdRoute
   '/outcomes/$id': typeof AppOutcomesIdRoute
   '/personas/$id': typeof AppPersonasIdRoute
@@ -453,6 +473,7 @@ export interface FileRoutesByFullPath {
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
+  '/settings/prompts': typeof AppSettingsPromptsRoute
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
@@ -486,6 +507,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/bizzybots': typeof AppBizzybotsRoute
   '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
@@ -509,6 +531,7 @@ export interface FileRoutesByTo {
   '/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/journeys/$id': typeof AppJourneysIdRoute
   '/missions/$id': typeof AppMissionsIdRoute
+  '/operate/ocda': typeof AppOperateOcdaRoute
   '/operators/$id': typeof AppOperatorsIdRoute
   '/outcomes/$id': typeof AppOutcomesIdRoute
   '/personas/$id': typeof AppPersonasIdRoute
@@ -521,6 +544,7 @@ export interface FileRoutesByTo {
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
+  '/settings/prompts': typeof AppSettingsPromptsRoute
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
@@ -556,6 +580,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/bizzybots': typeof AppBizzybotsRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/capture': typeof AppCaptureRoute
   '/_app/flightdeck': typeof AppFlightdeckRoute
@@ -579,6 +604,7 @@ export interface FileRoutesById {
   '/_app/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/_app/journeys/$id': typeof AppJourneysIdRoute
   '/_app/missions/$id': typeof AppMissionsIdRoute
+  '/_app/operate/ocda': typeof AppOperateOcdaRoute
   '/_app/operators/$id': typeof AppOperatorsIdRoute
   '/_app/outcomes/$id': typeof AppOutcomesIdRoute
   '/_app/personas/$id': typeof AppPersonasIdRoute
@@ -591,6 +617,7 @@ export interface FileRoutesById {
   '/_app/sessions/$id': typeof AppSessionsIdRoute
   '/_app/settings/excellence': typeof AppSettingsExcellenceRoute
   '/_app/settings/lenses': typeof AppSettingsLensesRouteWithChildren
+  '/_app/settings/prompts': typeof AppSettingsPromptsRoute
   '/_app/sparks/$id': typeof AppSparksIdRoute
   '/_app/tasks/$id': typeof AppTasksIdRoute
   '/_app/tenets/$slug': typeof AppTenetsSlugRoute
@@ -626,6 +653,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/bizzybots'
     | '/calendar'
     | '/capture'
     | '/flightdeck'
@@ -649,6 +677,7 @@ export interface FileRouteTypes {
     | '/engagement-plans/$id'
     | '/journeys/$id'
     | '/missions/$id'
+    | '/operate/ocda'
     | '/operators/$id'
     | '/outcomes/$id'
     | '/personas/$id'
@@ -661,6 +690,7 @@ export interface FileRouteTypes {
     | '/sessions/$id'
     | '/settings/excellence'
     | '/settings/lenses'
+    | '/settings/prompts'
     | '/sparks/$id'
     | '/tasks/$id'
     | '/tenets/$slug'
@@ -694,6 +724,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/bizzybots'
     | '/calendar'
     | '/capture'
     | '/flightdeck'
@@ -717,6 +748,7 @@ export interface FileRouteTypes {
     | '/engagement-plans/$id'
     | '/journeys/$id'
     | '/missions/$id'
+    | '/operate/ocda'
     | '/operators/$id'
     | '/outcomes/$id'
     | '/personas/$id'
@@ -729,6 +761,7 @@ export interface FileRouteTypes {
     | '/sessions/$id'
     | '/settings/excellence'
     | '/settings/lenses'
+    | '/settings/prompts'
     | '/sparks/$id'
     | '/tasks/$id'
     | '/tenets/$slug'
@@ -763,6 +796,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/bizzybots'
     | '/_app/calendar'
     | '/_app/capture'
     | '/_app/flightdeck'
@@ -786,6 +820,7 @@ export interface FileRouteTypes {
     | '/_app/engagement-plans/$id'
     | '/_app/journeys/$id'
     | '/_app/missions/$id'
+    | '/_app/operate/ocda'
     | '/_app/operators/$id'
     | '/_app/outcomes/$id'
     | '/_app/personas/$id'
@@ -798,6 +833,7 @@ export interface FileRouteTypes {
     | '/_app/sessions/$id'
     | '/_app/settings/excellence'
     | '/_app/settings/lenses'
+    | '/_app/settings/prompts'
     | '/_app/sparks/$id'
     | '/_app/tasks/$id'
     | '/_app/tenets/$slug'
@@ -947,6 +983,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof AppCalendarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/bizzybots': {
+      id: '/_app/bizzybots'
+      path: '/bizzybots'
+      fullPath: '/bizzybots'
+      preLoaderRoute: typeof AppBizzybotsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/workflows/': {
@@ -1138,6 +1181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSparksIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/prompts': {
+      id: '/_app/settings/prompts'
+      path: '/prompts'
+      fullPath: '/settings/prompts'
+      preLoaderRoute: typeof AppSettingsPromptsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/lenses': {
       id: '/_app/settings/lenses'
       path: '/lenses'
@@ -1220,6 +1270,13 @@ declare module '@tanstack/react-router' {
       path: '/operators/$id'
       fullPath: '/operators/$id'
       preLoaderRoute: typeof AppOperatorsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/operate/ocda': {
+      id: '/_app/operate/ocda'
+      path: '/operate/ocda'
+      fullPath: '/operate/ocda'
+      preLoaderRoute: typeof AppOperateOcdaRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/missions/$id': {
@@ -1323,11 +1380,13 @@ const AppSettingsLensesRouteWithChildren =
 interface AppSettingsRouteChildren {
   AppSettingsExcellenceRoute: typeof AppSettingsExcellenceRoute
   AppSettingsLensesRoute: typeof AppSettingsLensesRouteWithChildren
+  AppSettingsPromptsRoute: typeof AppSettingsPromptsRoute
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsExcellenceRoute: AppSettingsExcellenceRoute,
   AppSettingsLensesRoute: AppSettingsLensesRouteWithChildren,
+  AppSettingsPromptsRoute: AppSettingsPromptsRoute,
 }
 
 const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
@@ -1347,6 +1406,7 @@ const AppWorkflowsIdRouteWithChildren = AppWorkflowsIdRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppBizzybotsRoute: typeof AppBizzybotsRoute
   AppCalendarRoute: typeof AppCalendarRoute
   AppCaptureRoute: typeof AppCaptureRoute
   AppFlightdeckRoute: typeof AppFlightdeckRoute
@@ -1370,6 +1430,7 @@ interface AppRouteChildren {
   AppEngagementPlansIdRoute: typeof AppEngagementPlansIdRoute
   AppJourneysIdRoute: typeof AppJourneysIdRoute
   AppMissionsIdRoute: typeof AppMissionsIdRoute
+  AppOperateOcdaRoute: typeof AppOperateOcdaRoute
   AppOperatorsIdRoute: typeof AppOperatorsIdRoute
   AppOutcomesIdRoute: typeof AppOutcomesIdRoute
   AppPersonasIdRoute: typeof AppPersonasIdRoute
@@ -1410,6 +1471,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppBizzybotsRoute: AppBizzybotsRoute,
   AppCalendarRoute: AppCalendarRoute,
   AppCaptureRoute: AppCaptureRoute,
   AppFlightdeckRoute: AppFlightdeckRoute,
@@ -1433,6 +1495,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEngagementPlansIdRoute: AppEngagementPlansIdRoute,
   AppJourneysIdRoute: AppJourneysIdRoute,
   AppMissionsIdRoute: AppMissionsIdRoute,
+  AppOperateOcdaRoute: AppOperateOcdaRoute,
   AppOperatorsIdRoute: AppOperatorsIdRoute,
   AppOutcomesIdRoute: AppOutcomesIdRoute,
   AppPersonasIdRoute: AppPersonasIdRoute,
