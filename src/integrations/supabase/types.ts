@@ -5884,6 +5884,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ux_audit_runs: {
+        Row: {
+          audited_at: string
+          audited_by: string | null
+          created_at: string
+          findings: Json
+          guardrails_missing: string[]
+          id: string
+          model: string | null
+          notes: string | null
+          route_path: string
+          scores: Json
+          source_path: string | null
+          status: string
+          updated_at: string
+          ux_issues_user_reported: string[]
+        }
+        Insert: {
+          audited_at?: string
+          audited_by?: string | null
+          created_at?: string
+          findings?: Json
+          guardrails_missing?: string[]
+          id?: string
+          model?: string | null
+          notes?: string | null
+          route_path: string
+          scores?: Json
+          source_path?: string | null
+          status?: string
+          updated_at?: string
+          ux_issues_user_reported?: string[]
+        }
+        Update: {
+          audited_at?: string
+          audited_by?: string | null
+          created_at?: string
+          findings?: Json
+          guardrails_missing?: string[]
+          id?: string
+          model?: string | null
+          notes?: string | null
+          route_path?: string
+          scores?: Json
+          source_path?: string | null
+          status?: string
+          updated_at?: string
+          ux_issues_user_reported?: string[]
+        }
+        Relationships: []
+      }
       workflow_components: {
         Row: {
           component_id: string
