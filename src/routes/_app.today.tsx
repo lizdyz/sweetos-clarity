@@ -396,3 +396,33 @@ function DecisionQueueWidget() {
     </section>
   );
 }
+
+function SandboxTile() {
+  const { data: counts } = useQuery({
+    queryKey: ["today", "sandbox_counts"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("sandbox_items").select("state").limit(500);
+      if (error) throw error;
+      const rows = (data ?? []) as { state: string }[];
+      return {
+        raw: rows.filter((r) => r.state === "raw").length,
+        framed: rows.filter((r) => r.state === "framed").length,
+      };
+    },
+  });
+  const raw = counts?.raw ?? 0;
+  const framed = counts?.framed ?? 0;
+  return (
+    <Link to="/sandbox" className="group block rounded-2xl border bg-card p-4 shadow-sm transition-all hover:border-iris hover:shadow-md">
+      <div className="mb-2 flex items-center gap-2">
+        <FlaskConical className="h-4 w-4 text-iris" />
+        <h2 className="text-sm font-semibold">Idea Sandbox</h2>
+      </div>
+      <div className="flex items-baseline gap-3 text-sm">
+        <span><span className="text-lg font-semibold">{raw}</span> <span className="text-muted-foreground">raw</span></span>
+        <span><span className="text-lg font-semibold">{framed}</span> <span className="text-muted-foreground">framed</span></span>
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">Triage ideas → run lenses → promote to work.</p>
+    </Link>
+  );
+}
