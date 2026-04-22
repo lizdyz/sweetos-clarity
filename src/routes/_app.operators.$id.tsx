@@ -18,6 +18,7 @@ import {
 import { Bot, User, Workflow as WorkflowIcon, X, Plus, ArrowLeft, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { MeasuresPanel } from "@/components/measures-panel";
 
 export const Route = createFileRoute("/_app/operators/$id")({
   component: OperatorDetailPage,
@@ -215,6 +216,8 @@ function OperatorDetailPage() {
           </ul>
         )}
       </Card>
+
+      <MeasuresPanel subjectType="operator" subjectId={id} />
     </div>
   );
 }

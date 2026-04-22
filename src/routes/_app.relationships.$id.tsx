@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AWARENESS_TIER, RELATIONSHIP_TEMPERATURE, DRIFT_RISK } from "@/lib/enums";
 import { ServiceShapeStrip } from "@/components/service-shape-strip";
+import { MeasuresPanel } from "@/components/measures-panel";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
@@ -28,6 +29,9 @@ function RelationshipDetail() {
       <ServiceShapeStrip relationshipId={id} />
       <RelationshipPanels relationshipId={id} />
       <EntityDetailPage entityKey="relationships" />
+      <div className="px-6 pb-8">
+        <MeasuresPanel subjectType="relationship" subjectId={id} />
+      </div>
     </div>
   );
 }

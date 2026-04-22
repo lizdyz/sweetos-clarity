@@ -1,16 +1,19 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, ArrowRight, Clock, ExternalLink, Plane } from "lucide-react";
+import { AlertCircle, ArrowRight, ExternalLink, Plane, ShieldCheck, Target, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StageSwimlanes } from "@/components/stage-swimlanes";
 import { useDragToStatus } from "@/hooks/use-drag-to-status";
 import { DueDateChip } from "@/components/due-date-chip";
 import { SERVICE_PACKAGE, SERVICE_PACKAGE_BADGE, type ServicePackage } from "@/lib/enums";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/flightdeck")({
   component: FlightdeckPage,
@@ -308,6 +311,10 @@ function FlightdeckPage() {
 
       <DoneLogPanel />
 
+      <ApprovalsPanel />
+
+      <MeasuresDuePanel />
+
       <ComponentsInFlightPanel />
     </div>
   );
@@ -590,3 +597,244 @@ function DueGroup({ title, items }: { title: string; items: Array<{ id: string; 
     </div>
   );
 }
+
+// ===== Approvals panel =====
+
+type ApprovalRow = {
+  step_run_id: string;
+  run_id: string;
+  workflow_id: string;
+  step_name: string | null;
+  approval_role: string | null;
+  approval_requested_at: string | null;
+};
+
+function ApprovalsPanel() {
+  const qc = useQueryClient();
+  const { user, isAdmin } = useAuth();
+
+  const { data: rows = [] } = useQuery<ApprovalRow[]>({
+    queryKey: ["approvals-awaiting"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("workflow_step_pipeline" as never)
+        .select("step_run_id, run_id, workflow_id, name, approval_role, run_status")
+        .eq("run_status", "awaiting_approval");
+      if (error) return [];
+      return ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
+        step_run_id: r.step_run_id as string,
+        run_id: r.run_id as string,
+        workflow_id: r.workflow_id as string,
+        step_name: (r.name as string) ?? null,
+        approval_role: (r.approval_role as string) ?? null,
+        approval_requested_at: null,
+      }));
+    },
+  });
+
+  const visible = rows.filter((r) => {
+    if (!user) return false;
+    if (r.approval_role === "any_team_member") return true;
+    if (r.approval_role === "admin" || r.approval_role === "owner") return isAdmin;
+    return false;
+  });
+
+  const decide = useMutation({
+    mutationFn: async ({ row, approve }: { row: ApprovalRow; approve: boolean }) => {
+      const status = approve ? "done" : "rejected";
+      const { error } = await sb
+        .from("workflow_step_runs" as never)
+        .update({
+          status,
+          approval_decision: approve ? "approved" : "rejected",
+          approval_by: user?.id ?? null,
+          approval_at: new Date().toISOString(),
+          completed_at: approve ? new Date().toISOString() : null,
+        } as never)
+        .eq("id", row.step_run_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["approvals-awaiting"] });
+      toast.success("Updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Card className="p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-amber-500" />
+          <h2 className="text-sm font-semibold tracking-tight">Awaiting your approval</h2>
+        </div>
+        <Badge variant="secondary" className="h-5 text-[10px]">{visible.length}</Badge>
+      </div>
+      {visible.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-6 text-center text-xs text-muted-foreground">
+          No workflow steps awaiting your approval.
+        </div>
+      ) : (
+        <ul className="space-y-1.5">
+          {visible.map((r) => (
+            <li
+              key={r.step_run_id}
+              className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background p-2.5 text-sm"
+            >
+              <Link
+                to="/workflows/$id/runs/$runId"
+                params={{ id: r.workflow_id, runId: r.run_id }}
+                className="min-w-0 flex-1 truncate hover:underline"
+              >
+                <span className="font-medium">{r.step_name ?? "Step"}</span>
+                <span className="ml-2 text-[11px] text-muted-foreground">
+                  · {r.approval_role ?? "—"}
+                </span>
+              </Link>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => decide.mutate({ row: r, approve: false })}
+                  disabled={decide.isPending}
+                >
+                  <XCircle className="mr-1 h-3 w-3" /> Reject
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 bg-iris text-white text-xs"
+                  onClick={() => decide.mutate({ row: r, approve: true })}
+                  disabled={decide.isPending}
+                >
+                  <CheckCircle2 className="mr-1 h-3 w-3" /> Approve
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+// ===== Measures due for reading =====
+
+type DueMeasureRow = {
+  measure_id: string;
+  name: string;
+  cadence: string;
+  status_color: string | null;
+  last_reading_at: string | null;
+  subject_type: string;
+  subject_id: string;
+};
+
+const CADENCE_DAYS: Record<string, number> = {
+  daily: 1,
+  weekly: 7,
+  monthly: 30,
+  quarterly: 90,
+  per_event: 365,
+};
+
+function MeasuresDuePanel() {
+  const qc = useQueryClient();
+  const { data: rows = [] } = useQuery<DueMeasureRow[]>({
+    queryKey: ["measures-due"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("measure_health" as never)
+        .select("measure_id, name, cadence, status_color, last_reading_at, subject_type, subject_id");
+      if (error) return [];
+      return (data ?? []) as DueMeasureRow[];
+    },
+  });
+
+  const due = rows.filter((r) => {
+    const days = CADENCE_DAYS[r.cadence] ?? 30;
+    if (!r.last_reading_at) return true;
+    const last = new Date(r.last_reading_at).getTime();
+    const ageDays = (Date.now() - last) / (1000 * 60 * 60 * 24);
+    return ageDays >= days;
+  });
+
+  return (
+    <Card className="p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Target className="h-4 w-4 text-iris" />
+          <h2 className="text-sm font-semibold tracking-tight">Measures due for reading</h2>
+        </div>
+        <Badge variant="secondary" className="h-5 text-[10px]">{due.length}</Badge>
+      </div>
+      {due.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-6 text-center text-xs text-muted-foreground">
+          All measures are up to date.
+        </div>
+      ) : (
+        <ul className="space-y-1.5">
+          {due.slice(0, 12).map((r) => (
+            <DueMeasureRowEditor
+              key={r.measure_id}
+              row={r}
+              onSaved={() => {
+                qc.invalidateQueries({ queryKey: ["measures-due"] });
+                qc.invalidateQueries({ queryKey: ["measure_health"] });
+              }}
+            />
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+function DueMeasureRowEditor({ row, onSaved }: { row: DueMeasureRow; onSaved: () => void }) {
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    const v = Number(value);
+    if (!Number.isFinite(v)) return;
+    setBusy(true);
+    try {
+      const { error } = await sb
+        .from("measure_readings" as never)
+        .insert({ measure_id: row.measure_id, value: v, source: "manual" } as never);
+      if (error) throw error;
+      setValue("");
+      onSaved();
+      toast.success("Reading recorded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <li className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background p-2.5 text-sm">
+      <div className="min-w-0 flex-1">
+        <span className="font-medium">{row.name}</span>
+        <span className="ml-2 text-[11px] text-muted-foreground">
+          · {row.cadence} · last {row.last_reading_at ? new Date(row.last_reading_at).toLocaleDateString() : "never"}
+        </span>
+      </div>
+      <Input
+        type="number"
+        step="any"
+        value={value}
+        placeholder="value"
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && save()}
+        className="h-7 w-24 text-[11px]"
+        disabled={busy}
+      />
+      <Button size="sm" className="h-7 text-xs" onClick={save} disabled={busy || !value}>
+        Record
+      </Button>
+    </li>
+  );
+}
+

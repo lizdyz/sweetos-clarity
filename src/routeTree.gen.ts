@@ -69,6 +69,7 @@ import { Route as AppDelegationIdRouteImport } from './routes/_app.delegation.$i
 import { Route as AppDecisionsIdRouteImport } from './routes/_app.decisions.$id'
 import { Route as AppComponentsIdRouteImport } from './routes/_app.components.$id'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
+import { Route as AppWorkflowsIdRunsRunIdRouteImport } from './routes/_app.workflows.$id.runs.$runId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -372,6 +373,11 @@ const AppCampaignsIdRoute = AppCampaignsIdRouteImport.update({
   path: '/campaigns/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWorkflowsIdRunsRunIdRoute = AppWorkflowsIdRunsRunIdRouteImport.update({
+  id: '/runs/$runId',
+  path: '/runs/$runId',
+  getParentRoute: () => AppWorkflowsIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -410,7 +416,7 @@ export interface FileRoutesByFullPath {
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
-  '/workflows/$id': typeof AppWorkflowsIdRoute
+  '/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
   '/campaigns/': typeof AppCampaignsIndexRoute
   '/components/': typeof AppComponentsIndexRoute
   '/decisions/': typeof AppDecisionsIndexRoute
@@ -433,6 +439,7 @@ export interface FileRoutesByFullPath {
   '/sparks/': typeof AppSparksIndexRoute
   '/tasks/': typeof AppTasksIndexRoute
   '/workflows/': typeof AppWorkflowsIndexRoute
+  '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -471,7 +478,7 @@ export interface FileRoutesByTo {
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
-  '/workflows/$id': typeof AppWorkflowsIdRoute
+  '/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
   '/campaigns': typeof AppCampaignsIndexRoute
   '/components': typeof AppComponentsIndexRoute
   '/decisions': typeof AppDecisionsIndexRoute
@@ -494,6 +501,7 @@ export interface FileRoutesByTo {
   '/sparks': typeof AppSparksIndexRoute
   '/tasks': typeof AppTasksIndexRoute
   '/workflows': typeof AppWorkflowsIndexRoute
+  '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -534,7 +542,7 @@ export interface FileRoutesById {
   '/_app/sparks/$id': typeof AppSparksIdRoute
   '/_app/tasks/$id': typeof AppTasksIdRoute
   '/_app/tenets/$slug': typeof AppTenetsSlugRoute
-  '/_app/workflows/$id': typeof AppWorkflowsIdRoute
+  '/_app/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
   '/_app/campaigns/': typeof AppCampaignsIndexRoute
   '/_app/components/': typeof AppComponentsIndexRoute
   '/_app/decisions/': typeof AppDecisionsIndexRoute
@@ -557,6 +565,7 @@ export interface FileRoutesById {
   '/_app/sparks/': typeof AppSparksIndexRoute
   '/_app/tasks/': typeof AppTasksIndexRoute
   '/_app/workflows/': typeof AppWorkflowsIndexRoute
+  '/_app/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -620,6 +629,7 @@ export interface FileRouteTypes {
     | '/sparks/'
     | '/tasks/'
     | '/workflows/'
+    | '/workflows/$id/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -681,6 +691,7 @@ export interface FileRouteTypes {
     | '/sparks'
     | '/tasks'
     | '/workflows'
+    | '/workflows/$id/runs/$runId'
   id:
     | '__root__'
     | '/'
@@ -743,6 +754,7 @@ export interface FileRouteTypes {
     | '/_app/sparks/'
     | '/_app/tasks/'
     | '/_app/workflows/'
+    | '/_app/workflows/$id/runs/$runId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1173,6 +1185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampaignsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/workflows/$id/runs/$runId': {
+      id: '/_app/workflows/$id/runs/$runId'
+      path: '/runs/$runId'
+      fullPath: '/workflows/$id/runs/$runId'
+      preLoaderRoute: typeof AppWorkflowsIdRunsRunIdRouteImport
+      parentRoute: typeof AppWorkflowsIdRoute
+    }
   }
 }
 
@@ -1186,6 +1205,18 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
 
 const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
   AppSettingsRouteChildren,
+)
+
+interface AppWorkflowsIdRouteChildren {
+  AppWorkflowsIdRunsRunIdRoute: typeof AppWorkflowsIdRunsRunIdRoute
+}
+
+const AppWorkflowsIdRouteChildren: AppWorkflowsIdRouteChildren = {
+  AppWorkflowsIdRunsRunIdRoute: AppWorkflowsIdRunsRunIdRoute,
+}
+
+const AppWorkflowsIdRouteWithChildren = AppWorkflowsIdRoute._addFileChildren(
+  AppWorkflowsIdRouteChildren,
 )
 
 interface AppRouteChildren {
@@ -1222,7 +1253,7 @@ interface AppRouteChildren {
   AppSparksIdRoute: typeof AppSparksIdRoute
   AppTasksIdRoute: typeof AppTasksIdRoute
   AppTenetsSlugRoute: typeof AppTenetsSlugRoute
-  AppWorkflowsIdRoute: typeof AppWorkflowsIdRoute
+  AppWorkflowsIdRoute: typeof AppWorkflowsIdRouteWithChildren
   AppCampaignsIndexRoute: typeof AppCampaignsIndexRoute
   AppComponentsIndexRoute: typeof AppComponentsIndexRoute
   AppDecisionsIndexRoute: typeof AppDecisionsIndexRoute
@@ -1281,7 +1312,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSparksIdRoute: AppSparksIdRoute,
   AppTasksIdRoute: AppTasksIdRoute,
   AppTenetsSlugRoute: AppTenetsSlugRoute,
-  AppWorkflowsIdRoute: AppWorkflowsIdRoute,
+  AppWorkflowsIdRoute: AppWorkflowsIdRouteWithChildren,
   AppCampaignsIndexRoute: AppCampaignsIndexRoute,
   AppComponentsIndexRoute: AppComponentsIndexRoute,
   AppDecisionsIndexRoute: AppDecisionsIndexRoute,

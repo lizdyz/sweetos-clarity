@@ -6,6 +6,7 @@ import { EntityDetailPage } from "@/components/entity-workspace";
 import { Chip } from "@/components/chips";
 import { Plus, X, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { WorkContextStrip } from "@/components/work-context-strip";
+import { MeasuresPanel } from "@/components/measures-panel";
 
 export const Route = createFileRoute("/_app/tasks/$id")({
   component: TaskDetail,
@@ -20,6 +21,9 @@ function TaskDetail() {
       <WorkContextStrip entityType="task" entityId={id} />
       <TaskPanels taskId={id} />
       <EntityDetailPage entityKey="tasks" />
+      <div className="px-6 pb-8">
+        <MeasuresPanel subjectType="task" subjectId={id} />
+      </div>
     </div>
   );
 }
