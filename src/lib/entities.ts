@@ -254,6 +254,8 @@ export const ENTITIES: Record<string, EntityDef> = {
       ...TAXONOMY_FIELDS,
     ],
   },
+
+  workflows: {
     key: "workflows",
     table: "workflows",
     label: "Workflow",
