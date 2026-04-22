@@ -252,10 +252,10 @@ export function EngagementPlanAnatomy({ planId }: Props) {
         </Card>
       )}
 
-      {/* Plan-level measures */}
+      {/* Plan-level measures (rolled up via the relationship) */}
       <MeasuresPanel
-        subjectType="engagement_plan"
-        subjectId={planId}
+        subjectType="relationship"
+        subjectId={plan.relationship_id}
         title="Plan KPIs (NPS, retention, revenue)"
       />
 
