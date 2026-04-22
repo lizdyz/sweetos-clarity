@@ -222,14 +222,6 @@ function TodayPage() {
   );
 }
 
-const KIND_TO_PATH: Record<EntityType, string> = {
-  task: "/tasks",
-  project: "/projects",
-  session: "/sessions",
-  campaign: "/campaigns",
-  spark: "/sparks",
-  decision: "/decisions",
-};
 const KIND_ICON: Record<EntityType, typeof CheckSquare> = {
   task: CheckSquare,
   project: FolderKanban,
@@ -247,18 +239,28 @@ const KIND_COLOR: Record<EntityType, string> = {
   decision: "text-rose-600 dark:text-rose-400",
 };
 
+function hrefFor(kind: EntityType, id: string): string {
+  switch (kind) {
+    case "task": return `/tasks/${id}`;
+    case "project": return `/projects/${id}`;
+    case "session": return `/sessions/${id}`;
+    case "campaign": return `/campaigns/${id}`;
+    case "spark": return `/sparks/${id}`;
+    case "decision": return `/decisions/${id}`;
+  }
+}
+
 function ItemRow({ item, meta }: { item: TimeGridRow; meta?: string }) {
   const Icon = KIND_ICON[item.entity_type];
   return (
-    <Link
-      to={`${KIND_TO_PATH[item.entity_type]}/$id`}
-      params={{ id: item.entity_id }}
+    <a
+      href={hrefFor(item.entity_type, item.entity_id)}
       className="flex items-center gap-2 px-5 py-2.5 text-sm hover:bg-iris-soft/50"
     >
       <Icon className={`h-3.5 w-3.5 shrink-0 ${KIND_COLOR[item.entity_type]}`} />
       <span className="truncate font-medium">{item.name}</span>
       {meta && <span className="ml-auto shrink-0 text-xs text-muted-foreground">{meta}</span>}
-    </Link>
+    </a>
   );
 }
 
