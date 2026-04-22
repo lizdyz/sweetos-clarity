@@ -119,14 +119,16 @@ function ExcellenceSettings() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-8">
-      <div className="mb-6 flex items-center gap-3">
+      <div className="mb-6 flex items-start gap-3">
         <div className="grid h-10 w-10 place-items-center rounded-2xl bg-iris text-white shadow-[var(--shadow-glow)]">
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h1 className="text-xl font-semibold tracking-tight">Excellence Editor</h1>
-          <p className="text-sm text-muted-foreground">
-            Define what excellent looks like at L1→L5 across the 5 Ps for each Domain, Tenet, and Component.
+          <h1 className="text-xl font-semibold tracking-tight">Excellence Rubric</h1>
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+            Define what <em>excellent</em> looks like at <strong>L1 → L5</strong> across the{" "}
+            <strong>5 Ps</strong> for each Domain, Tenet, and Component. The rubric you build here
+            is the canon every relationship is scored against.
           </p>
         </div>
         <Link to="/settings" className="text-sm text-muted-foreground hover:text-foreground">
