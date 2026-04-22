@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { sb as supabase } from "@/lib/sb";
@@ -18,11 +18,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Plus, Search, Trash2, X, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Trash2,
+  X,
+  ArrowLeft,
+  Loader2,
+  Table as TableIcon,
+  KanbanSquare,
+  LayoutGrid,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ConfidenceChip, ProgressionChip, StateChip } from "@/components/chips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { KanbanBoard } from "@/components/kanban-board";
 
 type Row = Record<string, unknown> & { id: string; updated_at?: string; created_at?: string };
 
