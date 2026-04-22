@@ -1,54 +1,54 @@
 
-# Phase 1 — Completion Pass
+# Make Quest/Spark Cadence Configurable
 
-The foundation is mostly built. This pass fills the remaining gaps so Phase 1 fully matches the approved plan, then we're ready for Phase 2 (Capture + AI staging).
+You're right — the counts I referenced (e.g. "X quests per week", "Y sparks per journey") were arbitrary placeholders pulled from canon docs, not real product decisions. They shouldn't be hardcoded anywhere. And yes — the prior message was a Notion search query, not a build instruction, so I'm ignoring that part.
 
-## What's missing today
+Here's how we resolve the cadence-numbers problem properly inside SweetBOS.
 
-1. **Sidebar links exist for Components, Playbooks, Domain Assessments — but the transformation chain entities (Personas, Missions, Journeys, Quests, Sparks, Outcomes) have schemas and entity defs and no routes.** Navigating to them today would 404.
-2. **SweetCycle phase ladder** is not yet visualized on Session detail.
-3. **Per-client `workflow_states`** has a table and field defs but no UI on Workflow detail to view/edit which clients are at which state.
-4. **No team / settings page** for Liz to invite collaborators (admin-only) and edit her profile.
-5. **Index route** still relies on a redirect — fine, but the sidebar's "Today" link points to `/` instead of `/today` which is the actual route.
-6. **Polish gaps:** empty states + skeletons on entity lists; light/dark parity check on chips; keyboard nav on the command palette stub.
+## The fix: cadence as tunable settings, not constants
 
-## What this pass adds
+Create a single source of truth for every "how many / how often" number in the transformation system, stored in the database, editable from the Settings page, and read by any UI or future logic that needs them.
 
-### Routes for transformation chain entities
-Add list + detail routes for: `personas`, `missions`, `journeys`, `quests`, `sparks`, `outcomes`. All use the existing `EntityListPage` / `EntityDetailPage` components (entity defs already exist). Add them to a new sidebar group **"Transformation"** so the operator can browse the scaffolding without it cluttering the main flow.
+### 1. New table: `cadence_settings`
+One row per tunable variable. Key/value with type + scope so we can add new knobs without migrations.
 
-### SweetCycle ladder on Session detail
-A horizontal phase ladder rendered above the session form: Seed → Synthesize → Session → Sync → Ship. Current phase is highlighted with iridescent glow; completed phases get a check; upcoming phases are muted. Each step shows its sub-status pill (seed_status, sync_status, ship_status) and days-in-phase derived from `updated_at`. Clicking a phase scrolls to its field group.
+Columns:
+- `key` (text, unique) — e.g. `sparks_per_journey_target`, `quests_per_mission_target`, `sessions_per_week_target`, `spark_completion_window_days`, `quest_duration_weeks_default`, `mirror_refresh_days`
+- `label` (text) — human name shown in Settings
+- `description` (text) — what this controls
+- `value_number` (numeric) — the tunable value
+- `min` / `max` / `step` (numeric, nullable) — for the slider/stepper UI
+- `category` (text) — `sparks` | `quests` | `journeys` | `missions` | `sessions` | `mirror` so Settings can group them
+- `updated_at`, `updated_by`
 
-### Per-client workflow state panel on Workflow detail
-A right-rail card on the Workflow detail page listing every `workflow_states` row for that workflow. Inline editor per row: client (ref to relationships), state_of_the_thing (full ladder), source_of_advancement, notes. "+ Add client state" button opens a small form. Uses the existing `WORKFLOW_STATE_FIELDS` definition.
+Seeded with the full canonical set on first migration so the table is never empty.
 
-### Team & settings page
-New `/settings` route, two tabs:
-- **Profile** — display name, avatar URL, role label (everyone)
-- **Team** — list of members with role badges (visible to all, mutable by admin); admin-only "Invite member" form using `supabase.auth.admin.inviteUserByEmail` via a server function (avoids exposing service role to client). On invite, the new user signs in and gets the `member` role automatically via the existing `handle_new_user` trigger.
+### 2. Settings → new "Cadence" tab
+Add a third tab next to Profile and Team:
+- Grouped by category with section headers
+- Each setting renders as a labeled stepper or slider with description underneath
+- Inline save on blur; toast on success
+- Admin-only edit; everyone can view
 
-### Small fixes
-- Sidebar "Today" → `/today` (currently `/`).
-- Add `errorComponent` and `notFoundComponent` to `__root.tsx` and key routes per TanStack guidelines.
-- Loading skeletons on entity list and dashboard sections.
-- Empty-state illustrations (lightweight SVG using iris gradient) for "no data yet".
+### 3. Read path
+A small typed hook `useCadence()` returns a memoized map of all settings, fetched once via TanStack Query and cached. Anywhere a number is needed (entity defaults, dashboard targets, future progress bars on Journeys/Missions), components call `useCadence().sparksPerJourneyTarget` instead of hardcoding.
 
-## What's still deferred to Phase 2
+### 4. Strip arbitrary numbers from current code
+Sweep `src/lib/entities.ts`, dashboard files, and any chip/badge that currently shows a literal target. Replace with either the cadence value or remove entirely if no real logic depends on it yet. (Most of these don't exist yet in code — this is mostly preventative for the upcoming Phase 2 work.)
 
-- Universal Capture input + LLM intent/object/action parsing (BYO key requested at Phase 2 start)
-- Staging cards with contradiction detection
-- Dashboards C–H (Active Delivery, Delegation, Sessions Follow-Through, SweetCycle Tracker, Client Intelligence, Workflow Library)
-- Command-palette search execution
-- Quest/Spark interactivity, evidence graph, BizzyBot logic, content pipeline, voice input
+### 5. RLS
+- SELECT: any authenticated user
+- UPDATE: admin only (via `has_role(auth.uid(), 'admin')`)
+- No INSERT/DELETE from client — seeded values only; new keys added via migration as we discover them
+
+## What this gives you
+- Every "how many" number lives in one place
+- Liz can tune cadence per her own practice without a code change
+- When Phase 2 ships Capture + dashboards C–H, they'll read these values automatically — no hardcoded targets sneaking in
+- Future per-client overrides are a clean extension (add a `relationship_id` nullable column later)
 
 ## Build order
-
-1. Routes for personas, missions, journeys, quests, sparks, outcomes + sidebar group
-2. SweetCycle ladder component + wire into Session detail
-3. Workflow-states panel on Workflow detail (read + write)
-4. Settings route with Profile + Team tabs; admin invite via server function
-5. Sidebar fix, error/notFound boundaries, loading skeletons, empty states
-6. Light/dark parity sweep on chips and panels
-
-Once approved, I'll implement in this order in default mode.
+1. Migration: `cadence_settings` table + RLS + seed rows
+2. `useCadence` hook + query
+3. Settings "Cadence" tab UI
+4. Sweep existing files for stray hardcoded cadence numbers; replace or remove
