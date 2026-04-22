@@ -81,6 +81,8 @@ function OwnerPill({ owner }: { owner: JourneyRow["next_action_owner"] }) {
 
 function FlightdeckPage() {
   const navigate = useNavigate();
+  const [pkgFilter, setPkgFilter] = useState<"All" | ServicePackage | "Unscoped">("All");
+
   const { data: rows, isLoading } = useQuery<JourneyRow[]>({
     queryKey: ["relationship-journey"],
     queryFn: async () => {
@@ -93,6 +95,23 @@ function FlightdeckPage() {
     },
   });
 
+  const { data: packages = [] } = useQuery<Array<{ id: string; service_package: string | null }>>({
+    queryKey: ["relationships", "service-packages-all"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("relationships")
+        .select("id, service_package");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const pkgById = useMemo(() => {
+    const m = new Map<string, string | null>();
+    packages.forEach((p) => m.set(p.id, p.service_package));
+    return m;
+  }, [packages]);
+
   const moveStage = useDragToStatus({
     table: "relationships",
     field: "pipeline_stage",
@@ -100,7 +119,14 @@ function FlightdeckPage() {
     invalidate: [["relationship-journey"], ["relationships"]],
   });
 
-  const items = (rows ?? []).map((r) => ({
+  const filteredRows = (rows ?? []).filter((r) => {
+    if (pkgFilter === "All") return true;
+    const p = pkgById.get(r.relationship_id) ?? null;
+    if (pkgFilter === "Unscoped") return !p;
+    return p === pkgFilter;
+  });
+
+  const items = filteredRows.map((r) => ({
     id: r.relationship_id,
     stage: normalizeStage(r.current_stage),
     row: r,
@@ -109,7 +135,7 @@ function FlightdeckPage() {
   const today = new Date();
   const week = new Date();
   week.setDate(today.getDate() + 7);
-  const batons = (rows ?? []).filter((r) => {
+  const batons = filteredRows.filter((r) => {
     if (!r.next_action_due) return false;
     const d = new Date(r.next_action_due);
     return d >= new Date(today.toDateString()) && d <= week;
