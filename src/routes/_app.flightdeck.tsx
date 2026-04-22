@@ -397,12 +397,12 @@ function DueThisWeekPanel() {
   const todayIso = today.toISOString().slice(0, 10);
   const weekEndIso = weekEnd.toISOString().slice(0, 10);
 
-  const { data: tasks = [] } = useQuery<Array<{ id: string; title: string; due_date: string }>>({
+  const { data: tasks = [] } = useQuery<Array<{ id: string; name: string; due_date: string }>>({
     queryKey: ["due-week", "tasks", todayIso],
     queryFn: async () => {
       const { data, error } = await sb
         .from("tasks")
-        .select("id, title, due_date, status")
+        .select("id, name, due_date, status")
         .gte("due_date", todayIso)
         .lte("due_date", weekEndIso)
         .order("due_date");
@@ -453,7 +453,7 @@ function DueThisWeekPanel() {
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-3">
-          <DueGroup title="Tasks" items={tasks.map((t) => ({ id: t.id, label: t.title, due: t.due_date, to: "/tasks/$id" }))} />
+          <DueGroup title="Tasks" items={tasks.map((t) => ({ id: t.id, label: t.name, due: t.due_date, to: "/tasks/$id" }))} />
           <DueGroup title="Projects" items={projects.map((p) => ({ id: p.id, label: p.name, due: p.deadline, to: "/projects/$id" }))} />
           <DueGroup title="Campaigns" items={campaigns.map((c) => ({ id: c.id, label: c.campaign_name, due: c.deadline, to: "/campaigns/$id" }))} />
         </div>
