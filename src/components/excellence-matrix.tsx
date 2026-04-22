@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
 import { Card } from "@/components/ui/card";
-import { Loader2, Check, Minus, X } from "lucide-react";
+import { Loader2, Check, Minus, X, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MaturityThresholdSheet } from "@/components/maturity-threshold-sheet";
 
 export type SubjectKind = "domain" | "tenet" | "component";
 
@@ -89,6 +90,7 @@ export function ExcellenceMatrix({ subjectKind, subjectId, subjectLabel }: Props
   const [activeRel, setActiveRel] = useState<string>("");
   const [scores, setScores] = useState<Record<string, ScoreRow>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [thresholdOpen, setThresholdOpen] = useState(false);
 
   const perspectivesQ = useQuery({
     queryKey: ["excellence-perspectives"],
