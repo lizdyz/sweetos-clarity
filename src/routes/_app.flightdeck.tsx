@@ -1,16 +1,19 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, ArrowRight, Clock, ExternalLink, Plane } from "lucide-react";
+import { AlertCircle, ArrowRight, ExternalLink, Plane, ShieldCheck, Target, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StageSwimlanes } from "@/components/stage-swimlanes";
 import { useDragToStatus } from "@/hooks/use-drag-to-status";
 import { DueDateChip } from "@/components/due-date-chip";
 import { SERVICE_PACKAGE, SERVICE_PACKAGE_BADGE, type ServicePackage } from "@/lib/enums";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/flightdeck")({
   component: FlightdeckPage,

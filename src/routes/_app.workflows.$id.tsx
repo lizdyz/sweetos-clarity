@@ -104,10 +104,11 @@ function WorkflowDetail() {
                     )}
                   </div>
                   <Link
-                    to="/queue"
+                    to="/workflows/$id/runs/$runId"
+                    params={{ id, runId: r.id }}
                     className="inline-flex items-center gap-1 text-xs text-[color:var(--iris-violet)] hover:underline"
                   >
-                    View queue <ArrowRight className="h-3 w-3" />
+                    Open run <ArrowRight className="h-3 w-3" />
                   </Link>
                 </li>
               ))}
