@@ -18,6 +18,7 @@ import { ServiceShapeStrip } from "@/components/service-shape-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { StoryTrail } from "@/components/story-trail";
 import { TwoPathsStrip } from "@/components/two-paths-strip";
+import { BrandCanonEditor } from "@/components/brand-canon-editor";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
@@ -36,6 +37,9 @@ function RelationshipDetail() {
       </div>
       <div className="px-6">
         <MeasuresPanel subjectType="relationship" subjectId={id} />
+      </div>
+      <div className="px-6">
+        <BrandCanonEditor relationshipId={id} />
       </div>
       <div className="px-6 pb-8">
         <StoryTrail subjectKind="relationship" subjectId={id} />
