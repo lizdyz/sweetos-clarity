@@ -472,6 +472,8 @@ export const ENTITIES: Record<string, EntityDef> = {
       ...TAXONOMY_FIELDS,
     ],
   },
+
+  journeys: {
     key: "journeys",
     table: "journeys",
     label: "Journey",
@@ -536,6 +538,8 @@ export const ENTITIES: Record<string, EntityDef> = {
       ...TAXONOMY_FIELDS,
     ],
   },
+
+  engagement_plans: {
     key: "engagement_plans",
     table: "engagement_plans",
     label: "Engagement plan",
