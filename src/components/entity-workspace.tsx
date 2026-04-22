@@ -804,6 +804,36 @@ function FieldEditor({
       </div>
     );
   }
+  if (field.kind === "domain-tags") {
+    return (
+      <TagPicker
+        label={field.label}
+        variant="domains"
+        value={(value as string[]) ?? []}
+        onChange={onChange as (v: string[]) => void}
+      />
+    );
+  }
+  if (field.kind === "tenet-tags") {
+    return (
+      <TagPicker
+        label={field.label}
+        variant="tenets"
+        value={(value as string[]) ?? []}
+        onChange={onChange as (v: string[]) => void}
+      />
+    );
+  }
+  if (field.kind === "component-tags") {
+    return (
+      <TagPicker
+        label={field.label}
+        variant="components"
+        value={(value as string[]) ?? []}
+        onChange={onChange as (v: string[]) => void}
+      />
+    );
+  }
   if (field.kind === "multiselect" || field.kind === "tags") {
     return (
       <MultiSelect
