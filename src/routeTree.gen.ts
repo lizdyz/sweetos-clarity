@@ -18,6 +18,7 @@ import { Route as AppQueueRouteImport } from './routes/_app.queue'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppPeopleRouteImport } from './routes/_app.people'
 import { Route as AppMyTasksRouteImport } from './routes/_app.my-tasks'
+import { Route as AppMeasuresRouteImport } from './routes/_app.measures'
 import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
@@ -25,6 +26,7 @@ import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.i
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
 import { Route as AppSparksIndexRouteImport } from './routes/_app.sparks.index'
 import { Route as AppSessionsIndexRouteImport } from './routes/_app.sessions.index'
+import { Route as AppSessionTemplatesIndexRouteImport } from './routes/_app.session-templates.index'
 import { Route as AppRelationshipsIndexRouteImport } from './routes/_app.relationships.index'
 import { Route as AppQuestsIndexRouteImport } from './routes/_app.quests.index'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
@@ -48,6 +50,7 @@ import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
 import { Route as AppSparksIdRouteImport } from './routes/_app.sparks.$id'
 import { Route as AppSettingsExcellenceRouteImport } from './routes/_app.settings.excellence'
 import { Route as AppSessionsIdRouteImport } from './routes/_app.sessions.$id'
+import { Route as AppSessionTemplatesIdRouteImport } from './routes/_app.session-templates.$id'
 import { Route as AppRelationshipsIdRouteImport } from './routes/_app.relationships.$id'
 import { Route as AppQuestsIdRouteImport } from './routes/_app.quests.$id'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
@@ -111,6 +114,11 @@ const AppMyTasksRoute = AppMyTasksRouteImport.update({
   path: '/my-tasks',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMeasuresRoute = AppMeasuresRouteImport.update({
+  id: '/measures',
+  path: '/measures',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppJourneyRoute = AppJourneyRouteImport.update({
   id: '/journey',
   path: '/journey',
@@ -146,6 +154,12 @@ const AppSessionsIndexRoute = AppSessionsIndexRouteImport.update({
   path: '/sessions/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSessionTemplatesIndexRoute =
+  AppSessionTemplatesIndexRouteImport.update({
+    id: '/session-templates/',
+    path: '/session-templates/',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppRelationshipsIndexRoute = AppRelationshipsIndexRouteImport.update({
   id: '/relationships/',
   path: '/relationships/',
@@ -262,6 +276,11 @@ const AppSessionsIdRoute = AppSessionsIdRouteImport.update({
   path: '/sessions/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSessionTemplatesIdRoute = AppSessionTemplatesIdRouteImport.update({
+  id: '/session-templates/$id',
+  path: '/session-templates/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRelationshipsIdRoute = AppRelationshipsIdRouteImport.update({
   id: '/relationships/$id',
   path: '/relationships/$id',
@@ -360,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
   '/journey': typeof AppJourneyRoute
+  '/measures': typeof AppMeasuresRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
@@ -384,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/projects/$id': typeof AppProjectsIdRoute
   '/quests/$id': typeof AppQuestsIdRoute
   '/relationships/$id': typeof AppRelationshipsIdRoute
+  '/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/sparks/$id': typeof AppSparksIdRoute
@@ -407,6 +428,7 @@ export interface FileRoutesByFullPath {
   '/projects/': typeof AppProjectsIndexRoute
   '/quests/': typeof AppQuestsIndexRoute
   '/relationships/': typeof AppRelationshipsIndexRoute
+  '/session-templates/': typeof AppSessionTemplatesIndexRoute
   '/sessions/': typeof AppSessionsIndexRoute
   '/sparks/': typeof AppSparksIndexRoute
   '/tasks/': typeof AppTasksIndexRoute
@@ -418,6 +440,7 @@ export interface FileRoutesByTo {
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
   '/journey': typeof AppJourneyRoute
+  '/measures': typeof AppMeasuresRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
@@ -442,6 +465,7 @@ export interface FileRoutesByTo {
   '/projects/$id': typeof AppProjectsIdRoute
   '/quests/$id': typeof AppQuestsIdRoute
   '/relationships/$id': typeof AppRelationshipsIdRoute
+  '/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/sparks/$id': typeof AppSparksIdRoute
@@ -465,6 +489,7 @@ export interface FileRoutesByTo {
   '/projects': typeof AppProjectsIndexRoute
   '/quests': typeof AppQuestsIndexRoute
   '/relationships': typeof AppRelationshipsIndexRoute
+  '/session-templates': typeof AppSessionTemplatesIndexRoute
   '/sessions': typeof AppSessionsIndexRoute
   '/sparks': typeof AppSparksIndexRoute
   '/tasks': typeof AppTasksIndexRoute
@@ -478,6 +503,7 @@ export interface FileRoutesById {
   '/_app/capture': typeof AppCaptureRoute
   '/_app/flightdeck': typeof AppFlightdeckRoute
   '/_app/journey': typeof AppJourneyRoute
+  '/_app/measures': typeof AppMeasuresRoute
   '/_app/my-tasks': typeof AppMyTasksRoute
   '/_app/people': typeof AppPeopleRoute
   '/_app/pipeline': typeof AppPipelineRoute
@@ -502,6 +528,7 @@ export interface FileRoutesById {
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/_app/quests/$id': typeof AppQuestsIdRoute
   '/_app/relationships/$id': typeof AppRelationshipsIdRoute
+  '/_app/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/_app/sessions/$id': typeof AppSessionsIdRoute
   '/_app/settings/excellence': typeof AppSettingsExcellenceRoute
   '/_app/sparks/$id': typeof AppSparksIdRoute
@@ -525,6 +552,7 @@ export interface FileRoutesById {
   '/_app/projects/': typeof AppProjectsIndexRoute
   '/_app/quests/': typeof AppQuestsIndexRoute
   '/_app/relationships/': typeof AppRelationshipsIndexRoute
+  '/_app/session-templates/': typeof AppSessionTemplatesIndexRoute
   '/_app/sessions/': typeof AppSessionsIndexRoute
   '/_app/sparks/': typeof AppSparksIndexRoute
   '/_app/tasks/': typeof AppTasksIndexRoute
@@ -538,6 +566,7 @@ export interface FileRouteTypes {
     | '/capture'
     | '/flightdeck'
     | '/journey'
+    | '/measures'
     | '/my-tasks'
     | '/people'
     | '/pipeline'
@@ -562,6 +591,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/quests/$id'
     | '/relationships/$id'
+    | '/session-templates/$id'
     | '/sessions/$id'
     | '/settings/excellence'
     | '/sparks/$id'
@@ -585,6 +615,7 @@ export interface FileRouteTypes {
     | '/projects/'
     | '/quests/'
     | '/relationships/'
+    | '/session-templates/'
     | '/sessions/'
     | '/sparks/'
     | '/tasks/'
@@ -596,6 +627,7 @@ export interface FileRouteTypes {
     | '/capture'
     | '/flightdeck'
     | '/journey'
+    | '/measures'
     | '/my-tasks'
     | '/people'
     | '/pipeline'
@@ -620,6 +652,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/quests/$id'
     | '/relationships/$id'
+    | '/session-templates/$id'
     | '/sessions/$id'
     | '/settings/excellence'
     | '/sparks/$id'
@@ -643,6 +676,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/quests'
     | '/relationships'
+    | '/session-templates'
     | '/sessions'
     | '/sparks'
     | '/tasks'
@@ -655,6 +689,7 @@ export interface FileRouteTypes {
     | '/_app/capture'
     | '/_app/flightdeck'
     | '/_app/journey'
+    | '/_app/measures'
     | '/_app/my-tasks'
     | '/_app/people'
     | '/_app/pipeline'
@@ -679,6 +714,7 @@ export interface FileRouteTypes {
     | '/_app/projects/$id'
     | '/_app/quests/$id'
     | '/_app/relationships/$id'
+    | '/_app/session-templates/$id'
     | '/_app/sessions/$id'
     | '/_app/settings/excellence'
     | '/_app/sparks/$id'
@@ -702,6 +738,7 @@ export interface FileRouteTypes {
     | '/_app/projects/'
     | '/_app/quests/'
     | '/_app/relationships/'
+    | '/_app/session-templates/'
     | '/_app/sessions/'
     | '/_app/sparks/'
     | '/_app/tasks/'
@@ -779,6 +816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMyTasksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/measures': {
+      id: '/_app/measures'
+      path: '/measures'
+      fullPath: '/measures'
+      preLoaderRoute: typeof AppMeasuresRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/journey': {
       id: '/_app/journey'
       path: '/journey'
@@ -826,6 +870,13 @@ declare module '@tanstack/react-router' {
       path: '/sessions'
       fullPath: '/sessions/'
       preLoaderRoute: typeof AppSessionsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/session-templates/': {
+      id: '/_app/session-templates/'
+      path: '/session-templates'
+      fullPath: '/session-templates/'
+      preLoaderRoute: typeof AppSessionTemplatesIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/relationships/': {
@@ -989,6 +1040,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSessionsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/session-templates/$id': {
+      id: '/_app/session-templates/$id'
+      path: '/session-templates/$id'
+      fullPath: '/session-templates/$id'
+      preLoaderRoute: typeof AppSessionTemplatesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/relationships/$id': {
       id: '/_app/relationships/$id'
       path: '/relationships/$id'
@@ -1134,6 +1192,7 @@ interface AppRouteChildren {
   AppCaptureRoute: typeof AppCaptureRoute
   AppFlightdeckRoute: typeof AppFlightdeckRoute
   AppJourneyRoute: typeof AppJourneyRoute
+  AppMeasuresRoute: typeof AppMeasuresRoute
   AppMyTasksRoute: typeof AppMyTasksRoute
   AppPeopleRoute: typeof AppPeopleRoute
   AppPipelineRoute: typeof AppPipelineRoute
@@ -1158,6 +1217,7 @@ interface AppRouteChildren {
   AppProjectsIdRoute: typeof AppProjectsIdRoute
   AppQuestsIdRoute: typeof AppQuestsIdRoute
   AppRelationshipsIdRoute: typeof AppRelationshipsIdRoute
+  AppSessionTemplatesIdRoute: typeof AppSessionTemplatesIdRoute
   AppSessionsIdRoute: typeof AppSessionsIdRoute
   AppSparksIdRoute: typeof AppSparksIdRoute
   AppTasksIdRoute: typeof AppTasksIdRoute
@@ -1180,6 +1240,7 @@ interface AppRouteChildren {
   AppProjectsIndexRoute: typeof AppProjectsIndexRoute
   AppQuestsIndexRoute: typeof AppQuestsIndexRoute
   AppRelationshipsIndexRoute: typeof AppRelationshipsIndexRoute
+  AppSessionTemplatesIndexRoute: typeof AppSessionTemplatesIndexRoute
   AppSessionsIndexRoute: typeof AppSessionsIndexRoute
   AppSparksIndexRoute: typeof AppSparksIndexRoute
   AppTasksIndexRoute: typeof AppTasksIndexRoute
@@ -1190,6 +1251,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCaptureRoute: AppCaptureRoute,
   AppFlightdeckRoute: AppFlightdeckRoute,
   AppJourneyRoute: AppJourneyRoute,
+  AppMeasuresRoute: AppMeasuresRoute,
   AppMyTasksRoute: AppMyTasksRoute,
   AppPeopleRoute: AppPeopleRoute,
   AppPipelineRoute: AppPipelineRoute,
@@ -1214,6 +1276,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProjectsIdRoute: AppProjectsIdRoute,
   AppQuestsIdRoute: AppQuestsIdRoute,
   AppRelationshipsIdRoute: AppRelationshipsIdRoute,
+  AppSessionTemplatesIdRoute: AppSessionTemplatesIdRoute,
   AppSessionsIdRoute: AppSessionsIdRoute,
   AppSparksIdRoute: AppSparksIdRoute,
   AppTasksIdRoute: AppTasksIdRoute,
@@ -1236,6 +1299,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProjectsIndexRoute: AppProjectsIndexRoute,
   AppQuestsIndexRoute: AppQuestsIndexRoute,
   AppRelationshipsIndexRoute: AppRelationshipsIndexRoute,
+  AppSessionTemplatesIndexRoute: AppSessionTemplatesIndexRoute,
   AppSessionsIndexRoute: AppSessionsIndexRoute,
   AppSparksIndexRoute: AppSparksIndexRoute,
   AppTasksIndexRoute: AppTasksIndexRoute,

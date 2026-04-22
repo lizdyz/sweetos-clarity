@@ -1318,6 +1318,144 @@ export type Database = {
         }
         Relationships: []
       }
+      measure_readings: {
+        Row: {
+          created_at: string
+          id: string
+          measure_id: string
+          notes: string | null
+          recorded_at: string
+          recorded_by: string
+          source: Database["public"]["Enums"]["measure_reading_source"]
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          measure_id: string
+          notes?: string | null
+          recorded_at?: string
+          recorded_by?: string
+          source?: Database["public"]["Enums"]["measure_reading_source"]
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          measure_id?: string
+          notes?: string | null
+          recorded_at?: string
+          recorded_by?: string
+          source?: Database["public"]["Enums"]["measure_reading_source"]
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measure_readings_measure_id_fkey"
+            columns: ["measure_id"]
+            isOneToOne: false
+            referencedRelation: "measure_health"
+            referencedColumns: ["measure_id"]
+          },
+          {
+            foreignKeyName: "measure_readings_measure_id_fkey"
+            columns: ["measure_id"]
+            isOneToOne: false
+            referencedRelation: "measures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      measures: {
+        Row: {
+          baseline_value: number | null
+          cadence: Database["public"]["Enums"]["measure_cadence"]
+          created_at: string
+          created_by: string
+          current_value: number | null
+          description: string | null
+          direction: Database["public"]["Enums"]["measure_direction"]
+          done_at: string | null
+          due_date: string | null
+          id: string
+          kind: Database["public"]["Enums"]["measure_kind"]
+          name: string
+          notes: string | null
+          parent_measure_id: string | null
+          status: string | null
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["measure_subject_type"]
+          tagged_domains: string[]
+          tagged_tenets: string[]
+          target_unit: string | null
+          target_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          baseline_value?: number | null
+          cadence?: Database["public"]["Enums"]["measure_cadence"]
+          created_at?: string
+          created_by?: string
+          current_value?: number | null
+          description?: string | null
+          direction?: Database["public"]["Enums"]["measure_direction"]
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["measure_kind"]
+          name: string
+          notes?: string | null
+          parent_measure_id?: string | null
+          status?: string | null
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["measure_subject_type"]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
+          target_unit?: string | null
+          target_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          baseline_value?: number | null
+          cadence?: Database["public"]["Enums"]["measure_cadence"]
+          created_at?: string
+          created_by?: string
+          current_value?: number | null
+          description?: string | null
+          direction?: Database["public"]["Enums"]["measure_direction"]
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["measure_kind"]
+          name?: string
+          notes?: string | null
+          parent_measure_id?: string | null
+          status?: string | null
+          subject_id?: string
+          subject_type?: Database["public"]["Enums"]["measure_subject_type"]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
+          target_unit?: string | null
+          target_value?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measures_parent_measure_id_fkey"
+            columns: ["parent_measure_id"]
+            isOneToOne: false
+            referencedRelation: "measure_health"
+            referencedColumns: ["measure_id"]
+          },
+          {
+            foreignKeyName: "measures_parent_measure_id_fkey"
+            columns: ["parent_measure_id"]
+            isOneToOne: false
+            referencedRelation: "measures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       missions: {
         Row: {
           activated_journeys: string[] | null
@@ -2693,6 +2831,82 @@ export type Database = {
           },
         ]
       }
+      session_templates: {
+        Row: {
+          agenda: string[]
+          closing_checklist: string[]
+          created_at: string
+          created_by: string
+          default_components: string[]
+          default_deliverable_template_ids: string[]
+          default_duration_minutes: number
+          default_phase_owner: Database["public"]["Enums"]["phase_owner"] | null
+          default_sweetcycle_phase:
+            | Database["public"]["Enums"]["sweetcycle_phase"]
+            | null
+          description: string | null
+          enabled: boolean
+          id: string
+          linked_workflow_id: string | null
+          name: string
+          prep_checklist: string[]
+          service_type: string | null
+          sort_order: number
+          typical_position_in_journey: number | null
+          updated_at: string
+        }
+        Insert: {
+          agenda?: string[]
+          closing_checklist?: string[]
+          created_at?: string
+          created_by?: string
+          default_components?: string[]
+          default_deliverable_template_ids?: string[]
+          default_duration_minutes?: number
+          default_phase_owner?:
+            | Database["public"]["Enums"]["phase_owner"]
+            | null
+          default_sweetcycle_phase?:
+            | Database["public"]["Enums"]["sweetcycle_phase"]
+            | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          linked_workflow_id?: string | null
+          name: string
+          prep_checklist?: string[]
+          service_type?: string | null
+          sort_order?: number
+          typical_position_in_journey?: number | null
+          updated_at?: string
+        }
+        Update: {
+          agenda?: string[]
+          closing_checklist?: string[]
+          created_at?: string
+          created_by?: string
+          default_components?: string[]
+          default_deliverable_template_ids?: string[]
+          default_duration_minutes?: number
+          default_phase_owner?:
+            | Database["public"]["Enums"]["phase_owner"]
+            | null
+          default_sweetcycle_phase?:
+            | Database["public"]["Enums"]["sweetcycle_phase"]
+            | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          linked_workflow_id?: string | null
+          name?: string
+          prep_checklist?: string[]
+          service_type?: string | null
+          sort_order?: number
+          typical_position_in_journey?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           biggest_gap: string | null
@@ -2736,6 +2950,7 @@ export type Database = {
           service: string | null
           session_date: string | null
           session_number: number | null
+          session_template_id: string | null
           ship_status: string | null
           source_of_advancement:
             | Database["public"]["Enums"]["source_of_advancement"]
@@ -2796,6 +3011,7 @@ export type Database = {
           service?: string | null
           session_date?: string | null
           session_number?: number | null
+          session_template_id?: string | null
           ship_status?: string | null
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
@@ -2856,6 +3072,7 @@ export type Database = {
           service?: string | null
           session_date?: string | null
           session_number?: number | null
+          session_template_id?: string | null
           ship_status?: string | null
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
@@ -2948,6 +3165,13 @@ export type Database = {
             columns: ["relationship_id"]
             isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_session_template_id_fkey"
+            columns: ["session_template_id"]
+            isOneToOne: false
+            referencedRelation: "session_templates"
             referencedColumns: ["id"]
           },
           {
@@ -3520,9 +3744,12 @@ export type Database = {
       }
       workflow_runs: {
         Row: {
+          approval_requested_at: string | null
+          awaiting_approval_from: string | null
           completed_at: string | null
           created_at: string
           created_by: string | null
+          current_step_id: string | null
           id: string
           notes: string | null
           progress_pct: number
@@ -3534,9 +3761,12 @@ export type Database = {
           workflow_id: string
         }
         Insert: {
+          approval_requested_at?: string | null
+          awaiting_approval_from?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          current_step_id?: string | null
           id?: string
           notes?: string | null
           progress_pct?: number
@@ -3548,9 +3778,12 @@ export type Database = {
           workflow_id: string
         }
         Update: {
+          approval_requested_at?: string | null
+          awaiting_approval_from?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          current_step_id?: string | null
           id?: string
           notes?: string | null
           progress_pct?: number
@@ -3668,6 +3901,176 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workflow_step_dependencies: {
+        Row: {
+          depends_on_step_id: string
+          step_id: string
+        }
+        Insert: {
+          depends_on_step_id: string
+          step_id: string
+        }
+        Update: {
+          depends_on_step_id?: string
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_step_dependencies_depends_on_step_id_fkey"
+            columns: ["depends_on_step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_step_pipeline"
+            referencedColumns: ["step_id"]
+          },
+          {
+            foreignKeyName: "workflow_step_dependencies_depends_on_step_id_fkey"
+            columns: ["depends_on_step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_step_dependencies_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_step_pipeline"
+            referencedColumns: ["step_id"]
+          },
+          {
+            foreignKeyName: "workflow_step_dependencies_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_step_runs: {
+        Row: {
+          approval_at: string | null
+          approval_by: string | null
+          approval_decision: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          operator_id: string | null
+          output_document_id: string | null
+          run_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["workflow_step_status"]
+          step_id: string
+          updated_at: string
+        }
+        Insert: {
+          approval_at?: string | null
+          approval_by?: string | null
+          approval_decision?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          operator_id?: string | null
+          output_document_id?: string | null
+          run_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_step_status"]
+          step_id: string
+          updated_at?: string
+        }
+        Update: {
+          approval_at?: string | null
+          approval_by?: string | null
+          approval_decision?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          operator_id?: string | null
+          output_document_id?: string | null
+          run_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_step_status"]
+          step_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_step_runs_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_step_pipeline"
+            referencedColumns: ["step_id"]
+          },
+          {
+            foreignKeyName: "workflow_step_runs_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_steps: {
+        Row: {
+          approval_role: Database["public"]["Enums"]["approval_role"] | null
+          created_at: string
+          created_by: string
+          default_operator_id: string | null
+          description: string | null
+          expected_duration_minutes: number | null
+          id: string
+          name: string
+          position: number
+          produces_document_type: string | null
+          requires_human_approval: boolean
+          step_type: Database["public"]["Enums"]["workflow_step_type"]
+          success_criteria: string | null
+          tagged_components: string[]
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          approval_role?: Database["public"]["Enums"]["approval_role"] | null
+          created_at?: string
+          created_by?: string
+          default_operator_id?: string | null
+          description?: string | null
+          expected_duration_minutes?: number | null
+          id?: string
+          name: string
+          position?: number
+          produces_document_type?: string | null
+          requires_human_approval?: boolean
+          step_type?: Database["public"]["Enums"]["workflow_step_type"]
+          success_criteria?: string | null
+          tagged_components?: string[]
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          approval_role?: Database["public"]["Enums"]["approval_role"] | null
+          created_at?: string
+          created_by?: string
+          default_operator_id?: string | null
+          description?: string | null
+          expected_duration_minutes?: number | null
+          id?: string
+          name?: string
+          position?: number
+          produces_document_type?: string | null
+          requires_human_approval?: boolean
+          step_type?: Database["public"]["Enums"]["workflow_step_type"]
+          success_criteria?: string | null
+          tagged_components?: string[]
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: []
       }
       workflows: {
         Row: {
@@ -3828,6 +4231,26 @@ export type Database = {
           },
         ]
       }
+      measure_health: {
+        Row: {
+          baseline_value: number | null
+          cadence: Database["public"]["Enums"]["measure_cadence"] | null
+          direction: Database["public"]["Enums"]["measure_direction"] | null
+          kind: Database["public"]["Enums"]["measure_kind"] | null
+          last_reading_at: string | null
+          latest_value: number | null
+          measure_id: string | null
+          name: string | null
+          pct_to_target: number | null
+          status_color: string | null
+          subject_id: string | null
+          subject_type:
+            | Database["public"]["Enums"]["measure_subject_type"]
+            | null
+          target_value: number | null
+        }
+        Relationships: []
+      }
       operator_workload: {
         Row: {
           availability: string | null
@@ -3987,6 +4410,32 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_step_pipeline: {
+        Row: {
+          actual_operator_id: string | null
+          approval_at: string | null
+          approval_by: string | null
+          approval_decision: string | null
+          approval_role: Database["public"]["Enums"]["approval_role"] | null
+          completed_at: string | null
+          default_operator_id: string | null
+          expected_duration_minutes: number | null
+          output_document_id: string | null
+          position: number | null
+          requires_human_approval: boolean | null
+          run_id: string | null
+          run_status: Database["public"]["Enums"]["workflow_step_status"] | null
+          started_at: string | null
+          step_id: string | null
+          step_name: string | null
+          step_run_id: string | null
+          step_type: Database["public"]["Enums"]["workflow_step_type"] | null
+          success_criteria: string | null
+          tagged_components: string[] | null
+          workflow_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       default_phase_owner: {
@@ -4016,6 +4465,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member"
+      approval_role: "owner" | "admin" | "any_team_member" | "named_operator"
       awareness_tier:
         | "Unaware"
         | "Problem-aware"
@@ -4062,6 +4512,25 @@ export type Database = {
         | "L3 Launching"
         | "L4 Leveraging"
         | "L5 Leading"
+      measure_cadence:
+        | "daily"
+        | "weekly"
+        | "monthly"
+        | "quarterly"
+        | "per_event"
+      measure_direction: "higher_is_better" | "lower_is_better" | "hit_target"
+      measure_kind: "Objective" | "KeyResult" | "KPI" | "CSF"
+      measure_reading_source: "manual" | "session" | "workflow_run" | "agent"
+      measure_subject_type:
+        | "operator"
+        | "project"
+        | "task"
+        | "campaign"
+        | "workflow"
+        | "component"
+        | "relationship"
+        | "mission"
+        | "engagement_service"
       operator_kind: "human" | "workflow" | "agent"
       phase_owner: "client" | "us" | "both"
       portal_kind:
@@ -4153,6 +4622,15 @@ export type Database = {
         | "paused"
         | "completed"
         | "cancelled"
+      workflow_step_status:
+        | "pending"
+        | "in_progress"
+        | "awaiting_approval"
+        | "approved"
+        | "rejected"
+        | "done"
+        | "skipped"
+      workflow_step_type: "action" | "gate" | "branch" | "sub_workflow"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4281,6 +4759,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member"],
+      approval_role: ["owner", "admin", "any_team_member", "named_operator"],
       awareness_tier: [
         "Unaware",
         "Problem-aware",
@@ -4333,6 +4812,21 @@ export const Constants = {
         "L3 Launching",
         "L4 Leveraging",
         "L5 Leading",
+      ],
+      measure_cadence: ["daily", "weekly", "monthly", "quarterly", "per_event"],
+      measure_direction: ["higher_is_better", "lower_is_better", "hit_target"],
+      measure_kind: ["Objective", "KeyResult", "KPI", "CSF"],
+      measure_reading_source: ["manual", "session", "workflow_run", "agent"],
+      measure_subject_type: [
+        "operator",
+        "project",
+        "task",
+        "campaign",
+        "workflow",
+        "component",
+        "relationship",
+        "mission",
+        "engagement_service",
       ],
       operator_kind: ["human", "workflow", "agent"],
       phase_owner: ["client", "us", "both"],
@@ -4433,6 +4927,16 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
+      workflow_step_status: [
+        "pending",
+        "in_progress",
+        "awaiting_approval",
+        "approved",
+        "rejected",
+        "done",
+        "skipped",
+      ],
+      workflow_step_type: ["action", "gate", "branch", "sub_workflow"],
     },
   },
 } as const
