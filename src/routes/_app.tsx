@@ -2,12 +2,12 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopBar } from "@/components/app-topbar";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_app")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
+  beforeLoad: ({ context }) => {
+    // Wait for auth hydration; once loaded, redirect if no session
+    if (!context.auth || context.auth.loading) return;
+    if (!context.auth.session) {
       throw redirect({ to: "/login" });
     }
   },

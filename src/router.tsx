@@ -1,5 +1,6 @@
 import { createRouter, useRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
+import type { AuthState } from "@/lib/auth-context";
 
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
@@ -54,14 +55,23 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
   );
 }
 
+export interface RouterAppContext {
+  auth: AuthState | null;
+}
+
 export const getRouter = () => {
   const router = createRouter({
     routeTree,
-    context: {},
+    context: { auth: null } as RouterAppContext,
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
     defaultErrorComponent: DefaultErrorComponent,
   });
 
   return router;
 };
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: ReturnType<typeof getRouter>;
+  }
+}

@@ -1,18 +1,20 @@
 import {
   Outlet,
   Link,
-  createRootRoute,
   HeadContent,
   Scripts,
+  useRouter,
+  createRootRouteWithContext,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
-import { AuthProvider } from "@/lib/auth-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import type { RouterAppContext } from "@/router";
 
 function NotFoundComponent() {
   return (
@@ -36,7 +38,7 @@ function NotFoundComponent() {
   );
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -89,6 +91,21 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AuthContextBridge({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    router.update({
+      context: { ...router.options.context, auth },
+    });
+    // Re-invalidate so any pending guards re-evaluate against fresh auth
+    router.invalidate();
+  }, [auth, router]);
+
+  return <>{children}</>;
+}
+
 function RootComponent() {
   const [queryClient] = useState(
     () =>
@@ -103,10 +120,12 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <TooltipProvider delayDuration={150}>
-            <Outlet />
-            <Toaster richColors closeButton position="top-right" />
-          </TooltipProvider>
+          <AuthContextBridge>
+            <TooltipProvider delayDuration={150}>
+              <Outlet />
+              <Toaster richColors closeButton position="top-right" />
+            </TooltipProvider>
+          </AuthContextBridge>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

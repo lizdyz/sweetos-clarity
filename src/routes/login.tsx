@@ -1,6 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,20 +9,28 @@ import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/" });
+  beforeLoad: ({ context }) => {
+    if (!context.auth || context.auth.loading) return;
+    if (context.auth.session) throw redirect({ to: "/today" });
   },
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { session } = useAuth();
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Navigate once auth state actually flips to "signed in"
+  useEffect(() => {
+    if (session) {
+      navigate({ to: "/today" });
+    }
+  }, [session, navigate]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +51,7 @@ function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/" });
+      // Navigation handled by useEffect above once session updates
     } catch (err) {
       const e = err as Error;
       toast.error(e.message || "Authentication failed");
