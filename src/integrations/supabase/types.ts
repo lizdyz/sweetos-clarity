@@ -406,6 +406,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           body_md: string | null
+          brand_canon_snapshot: Json | null
           component_id: string
           created_at: string
           created_by: string
@@ -416,6 +417,7 @@ export type Database = {
           generated_by_operator_id: string | null
           generation_prompt_key: string | null
           id: string
+          narrative_panels: Json | null
           notes: string | null
           output_kind: string
           status: string
@@ -430,6 +432,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           body_md?: string | null
+          brand_canon_snapshot?: Json | null
           component_id: string
           created_at?: string
           created_by?: string
@@ -440,6 +443,7 @@ export type Database = {
           generated_by_operator_id?: string | null
           generation_prompt_key?: string | null
           id?: string
+          narrative_panels?: Json | null
           notes?: string | null
           output_kind: string
           status?: string
@@ -454,6 +458,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           body_md?: string | null
+          brand_canon_snapshot?: Json | null
           component_id?: string
           created_at?: string
           created_by?: string
@@ -464,6 +469,7 @@ export type Database = {
           generated_by_operator_id?: string | null
           generation_prompt_key?: string | null
           id?: string
+          narrative_panels?: Json | null
           notes?: string | null
           output_kind?: string
           status?: string
@@ -2312,6 +2318,339 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      narrative_brand_canon: {
+        Row: {
+          component_id: string | null
+          created_at: string
+          created_by: string
+          forbidden_phrases: string[]
+          forbidden_visuals: string[]
+          id: string
+          name: string
+          narrative_pillars: string[]
+          notes: string | null
+          protagonist_anchors: Json
+          relationship_id: string | null
+          updated_at: string
+          vault_source_ids: string[]
+          visual_style: Json
+          voice_attributes: Json
+          world_anchors: Json
+        }
+        Insert: {
+          component_id?: string | null
+          created_at?: string
+          created_by?: string
+          forbidden_phrases?: string[]
+          forbidden_visuals?: string[]
+          id?: string
+          name: string
+          narrative_pillars?: string[]
+          notes?: string | null
+          protagonist_anchors?: Json
+          relationship_id?: string | null
+          updated_at?: string
+          vault_source_ids?: string[]
+          visual_style?: Json
+          voice_attributes?: Json
+          world_anchors?: Json
+        }
+        Update: {
+          component_id?: string | null
+          created_at?: string
+          created_by?: string
+          forbidden_phrases?: string[]
+          forbidden_visuals?: string[]
+          id?: string
+          name?: string
+          narrative_pillars?: string[]
+          notes?: string | null
+          protagonist_anchors?: Json
+          relationship_id?: string | null
+          updated_at?: string
+          vault_source_ids?: string[]
+          visual_style?: Json
+          voice_attributes?: Json
+          world_anchors?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narrative_brand_canon_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "narrative_brand_canon_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narrative_brand_canon_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "narrative_brand_canon_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      narrative_distill_proposals: {
+        Row: {
+          brand_canon_id: string | null
+          component_id: string | null
+          created_at: string
+          created_by: string
+          generated_by_model: string | null
+          id: string
+          proposed: Json
+          rationale: string | null
+          relationship_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          vault_source_ids: string[]
+        }
+        Insert: {
+          brand_canon_id?: string | null
+          component_id?: string | null
+          created_at?: string
+          created_by?: string
+          generated_by_model?: string | null
+          id?: string
+          proposed?: Json
+          rationale?: string | null
+          relationship_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          vault_source_ids?: string[]
+        }
+        Update: {
+          brand_canon_id?: string | null
+          component_id?: string | null
+          created_at?: string
+          created_by?: string
+          generated_by_model?: string | null
+          id?: string
+          proposed?: Json
+          rationale?: string | null
+          relationship_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          vault_source_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narrative_distill_proposals_brand_canon_id_fkey"
+            columns: ["brand_canon_id"]
+            isOneToOne: false
+            referencedRelation: "narrative_brand_canon"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narrative_distill_proposals_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "narrative_distill_proposals_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narrative_distill_proposals_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "narrative_distill_proposals_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      narrative_drafts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          audience: string | null
+          brand_canon_id: string
+          component_id: string | null
+          confidence: number | null
+          created_at: string
+          created_by: string
+          fidelity_flags: string[]
+          format_spec_id: string
+          generated_by_model: string | null
+          id: string
+          panels: Json
+          published_output_id: string | null
+          quality_issues: Json
+          relationship_id: string | null
+          status: string
+          updated_at: string
+          user_prompt: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          audience?: string | null
+          brand_canon_id: string
+          component_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          fidelity_flags?: string[]
+          format_spec_id: string
+          generated_by_model?: string | null
+          id?: string
+          panels?: Json
+          published_output_id?: string | null
+          quality_issues?: Json
+          relationship_id?: string | null
+          status?: string
+          updated_at?: string
+          user_prompt: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          audience?: string | null
+          brand_canon_id?: string
+          component_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          fidelity_flags?: string[]
+          format_spec_id?: string
+          generated_by_model?: string | null
+          id?: string
+          panels?: Json
+          published_output_id?: string | null
+          quality_issues?: Json
+          relationship_id?: string | null
+          status?: string
+          updated_at?: string
+          user_prompt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narrative_drafts_brand_canon_id_fkey"
+            columns: ["brand_canon_id"]
+            isOneToOne: false
+            referencedRelation: "narrative_brand_canon"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narrative_drafts_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "narrative_drafts_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narrative_drafts_format_spec_id_fkey"
+            columns: ["format_spec_id"]
+            isOneToOne: false
+            referencedRelation: "narrative_format_specs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narrative_drafts_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "narrative_drafts_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      narrative_format_specs: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          dialogue_density: string
+          enabled: boolean
+          id: string
+          name: string
+          narrative_arc: string[]
+          optional_canon_fields: string[]
+          output_kind: string
+          panel_count: number
+          required_canon_fields: string[]
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          dialogue_density?: string
+          enabled?: boolean
+          id?: string
+          name: string
+          narrative_arc: string[]
+          optional_canon_fields?: string[]
+          output_kind: string
+          panel_count: number
+          required_canon_fields?: string[]
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          dialogue_density?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          narrative_arc?: string[]
+          optional_canon_fields?: string[]
+          output_kind?: string
+          panel_count?: number
+          required_canon_fields?: string[]
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       open_decisions: {
         Row: {
