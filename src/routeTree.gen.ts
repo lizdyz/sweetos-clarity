@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTodayRouteImport } from './routes/_app.today'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppQueueRouteImport } from './routes/_app.queue'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
@@ -75,6 +76,11 @@ const AppTodayRoute = AppTodayRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppQueueRoute = AppQueueRouteImport.update({
+  id: '/queue',
+  path: '/queue',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPipelineRoute = AppPipelineRouteImport.update({
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
   '/pipeline': typeof AppPipelineRoute
+  '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRoute
   '/today': typeof AppTodayRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
@@ -318,6 +325,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
   '/pipeline': typeof AppPipelineRoute
+  '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRoute
   '/today': typeof AppTodayRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
@@ -364,6 +372,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/capture': typeof AppCaptureRoute
   '/_app/pipeline': typeof AppPipelineRoute
+  '/_app/queue': typeof AppQueueRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/today': typeof AppTodayRoute
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
@@ -410,6 +419,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/capture'
     | '/pipeline'
+    | '/queue'
     | '/settings'
     | '/today'
     | '/campaigns/$id'
@@ -454,6 +464,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/capture'
     | '/pipeline'
+    | '/queue'
     | '/settings'
     | '/today'
     | '/campaigns/$id'
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/capture'
     | '/_app/pipeline'
+    | '/_app/queue'
     | '/_app/settings'
     | '/_app/today'
     | '/_app/campaigns/$id'
@@ -580,6 +592,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/queue': {
+      id: '/_app/queue'
+      path: '/queue'
+      fullPath: '/queue'
+      preLoaderRoute: typeof AppQueueRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/pipeline': {
@@ -854,6 +873,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCaptureRoute: typeof AppCaptureRoute
   AppPipelineRoute: typeof AppPipelineRoute
+  AppQueueRoute: typeof AppQueueRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTodayRoute: typeof AppTodayRoute
   AppCampaignsIdRoute: typeof AppCampaignsIdRoute
@@ -897,6 +917,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCaptureRoute: AppCaptureRoute,
   AppPipelineRoute: AppPipelineRoute,
+  AppQueueRoute: AppQueueRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTodayRoute: AppTodayRoute,
   AppCampaignsIdRoute: AppCampaignsIdRoute,
