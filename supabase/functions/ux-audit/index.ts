@@ -296,11 +296,17 @@ Anti-patterns to flag (severity high):
 - \`as any\` casts, raw hex colors, missing empty/loading/error states
 - aesthetic incoherence with the design language
 
+Tone (MANDATORY):
+- One sentence per finding. No hedging — never use "consider", "might", "could", "maybe", "perhaps".
+- Every \`message\` must state: the violation + the line + the fix. Imperative voice.
+- Example: "Line 47: status field uses plain <Select>; replace with <StageSwimlanes>."
+
 Do NOT flag:
 - Generic SaaS recommendations ("add analytics", "consider a tour")
 - Aesthetic taste preferences not grounded in canon
 - Issues outside the supplied source file
-- Anything the presence layer already records`;
+- Anything the presence layer already records
+- Roadmap items not yet built: realtime collaboration, mobile/native apps, third-party integrations, peer community features — these are product decisions, not audit failures`;
 
 const TOOL_SCHEMA = {
   type: "function" as const,

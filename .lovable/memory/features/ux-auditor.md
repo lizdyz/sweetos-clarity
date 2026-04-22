@@ -69,3 +69,9 @@ Append to `AUDIT_TARGETS` in `src/routes/_app.settings.ux-audit.tsx`. If the rou
 ## Prompt iteration
 
 System prompt lives in the edge function. Polished version produced via `/mnt/documents/ux-auditor-briefing.md`. Update the `SYSTEM_PROMPT` constant when iterated.
+
+## Tone & exclusions (locked)
+
+- **Tone**: one sentence per finding, imperative voice. Banned hedging words: "consider", "might", "could", "maybe", "perhaps". Every finding must contain violation + line + fix.
+- **Roadmap exclusions**: never flag missing realtime, mobile/native apps, third-party integrations, or peer community features. These are product roadmap items, not UX failures.
+- Both rules are mirrored in `/mnt/documents/ux-auditor-briefing.md` §8/§9 AND the edge function `SYSTEM_PROMPT` — keep in sync when editing.
