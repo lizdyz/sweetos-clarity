@@ -7,6 +7,7 @@ import { MeasuresPanel } from "@/components/measures-panel";
 import { OperatorChip } from "@/components/operator-chip";
 import { ComponentOutputGenerator } from "@/components/component-output-generator";
 import { JTBDList } from "@/components/jtbd-list";
+import { StoryTrail } from "@/components/story-trail";
 
 export const Route = createFileRoute("/_app/components/$id")({
   component: ComponentDetail,
@@ -42,8 +43,11 @@ function ComponentDetail() {
       <div className="px-6">
         <JTBDList componentId={id} />
       </div>
-      <div className="px-6 pb-8">
+      <div className="px-6">
         <MeasuresPanel subjectType="component" subjectId={id} />
+      </div>
+      <div className="px-6 pb-8">
+        <StoryTrail subjectKind="component" subjectId={id} />
       </div>
     </div>
   );

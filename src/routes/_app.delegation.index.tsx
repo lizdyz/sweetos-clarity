@@ -3,6 +3,7 @@ import { GitBranch, Workflow as WorkflowIcon } from "lucide-react";
 import { EntityListPage } from "@/components/entity-workspace";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { LizDependencyGauge } from "@/components/liz-dependency-gauge";
 
 export const Route = createFileRoute("/_app/delegation/")({
   component: DelegationPage,
@@ -29,6 +30,9 @@ function DelegationPage() {
             </Button>
           }
         />
+      </div>
+      <div className="px-6">
+        <LizDependencyGauge />
       </div>
       <EntityListPage entityKey="delegation" />
     </div>
