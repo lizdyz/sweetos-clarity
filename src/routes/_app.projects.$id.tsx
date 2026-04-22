@@ -5,6 +5,8 @@ import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { Chip } from "@/components/chips";
 import { Plus, ArrowRight, AlertCircle } from "lucide-react";
+import { ComponentLinkPanel } from "@/components/component-link-panel";
+import { WorkContextStrip } from "@/components/work-context-strip";
 
 export const Route = createFileRoute("/_app/projects/$id")({
   component: ProjectDetail,
@@ -16,6 +18,8 @@ function ProjectDetail() {
   const { id } = Route.useParams();
   return (
     <div className="space-y-5">
+      <WorkContextStrip entityType="project" entityId={id} />
+      <ComponentLinkPanel projectId={id} />
       <ProjectPanels projectId={id} />
       <EntityDetailPage entityKey="projects" />
     </div>
