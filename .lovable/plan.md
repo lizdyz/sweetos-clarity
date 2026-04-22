@@ -1,105 +1,133 @@
 
 
-# Phase 2.10q (revised) — Less new, more sharp. Story Trail in. Noise out.
+# Phase 2.10r — Fix the Spark/Quest confusion. Anchor SweetSync to a client. Honor the doc.
 
-You're right. Last plan was 13 new components and 3 new routes. That's noise. Here's the same intent, ranked, with most "new" stuff replaced by **upgrades to things we already have**.
+## What's wrong right now (quick truth)
 
----
+You read it correctly. Today **Sparks and Quests have no `relationship_id`** — they live in your workspace as if they were yours. The doc is explicit: **Sparks/Quests are the SweetSync decomposition path for a specific client**. Sessions (SweetCycle) are the **session path for that same client**. Both advance the same underlying **workflow/capability** (Component) and write to **one shared truth model**.
 
-## What I'm pulling — ranked by leverage
+So Sparks ARE for clients — but they can also reflect *your* internal builds (you are the client of your own SweetBOS). The fix isn't "remove Sparks from your view" — it's **make every Spark/Quest declare who it's for**, and give you two clean lenses: *Client SweetSync* vs *Internal SweetSync*.
 
-### 🟢 Tier 1 — High leverage, low surface area (build now)
-
-#### 1. **Story Trail** — the single best pattern from sparkflow
-A chronological **narrative timeline** of a Quest / Journey / Component / Relationship — chapters for completed milestones, the active one pulsing, locked ones dimmed. Reads like a story instead of a log.
-
-**No new tables.** It's a *view* that composes data we already have:
-- `sparks` (completed → chapter beats)
-- `quests` + `quest_components` (chapter headers)
-- `entity_audit_log` (timestamps + actors)
-- `component_outputs` (artifacts produced — appear inline as "📎 PRD shipped here")
-- `decisions` (decisions made — appear as inline diamonds)
-
-**One new component** `<StoryTrail subject={...} />`, mounted as a tab on:
-- `/quests/$id` (replaces flat list view)
-- `/journeys/$id`
-- `/components/$id` (the "how this Component matured" story)
-- `/relationships/$id` (the "what we did together" story — also the basis of the future client portal recap)
-
-This is the *audit trail made beautiful*, and it's the natural reading view of work. Highest leverage thing in the whole sparkflow project.
-
-#### 2. **Upgrade the existing `/today` page** (don't replace it)
-Today already has Overdue / Due Today / This Week / Blocked / Sessions / Relationships sections. Just add **two strips above** them:
-- **OCDA tile strip** (Observe / Choose / Decide / Act counts, click → OCDA Cockpit) — 60 lines.
-- **Decision Queue widget** (5 items waiting on me) — 40 lines.
-
-No "Morning Scan" rebrand. No new file. Just enrich what's there. ~100 lines total.
-
-#### 3. **Liz Dependency gauge on `/delegation`** (one component, no schema)
-Read existing `delegation` rows, compute "% where `currently_done_by` = 'Liz' AND `can_be_delegated_to` is null" → big gauge + per-category bars at the top of `/delegation`. One component, ~150 lines. Makes the delegation register *visual* without any schema changes.
-
-### 🟡 Tier 2 — Worth building, scope down to one component each
-
-#### 4. **Spark Completion polish** (in place, no new flow file)
-Edit the existing `_app.sparks.$id.tsx` to add:
-- An **Impact Preview** strip at the top: "Completing this advances Component X · advances Quest Y · captures Z" — read straight from existing `sparks.affected_components` + `sparks.quest_id`.
-- A small **completion celebration** (confetti + 1-second toast on save) — `canvas-confetti` lib, ~20 lines.
-
-No `<SparkCompletionFlow>` orchestration component, no `<CelebrationSequence>` 4-step overlay. Same outcome, 1/10 the surface area.
-
-#### 5. **Excellence Advisor as a sort, not a page**
-Drop the `/operate/excellence-advisor` route. Instead: on the existing **Components list** and **Domains** pages add a **"Sort: Needs attention"** option that ranks by `(execution_gap × low_excellence_score)`. Users get the prioritized list without a new page to maintain.
-
-### 🔴 Tier 3 — Cut from this pass
-
-- ❌ **Pre-Assessment Wizard / AssessmentResults** — large surface, premature. We don't yet have enough seeded relationships for this to pay back. Defer to when onboarding is the bottleneck.
-- ❌ **Agent Swarm gallery rework** — current `/bizzybots` already works. Retitle column groupings only if you want.
-- ❌ **QuestMapView** as a separate component — Story Trail (Tier 1 #1) does the same job better with chapters.
-- ❌ **OKRDashboard** — `<MeasuresPanel>` already exists. Add a small visual tweak (progress bar per KR) inside it, no new component.
-- ❌ **BulkParseReview generalization** — wait until we hit the second use case.
+I'll also stop using the word **compress** anywhere in the UI/copy (per your note) — replace with **"sessions advance"** / **"session-led path"** vs **"self-paced path"**.
 
 ---
 
-## What this builds — total inventory
+## Tier 1 — Anchor + relabel (the core fix)
 
-**New files (only 2):**
-- `src/components/story-trail.tsx` — the chapter timeline component.
-- `src/components/liz-dependency-gauge.tsx` — gauge + per-category bars.
+### 1. Add `subject` to Quests and Sparks (one client OR internal)
+Tiny additive migration:
+```sql
+ALTER TABLE quests
+  ADD COLUMN relationship_id uuid REFERENCES relationships ON DELETE SET NULL,
+  ADD COLUMN scope text NOT NULL DEFAULT 'client'    -- 'client' | 'internal'
+    CHECK (scope IN ('client','internal')),
+  ADD COLUMN core_workflow_id uuid REFERENCES workflows ON DELETE SET NULL;
+   -- declares the underlying workflow/capability this Quest advances
 
-**Edited files (5):**
-- `src/routes/_app.today.tsx` — add OCDA tile strip + Decision Queue widget inline.
-- `src/routes/_app.sparks.$id.tsx` — add Impact Preview strip + confetti on completion.
-- `src/routes/_app.delegation.index.tsx` — mount `<LizDependencyGauge>` at top.
-- `src/routes/_app.quests.$id.tsx` + `_app.journeys.$id.tsx` + `_app.components.$id.tsx` + `_app.relationships.$id.tsx` — add **Story Trail** tab.
-- `src/components/measures-panel.tsx` — small KR progress-bar tweak.
+ALTER TABLE sparks
+  ADD COLUMN relationship_id uuid REFERENCES relationships ON DELETE SET NULL,
+  ADD COLUMN scope text NOT NULL DEFAULT 'client'
+    CHECK (scope IN ('client','internal'));
 
-**Dependencies:**
-- `canvas-confetti` (~3KB).
+-- Backfill: existing quests/sparks → scope='internal' (they were yours).
+UPDATE quests SET scope='internal' WHERE relationship_id IS NULL;
+UPDATE sparks SET scope='internal' WHERE relationship_id IS NULL;
+```
 
-**Schema changes: none.** Everything composes existing data.
+A trigger keeps Spark.scope/relationship_id in sync with its parent Quest so they can never drift.
+
+### 2. Splash a clear filter on `/sparks` and `/quests`
+Top of page tab strip: **All · Internal (mine) · Client SweetSync** plus a relationship picker. Default = **Internal** so you stop seeing client work mixed in with your own. Each row gets a small "👤 Liz" or "🟣 {Client name}" chip so the scope is obvious at a glance.
+
+### 3. Rename one route group, add explainer headers
+- `/quests` and `/sparks` get a **PageHeader explainer** (canonical, from the doc): *"Sparks are the atomic unit of self-paced advancement. Sessions move things forward in a guided cadence; Sparks let progress happen between sessions. Both advance the same Components."*
+- New section in sidebar: under **SweetSync**, a single entry **"SweetSync (self-paced)"** that opens `/sweetsync` — a per-relationship board of that client's active Quests + Sparks. The existing `/sweetcycle` (session-led board) stays. Sidebar makes the two paths visually adjacent so the duality reads clearly.
+
+---
+
+## Tier 2 — Wire the two paths to one truth (the doc's core ask)
+
+### 4. The "Core Workflow" link — Quest → Workflow → Components
+The doc's core sentence: *each workflow/capability is the core object*. Today Quests just float. Add `quests.core_workflow_id` (above) so every Quest declares which underlying workflow/capability it advances. On Quest detail:
+- Top card shows the **Core Workflow** + its delivery variations (**Map · Machine · SweetSync** chips, click-to-toggle which variations apply).
+- Below, the existing **Components advanced** list — but now sourced from `workflows.workflow_components` so it's consistent with the session path.
+
+This is what closes the loop: a Session advancing Workflow X and a SweetSync Quest advancing Workflow X both write to the same Component maturity.
+
+### 5. Session ↔ SweetSync bridge widget
+On each `/relationships/$id` add a small **"Two paths · one truth"** strip:
+```text
+┌──────────────────── Workflow: Pre-call prep ────────────────────┐
+│ Session-led    ▶ 2 sessions held · last Apr 12 · Component 60% │
+│ Self-paced     ▶ 3 of 5 Sparks done · 2 awaiting confirm       │
+│                                                                 │
+│ Pre-filled from sessions: 4 inputs (✓ confirm to lock)          │
+└─────────────────────────────────────────────────────────────────┘
+```
+Reads from existing data (sessions + sparks tagged with the same `core_workflow_id`). No new table. Makes the bridge visible per the doc's *Section 3*.
+
+### 6. Story Trail honors the new model
+`<StoryTrail>` already exists. Tweak the chapter labels to use the doc's vocabulary:
+- "Spark completed by you" / "Spark completed with Liz" / "Spark completed for you" (mapped from `source_of_advancement` enum).
+- Show the **scope chip** (Internal vs Client name) on every chapter so a Component's Story Trail shows both paths interleaved truthfully.
+
+---
+
+## Tier 3 — Vocabulary cleanup ("compress" → out)
+
+A focused find/replace pass:
+- "compress / compression" → **"session-led" / "advance through sessions"**
+- Audit copy in: `/sweetcycle` PageHeader, `/sessions` explainers, Story Trail chapter labels, memory file `mem://features/sweetcycle-journey.md`, and the Engagement Plan explainer card.
+- Add a memory rule so I never reintroduce it: `mem://design/canon-vocabulary.md` → "Never use compress/compression. Sessions *advance*; SweetSync *self-paces*. Both write to one shared truth."
+
+---
+
+## Tier 4 — Honest "open decisions" surface (Section 14 of the doc)
+
+You said open decisions are not failures, they're decisions to mark honestly. Add a tiny `/settings/open-decisions` page that reads from a new `open_decisions` table (5 rows seeded from Section 14) — equivalency rules, maturity thresholds, evidence formalization, decomposition readiness. Each row is a placeholder we update as we calibrate. So you and I never pretend the system is more settled than it is.
+
+---
+
+## What I'm NOT doing this pass
+
+- ❌ Building the Vault/Portal client renderer (still phase-3).
+- ❌ Adding the 3Cs / governance lens UI (doc Section 6 — needed but not this pass).
+- ❌ Auto-equivalency rules for "Session work pre-fills SweetSync Sparks" — schema lands now (`source_of_advancement`, `confidence` already exist), wiring the *automatic pre-fill* is its own pass once we have one real client running both paths.
+- ❌ Renaming any tables. Sparks stay sparks. Quests stay quests.
+- ❌ Touching the BizzyBots gallery, OCDA Cockpit, or anything we just shipped.
+
+---
+
+## Total inventory
+
+**Migration (one):** add `relationship_id`, `scope`, `core_workflow_id` to quests; `relationship_id`, `scope` to sparks; sync trigger; seed `open_decisions` table.
+
+**New files (3):**
+- `src/components/scope-chip.tsx` — internal/client visual chip used everywhere a Spark/Quest is shown.
+- `src/components/two-paths-strip.tsx` — the bridge widget on relationship detail.
+- `src/routes/_app.sweetsync.tsx` — per-relationship self-paced board (mirrors `/sweetcycle` shape).
+
+**Edited files (~7):**
+- `src/routes/_app.sparks.index.tsx` + `_app.quests.index.tsx` — scope tabs + explainer header + scope chip on rows.
+- `src/routes/_app.sparks.$id.tsx` + `_app.quests.$id.tsx` — show scope, core workflow, relationship link.
+- `src/routes/_app.relationships.$id.tsx` — mount `<TwoPathsStrip>`.
+- `src/components/app-sidebar.tsx` — add `/sweetsync` next to `/sweetcycle`.
+- `src/components/story-trail.tsx` — scope chip on chapters; vocabulary tweaks.
+- Vocabulary sweep in `_app.sweetcycle.tsx`, `engagement-plans.$id.tsx`, memory files.
 
 **Memory:**
-- `mem://design/story-trail.md` — Story Trail is the canonical narrative read of any subject's progress.
-- Update `mem://index.md` Core: "Audit/progress reads as a Story Trail timeline; never a flat log when a Story Trail will do."
+- `mem://design/canon-vocabulary.md` (new) — never use "compress."
+- `mem://features/two-paths.md` (new) — Sessions advance, SweetSync self-paces, both write to one truth via `core_workflow_id`.
+- Update `mem://design/canon-sparks-vs-tasks.md` → add scope rule.
 
 ---
-
-## Why this is the right move
-
-You said: *"you're creating a lot of new things when maybe you should be optimizing"*. So:
-
-- **Tier 1 ships in one pass.** It's two new components and four edited routes.
-- **Story Trail is the headline.** It changes how you *read* the system without rebuilding it.
-- **Tier 2 is in-place polish.** Sparks, /today, /delegation get sharper without new pages.
-- **Tier 3 is parked, not deleted.** When onboarding becomes the bottleneck or the BizzyBots gallery actually feels cluttered, we revisit.
 
 ## Suggested order
 
-1. **Story Trail** — `<StoryTrail>` component + Quest detail mount. *Single highest-impact change. Ship and feel it.*
-2. **Mount Story Trail** on Journeys, Components, Relationships.
-3. **`/today` enrichment** + **Liz Dependency gauge**.
-4. **Spark Impact Preview + confetti**.
-5. **MeasuresPanel KR bar tweak**.
+1. **Migration + scope chips on lists** — you immediately stop seeing client work mixed with yours.
+2. **Sidebar `/sweetsync` board** — per-client self-paced view goes live.
+3. **Two-paths strip on relationship detail** — the bridge becomes visible.
+4. **Vocabulary sweep + open-decisions page** — clean copy + honest unknowns.
 
-Each step is 30–90 minutes and shippable on its own.
+Each step ships independently. Approve and I start at #1.
 
