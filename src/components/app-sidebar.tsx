@@ -50,6 +50,7 @@ const PRIMARY: NavGroup[] = [
   {
     label: "Operate",
     items: [
+      { to: "/journey", label: "Journey", icon: Map },
       { to: "/relationships", label: "Relationships", icon: Users },
       { to: "/engagement-plans", label: "Engagement Plans", icon: Compass },
       { to: "/domains", label: "Domains", icon: Gauge },
