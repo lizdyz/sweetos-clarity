@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { OperatorAssignmentsPanel } from "@/components/operator-assignments-panel";
+import { StoryTrail } from "@/components/story-trail";
 
 export const Route = createFileRoute("/_app/operators/$id")({
   component: OperatorDetailPage,
@@ -181,6 +182,8 @@ function OperatorDetailPage() {
       <OperatorAssignmentsPanel operatorId={id} />
 
       <MeasuresPanel subjectType="operator" subjectId={id} />
+
+      <StoryTrail subjectKind="operator" subjectId={id} />
     </div>
   );
 }

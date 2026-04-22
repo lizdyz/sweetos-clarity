@@ -13,12 +13,21 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type StorySubjectKind = "quest" | "journey" | "component" | "relationship";
+export type StorySubjectKind =
+  | "quest"
+  | "journey"
+  | "component"
+  | "relationship"
+  | "operator"
+  | "workspace";
 
 interface Props {
   subjectKind: StorySubjectKind;
-  subjectId: string;
+  /** Required for everything except `workspace`. */
+  subjectId?: string;
   className?: string;
+  /** How many beats to show (default 20). */
+  limit?: number;
 }
 
 type Beat = {
@@ -33,20 +42,40 @@ type Beat = {
 };
 
 /**
- * StoryTrail — chronological narrative of a Quest / Journey / Component / Relationship.
- * Composes existing data (sparks, decisions, component_outputs, audit log) into chapters.
+ * StoryTrail — chronological narrative of a Quest / Journey / Component /
+ * Relationship / Operator, or the whole Workspace (master view).
+ * Composes existing data into chapters; never a new table.
+ * See `mem://design/story-trail.md`.
  */
-export function StoryTrail({ subjectKind, subjectId, className }: Props) {
+export function StoryTrail({ subjectKind, subjectId, className, limit = 20 }: Props) {
+  const isWorkspace = subjectKind === "workspace";
+
   const { data: sparks = [] } = useQuery({
     queryKey: ["story-trail", "sparks", subjectKind, subjectId],
     queryFn: async () => {
-      // Sparks are tied to quests. For component/relationship, follow sparks via quests.
-      if (subjectKind === "quest") {
+      if (subjectKind === "quest" && subjectId) {
         const { data } = await supabase
           .from("sparks")
           .select("id, name, spark_type, progression_state, sequence_order, captured_answer, created_at, done_at, quest_id")
           .eq("quest_id", subjectId)
           .order("sequence_order", { ascending: true });
+        return data ?? [];
+      }
+      if (subjectKind === "operator" && subjectId) {
+        const { data } = await supabase
+          .from("sparks")
+          .select("id, name, spark_type, progression_state, captured_answer, created_at, done_at")
+          .eq("generator_operator_id", subjectId)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        return data ?? [];
+      }
+      if (isWorkspace) {
+        const { data } = await supabase
+          .from("sparks")
+          .select("id, name, spark_type, progression_state, captured_answer, created_at, done_at")
+          .order("created_at", { ascending: false })
+          .limit(limit);
         return data ?? [];
       }
       return [];
@@ -56,7 +85,7 @@ export function StoryTrail({ subjectKind, subjectId, className }: Props) {
   const { data: outputs = [] } = useQuery({
     queryKey: ["story-trail", "outputs", subjectKind, subjectId],
     queryFn: async () => {
-      if (subjectKind === "component") {
+      if (subjectKind === "component" && subjectId) {
         const { data } = await supabase
           .from("component_outputs")
           .select("id, title, output_kind, status, generated_at, created_at, component_id")
@@ -64,12 +93,29 @@ export function StoryTrail({ subjectKind, subjectId, className }: Props) {
           .order("created_at", { ascending: true });
         return data ?? [];
       }
-      if (subjectKind === "relationship") {
+      if (subjectKind === "relationship" && subjectId) {
         const { data } = await supabase
           .from("component_outputs")
           .select("id, title, output_kind, status, generated_at, created_at, for_relationship_id")
           .eq("for_relationship_id", subjectId)
           .order("created_at", { ascending: true });
+        return data ?? [];
+      }
+      if (subjectKind === "operator" && subjectId) {
+        const { data } = await supabase
+          .from("component_outputs")
+          .select("id, title, output_kind, status, generated_at, created_at")
+          .eq("generated_by_operator_id", subjectId)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        return data ?? [];
+      }
+      if (isWorkspace) {
+        const { data } = await supabase
+          .from("component_outputs")
+          .select("id, title, output_kind, status, generated_at, created_at")
+          .order("created_at", { ascending: false })
+          .limit(limit);
         return data ?? [];
       }
       return [];
@@ -85,7 +131,14 @@ export function StoryTrail({ subjectKind, subjectId, className }: Props) {
           .select("id, decision, context, date_made, created_at, related_project_id")
           .order("created_at", { ascending: true })
           .limit(50);
-        // Heuristic: tied via project for this rel — keep simple, return all and let UI render
+        return data ?? [];
+      }
+      if (isWorkspace) {
+        const { data } = await supabase
+          .from("decisions")
+          .select("id, decision, context, date_made, created_at")
+          .order("created_at", { ascending: false })
+          .limit(limit);
         return data ?? [];
       }
       return [];
@@ -95,13 +148,33 @@ export function StoryTrail({ subjectKind, subjectId, className }: Props) {
   const { data: audit = [] } = useQuery({
     queryKey: ["story-trail", "audit", subjectKind, subjectId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("entity_audit_log")
-        .select("id, change_type, field, source, created_at, notes, subject_kind, subject_id")
-        .eq("subject_id", subjectId)
-        .order("created_at", { ascending: true })
-        .limit(50);
-      return data ?? [];
+      if (isWorkspace) {
+        const { data } = await supabase
+          .from("entity_audit_log")
+          .select("id, change_type, field, source, created_at, notes, subject_kind, subject_id")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        return data ?? [];
+      }
+      if (subjectKind === "operator" && subjectId) {
+        const { data } = await supabase
+          .from("entity_audit_log")
+          .select("id, change_type, field, source, created_at, notes, subject_kind, subject_id")
+          .eq("operator_id", subjectId)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        return data ?? [];
+      }
+      if (subjectId) {
+        const { data } = await supabase
+          .from("entity_audit_log")
+          .select("id, change_type, field, source, created_at, notes, subject_kind, subject_id")
+          .eq("subject_id", subjectId)
+          .order("created_at", { ascending: true })
+          .limit(50);
+        return data ?? [];
+      }
+      return [];
     },
   });
 
@@ -151,19 +224,24 @@ export function StoryTrail({ subjectKind, subjectId, className }: Props) {
         at: a.created_at,
         state: "done",
       })),
-  ].sort((a, b) => {
-    const ta = a.at ? new Date(a.at).getTime() : 0;
-    const tb = b.at ? new Date(b.at).getTime() : 0;
-    return ta - tb;
-  });
+  ]
+    .sort((a, b) => {
+      const ta = a.at ? new Date(a.at).getTime() : 0;
+      const tb = b.at ? new Date(b.at).getTime() : 0;
+      // Workspace + operator views: most recent first.
+      return isWorkspace || subjectKind === "operator" ? tb - ta : ta - tb;
+    })
+    .slice(0, isWorkspace || subjectKind === "operator" ? limit : undefined);
 
   const isLoading = !sparks && !outputs && !decisions && !audit;
+
+  const titleText = isWorkspace ? "Master story trail" : "Story trail";
 
   return (
     <section className={cn("panel-raised p-5", className)}>
       <header className="mb-4 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-[color:var(--iris-violet)]" />
-        <h2 className="text-sm font-semibold">Story trail</h2>
+        <h2 className="text-sm font-semibold">{titleText}</h2>
         <span className="ml-auto text-[11px] text-muted-foreground">
           {beats.length} {beats.length === 1 ? "chapter" : "chapters"}
         </span>
@@ -179,7 +257,6 @@ export function StoryTrail({ subjectKind, subjectId, className }: Props) {
         </p>
       ) : (
         <ol className="relative space-y-3 pl-6">
-          {/* spine */}
           <span
             aria-hidden
             className="absolute left-[10px] top-1 bottom-1 w-px bg-gradient-to-b from-[color:var(--iris-violet)]/30 via-border to-transparent"

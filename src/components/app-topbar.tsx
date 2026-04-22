@@ -1,8 +1,12 @@
+import { useEffect, useState } from "react";
+import { useLocation } from "@tanstack/react-router";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Moon, Search, Sun, Sparkles, LogOut } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Moon, Search, Sun, Sparkles, LogOut, Menu } from "lucide-react";
+import { SidebarNav } from "@/components/sidebar-nav";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +19,38 @@ import {
 export function AppTopBar() {
   const { theme, toggle } = useTheme();
   const { user, isAdmin, signOut } = useAuth();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const location = useLocation();
+
+  // Auto-close mobile drawer on route change.
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/70 px-5 backdrop-blur-xl">
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-xl md:hidden"
+            aria-label="Open navigation"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent
+          side="left"
+          className="w-72 border-sidebar-border bg-sidebar/95 p-0 backdrop-blur-xl"
+        >
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <div className="flex h-full flex-col">
+            <SidebarNav onNavigate={() => setMobileNavOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <div className="relative flex max-w-md flex-1 items-center">
         <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" />
         <Input

@@ -6,6 +6,8 @@ import {
   Sparkles, CheckSquare, CalendarClock, Eye, GitBranch, Diamond, Zap,
   Trophy, ShieldCheck, TrendingUp, Lightbulb, Megaphone, FolderKanban,
 } from "lucide-react";
+import { FiredKtisStrip } from "@/components/fired-ktis-strip";
+import { MasterStoryTrail } from "@/components/master-story-trail";
 
 export const Route = createFileRoute("/_app/today")({
   component: TodayPage,
@@ -132,6 +134,9 @@ function TodayPage() {
           <p className="text-sm text-muted-foreground">{format(new Date(), "EEEE, MMMM d")}</p>
         </div>
       </div>
+
+      <FiredKtisStrip />
+      <MasterStoryTrail />
 
       <div className="mb-5 grid gap-3 lg:grid-cols-[2fr_1fr]">
         <OcdaTileStrip />

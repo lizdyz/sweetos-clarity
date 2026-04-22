@@ -16,5 +16,7 @@ Rules:
 - Audit/progress reads as a Story Trail timeline; never a flat log when a Story Trail will do.
 - `done` = emerald check; `active` = pulsing iris ring; `locked` = dim.
 - Ordered chronologically by `done_at ?? created_at`.
-- Mounted as the bottom panel on `/quests/$id`, `/journeys/$id`, `/components/$id`, `/relationships/$id`.
+- Mounted as the bottom panel on `/quests/$id`, `/journeys/$id`, `/components/$id`, `/relationships/$id`, `/operators/$id`.
+- `subjectKind="workspace"` is the **Master Story Trail** — last N beats across the whole workspace; mounted at the top of `/today` (collapsible) as the daily narrative glance.
+- `subjectKind="operator"` traces an operator's sparks (via `generator_operator_id`), component outputs (via `generated_by_operator_id`), and audit log entries (via `operator_id`).
 - This is the basis of the future client portal recap.
