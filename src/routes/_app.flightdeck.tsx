@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
@@ -7,6 +8,9 @@ import { AlertCircle, ArrowRight, Clock, ExternalLink, Plane } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { StageSwimlanes } from "@/components/stage-swimlanes";
 import { useDragToStatus } from "@/hooks/use-drag-to-status";
+import { DueDateChip } from "@/components/due-date-chip";
+import { SERVICE_PACKAGE, SERVICE_PACKAGE_BADGE, type ServicePackage } from "@/lib/enums";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/flightdeck")({
   component: FlightdeckPage,
@@ -77,6 +81,8 @@ function OwnerPill({ owner }: { owner: JourneyRow["next_action_owner"] }) {
 
 function FlightdeckPage() {
   const navigate = useNavigate();
+  const [pkgFilter, setPkgFilter] = useState<"All" | ServicePackage | "Unscoped">("All");
+
   const { data: rows, isLoading } = useQuery<JourneyRow[]>({
     queryKey: ["relationship-journey"],
     queryFn: async () => {
@@ -89,6 +95,23 @@ function FlightdeckPage() {
     },
   });
 
+  const { data: packages = [] } = useQuery<Array<{ id: string; service_package: string | null }>>({
+    queryKey: ["relationships", "service-packages-all"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("relationships")
+        .select("id, service_package");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const pkgById = useMemo(() => {
+    const m = new Map<string, string | null>();
+    packages.forEach((p) => m.set(p.id, p.service_package));
+    return m;
+  }, [packages]);
+
   const moveStage = useDragToStatus({
     table: "relationships",
     field: "pipeline_stage",
@@ -96,7 +119,14 @@ function FlightdeckPage() {
     invalidate: [["relationship-journey"], ["relationships"]],
   });
 
-  const items = (rows ?? []).map((r) => ({
+  const filteredRows = (rows ?? []).filter((r) => {
+    if (pkgFilter === "All") return true;
+    const p = pkgById.get(r.relationship_id) ?? null;
+    if (pkgFilter === "Unscoped") return !p;
+    return p === pkgFilter;
+  });
+
+  const items = filteredRows.map((r) => ({
     id: r.relationship_id,
     stage: normalizeStage(r.current_stage),
     row: r,
@@ -105,12 +135,18 @@ function FlightdeckPage() {
   const today = new Date();
   const week = new Date();
   week.setDate(today.getDate() + 7);
-  const batons = (rows ?? []).filter((r) => {
+  const batons = filteredRows.filter((r) => {
     if (!r.next_action_due) return false;
     const d = new Date(r.next_action_due);
     return d >= new Date(today.toDateString()) && d <= week;
   });
-  const atRisk = (rows ?? []).filter((r) => r.drift_risk || r.current_blocker);
+  const atRisk = filteredRows.filter((r) => r.drift_risk || r.current_blocker);
+
+  const filterChips: Array<"All" | ServicePackage | "Unscoped"> = [
+    "All",
+    ...SERVICE_PACKAGE,
+    "Unscoped",
+  ];
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-6 p-6">
@@ -126,11 +162,26 @@ function FlightdeckPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-[10px] uppercase tracking-wider text-muted-foreground">Package</span>
+        {filterChips.map((p) => (
+          <Button
+            key={p}
+            size="sm"
+            variant={pkgFilter === p ? "default" : "outline"}
+            onClick={() => setPkgFilter(p)}
+            className="h-6 px-2 text-[11px]"
+          >
+            {p}
+          </Button>
+        ))}
+      </div>
+
       <Card className="p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold tracking-tight">Stage swimlanes</h2>
           <span className="text-[11px] text-muted-foreground">
-            {rows?.length ?? 0} relationships · {isLoading ? "loading…" : "drag to advance"}
+            {filteredRows.length} of {rows?.length ?? 0} relationships · {isLoading ? "loading…" : "drag to advance"}
           </span>
         </div>
         <StageSwimlanes
@@ -138,40 +189,51 @@ function FlightdeckPage() {
           hints={STAGE_HINTS}
           items={items}
           onMove={(id, newStage) => moveStage.mutate({ id, value: newStage })}
-          renderCard={({ row: r }) => (
-            <div
-              onClick={() => navigate({ to: "/relationships/$id", params: { id: r.relationship_id } })}
-              className="rounded-lg border border-border/50 bg-background p-2 text-xs shadow-sm transition-all hover:border-iris/40"
-            >
-              <div className="line-clamp-1 font-medium">{r.name}</div>
-              <div className="mt-1 flex items-center justify-between gap-1">
-                <span className="line-clamp-1 text-[10px] text-muted-foreground">
-                  {r.primary_service ?? "—"}
-                </span>
-                <OwnerPill owner={r.next_action_owner} />
-              </div>
-              {r.next_action_due && (
-                <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <Clock className="h-2.5 w-2.5" />
-                  {r.next_action_due}
+          renderCard={({ row: r }) => {
+            const pkg = pkgById.get(r.relationship_id) as ServicePackage | null;
+            return (
+              <div
+                onClick={() => navigate({ to: "/relationships/$id", params: { id: r.relationship_id } })}
+                className="rounded-lg border border-border/50 bg-background p-2 text-xs shadow-sm transition-all hover:border-iris/40"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <div className="line-clamp-1 font-medium">{r.name}</div>
+                  {pkg && (
+                    <Badge variant="secondary" className="h-4 text-[9px]">
+                      {SERVICE_PACKAGE_BADGE[pkg]}
+                    </Badge>
+                  )}
                 </div>
-              )}
-              {r.latest_portal_url && (
-                <a
-                  href={r.latest_portal_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="mt-1 inline-flex items-center gap-1 text-[10px] text-[color:var(--iris-violet)] hover:underline"
-                >
-                  <ExternalLink className="h-2.5 w-2.5" />
-                  Portal
-                </a>
-              )}
-            </div>
-          )}
+                <div className="mt-1 flex items-center justify-between gap-1">
+                  <span className="line-clamp-1 text-[10px] text-muted-foreground">
+                    {r.primary_service ?? "—"}
+                  </span>
+                  <OwnerPill owner={r.next_action_owner} />
+                </div>
+                {r.next_action_due && (
+                  <div className="mt-1">
+                    <DueDateChip due={r.next_action_due} />
+                  </div>
+                )}
+                {r.latest_portal_url && (
+                  <a
+                    href={r.latest_portal_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1 inline-flex items-center gap-1 text-[10px] text-[color:var(--iris-violet)] hover:underline"
+                  >
+                    <ExternalLink className="h-2.5 w-2.5" />
+                    Portal
+                  </a>
+                )}
+              </div>
+            );
+          }}
         />
       </Card>
+
+      <DueThisWeekPanel />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4">
@@ -325,5 +387,105 @@ function ComponentsInFlightPanel() {
         </div>
       )}
     </Card>
+  );
+}
+
+function DueThisWeekPanel() {
+  const today = new Date();
+  const weekEnd = new Date();
+  weekEnd.setDate(today.getDate() + 7);
+  const todayIso = today.toISOString().slice(0, 10);
+  const weekEndIso = weekEnd.toISOString().slice(0, 10);
+
+  const { data: tasks = [] } = useQuery<Array<{ id: string; title: string; due_date: string }>>({
+    queryKey: ["due-week", "tasks", todayIso],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("tasks")
+        .select("id, title, due_date, status")
+        .gte("due_date", todayIso)
+        .lte("due_date", weekEndIso)
+        .order("due_date");
+      if (error) return [];
+      return (data ?? []).filter((t: { status?: string }) => (t.status ?? "") !== "Done");
+    },
+  });
+
+  const { data: projects = [] } = useQuery<Array<{ id: string; name: string; deadline: string }>>({
+    queryKey: ["due-week", "projects", todayIso],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("projects")
+        .select("id, name, deadline")
+        .gte("deadline", todayIso)
+        .lte("deadline", weekEndIso)
+        .order("deadline");
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
+  const { data: campaigns = [] } = useQuery<Array<{ id: string; campaign_name: string; deadline: string }>>({
+    queryKey: ["due-week", "campaigns", todayIso],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("campaigns")
+        .select("id, campaign_name, deadline")
+        .gte("deadline", todayIso)
+        .lte("deadline", weekEndIso)
+        .order("deadline");
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
+  const total = tasks.length + projects.length + campaigns.length;
+
+  return (
+    <Card className="p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold tracking-tight">Due this week</h2>
+        <Badge variant="secondary" className="h-5 text-[10px]">{total}</Badge>
+      </div>
+      {total === 0 ? (
+        <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-6 text-center text-xs text-muted-foreground">
+          Nothing due in the next 7 days.
+        </div>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-3">
+          <DueGroup title="Tasks" items={tasks.map((t) => ({ id: t.id, label: t.title, due: t.due_date, to: "/tasks/$id" }))} />
+          <DueGroup title="Projects" items={projects.map((p) => ({ id: p.id, label: p.name, due: p.deadline, to: "/projects/$id" }))} />
+          <DueGroup title="Campaigns" items={campaigns.map((c) => ({ id: c.id, label: c.campaign_name, due: c.deadline, to: "/campaigns/$id" }))} />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function DueGroup({ title, items }: { title: string; items: Array<{ id: string; label: string; due: string; to: string }> }) {
+  return (
+    <div className="rounded-xl border border-border/50 bg-card/40 p-2.5">
+      <div className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {title} · {items.length}
+      </div>
+      {items.length === 0 ? (
+        <div className="px-1 py-2 text-[11px] text-muted-foreground">None</div>
+      ) : (
+        <ul className="space-y-1">
+          {items.map((it) => (
+            <li key={`${title}-${it.id}`}>
+              <Link
+                to={it.to}
+                params={{ id: it.id }}
+                className="flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-background p-2 text-xs hover:border-iris/40"
+              >
+                <span className="line-clamp-1 flex-1">{it.label}</span>
+                <DueDateChip due={it.due} showIcon={false} />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
