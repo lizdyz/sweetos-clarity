@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, Sparkles, Plus, Save, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,10 +91,11 @@ function ExcellenceSettings() {
   });
 
   // Default-select first subject of the chosen kind so the page never looks blank
-  if (!subjectId && (subjectsQ.data?.length ?? 0) > 0) {
-    const first = subjectsQ.data![0]!;
-    setTimeout(() => setSubjectId(first.id), 0);
-  }
+  useEffect(() => {
+    if (!subjectId && (subjectsQ.data?.length ?? 0) > 0) {
+      setSubjectId(subjectsQ.data![0]!.id);
+    }
+  }, [subjectId, subjectsQ.data]);
 
   const cellsQ = useQuery({
     queryKey: ["settings-cells", kind, subjectId],
