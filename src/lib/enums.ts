@@ -143,3 +143,21 @@ export const OUTCOME_TYPE = [
 ] as const;
 
 export const DECISION_STATUS = ["Open","Decided","Superseded"] as const;
+
+// Phase 2.8 — funnel + engagement
+export const AWARENESS_TIER = [
+  "Unaware","Problem-aware","Solution-aware","Product-aware","Most-aware",
+] as const;
+export const RELATIONSHIP_TEMPERATURE = ["Warm","Cool","Cold","Paused"] as const;
+export const DRIFT_RISK = ["None","Low","Medium","High"] as const;
+export const ENGAGEMENT_PLAN_STATUS = [
+  "Proposed","Accepted","In Progress","Completed","Cancelled",
+] as const;
+export const ENGAGEMENT_SERVICE_TYPE = [
+  "Mirror","Map","Machine","SweetSync","SweetConnect",
+] as const;
+export const ENGAGEMENT_SERVICE_STATUS = [
+  "Not Started","Active","Paused","Completed","Renewed","Cancelled",
+] as const;
+export const SESSION_PHASE = ["Pre-Engagement","Deliverable","Follow-up"] as const;
+export const REUSABILITY_TIER = ["One-Time","Relationship","Org","System"] as const;
