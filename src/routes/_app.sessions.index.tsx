@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { sb as supabase } from "@/lib/sb";
 import { EntityListPage } from "@/components/entity-workspace";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 
 export const Route = createFileRoute("/_app/sessions/")({
   component: SessionsIndex,
@@ -54,8 +56,20 @@ function SessionsIndex() {
 
   return (
     <div className="space-y-3">
+      <div className="px-6 pt-6">
+        <PageHeader
+          icon={<CalendarIcon className="h-5 w-5" />}
+          title="Sessions Bank"
+          purpose="All Mirror, Map, Machine, and Sync sessions — past, scheduled, and templated. Sessions advance the underlying workflow through guided cadence; SweetSync self-paces the same work between them."
+          whatYouCanDo={[
+            "Filter by service type to focus on Mirror / Map / Machine / Sync",
+            "See past sessions, today's live ones (status chip), and what's scheduled",
+            "Open a session to capture outcomes, decisions, and Component movement",
+          ]}
+        />
+      </div>
       {serviceTypes.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 px-6 pt-4">
+        <div className="flex flex-wrap items-center gap-1.5 px-6 pt-2">
           <span className="mr-1 text-[10px] uppercase tracking-wider text-muted-foreground">
             Service type
           </span>
