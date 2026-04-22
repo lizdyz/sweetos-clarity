@@ -389,3 +389,103 @@ function ComponentsInFlightPanel() {
     </Card>
   );
 }
+
+function DueThisWeekPanel() {
+  const today = new Date();
+  const weekEnd = new Date();
+  weekEnd.setDate(today.getDate() + 7);
+  const todayIso = today.toISOString().slice(0, 10);
+  const weekEndIso = weekEnd.toISOString().slice(0, 10);
+
+  const { data: tasks = [] } = useQuery<Array<{ id: string; title: string; due_date: string }>>({
+    queryKey: ["due-week", "tasks", todayIso],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("tasks")
+        .select("id, title, due_date, status")
+        .gte("due_date", todayIso)
+        .lte("due_date", weekEndIso)
+        .order("due_date");
+      if (error) return [];
+      return (data ?? []).filter((t: { status?: string }) => (t.status ?? "") !== "Done");
+    },
+  });
+
+  const { data: projects = [] } = useQuery<Array<{ id: string; name: string; deadline: string }>>({
+    queryKey: ["due-week", "projects", todayIso],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("projects")
+        .select("id, name, deadline")
+        .gte("deadline", todayIso)
+        .lte("deadline", weekEndIso)
+        .order("deadline");
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
+  const { data: campaigns = [] } = useQuery<Array<{ id: string; campaign_name: string; deadline: string }>>({
+    queryKey: ["due-week", "campaigns", todayIso],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("campaigns")
+        .select("id, campaign_name, deadline")
+        .gte("deadline", todayIso)
+        .lte("deadline", weekEndIso)
+        .order("deadline");
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
+  const total = tasks.length + projects.length + campaigns.length;
+
+  return (
+    <Card className="p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold tracking-tight">Due this week</h2>
+        <Badge variant="secondary" className="h-5 text-[10px]">{total}</Badge>
+      </div>
+      {total === 0 ? (
+        <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-6 text-center text-xs text-muted-foreground">
+          Nothing due in the next 7 days.
+        </div>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-3">
+          <DueGroup title="Tasks" items={tasks.map((t) => ({ id: t.id, label: t.title, due: t.due_date, to: "/tasks/$id" }))} />
+          <DueGroup title="Projects" items={projects.map((p) => ({ id: p.id, label: p.name, due: p.deadline, to: "/projects/$id" }))} />
+          <DueGroup title="Campaigns" items={campaigns.map((c) => ({ id: c.id, label: c.campaign_name, due: c.deadline, to: "/campaigns/$id" }))} />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function DueGroup({ title, items }: { title: string; items: Array<{ id: string; label: string; due: string; to: string }> }) {
+  return (
+    <div className="rounded-xl border border-border/50 bg-card/40 p-2.5">
+      <div className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {title} · {items.length}
+      </div>
+      {items.length === 0 ? (
+        <div className="px-1 py-2 text-[11px] text-muted-foreground">None</div>
+      ) : (
+        <ul className="space-y-1">
+          {items.map((it) => (
+            <li key={`${title}-${it.id}`}>
+              <Link
+                to={it.to}
+                params={{ id: it.id }}
+                className="flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-background p-2 text-xs hover:border-iris/40"
+              >
+                <span className="line-clamp-1 flex-1">{it.label}</span>
+                <DueDateChip due={it.due} showIcon={false} />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
