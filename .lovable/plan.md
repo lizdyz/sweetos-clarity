@@ -1,116 +1,102 @@
 
 
-# Phase 2.10j: Domain & Tenet crib sheets — Lens-aware best-practice pages
+# Phase 2.10k: Operator assignments — done right (not inside the create modal)
 
-You want every Domain page and every Tenet page to feel like opening a **field guide** for that entity: quick facts up top, then the canonical Lenses (OCDA, 4Ds, 5Ps, 5Ls, Gestalt, 3Cs, Co-Evolution, Rhetorical) each weighing in *from their own perspective* on this specific Domain or Tenet. The BizzyBots (F1–F8) are the visual personas that voice each Lens.
+## Your instinct is right. The placement is wrong.
 
-You also named the deeper pattern correctly: this is a **system-level transformation layer**, not eight hand-written paragraphs per entity. One AI pass per (entity × lens) pair, cached, regenerated on demand. The page just renders what's cached.
+You're seeing the gap that an Operator should be hooked into **what they do**: projects, tasks, components, workflows. That belongs on the **operator detail page**, not the "New operator" creation modal. Here's the reasoning, then the fix.
 
-Here's how it lands.
+### Why not in the create dialog
+- A brand-new operator has no skills/availability filled in yet — assigning work *before* you know what they're good at produces bad assignments.
+- Creation should stay a 5-second action. Pile on assignments and people abandon mid-flow.
+- Real-world flow: create → describe (skills/likes/dislikes) → *then* assign work, often days later as needs come up.
+- Workflows and components don't get *assigned to* operators the same way tasks do — they need different verbs (own, contribute, run-as).
 
-## The data model
+### What "assign work to an operator" actually means per entity
 
-### One new canon table — `lenses`
-Seeded with the 8 BizzyBots so they're a first-class catalog (not hardcoded strings):
-- `code` (F1–F8), `name` ("OCDA"), `tagline` ("Observe → Choose → Decide → Act"), `what_it_asks`, `best_use`, `stages text[]` (the ordered phases), `bizzybot_emoji / icon_key`, `accent_color`, `sort_order`.
-- Read-only canon. Seeded by the migration. Editable only by admin via a future Lens settings screen.
+| Entity | Verb | Already in schema? | Where it lands |
+|---|---|---|---|
+| **Tasks** | assign (`tasks.operator_id`) | ✅ yes | Operator detail → Tasks tab |
+| **Projects** | own/lead (new `projects.operator_id`) | ❌ needs column | Operator detail → Projects tab |
+| **Components** | contribute (uses existing `project_components` indirectly via project ownership; **direct** ownership = new `components.responsible_operator_id`) | ❌ needs column | Operator detail → Components tab |
+| **Workflows** | run-as (already supported: `operators.workflow_id` makes the operator BE a workflow) | ✅ yes | Already shown |
+| **Sessions** | facilitate (new `sessions.operator_id`) | ❌ needs column | Operator detail → Sessions tab |
 
-### One new content table — `lens_perspectives`
-The cached AI-generated crib sheet content:
-- `id`, `lens_id` (→ lenses), `subject_kind` enum (`domain | tenet | component | relationship | mission | project`), `subject_id uuid`
-- `quick_facts text[]` — 3–5 punchy bullets for the top of the page
-- `perspective_md text` — markdown body: how this Lens sees this Domain/Tenet, walked through that Lens's own stages
-- `key_questions text[]` — 3–5 questions this Lens would force you to answer
-- `watch_outs text[]` — what this Lens warns about for this entity
-- `next_actions text[]` — recommended next moves through this Lens
-- `generated_at timestamptz`, `generated_by_model text`, `confidence numeric`, `version int`
-- `is_pinned bool` (user can pin a hand-edited version so AI re-runs don't overwrite)
-- Unique on `(lens_id, subject_kind, subject_id, version)`; latest version is what renders.
+## What I'll build
 
-### One new top-of-page artifact — `entity_crib_sheets`
-The *cross-Lens summary* that sits above the per-Lens cards:
-- `subject_kind`, `subject_id`, `tldr text`, `core_principles text[]`, `quick_facts text[]`, `common_pitfalls text[]`, `signature_metrics text[]`, `generated_at`, `version`, `is_pinned`.
-- One row per entity. Generated from the union of all Lens perspectives + the entity's own metadata (description, tagged_components, related sessions, etc.).
+### 1. Schema migration — minimal, additive
+Add nullable `operator_id` columns to:
+- `projects` (lead/owner)
+- `components` (responsible_operator_id)
+- `sessions` (facilitator)
 
-## The generation pipeline
+Each gets an index. RLS already covers via existing policies.
 
-**Server function `generate_lens_perspectives(subject_kind, subject_id, lens_codes?)`** in `src/utils/lenses.functions.ts`:
-- Pulls the entity's row + description + any related rows (components linked, tenets in the same category, recent sessions/projects mentioning it, current maturity level if any).
-- For each requested Lens (default: all 8 if missing or stale), calls Lovable AI Gateway with a tight system prompt: *"You are the {LensName} BizzyBot. Walk through {Domain/Tenet name} using your stages: {stages}. Output JSON: quick_facts, perspective_md, key_questions, watch_outs, next_actions."*
-- Writes results to `lens_perspectives` (new version row).
-- Then fires a final consolidation call to produce the `entity_crib_sheets` row from all 8 perspectives.
-- Returns the freshly written rows.
+### 2. Operator detail page — new "Assignments" section with 4 tabs
+Replace the current single "Open tasks" card with a tabbed assignments panel directly under skills/likes/dislikes:
 
-**Triggers for regeneration:**
-- Manual "Regenerate" button on the page header (admin-only).
-- Auto on first view if no perspective exists for that entity (lazy generation, with a skeleton state).
-- Stale flag if the entity description or related taxonomy changed since last generation.
+```
+┌─ Assignments ─────────────────────────────────────┐
+│ [Tasks 7] [Projects 2] [Components 3] [Sessions 1]│
+│ ─────────────────────────────────────────────────│
+│ • Task name                       Due · Status    │
+│ • ...                                              │
+│                            [+ Assign existing →]   │
+└────────────────────────────────────────────────────┘
+```
 
-## The page UI
+Each tab:
+- Lists current assignments (linked rows).
+- Has a **"+ Assign existing"** button → opens a searchable picker (combobox) of unassigned-or-reassignable rows of that type, filtered to ones whose tags overlap with the operator's `skills`.
+- Has a **"+ Create new"** quick action that opens that entity's create dialog with `operator_id` pre-set to the current operator.
 
-### Domain detail page (`_app.domains.$slug.tsx`) and Tenet detail page (`_app.tenets.$slug.tsx`) get a new section beneath the existing header & ExcellenceMatrix:
+### 3. Smart suggestions — small but high-value
+Above each tab list, a "Suggested for {operator name}" strip surfaces 3 unassigned items where:
+- **Tasks**: `tasks.operator_id IS NULL` and `tagged_components` overlaps with components this operator already owns, OR the task's tagged_domains/tenets overlaps the operator's `skills`.
+- **Projects**: `projects.operator_id IS NULL` and tagged_domains overlaps skills.
+- **Components**: `components.responsible_operator_id IS NULL` and `related_domains` overlaps skills.
+- **Sessions**: upcoming sessions on engagement_services where the operator has a relevant skill OR is already on the relationship.
 
-**1. Crib Sheet card** (top, premium, light)
-- Pulled from `entity_crib_sheets`.
-- Layout: TL;DR sentence · 5 quick facts as chips · Core Principles list · Signature Metrics chips · Common Pitfalls callout.
+One-click "Assign" on any suggestion. No drag, no modal.
 
-**2. Lens Wall** — 8 BizzyBot cards in a responsive grid (4×2 desktop, 2×4 tablet, stacked mobile)
-- Each card is a `<LensPerspectiveCard>`:
-  - Header: BizzyBot icon + Lens name + tagline (color-accented per Lens).
-  - The Lens's stages rendered as a horizontal mini-strip ("Observe → Choose → Decide → Act") with each stage tooltip-revealing a 1-line "what this stage means here for {Domain}".
-  - Body tabs: **Perspective** (markdown) / **Questions** / **Watch-outs** / **Next Actions**.
-  - Footer: "generated {timeago} by {model}" + Regenerate (admin) + Pin (admin).
-- Cards are **collapsible** (chevron on each), with a header toggle "Expand all / Collapse all".
-- A compact mode toggle: switch the wall from "full cards" to "lens chips with hover-popover" for a denser scan.
+### 4. Reverse direction — show on the entity side too
+On Project detail, Task detail, Component detail, Session detail: a small "Operator" pill near the header showing who owns/leads/facilitates. Click → opens an inline picker to reassign. (This uses the existing `OperatorChip` pattern from tasks.)
 
-**3. Lens Spotlight** — top-right floating chip selector
-- Picks 1 of 8 to feature larger ("Show me OCDA's view"). Useful when a user wants to read just one lens at a time. Selection persists in URL search param `?lens=F1`.
+### 5. Keep create dialog clean
+The "New operator" modal stays as-is — name, kind, profile/workflow/model/prompt only. After create, redirect to `/operators/{id}` so you immediately land on the page where assignments live. That's the natural next step.
 
-### A shared `<LensWall subjectKind subjectId />` component
-- Same component reused on Domains, Tenets, and (optionally later) Components, Missions, Projects, Relationships — the schema already supports those subject_kinds.
+## What this connects to that already exists
 
-### Naming the BizzyBots
-Each Lens row stores its `bizzybot_emoji` (or icon key into a small icon map). Rendered consistently across the app whenever a Lens is referenced (e.g. "🟣 OCDA says…"). When you later add the Best-Practice Catalog, that catalog can reuse the same BizzyBot identity.
-
-## How this connects to what already exists
-
-- **ExcellenceMatrix** stays where it is on the Domain/Tenet page. Lens Wall sits *under* it as the "why does this matter / how do I think about it" layer, while ExcellenceMatrix stays the "where am I on it" layer.
-- **Measures**: `entity_crib_sheets.signature_metrics` becomes a "Suggest measures from this Lens" button → prefills `measures` rows for the entity (kind=KPI/CSF, target left blank, cadence inferred).
-- **Components**: when a Lens recommends "build a component for X" in its `next_actions`, a one-click "Create component" CTA spawns a `components` row pre-tagged to this Domain/Tenet.
-- **Memory**: the BizzyBot canon and Lens definitions are added to `mem://design/lenses-bizzybots.md` so future plans never re-invent the names or stages.
+- **Flightdeck workload panel** already aggregates per-operator open task counts → it'll automatically pick up the new project/component/session counts via the same `operator_id` columns once we add them to the `operator_workload` view.
+- **MeasuresPanel** at the bottom of the operator page stays — you can attach KPIs like "weekly tasks shipped" or "session NPS" to an individual operator.
+- **Skills array** becomes the matching key for suggestions — already populated on the operator page, no new field needed.
 
 ## Files touched
 
-- **Migration** `<ts>_lenses_perspectives_crib_sheets.sql`:
-  - new tables: `lenses`, `lens_perspectives`, `entity_crib_sheets`
-  - new enums: `lens_subject_kind`
-  - seed: 8 lens rows (F1 OCDA → F8 Rhetorical) with stages, taglines, accent colors, BizzyBot icon keys
-  - RLS: read-all-team, write admin-or-system
-- **New component**: `src/components/lens-wall.tsx`
-- **New component**: `src/components/lens-perspective-card.tsx`
-- **New component**: `src/components/crib-sheet-card.tsx`
-- **New component**: `src/components/bizzybot-avatar.tsx` (visual identity per Lens)
-- **New utils**: `src/utils/lenses.functions.ts` (server functions: `generate_lens_perspectives`, `regenerate_crib_sheet`, `pin_perspective`)
-- **New utils**: `src/utils/lens-prompts.ts` (per-Lens system prompts, kept editable in code)
-- **Edited**: `src/routes/_app.domains.$slug.tsx` — mount `<CribSheetCard>` + `<LensWall subjectKind="domain" />`
-- **Edited**: `src/routes/_app.tenets.$slug.tsx` — same drop-in
-- **Edited**: `src/integrations/supabase/types.ts` — auto-regen
-- **New memory**:
-  - `mem://design/lenses-bizzybots.md` — F1–F8 canon (codes, names, stages, what they ask, best use). Mark as Core: never invent new lenses; never alter stages without admin sign-off.
-  - Append `mem://index.md` Core: "Eight canonical Lenses (BizzyBots F1–F8) drive perspective generation. Stored in `lenses` table. AI-generated `lens_perspectives` cached per (subject, lens). Domain/Tenet detail pages render a `<LensWall>` under the ExcellenceMatrix."
+- **Migration** `<ts>_operator_assignments.sql`:
+  - `ALTER TABLE projects ADD COLUMN operator_id uuid REFERENCES operators(id) ON DELETE SET NULL;`
+  - `ALTER TABLE components ADD COLUMN responsible_operator_id uuid REFERENCES operators(id) ON DELETE SET NULL;`
+  - `ALTER TABLE sessions ADD COLUMN operator_id uuid REFERENCES operators(id) ON DELETE SET NULL;`
+  - Indexes on each.
+  - Update `operator_workload` view to include open projects + sessions counts.
+- **New component**: `src/components/operator-assignments-panel.tsx` — tabbed panel + assign/create actions + suggestion strip.
+- **New component**: `src/components/operator-chip.tsx` — small inline picker reused on project/task/component/session detail headers.
+- **Edited**: `src/routes/_app.operators.$id.tsx` — replace single tasks card with `<OperatorAssignmentsPanel operatorId={id} />`. Keep MeasuresPanel.
+- **Edited**: `src/routes/_app.operators.index.tsx` — after create, navigate to `/operators/{id}`.
+- **Edited**: `src/routes/_app.projects.$id.tsx`, `_app.tasks.$id.tsx`, `_app.components.$id.tsx`, `_app.sessions.$id.tsx` — add `<OperatorChip>` to header row.
+- **Memory append**: `mem://features/operators.md` — add: "Operators are assigned via `operator_id` on tasks/projects/sessions and `responsible_operator_id` on components. Assignment UI lives on the operator detail page (not the create modal). Suggestion engine matches `operators.skills` against entity tags."
 
-## What I'm NOT doing in 2.10j
+## What I'm NOT doing this pass
 
-- Live agent chat ("ask OCDA a question about this Domain") — perspectives are pre-generated cached snapshots this pass. Live Q&A becomes the next phase using the same Lens prompts.
-- Cross-Lens contradiction detection (when 5Ps says one thing and 3Cs says another) — surfaced as a future Flightdeck card.
-- Per-relationship Lens perspectives (the same Domain seen *in the context of one client*) — the schema already supports it via `subject_kind='relationship'`, but the UI sweep stops at Domains/Tenets this pass.
-- Editing the BizzyBot catalog from the UI — code-seeded for now; admin editor later.
+- Drag-and-drop "drop a task on an operator card" from the operators index — nice-to-have, not essential. The picker + suggestions cover the same use case faster.
+- Auto-assignment by AI ("which operator should own this?") — surfaces as suggestions only this pass; auto-route comes later.
+- Workload-based load balancing (prefer the least-busy operator) — can add as a sort key on the picker once we see it being used.
+- Per-operator capacity limits ("max 5 concurrent projects") — config later if needed.
 
 ## Suggested order after this
 
-1. **2.10j (this plan)** — Lens Wall + Crib Sheet on Domains & Tenets, with cached AI generation.
-2. **Live BizzyBot chat** — "Ask {Lens} about this entity" using the same prompts.
-3. **Lens-aware `MeasuresPanel`** — "Suggest measures from CSFs each Lens highlighted."
-4. **Per-relationship Lens views** on the relationship detail page.
-5. **Best-Practice Catalog** — reuses BizzyBot identities for industry-specific best-practice cards.
+1. **2.10k (this plan)** — operator assignments panel + reverse chips.
+2. **AI auto-suggest assignee** on capture/queue confirmation, using the same skill-matching logic.
+3. **Workload balancing** — sort suggestion picker by `open_tasks ASC` so least-busy wins ties.
+4. **Operator availability calendar** — block-out windows that hide them from suggestions.
 
