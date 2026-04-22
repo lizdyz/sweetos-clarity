@@ -578,6 +578,48 @@ export type Database = {
           },
         ]
       }
+      domains: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       journeys: {
         Row: {
           created_at: string
@@ -1361,6 +1403,107 @@ export type Database = {
           },
         ]
       }
+      rubric_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          excellence_definition: string | null
+          id: string
+          prompt: string
+          scale_max: number
+          scale_min: number
+          sort_order: number
+          tenet_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          excellence_definition?: string | null
+          id?: string
+          prompt: string
+          scale_max?: number
+          scale_min?: number
+          sort_order?: number
+          tenet_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          excellence_definition?: string | null
+          id?: string
+          prompt?: string
+          scale_max?: number
+          scale_min?: number
+          sort_order?: number
+          tenet_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rubric_items_tenet_id_fkey"
+            columns: ["tenet_id"]
+            isOneToOne: false
+            referencedRelation: "tenets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rubric_scores: {
+        Row: {
+          assessed_at: string
+          assessed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          relationship_id: string
+          rubric_item_id: string
+          score: number | null
+          updated_at: string
+        }
+        Insert: {
+          assessed_at?: string
+          assessed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_id: string
+          rubric_item_id: string
+          score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assessed_at?: string
+          assessed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_id?: string
+          rubric_item_id?: string
+          score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rubric_scores_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rubric_scores_rubric_item_id_fkey"
+            columns: ["rubric_item_id"]
+            isOneToOne: false
+            referencedRelation: "rubric_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_components: {
         Row: {
           advancement_type: string | null
@@ -1835,6 +1978,56 @@ export type Database = {
           },
         ]
       }
+      tenets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          domain_id: string
+          enabled: boolean
+          excellence_definition: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain_id: string
+          enabled?: boolean
+          excellence_definition?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain_id?: string
+          enabled?: boolean
+          excellence_definition?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenets_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1902,6 +2095,73 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "workflow_domains_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          progress_pct: number
+          project_id: string | null
+          relationship_id: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["workflow_run_status"]
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          progress_pct?: number
+          project_id?: string | null
+          relationship_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_run_status"]
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          progress_pct?: number
+          project_id?: string | null
+          relationship_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_run_status"]
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_workflow_id_fkey"
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "workflows"
@@ -2128,6 +2388,12 @@ export type Database = {
         | "Adopted"
         | "Sustained"
       sweetcycle_phase: "Seed" | "Synthesize" | "Session" | "Sync" | "Ship"
+      workflow_run_status:
+        | "planned"
+        | "running"
+        | "paused"
+        | "completed"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2338,6 +2604,13 @@ export const Constants = {
         "Sustained",
       ],
       sweetcycle_phase: ["Seed", "Synthesize", "Session", "Sync", "Ship"],
+      workflow_run_status: [
+        "planned",
+        "running",
+        "paused",
+        "completed",
+        "cancelled",
+      ],
     },
   },
 } as const

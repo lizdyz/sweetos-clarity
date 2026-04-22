@@ -29,6 +29,7 @@ import { Route as AppPersonasIndexRouteImport } from './routes/_app.personas.ind
 import { Route as AppOutcomesIndexRouteImport } from './routes/_app.outcomes.index'
 import { Route as AppMissionsIndexRouteImport } from './routes/_app.missions.index'
 import { Route as AppJourneysIndexRouteImport } from './routes/_app.journeys.index'
+import { Route as AppDomainsIndexRouteImport } from './routes/_app.domains.index'
 import { Route as AppDomainAssessmentsIndexRouteImport } from './routes/_app.domain-assessments.index'
 import { Route as AppDocumentsIndexRouteImport } from './routes/_app.documents.index'
 import { Route as AppDelegationIndexRouteImport } from './routes/_app.delegation.index'
@@ -47,6 +48,7 @@ import { Route as AppPersonasIdRouteImport } from './routes/_app.personas.$id'
 import { Route as AppOutcomesIdRouteImport } from './routes/_app.outcomes.$id'
 import { Route as AppMissionsIdRouteImport } from './routes/_app.missions.$id'
 import { Route as AppJourneysIdRouteImport } from './routes/_app.journeys.$id'
+import { Route as AppDomainsSlugRouteImport } from './routes/_app.domains.$slug'
 import { Route as AppDomainAssessmentsIdRouteImport } from './routes/_app.domain-assessments.$id'
 import { Route as AppDocumentsIdRouteImport } from './routes/_app.documents.$id'
 import { Route as AppDelegationIdRouteImport } from './routes/_app.delegation.$id'
@@ -153,6 +155,11 @@ const AppJourneysIndexRoute = AppJourneysIndexRouteImport.update({
   path: '/journeys/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDomainsIndexRoute = AppDomainsIndexRouteImport.update({
+  id: '/domains/',
+  path: '/domains/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDomainAssessmentsIndexRoute =
   AppDomainAssessmentsIndexRouteImport.update({
     id: '/domain-assessments/',
@@ -244,6 +251,11 @@ const AppJourneysIdRoute = AppJourneysIdRouteImport.update({
   path: '/journeys/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDomainsSlugRoute = AppDomainsSlugRouteImport.update({
+  id: '/domains/$slug',
+  path: '/domains/$slug',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDomainAssessmentsIdRoute = AppDomainAssessmentsIdRouteImport.update({
   id: '/domain-assessments/$id',
   path: '/domain-assessments/$id',
@@ -289,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/delegation/$id': typeof AppDelegationIdRoute
   '/documents/$id': typeof AppDocumentsIdRoute
   '/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
+  '/domains/$slug': typeof AppDomainsSlugRoute
   '/journeys/$id': typeof AppJourneysIdRoute
   '/missions/$id': typeof AppMissionsIdRoute
   '/outcomes/$id': typeof AppOutcomesIdRoute
@@ -307,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/delegation/': typeof AppDelegationIndexRoute
   '/documents/': typeof AppDocumentsIndexRoute
   '/domain-assessments/': typeof AppDomainAssessmentsIndexRoute
+  '/domains/': typeof AppDomainsIndexRoute
   '/journeys/': typeof AppJourneysIndexRoute
   '/missions/': typeof AppMissionsIndexRoute
   '/outcomes/': typeof AppOutcomesIndexRoute
@@ -334,6 +348,7 @@ export interface FileRoutesByTo {
   '/delegation/$id': typeof AppDelegationIdRoute
   '/documents/$id': typeof AppDocumentsIdRoute
   '/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
+  '/domains/$slug': typeof AppDomainsSlugRoute
   '/journeys/$id': typeof AppJourneysIdRoute
   '/missions/$id': typeof AppMissionsIdRoute
   '/outcomes/$id': typeof AppOutcomesIdRoute
@@ -352,6 +367,7 @@ export interface FileRoutesByTo {
   '/delegation': typeof AppDelegationIndexRoute
   '/documents': typeof AppDocumentsIndexRoute
   '/domain-assessments': typeof AppDomainAssessmentsIndexRoute
+  '/domains': typeof AppDomainsIndexRoute
   '/journeys': typeof AppJourneysIndexRoute
   '/missions': typeof AppMissionsIndexRoute
   '/outcomes': typeof AppOutcomesIndexRoute
@@ -381,6 +397,7 @@ export interface FileRoutesById {
   '/_app/delegation/$id': typeof AppDelegationIdRoute
   '/_app/documents/$id': typeof AppDocumentsIdRoute
   '/_app/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
+  '/_app/domains/$slug': typeof AppDomainsSlugRoute
   '/_app/journeys/$id': typeof AppJourneysIdRoute
   '/_app/missions/$id': typeof AppMissionsIdRoute
   '/_app/outcomes/$id': typeof AppOutcomesIdRoute
@@ -399,6 +416,7 @@ export interface FileRoutesById {
   '/_app/delegation/': typeof AppDelegationIndexRoute
   '/_app/documents/': typeof AppDocumentsIndexRoute
   '/_app/domain-assessments/': typeof AppDomainAssessmentsIndexRoute
+  '/_app/domains/': typeof AppDomainsIndexRoute
   '/_app/journeys/': typeof AppJourneysIndexRoute
   '/_app/missions/': typeof AppMissionsIndexRoute
   '/_app/outcomes/': typeof AppOutcomesIndexRoute
@@ -428,6 +446,7 @@ export interface FileRouteTypes {
     | '/delegation/$id'
     | '/documents/$id'
     | '/domain-assessments/$id'
+    | '/domains/$slug'
     | '/journeys/$id'
     | '/missions/$id'
     | '/outcomes/$id'
@@ -446,6 +465,7 @@ export interface FileRouteTypes {
     | '/delegation/'
     | '/documents/'
     | '/domain-assessments/'
+    | '/domains/'
     | '/journeys/'
     | '/missions/'
     | '/outcomes/'
@@ -473,6 +493,7 @@ export interface FileRouteTypes {
     | '/delegation/$id'
     | '/documents/$id'
     | '/domain-assessments/$id'
+    | '/domains/$slug'
     | '/journeys/$id'
     | '/missions/$id'
     | '/outcomes/$id'
@@ -491,6 +512,7 @@ export interface FileRouteTypes {
     | '/delegation'
     | '/documents'
     | '/domain-assessments'
+    | '/domains'
     | '/journeys'
     | '/missions'
     | '/outcomes'
@@ -519,6 +541,7 @@ export interface FileRouteTypes {
     | '/_app/delegation/$id'
     | '/_app/documents/$id'
     | '/_app/domain-assessments/$id'
+    | '/_app/domains/$slug'
     | '/_app/journeys/$id'
     | '/_app/missions/$id'
     | '/_app/outcomes/$id'
@@ -537,6 +560,7 @@ export interface FileRouteTypes {
     | '/_app/delegation/'
     | '/_app/documents/'
     | '/_app/domain-assessments/'
+    | '/_app/domains/'
     | '/_app/journeys/'
     | '/_app/missions/'
     | '/_app/outcomes/'
@@ -699,6 +723,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppJourneysIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/domains/': {
+      id: '/_app/domains/'
+      path: '/domains'
+      fullPath: '/domains/'
+      preLoaderRoute: typeof AppDomainsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/domain-assessments/': {
       id: '/_app/domain-assessments/'
       path: '/domain-assessments'
@@ -825,6 +856,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppJourneysIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/domains/$slug': {
+      id: '/_app/domains/$slug'
+      path: '/domains/$slug'
+      fullPath: '/domains/$slug'
+      preLoaderRoute: typeof AppDomainsSlugRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/domain-assessments/$id': {
       id: '/_app/domain-assessments/$id'
       path: '/domain-assessments/$id'
@@ -882,6 +920,7 @@ interface AppRouteChildren {
   AppDelegationIdRoute: typeof AppDelegationIdRoute
   AppDocumentsIdRoute: typeof AppDocumentsIdRoute
   AppDomainAssessmentsIdRoute: typeof AppDomainAssessmentsIdRoute
+  AppDomainsSlugRoute: typeof AppDomainsSlugRoute
   AppJourneysIdRoute: typeof AppJourneysIdRoute
   AppMissionsIdRoute: typeof AppMissionsIdRoute
   AppOutcomesIdRoute: typeof AppOutcomesIdRoute
@@ -900,6 +939,7 @@ interface AppRouteChildren {
   AppDelegationIndexRoute: typeof AppDelegationIndexRoute
   AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
   AppDomainAssessmentsIndexRoute: typeof AppDomainAssessmentsIndexRoute
+  AppDomainsIndexRoute: typeof AppDomainsIndexRoute
   AppJourneysIndexRoute: typeof AppJourneysIndexRoute
   AppMissionsIndexRoute: typeof AppMissionsIndexRoute
   AppOutcomesIndexRoute: typeof AppOutcomesIndexRoute
@@ -926,6 +966,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDelegationIdRoute: AppDelegationIdRoute,
   AppDocumentsIdRoute: AppDocumentsIdRoute,
   AppDomainAssessmentsIdRoute: AppDomainAssessmentsIdRoute,
+  AppDomainsSlugRoute: AppDomainsSlugRoute,
   AppJourneysIdRoute: AppJourneysIdRoute,
   AppMissionsIdRoute: AppMissionsIdRoute,
   AppOutcomesIdRoute: AppOutcomesIdRoute,
@@ -944,6 +985,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDelegationIndexRoute: AppDelegationIndexRoute,
   AppDocumentsIndexRoute: AppDocumentsIndexRoute,
   AppDomainAssessmentsIndexRoute: AppDomainAssessmentsIndexRoute,
+  AppDomainsIndexRoute: AppDomainsIndexRoute,
   AppJourneysIndexRoute: AppJourneysIndexRoute,
   AppMissionsIndexRoute: AppMissionsIndexRoute,
   AppOutcomesIndexRoute: AppOutcomesIndexRoute,
