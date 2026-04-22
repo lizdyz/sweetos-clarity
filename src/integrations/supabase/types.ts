@@ -4739,6 +4739,78 @@ export type Database = {
           },
         ]
       }
+      sandbox_items: {
+        Row: {
+          body: string | null
+          confidence: number | null
+          created_at: string
+          created_by: string
+          frames: Json
+          id: string
+          relationship_id: string | null
+          routed_at: string | null
+          routed_note: string | null
+          routed_to_id: string | null
+          routed_to_kind:
+            | Database["public"]["Enums"]["sandbox_route_kind"]
+            | null
+          source_id: string | null
+          source_kind: Database["public"]["Enums"]["sandbox_source_kind"]
+          state: Database["public"]["Enums"]["sandbox_state"]
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          frames?: Json
+          id?: string
+          relationship_id?: string | null
+          routed_at?: string | null
+          routed_note?: string | null
+          routed_to_id?: string | null
+          routed_to_kind?:
+            | Database["public"]["Enums"]["sandbox_route_kind"]
+            | null
+          source_id?: string | null
+          source_kind?: Database["public"]["Enums"]["sandbox_source_kind"]
+          state?: Database["public"]["Enums"]["sandbox_state"]
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          frames?: Json
+          id?: string
+          relationship_id?: string | null
+          routed_at?: string | null
+          routed_note?: string | null
+          routed_to_id?: string | null
+          routed_to_kind?:
+            | Database["public"]["Enums"]["sandbox_route_kind"]
+            | null
+          source_id?: string | null
+          source_kind?: Database["public"]["Enums"]["sandbox_source_kind"]
+          state?: Database["public"]["Enums"]["sandbox_state"]
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       seed_responses: {
         Row: {
           auto_saved_at: string
@@ -7065,6 +7137,20 @@ export type Database = {
           },
         ]
       }
+      sandbox_inbox: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          frames: Json | null
+          id: string | null
+          relationship_id: string | null
+          source_id: string | null
+          source_kind: string | null
+          state: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
       task_blockers: {
         Row: {
           blocker_name: string | null
@@ -7303,6 +7389,21 @@ export type Database = {
       quality_status: "Draft" | "Tested" | "Proven" | "Canonical"
       relationship_temperature: "Warm" | "Cool" | "Cold" | "Paused"
       reusability_tier: "One-Time" | "Relationship" | "Org" | "System"
+      sandbox_route_kind:
+        | "task"
+        | "project"
+        | "spark"
+        | "decision_input"
+        | "component_canon"
+        | "archive"
+      sandbox_source_kind:
+        | "capture"
+        | "kti_fire"
+        | "inbound_signal"
+        | "spark"
+        | "session_question"
+        | "manual"
+      sandbox_state: "raw" | "framed" | "routed" | "archived"
       seed_question_badge: "foundational" | "optional" | "upload"
       seed_question_type:
         | "short_text"
@@ -7650,6 +7751,23 @@ export const Constants = {
       quality_status: ["Draft", "Tested", "Proven", "Canonical"],
       relationship_temperature: ["Warm", "Cool", "Cold", "Paused"],
       reusability_tier: ["One-Time", "Relationship", "Org", "System"],
+      sandbox_route_kind: [
+        "task",
+        "project",
+        "spark",
+        "decision_input",
+        "component_canon",
+        "archive",
+      ],
+      sandbox_source_kind: [
+        "capture",
+        "kti_fire",
+        "inbound_signal",
+        "spark",
+        "session_question",
+        "manual",
+      ],
+      sandbox_state: ["raw", "framed", "routed", "archived"],
       seed_question_badge: ["foundational", "optional", "upload"],
       seed_question_type: [
         "short_text",
