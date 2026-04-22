@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { supabase } from "@/lib/sb";
+import { sb as supabase } from "@/lib/sb";
 import { useAuth } from "@/lib/auth-context";
 import type { EntityDef, FieldDef } from "@/lib/entities";
 import { ENTITIES } from "@/lib/entities";
