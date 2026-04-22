@@ -34,6 +34,7 @@ import { ConfidenceChip, ProgressionChip, StateChip } from "@/components/chips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { KanbanBoard } from "@/components/kanban-board";
+import { TagPicker } from "@/components/tag-picker";
 
 type Row = Record<string, unknown> & { id: string; updated_at?: string; created_at?: string };
 
