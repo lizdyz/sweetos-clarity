@@ -72,8 +72,6 @@ const LIBRARY: NavItem[] = [
   { to: "/outcomes", label: "Outcomes" },
   { to: "/domain-assessments", label: "Domain Assessments" },
   { to: "/sessions", label: "Sessions" },
-  { to: "/projects", label: "Projects" },
-  { to: "/tasks", label: "Tasks" },
   { to: "/campaigns", label: "Campaigns" },
 ];
 
