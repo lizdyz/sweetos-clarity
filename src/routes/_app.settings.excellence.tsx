@@ -90,6 +90,12 @@ function ExcellenceSettings() {
     },
   });
 
+  // Default-select first subject of the chosen kind so the page never looks blank
+  if (!subjectId && (subjectsQ.data?.length ?? 0) > 0) {
+    const first = subjectsQ.data![0]!;
+    setTimeout(() => setSubjectId(first.id), 0);
+  }
+
   const cellsQ = useQuery({
     queryKey: ["settings-cells", kind, subjectId],
     enabled: !!subjectId,

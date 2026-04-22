@@ -101,7 +101,7 @@ function SweetCyclePage() {
             <p className="text-sm text-muted-foreground">
               The 5-phase rhythm of every session: <strong>Seed</strong> (client prep) →{" "}
               <strong>Synthesize</strong> (our analysis) → <strong>Session</strong> (live work) →{" "}
-              <strong>Sync</strong> (recap & decide) → <strong>Ship</strong> (delivered).
+              <strong>Sync</strong> (recap & confirm) → <strong>Ship</strong> (delivered).
               Pick a relationship to see where each session is in the cycle, and drag to advance.
             </p>
           </div>

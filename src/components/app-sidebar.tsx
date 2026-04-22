@@ -37,7 +37,9 @@ interface NavGroup {
 const PRIMARY: NavGroup[] = [
   {
     items: [
-      { to: "/today", label: "Today", icon: LayoutDashboard },
+      { to: "/today", label: "Today", icon: LayoutDashboard, hint: "Live working surface" },
+      { to: "/planner", label: "Planner", icon: Layers, hint: "Plan this week / next / backlog" },
+      { to: "/calendar", label: "Calendar", icon: Calendar, hint: "Visual time view" },
       { to: "/capture", label: "Capture", icon: Sparkles },
       { to: "/queue", label: "Proposals Queue", icon: Inbox },
       { to: "/pipeline", label: "Pipeline", icon: Compass },
