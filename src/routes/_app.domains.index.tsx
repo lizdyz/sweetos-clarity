@@ -45,16 +45,24 @@ function DomainsIndex() {
 
   return (
     <div className="px-6 py-6">
-      <header className="mb-6 flex items-center gap-3">
+      <header className="mb-6 flex items-start gap-3">
         <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-iris-cyan/30 to-iris-violet/30 text-foreground shadow-[var(--shadow-glass)]">
           <Compass className="h-5 w-5" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold tracking-tight">Domains of Excellence</h1>
-          <p className="text-sm text-muted-foreground">
-            The areas of the business where we measure what excellent looks like.
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            The 22 universal areas of a business where we define what "excellent" looks like.
+            Click a domain to open its crib sheet, the 8 BizzyBot perspectives, and the L1→L5 excellence matrix.
+            Tenets (industry-specific best-practice anchors) live in their own tab.
           </p>
         </div>
+        <Link
+          to="/tenets"
+          className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-iris-soft/40"
+        >
+          Browse tenets →
+        </Link>
       </header>
 
       {loading ? (
@@ -75,18 +83,15 @@ function DomainsIndex() {
                   className="absolute inset-x-0 top-0 h-1"
                   style={{ background: d.color }}
                 />
-                <div className="mb-3 flex items-start justify-between">
-                  <h2 className="text-lg font-semibold tracking-tight">{d.name}</h2>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white"
-                    style={{ background: d.color }}
-                  >
-                    {tenetCounts[d.id] ?? 0} tenets
-                  </span>
-                </div>
+                <h2 className="mb-2 text-lg font-semibold tracking-tight">{d.name}</h2>
                 <p className="text-sm text-muted-foreground line-clamp-3">{d.description}</p>
-                <div className="mt-4 text-xs font-medium text-[color:var(--iris-violet)] opacity-0 transition-opacity group-hover:opacity-100">
-                  Open intelligence dashboard →
+                <div className="mt-4 flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground">
+                    {tenetCounts[d.id] ?? 0} tenets linked
+                  </span>
+                  <span className="font-medium text-[color:var(--iris-violet)] opacity-0 transition-opacity group-hover:opacity-100">
+                    Open →
+                  </span>
                 </div>
               </Card>
             </Link>
