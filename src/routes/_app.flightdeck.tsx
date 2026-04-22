@@ -311,6 +311,10 @@ function FlightdeckPage() {
 
       <DoneLogPanel />
 
+      <ApprovalsPanel />
+
+      <MeasuresDuePanel />
+
       <ComponentsInFlightPanel />
     </div>
   );
