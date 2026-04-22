@@ -19,6 +19,7 @@ import { Bot, User, Workflow as WorkflowIcon, X, Plus, ArrowLeft, Play } from "l
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { MeasuresPanel } from "@/components/measures-panel";
+import { OperatorAssignmentsPanel } from "@/components/operator-assignments-panel";
 
 export const Route = createFileRoute("/_app/operators/$id")({
   component: OperatorDetailPage,
@@ -70,19 +71,6 @@ function OperatorDetailPage() {
     },
   });
 
-  const { data: tasks = [] } = useQuery<{ id: string; name: string; status: string | null; due_date: string | null; blocked: boolean | null }[]>({
-    queryKey: ["operator-tasks", id],
-    queryFn: async () => {
-      const { data, error } = await sb
-        .from("tasks")
-        .select("id, name, status, due_date, blocked")
-        .eq("operator_id", id)
-        .order("due_date", { ascending: true, nullsFirst: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
   const update = useMutation({
     mutationFn: async (patch: Partial<Operator>) => {
       const { error } = await sb.from("operators").update(patch).eq("id", id);
@@ -117,9 +105,6 @@ function OperatorDetailPage() {
             <EditableName name={op.name} onSave={(name) => update.mutate({ name })} />
             <div className="mt-0.5 flex items-center gap-2">
               <Badge variant="secondary" className="h-5 text-[10px] capitalize">{meta.label}</Badge>
-              <span className="text-[11px] text-muted-foreground">
-                {tasks.filter((t) => !["Done", "Complete", "Completed"].includes(t.status ?? "")).length} open tasks
-              </span>
             </div>
           </div>
         </div>
@@ -193,29 +178,7 @@ function OperatorDetailPage() {
         </Card>
       )}
 
-      <Card className="p-4">
-        <h2 className="mb-3 text-sm font-semibold">Open tasks</h2>
-        {tasks.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-6 text-center text-xs text-muted-foreground">
-            No tasks assigned yet.
-          </div>
-        ) : (
-          <ul className="space-y-1">
-            {tasks.slice(0, 20).map((t) => (
-              <li key={t.id}>
-                <Link
-                  to="/tasks/$id"
-                  params={{ id: t.id }}
-                  className="flex items-center justify-between rounded-lg border border-border/40 bg-background p-2 text-xs hover:bg-muted/40"
-                >
-                  <span className="truncate font-medium">{t.name}</span>
-                  <span className="text-[10px] text-muted-foreground">{t.status ?? "—"} · {t.due_date ?? ""}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <OperatorAssignmentsPanel operatorId={id} />
 
       <MeasuresPanel subjectType="operator" subjectId={id} />
     </div>

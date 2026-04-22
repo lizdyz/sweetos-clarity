@@ -9,6 +9,7 @@ import { ComponentLinkPanel } from "@/components/component-link-panel";
 import { WorkContextStrip } from "@/components/work-context-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
+import { OperatorChip } from "@/components/operator-chip";
 
 export const Route = createFileRoute("/_app/projects/$id")({
   component: ProjectDetail,
@@ -20,6 +21,9 @@ function ProjectDetail() {
   const { id } = Route.useParams();
   return (
     <div className="space-y-5">
+      <div className="flex justify-end px-6 pt-4">
+        <ProjectOperatorChip projectId={id} />
+      </div>
       <WorkContextStrip entityType="project" entityId={id} />
       <ProjectTimeBlock projectId={id} />
       <ComponentLinkPanel projectId={id} />
@@ -29,6 +33,27 @@ function ProjectDetail() {
         <MeasuresPanel subjectType="project" subjectId={id} />
       </div>
     </div>
+  );
+}
+
+function ProjectOperatorChip({ projectId }: { projectId: string }) {
+  const { data } = useQuery({
+    queryKey: ["projects", "operator", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("projects").select("operator_id").eq("id", projectId).maybeSingle();
+      if (error) throw error;
+      return data as { operator_id: string | null } | null;
+    },
+  });
+  return (
+    <OperatorChip
+      table="projects"
+      column="operator_id"
+      rowId={projectId}
+      operatorId={data?.operator_id}
+      label="Lead"
+      invalidateKeys={[["projects", "operator", projectId]]}
+    />
   );
 }
 

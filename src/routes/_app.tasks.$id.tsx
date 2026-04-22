@@ -8,6 +8,7 @@ import { Plus, X, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { WorkContextStrip } from "@/components/work-context-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
+import { OperatorChip } from "@/components/operator-chip";
 
 export const Route = createFileRoute("/_app/tasks/$id")({
   component: TaskDetail,
@@ -19,6 +20,9 @@ function TaskDetail() {
   const { id } = Route.useParams();
   return (
     <div className="space-y-5">
+      <div className="flex justify-end px-6 pt-4">
+        <TaskOperatorChip taskId={id} />
+      </div>
       <WorkContextStrip entityType="task" entityId={id} />
       <TaskTimeBlock taskId={id} />
       <TaskPanels taskId={id} />
@@ -27,6 +31,27 @@ function TaskDetail() {
         <MeasuresPanel subjectType="task" subjectId={id} />
       </div>
     </div>
+  );
+}
+
+function TaskOperatorChip({ taskId }: { taskId: string }) {
+  const { data } = useQuery({
+    queryKey: ["tasks", "operator", taskId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tasks").select("operator_id").eq("id", taskId).maybeSingle();
+      if (error) throw error;
+      return data as { operator_id: string | null } | null;
+    },
+  });
+  return (
+    <OperatorChip
+      table="tasks"
+      column="operator_id"
+      rowId={taskId}
+      operatorId={data?.operator_id}
+      label="Assignee"
+      invalidateKeys={[["tasks", "operator", taskId]]}
+    />
   );
 }
 

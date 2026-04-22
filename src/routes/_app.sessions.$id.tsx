@@ -4,6 +4,7 @@ import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { Calendar, ExternalLink, Layers } from "lucide-react";
+import { OperatorChip } from "@/components/operator-chip";
 
 export const Route = createFileRoute("/_app/sessions/$id")({
   component: SessionDetail,
@@ -14,6 +15,7 @@ interface SessionRow {
   name: string | null;
   session_template_id: string | null;
   tagged_components: string[] | null;
+  operator_id: string | null;
 }
 
 interface TemplateRow {
@@ -32,7 +34,7 @@ function SessionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sessions")
-        .select("id, name, session_template_id, tagged_components")
+        .select("id, name, session_template_id, tagged_components, operator_id")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
@@ -71,6 +73,16 @@ function SessionDetail() {
 
   return (
     <div className="space-y-5">
+      <div className="flex justify-end px-6 pt-4">
+        <OperatorChip
+          table="sessions"
+          column="operator_id"
+          rowId={id}
+          operatorId={session?.operator_id}
+          label="Facilitator"
+          invalidateKeys={[["session-meta", id]]}
+        />
+      </div>
       <EntityDetailPage entityKey="sessions" />
       <div className="space-y-5 px-6 pb-8">
         {template && (

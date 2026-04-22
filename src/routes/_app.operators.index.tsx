@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { sb } from "@/lib/sb";
@@ -207,6 +207,7 @@ function NewOperatorDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [kind, setKind] = useState<"human" | "workflow" | "agent">("agent");
   const [profileId, setProfileId] = useState<string>("");
@@ -250,11 +251,12 @@ function NewOperatorDialog({
         payload.agent_model = agentModel;
         payload.agent_system_prompt = agentPrompt;
       }
-      const { error } = await sb.from("operators").insert(payload);
+      const { data, error } = await sb.from("operators").insert(payload).select("id").single();
       if (error) throw error;
+      return data?.id as string | undefined;
     },
-    onSuccess: () => {
-      toast.success("Operator created");
+    onSuccess: (newId) => {
+      toast.success("Operator created — assign work below");
       qc.invalidateQueries({ queryKey: ["operators"] });
       qc.invalidateQueries({ queryKey: ["operator-workload"] });
       onOpenChange(false);
@@ -262,6 +264,7 @@ function NewOperatorDialog({
       setProfileId("");
       setWorkflowId("");
       setAgentPrompt("");
+      if (newId) navigate({ to: "/operators/$id", params: { id: newId } });
     },
     onError: (e: Error) => toast.error(e.message),
   });
