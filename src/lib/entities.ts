@@ -93,6 +93,14 @@ export interface EntityDef {
 const owner = (key = "owner", label = "Owner", group = "Identity") =>
   ({ key, label, kind: "select", options: PROJECT_OWNER, group, inList: true } as FieldDef);
 
+// Standard taxonomy fields — Domains (universal lens), Tenets (industry best-practice anchors),
+// Components (reusable scaffolding). Always rendered as three separate sections in the UI.
+const TAXONOMY_FIELDS: FieldDef[] = [
+  { key: "tagged_domains", label: "Domains", kind: "domain-tags", group: "Taxonomy", helper: "Universal lens — which of the 22 domains this touches" },
+  { key: "tagged_tenets", label: "Tenets", kind: "tenet-tags", group: "Taxonomy", helper: "Industry best-practice anchors" },
+  { key: "tagged_components", label: "Components", kind: "component-tags", group: "Taxonomy", helper: "Reusable building blocks involved" },
+];
+
 export const ENTITIES: Record<string, EntityDef> = {
   relationships: {
     key: "relationships",
