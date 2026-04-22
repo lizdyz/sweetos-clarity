@@ -128,6 +128,7 @@ export type Database = {
           brief_for_next_action: string | null
           campaign_brief: string | null
           campaign_name: string
+          confidence: number | null
           created_at: string
           created_by: string
           deadline: string | null
@@ -140,7 +141,10 @@ export type Database = {
           notes: string | null
           owner: string | null
           prompt_status: string | null
+          proposal_id: string | null
           revenue_target_usd: number | null
+          source: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref: string | null
           status: string | null
           target_persona: string[] | null
           type: string | null
@@ -151,6 +155,7 @@ export type Database = {
           brief_for_next_action?: string | null
           campaign_brief?: string | null
           campaign_name: string
+          confidence?: number | null
           created_at?: string
           created_by?: string
           deadline?: string | null
@@ -163,7 +168,10 @@ export type Database = {
           notes?: string | null
           owner?: string | null
           prompt_status?: string | null
+          proposal_id?: string | null
           revenue_target_usd?: number | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           status?: string | null
           target_persona?: string[] | null
           type?: string | null
@@ -174,6 +182,7 @@ export type Database = {
           brief_for_next_action?: string | null
           campaign_brief?: string | null
           campaign_name?: string
+          confidence?: number | null
           created_at?: string
           created_by?: string
           deadline?: string | null
@@ -186,13 +195,24 @@ export type Database = {
           notes?: string | null
           owner?: string | null
           prompt_status?: string | null
+          proposal_id?: string | null
           revenue_target_usd?: number | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           status?: string | null
           target_persona?: string[] | null
           type?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       components: {
         Row: {
@@ -695,9 +715,49 @@ export type Database = {
           },
         ]
       }
+      persona_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          enabled: boolean
+          id: string
+          industry: string
+          name: string
+          sort_order: number
+          suggested_fields: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          industry: string
+          name: string
+          sort_order?: number
+          suggested_fields?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          industry?: string
+          name?: string
+          sort_order?: number
+          suggested_fields?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       personas: {
         Row: {
           autonomy_level: string | null
+          confidence: number | null
           contract_considerations: string | null
           created_at: string
           created_by: string
@@ -705,15 +765,19 @@ export type Database = {
           name: string
           notes: string | null
           practice_structure: string | null
+          proposal_id: string | null
           real_examples: string | null
           regulatory_registration: string[] | null
           sector: string | null
           seed_adaptation_notes: string | null
+          source: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref: string | null
           spec_status: Database["public"]["Enums"]["spec_status"] | null
           updated_at: string
         }
         Insert: {
           autonomy_level?: string | null
+          confidence?: number | null
           contract_considerations?: string | null
           created_at?: string
           created_by?: string
@@ -721,15 +785,19 @@ export type Database = {
           name: string
           notes?: string | null
           practice_structure?: string | null
+          proposal_id?: string | null
           real_examples?: string | null
           regulatory_registration?: string[] | null
           sector?: string | null
           seed_adaptation_notes?: string | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           spec_status?: Database["public"]["Enums"]["spec_status"] | null
           updated_at?: string
         }
         Update: {
           autonomy_level?: string | null
+          confidence?: number | null
           contract_considerations?: string | null
           created_at?: string
           created_by?: string
@@ -737,14 +805,25 @@ export type Database = {
           name?: string
           notes?: string | null
           practice_structure?: string | null
+          proposal_id?: string | null
           real_examples?: string | null
           regulatory_registration?: string[] | null
           sector?: string | null
           seed_adaptation_notes?: string | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           spec_status?: Database["public"]["Enums"]["spec_status"] | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "personas_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       playbook_workflows: {
         Row: {
@@ -877,6 +956,7 @@ export type Database = {
       projects: {
         Row: {
           client_id: string | null
+          confidence: number | null
           created_at: string
           created_by: string
           current_blocker_specific: string | null
@@ -893,7 +973,10 @@ export type Database = {
           priority: string | null
           project_brief: string | null
           prompt_status: string | null
+          proposal_id: string | null
           revenue_potential_usd: number | null
+          source: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref: string | null
           sprint: string | null
           status: string | null
           type: string | null
@@ -901,6 +984,7 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          confidence?: number | null
           created_at?: string
           created_by?: string
           current_blocker_specific?: string | null
@@ -917,7 +1001,10 @@ export type Database = {
           priority?: string | null
           project_brief?: string | null
           prompt_status?: string | null
+          proposal_id?: string | null
           revenue_potential_usd?: number | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           sprint?: string | null
           status?: string | null
           type?: string | null
@@ -925,6 +1012,7 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          confidence?: number | null
           created_at?: string
           created_by?: string
           current_blocker_specific?: string | null
@@ -941,7 +1029,10 @@ export type Database = {
           priority?: string | null
           project_brief?: string | null
           prompt_status?: string | null
+          proposal_id?: string | null
           revenue_potential_usd?: number | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           sprint?: string | null
           status?: string | null
           type?: string | null
@@ -955,7 +1046,89 @@ export type Database = {
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projects_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      proposals: {
+        Row: {
+          ai_model: string | null
+          ai_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          confidence: number | null
+          conflicts: Json
+          created_at: string
+          created_by: string
+          entity_type: Database["public"]["Enums"]["proposal_entity_type"]
+          id: string
+          matched_record_id: string | null
+          matched_record_table: string | null
+          proposed_fields: Json
+          raw_input: string | null
+          rejected_reason: string | null
+          source: Database["public"]["Enums"]["proposal_source"]
+          source_label: string | null
+          source_ref: string | null
+          status: Database["public"]["Enums"]["proposal_status"]
+          updated_at: string
+          written_record_id: string | null
+          written_record_table: string | null
+        }
+        Insert: {
+          ai_model?: string | null
+          ai_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: number | null
+          conflicts?: Json
+          created_at?: string
+          created_by?: string
+          entity_type: Database["public"]["Enums"]["proposal_entity_type"]
+          id?: string
+          matched_record_id?: string | null
+          matched_record_table?: string | null
+          proposed_fields?: Json
+          raw_input?: string | null
+          rejected_reason?: string | null
+          source: Database["public"]["Enums"]["proposal_source"]
+          source_label?: string | null
+          source_ref?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+          updated_at?: string
+          written_record_id?: string | null
+          written_record_table?: string | null
+        }
+        Update: {
+          ai_model?: string | null
+          ai_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: number | null
+          conflicts?: Json
+          created_at?: string
+          created_by?: string
+          entity_type?: Database["public"]["Enums"]["proposal_entity_type"]
+          id?: string
+          matched_record_id?: string | null
+          matched_record_table?: string | null
+          proposed_fields?: Json
+          raw_input?: string | null
+          rejected_reason?: string | null
+          source?: Database["public"]["Enums"]["proposal_source"]
+          source_label?: string | null
+          source_ref?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+          updated_at?: string
+          written_record_id?: string | null
+          written_record_table?: string | null
+        }
+        Relationships: []
       }
       quests: {
         Row: {
@@ -1031,6 +1204,7 @@ export type Database = {
           ai_sophistication: string | null
           brief_for_next_touchpoint: string | null
           company: string | null
+          confidence: number | null
           created_at: string
           created_by: string
           email: string | null
@@ -1038,6 +1212,7 @@ export type Database = {
           geography: string | null
           id: string
           ideal_next_touchpoint: string | null
+          industry: string | null
           intelligence_confidence:
             | Database["public"]["Enums"]["intelligence_confidence"]
             | null
@@ -1055,12 +1230,15 @@ export type Database = {
           portal_delivered: boolean | null
           portal_link: string | null
           prompt_status: string | null
+          proposal_id: string | null
           referred_by: string | null
           revenue_potential_usd: number | null
           role: string | null
           sessions_purchased: number | null
           sessions_remaining: number | null
           sessions_used: number | null
+          source: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref: string | null
           status: string | null
           sweetconnect_credits: number | null
           sweetconnect_credits_used: number | null
@@ -1072,6 +1250,7 @@ export type Database = {
           ai_sophistication?: string | null
           brief_for_next_touchpoint?: string | null
           company?: string | null
+          confidence?: number | null
           created_at?: string
           created_by?: string
           email?: string | null
@@ -1079,6 +1258,7 @@ export type Database = {
           geography?: string | null
           id?: string
           ideal_next_touchpoint?: string | null
+          industry?: string | null
           intelligence_confidence?:
             | Database["public"]["Enums"]["intelligence_confidence"]
             | null
@@ -1096,12 +1276,15 @@ export type Database = {
           portal_delivered?: boolean | null
           portal_link?: string | null
           prompt_status?: string | null
+          proposal_id?: string | null
           referred_by?: string | null
           revenue_potential_usd?: number | null
           role?: string | null
           sessions_purchased?: number | null
           sessions_remaining?: number | null
           sessions_used?: number | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           status?: string | null
           sweetconnect_credits?: number | null
           sweetconnect_credits_used?: number | null
@@ -1113,6 +1296,7 @@ export type Database = {
           ai_sophistication?: string | null
           brief_for_next_touchpoint?: string | null
           company?: string | null
+          confidence?: number | null
           created_at?: string
           created_by?: string
           email?: string | null
@@ -1120,6 +1304,7 @@ export type Database = {
           geography?: string | null
           id?: string
           ideal_next_touchpoint?: string | null
+          industry?: string | null
           intelligence_confidence?:
             | Database["public"]["Enums"]["intelligence_confidence"]
             | null
@@ -1137,12 +1322,15 @@ export type Database = {
           portal_delivered?: boolean | null
           portal_link?: string | null
           prompt_status?: string | null
+          proposal_id?: string | null
           referred_by?: string | null
           revenue_potential_usd?: number | null
           role?: string | null
           sessions_purchased?: number | null
           sessions_remaining?: number | null
           sessions_used?: number | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           status?: string | null
           sweetconnect_credits?: number | null
           sweetconnect_credits_used?: number | null
@@ -1155,6 +1343,13 @@ export type Database = {
             columns: ["persona_id"]
             isOneToOne: false
             referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
           {
@@ -1385,6 +1580,57 @@ export type Database = {
           },
         ]
       }
+      sources: {
+        Row: {
+          created_at: string
+          created_by: string
+          enabled: boolean
+          entity_type: Database["public"]["Enums"]["proposal_entity_type"]
+          external_id: string
+          external_url: string | null
+          id: string
+          kind: string
+          last_pull_count: number | null
+          last_pull_status: string | null
+          last_pulled_at: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          enabled?: boolean
+          entity_type: Database["public"]["Enums"]["proposal_entity_type"]
+          external_id: string
+          external_url?: string | null
+          id?: string
+          kind?: string
+          last_pull_count?: number | null
+          last_pull_status?: string | null
+          last_pulled_at?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          enabled?: boolean
+          entity_type?: Database["public"]["Enums"]["proposal_entity_type"]
+          external_id?: string
+          external_url?: string | null
+          id?: string
+          kind?: string
+          last_pull_count?: number | null
+          last_pull_status?: string | null
+          last_pulled_at?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sparks: {
         Row: {
           affected_components: string[] | null
@@ -1470,6 +1716,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          confidence: number | null
           context_to_load: string | null
           created_at: string
           created_by: string
@@ -1489,15 +1736,19 @@ export type Database = {
           priority: string | null
           project_id: string | null
           prompt_status: string | null
+          proposal_id: string | null
           recurring: boolean | null
           recurring_cadence: string | null
           relationship_id: string | null
+          source: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref: string | null
           status: string | null
           success_criteria: string | null
           updated_at: string
           waiting_on: string | null
         }
         Insert: {
+          confidence?: number | null
           context_to_load?: string | null
           created_at?: string
           created_by?: string
@@ -1517,15 +1768,19 @@ export type Database = {
           priority?: string | null
           project_id?: string | null
           prompt_status?: string | null
+          proposal_id?: string | null
           recurring?: boolean | null
           recurring_cadence?: string | null
           relationship_id?: string | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           status?: string | null
           success_criteria?: string | null
           updated_at?: string
           waiting_on?: string | null
         }
         Update: {
+          confidence?: number | null
           context_to_load?: string | null
           created_at?: string
           created_by?: string
@@ -1545,9 +1800,12 @@ export type Database = {
           priority?: string | null
           project_id?: string | null
           prompt_status?: string | null
+          proposal_id?: string | null
           recurring?: boolean | null
           recurring_cadence?: string | null
           relationship_id?: string | null
+          source?: Database["public"]["Enums"]["proposal_source"] | null
+          source_ref?: string | null
           status?: string | null
           success_criteria?: string | null
           updated_at?: string
@@ -1559,6 +1817,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
           {
@@ -1812,6 +2077,27 @@ export type Database = {
         | "Skipped"
         | "Reopened"
         | "Superseded"
+      proposal_entity_type:
+        | "persona"
+        | "relationship"
+        | "campaign"
+        | "project"
+        | "task"
+        | "session"
+        | "document"
+        | "decision"
+        | "spark"
+        | "quest"
+        | "component"
+        | "workflow"
+        | "journey"
+        | "mission"
+        | "outcome"
+        | "domain_assessment"
+        | "delegation"
+        | "playbook"
+      proposal_source: "capture" | "notion" | "external_ai" | "manual"
+      proposal_status: "pending" | "approved" | "rejected" | "held" | "merged"
       quality_status: "Draft" | "Tested" | "Proven" | "Canonical"
       source_of_advancement:
         | "Seed"
@@ -1997,6 +2283,28 @@ export const Constants = {
         "Reopened",
         "Superseded",
       ],
+      proposal_entity_type: [
+        "persona",
+        "relationship",
+        "campaign",
+        "project",
+        "task",
+        "session",
+        "document",
+        "decision",
+        "spark",
+        "quest",
+        "component",
+        "workflow",
+        "journey",
+        "mission",
+        "outcome",
+        "domain_assessment",
+        "delegation",
+        "playbook",
+      ],
+      proposal_source: ["capture", "notion", "external_ai", "manual"],
+      proposal_status: ["pending", "approved", "rejected", "held", "merged"],
       quality_status: ["Draft", "Tested", "Proven", "Canonical"],
       source_of_advancement: [
         "Seed",
