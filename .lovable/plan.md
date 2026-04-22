@@ -1,126 +1,71 @@
 
 
-# Phase 2.10v — Surface the views that already know things. Stop asking the same question twice.
+# Phase 2.10v — Step 2: Bring the dead index pages alive
 
-You're right. There are **13 database views** quietly doing serious work, and most of the app ignores them. We've been re-querying raw tables and re-deriving in JS what the database already pre-sorts. Here's the audit and what to change.
+Step 1 (Today + Planner on `time_grid`) is shipped. Continuing with the next shippable slice.
 
----
+## What this step delivers
 
-## What's hiding in plain sight (database views, today usage)
+Three skeleton index pages (`/projects`, `/relationships`, `/tasks`) get rebuilt to read from the rollup views that already exist. Plus the Components index gets the build-pipeline upgrade. No migration, no new tables — pure UI plumbing into views the database already computes.
 
-| View | What it pre-sorts | Used by | Missed value |
-|---|---|---|---|
-| `time_grid` | All actionable records (task/project/session/campaign/spark/decision) unified by date axis | **nothing** | Today + Planner + Calendar should *all* feed from this. Currently each re-derives from raw tables, missing sessions/sparks/decisions. |
-| `work_context` | Per-entity tagging + relationships + blockers + which components it's building | **nothing** | Detail pages, Components, Domains all want this. Blocker chains visible nowhere. |
-| `task_blockers` | What's blocking what (resolved names, not IDs) | **nothing** | "Why is this stuck?" answered in zero clicks instead of three. |
-| `recent_done_log` | Unified 14-day "what shipped" feed across tasks/projects/sessions | Flightdeck only | Today's "Wins this week", Relationship detail "Recent activity", weekly review. |
-| `operator_workload` | Open/blocked/overdue per operator + next due | Operators, People | Flightdeck operator view, Project owners, Today "team status." |
-| `component_build_pipeline` | Active projects + tasks per component | **nothing** | Components index = a dead list today. Should show "what's actively moving this." |
-| `workflow_step_pipeline` | Step DAG + run status + approvals waiting | Flightdeck only | Today's "needs your approval", Workflow detail. |
-| `maturity_threshold_progress` | "ready_to_advance" boolean per rubric | **nothing** | Domain detail + SweetCycle should highlight thresholds you've earned. |
-| `engagement_service_rollup` | Sessions total/shipped/in-flight + completion % per service | **nothing** | Engagement Plan detail, Relationship subscription card. |
-| `project_rollup` | Total/open/blocked/overdue per project + next due | **nothing** | Projects index = dead list. Should show heat. |
-| `relationship_journey` | Stage + temperature + drift + primary service in one row | **nothing** | Relationships index, Pipeline cards, SweetCycle header. |
-| `measure_health` | Status colour per measure | MeasuresPanel | (already good) |
-| `relationship_domain_maturity` | L1–L5 per (relationship, domain) | (already good) | (already good) |
+## Per-page changes
 
-**The pattern:** ~70% of the intelligence is already computed. The UI just isn't reading it.
+### `/projects` — from 5-line stub to live heat map
+Reads `project_rollup` joined with `projects`. Each row shows:
+- Name + relationship
+- Stat chips: **open · blocked · overdue · next due**
+- Owner avatars
+- Visual heat: red ring if `overdue > 0`, amber if `blocked > 0`, neutral otherwise
+- Filter chips: *All · Stuck (overdue OR blocked) · Mine · By relationship*
+- Sort: *Most overdue · Soonest due · Recently touched*
 
----
+### `/relationships` — from 5-line stub to journey-aware list
+Reads `relationship_journey` (one row per relationship with stage/temperature/drift/primary service pre-joined).
+- Card per relationship: name · pipeline stage chip · temperature dot · drift indicator · primary service · current SweetCycle stage
+- Filter chips: *Stage · Temperature · Drift risk · Has subscription*
+- Sort: *Stage progression · Temperature · Drift risk · Recently touched*
+- Empty state with "Add relationship" CTA
 
-## What to build (one cohesive pass)
+### `/tasks` — from 5-line stub to operator workspace
+Reads `tasks` joined with `work_context` (tags, relationship, component contributions) + `task_blockers` (resolved blocker names).
+- Group-by toggle: *Status · Relationship · Operator · Due bucket*
+- Each row: name · status chip · due chip · operator chip · relationship chip · inline blocker chain (when blocked)
+- Filter chips: *Mine · Blocked · Overdue · Unscheduled*
+- Drag-to-status reusing `<StageSwimlanes>` when grouped by status
 
-### 1. Fix Today and Planner to feed from `time_grid` + `recent_done_log`
-
-**Today** currently shows tasks only. After: tasks · sessions · sparks · decisions · campaigns, all unified by date, with **Wins this week** (from `recent_done_log`) and **Awaiting your approval** (from `workflow_step_pipeline` where `run_status = 'awaiting_approval'`) as new sections. One query replaces four.
-
-**Planner** currently lanes only tasks/projects/campaigns. After: same lanes, but populated from `time_grid` so sessions and sparks land where they belong on the week.
-
-### 2. Two new "pre-sorted" surfaces nobody knew were possible
-
-**`/think/blockers`** — *"What's stuck and why."* Reads `task_blockers` joined to `tasks`. Lists every open task with its blocker chain resolved (names, not IDs), grouped by relationship. One click to open either side. This is the page that answers "why isn't this moving?" — currently invisible.
-
-**`/think/wins`** — *"Recent done."* Reads `recent_done_log` (last 14 days, all entity types). Filterable by relationship, operator, kind. The weekly-review surface that doesn't exist today. Lives under THINK group next to Decisions.
-
-### 3. Make dead index pages alive (zero new tables, just join the views)
-
-- **`/components`** — join `component_build_pipeline` so each row shows *active projects · active tasks · current maturity*. Sort by "most-moved this week."
-- **`/projects`** — join `project_rollup` so each row shows *open · blocked · overdue · next due · owners*. Surface a "Stuck" filter chip (overdue > 0 OR blocked > 0).
-- **`/relationships`** — join `relationship_journey` so each row shows *stage · temperature · drift · primary service · current SweetCycle stage* without N+1 queries.
-- **`/operators`** — already uses `operator_workload` (good); add the same workload chips to **People** and **Flightdeck operator cards** so the heatmap reads everywhere.
-
-### 4. Surface "ready_to_advance" — the maturity moment
-
-`maturity_threshold_progress.ready_to_advance` is computed and ignored. Add:
-- A pulsing **"Ready to advance"** badge on Domain detail, SweetCycle journey card, and Today (a new section "Maturity wins ready to claim"). One click → opens the rubric so Liz checks the box and the level moves.
-
-### 5. Engagement Plan + Subscription get the rollup they need
-
-- **`/engagement-plans/$id`** — render each service with `engagement_service_rollup` (sessions total/shipped/in-flight, completion %, next session date). The "is this delivery on track?" question answers itself.
-- **`<SubscriptionCard>`** (already on relationship detail) — add the rollup so subscription = *tier + sessions remaining (from rollup, not just the manual counter) + next session date + completion %*.
-
-### 6. Sidebar: small reorg to surface the new surfaces
-
-Add to **THINK** group:
-- **Blockers** (new — `/think/blockers`)
-- **Recent wins** (new — `/think/wins`)
-
-Rename the group caption from "Registers & analysis" to "Patterns & blockers" so the verb-first IA holds.
-
-### 7. Memory updates so this doesn't regress
-
-- `mem://design/views-as-truth.md` *(new)* — Hard rule: list/detail pages prefer views over re-deriving from raw tables. List the 13 views and their canonical use sites.
-- Update `mem://design/sidebar-ia.md` — add Blockers + Recent wins under THINK.
-
----
+### `/components` — pipeline-aware
+Reads `components` joined with `component_build_pipeline`. Each row shows:
+- Name · current maturity level chip
+- Activity chips: **active projects · active tasks · last touched**
+- Sort: *Most-moved this week · Maturity · Alphabetical*
+- Filter chips: *All · Active · Stalled (no activity 30d) · By domain*
 
 ## What this builds
 
-**No migration.** Zero new tables. Zero new views. Just consume what's already there.
+**No migration.** All four views already exist.
 
-**New routes (2)**
-- `src/routes/_app.think.blockers.tsx`
-- `src/routes/_app.think.wins.tsx`
+**New components**
+- `src/components/rollup-stat-chip.tsx` — small numeric chip with tone (neutral/amber/red) used across all four pages.
+- `src/components/heat-ring.tsx` — colored border-ring wrapper for cards based on overdue/blocked state.
 
-**New components (3)**
-- `src/components/blocker-chain.tsx` — renders a task's blocker chain inline.
-- `src/components/wins-feed.tsx` — `recent_done_log` rendered as a timeline.
-- `src/components/ready-to-advance-badge.tsx` — pulsing chip with one-click open.
-
-**Edited**
-- `src/routes/_app.today.tsx` — switch to `time_grid` + add Wins + Awaiting approval + Ready-to-advance sections.
-- `src/routes/_app.planner.tsx` — switch to `time_grid`; sessions/sparks land on lanes.
-- `src/routes/_app.components.index.tsx` — join `component_build_pipeline`; add "most-moved" sort.
-- `src/routes/_app.projects.index.tsx` — currently 5 lines, build it out using `project_rollup`.
-- `src/routes/_app.relationships.index.tsx` — currently 5 lines, build using `relationship_journey`.
-- `src/routes/_app.tasks.index.tsx` — currently 5 lines, build using `work_context` + `task_blockers`.
-- `src/routes/_app.operators.index.tsx` — keep workload, add overdue chip.
-- `src/routes/_app.people.tsx` — add workload chips per operator.
-- `src/routes/_app.engagement-plans.$id.tsx` — render `engagement_service_rollup` per service.
-- `src/routes/_app.relationships.$id.tsx` — `<SubscriptionCard>` reads rollup; `<ReadyToAdvanceBadge>` per domain.
-- `src/routes/_app.domains.$slug.tsx` — `<ReadyToAdvanceBadge>` per active rubric row.
-- `src/routes/_app.sweetcycle.tsx` — `<ReadyToAdvanceBadge>` on stage cards where applicable.
-- `src/components/app-sidebar.tsx` — add Blockers + Recent wins under THINK.
+**Edited routes**
+- `src/routes/_app.projects.index.tsx`
+- `src/routes/_app.relationships.index.tsx`
+- `src/routes/_app.tasks.index.tsx`
+- `src/routes/_app.components.index.tsx`
 
 **Memory**
-- `mem://design/views-as-truth.md` *(new)* — the 13 views and where each must be used.
-- `mem://design/sidebar-ia.md` — add the two new entries.
+- `mem://design/views-as-truth.md` *(new)* — the hard rule + canonical view→page mapping so this doesn't regress.
 
----
+## What's NOT in this step
+- `/think/blockers` and `/think/wins` routes — Step 4.
+- `<ReadyToAdvanceBadge>` — Step 5.
+- Engagement plan + subscription rollups — Step 5.
+- Sidebar reorg (Blockers + Recent wins entries) — moves to Step 4 when those routes exist.
 
-## Why this is the right pass
+## Why this order
 
-You said: *"there's already pre-sorted views that are gonna help us in ways we never knew were possible."* Exactly right. The intelligence is in the database. Every screen that re-derives blocker logic, due-grouping, or rollups in JS is **slower, less consistent, and missing entities** because raw-table queries forget about sessions/sparks/decisions. Switching to views fixes correctness *and* unlocks two surfaces (Blockers, Wins) that genuinely don't exist anywhere yet.
+Index pages are the daily entry point to entities. Today they're empty stubs that force users to click through to find anything useful. After this step, the four busiest list pages tell you *where the heat is* before you click. That's a far bigger daily-quality win than building the two new niche routes first.
 
-It's also a cheap pass — no migration, no new tables, no AI cost. Pure UI plumbing into work already done.
-
-## Suggested order
-
-1. **Today + Planner switch to `time_grid`** + add Wins / Awaiting approval / Ready-to-advance. *Highest daily-value win.*
-2. **Build out the three skeletal index pages** (`/projects`, `/relationships`, `/tasks`) using rollup views.
-3. **Components index reads `component_build_pipeline`** + new "most-moved" sort.
-4. **New `/think/blockers` + `/think/wins`** routes + sidebar entries.
-5. **Engagement plan + subscription rollups + Ready-to-advance badges** across Domain / SweetCycle / Relationship detail.
-
-Each step is independently shippable. Approve and I start at #1.
+Ready to ship Step 2.
 
