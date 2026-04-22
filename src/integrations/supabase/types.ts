@@ -5737,6 +5737,39 @@ export type Database = {
           },
         ]
       }
+      workflow_outcomes: {
+        Row: {
+          created_at: string
+          outcome_id: string
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string
+          outcome_id: string
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string
+          outcome_id?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_outcomes_outcome_id_fkey"
+            columns: ["outcome_id"]
+            isOneToOne: false
+            referencedRelation: "outcomes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_outcomes_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_relationship_state: {
         Row: {
           created_at: string
@@ -5951,6 +5984,56 @@ export type Database = {
           },
         ]
       }
+      workflow_step_components: {
+        Row: {
+          component_id: string
+          contribution_type: string
+          created_at: string
+          workflow_step_id: string
+        }
+        Insert: {
+          component_id: string
+          contribution_type?: string
+          created_at?: string
+          workflow_step_id: string
+        }
+        Update: {
+          component_id?: string
+          contribution_type?: string
+          created_at?: string
+          workflow_step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_step_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "workflow_step_components_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_step_components_workflow_step_id_fkey"
+            columns: ["workflow_step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_step_pipeline"
+            referencedColumns: ["step_id"]
+          },
+          {
+            foreignKeyName: "workflow_step_components_workflow_step_id_fkey"
+            columns: ["workflow_step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_step_dependencies: {
         Row: {
           depends_on_step_id: string
@@ -5989,6 +6072,46 @@ export type Database = {
           {
             foreignKeyName: "workflow_step_dependencies_step_id_fkey"
             columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_step_outcomes: {
+        Row: {
+          created_at: string
+          outcome_id: string
+          workflow_step_id: string
+        }
+        Insert: {
+          created_at?: string
+          outcome_id: string
+          workflow_step_id: string
+        }
+        Update: {
+          created_at?: string
+          outcome_id?: string
+          workflow_step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_step_outcomes_outcome_id_fkey"
+            columns: ["outcome_id"]
+            isOneToOne: false
+            referencedRelation: "outcomes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_step_outcomes_workflow_step_id_fkey"
+            columns: ["workflow_step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_step_pipeline"
+            referencedColumns: ["step_id"]
+          },
+          {
+            foreignKeyName: "workflow_step_outcomes_workflow_step_id_fkey"
+            columns: ["workflow_step_id"]
             isOneToOne: false
             referencedRelation: "workflow_steps"
             referencedColumns: ["id"]
@@ -6070,6 +6193,7 @@ export type Database = {
           created_at: string
           created_by: string
           default_operator_id: string | null
+          deliverables: string[]
           description: string | null
           expected_duration_minutes: number | null
           id: string
@@ -6078,7 +6202,7 @@ export type Database = {
           produces_document_type: string | null
           requires_human_approval: boolean
           step_type: Database["public"]["Enums"]["workflow_step_type"]
-          success_criteria: string | null
+          success_criteria: string[]
           tagged_components: string[]
           updated_at: string
           workflow_id: string
@@ -6088,6 +6212,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           default_operator_id?: string | null
+          deliverables?: string[]
           description?: string | null
           expected_duration_minutes?: number | null
           id?: string
@@ -6096,7 +6221,7 @@ export type Database = {
           produces_document_type?: string | null
           requires_human_approval?: boolean
           step_type?: Database["public"]["Enums"]["workflow_step_type"]
-          success_criteria?: string | null
+          success_criteria?: string[]
           tagged_components?: string[]
           updated_at?: string
           workflow_id: string
@@ -6106,6 +6231,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           default_operator_id?: string | null
+          deliverables?: string[]
           description?: string | null
           expected_duration_minutes?: number | null
           id?: string
@@ -6114,7 +6240,7 @@ export type Database = {
           produces_document_type?: string | null
           requires_human_approval?: boolean
           step_type?: Database["public"]["Enums"]["workflow_step_type"]
-          success_criteria?: string | null
+          success_criteria?: string[]
           tagged_components?: string[]
           updated_at?: string
           workflow_id?: string
@@ -6468,6 +6594,7 @@ export type Database = {
           approval_role: Database["public"]["Enums"]["approval_role"] | null
           completed_at: string | null
           default_operator_id: string | null
+          deliverables: string[] | null
           expected_duration_minutes: number | null
           output_document_id: string | null
           position: number | null
@@ -6479,7 +6606,7 @@ export type Database = {
           step_name: string | null
           step_run_id: string | null
           step_type: Database["public"]["Enums"]["workflow_step_type"] | null
-          success_criteria: string | null
+          success_criteria: string[] | null
           tagged_components: string[] | null
           workflow_id: string | null
         }
