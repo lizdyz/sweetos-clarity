@@ -1,44 +1,106 @@
 
-# Fix: Stop the login bounce
+# Phase 2 Kickoff: Capture, Pollination & Validation
 
-## What's broken
-Successful sign-in returns a valid session, but the user lands back on `/login` because:
+You're naming the thing the system is missing: right now it's a **dashboard of empty tables** with no way to actually feed it. You don't want to click "+ New Persona" 40 times. You want to **talk at it**, have it **pull from your existing Notion**, and then **review and approve** what it proposes — not blindly write.
 
-1. **Race condition** — `navigate({ to: "/" })` fires before Supabase finishes writing the session to localStorage. The `/` route's `beforeLoad` calls `getSession()`, gets `null`, and redirects back to `/login`.
-2. **Two sources of truth** — `AuthProvider` tracks session via `onAuthStateChange` (correct, reactive), but route guards independently re-query `getSession()` (racy, async).
-3. **Stale preload** — `defaultPreloadStaleTime: 0` forces guard re-execution on every hover/navigation, amplifying the flap.
+This pass turns SweetBOS into that.
 
-## The fix (3 small, surgical changes)
+## Three input rails into one review queue
 
-### 1. Make auth state the single source of truth via router context
-Pass the live `AuthProvider` state into TanStack Router context so `beforeLoad` reads the **already-resolved** session synchronously instead of re-querying Supabase.
+Everything you say, paste, or pull becomes a **proposal** — never a direct write. All proposals land in a single **Staging Queue** where you confirm, edit, merge, or reject.
 
-- `src/router.tsx` — declare `context: { auth: AuthState }` shape, switch root to `createRootRouteWithContext<{ auth: AuthState }>()`
-- `src/routes/__root.tsx` — inject the live auth value into the router via `router.update({ context })` inside `RootComponent`, after `AuthProvider` mounts
-- `src/routes/_app.tsx`, `src/routes/index.tsx`, `src/routes/login.tsx` — replace `await supabase.auth.getSession()` in `beforeLoad` with `context.auth.session` (synchronous read)
+```text
+Voice / Text Capture ─┐
+Notion Pull (MCP)     ├──► Proposals Queue ──► You review ──► Writes to DB
+External AI (paste)   ─┘                       (approve/edit/reject/merge)
+```
 
-### 2. Wait for auth to finish loading before guarding
-Add a guard in `beforeLoad` that waits for `auth.loading === false` before deciding. This eliminates the race entirely — guards never run while the session is still being hydrated.
+### Rail 1 — Universal Capture (talk or type)
+- Floating capture bar (already stubbed at `/capture`) becomes a real input: textarea + mic button + paste-from-anywhere
+- On submit, calls a server function that sends the raw text to Lovable AI (`google/gemini-3-flash-preview` default, switchable)
+- AI returns: `{ intent, entity_type, proposed_fields, matched_existing_record?, confidence, contradictions[] }`
+- Result lands in the staging queue, not the DB
 
-### 3. Login form: navigate after the auth state actually flips
-Instead of calling `navigate()` immediately after `signInWithPassword()` resolves, listen for `session` to become non-null in `AuthProvider`, then navigate. Use a small `useEffect` in `LoginPage` that watches `auth.session` and triggers `navigate({ to: "/today" })` once it's set. (Skip the `/` hop — go straight to `/today`.)
+### Rail 2 — Notion MCP pollination
+- New **Sources** page under Settings: lists Notion pages/databases you choose to sync from
+- For each source you pick which SweetBOS entity it maps to (e.g. "this Notion DB → Personas")
+- "Pull from Notion" button fetches via the Notion MCP, runs each row through the same AI normalizer, lands them in the staging queue
+- Re-pull is incremental — already-staged or already-approved Notion rows are deduped by source URL + row ID
 
-### 4. Small cleanup
-- Remove `defaultPreloadStaleTime: 0` from router config (it's the wrong default for an auth-guarded app and causes guard thrash on hover-preload)
-- `/index.tsx` keeps its redirect logic but reads from context, so it resolves instantly
+### Rail 3 — Bring-your-own AI output
+- Paste-in box: "I worked this through with another AI, here's the output"
+- Same normalizer parses it into proposals
+- Provenance on the proposal records "external_ai" + your label (e.g. "ChatGPT", "Claude")
 
-## Why this works
-- No more async `getSession()` calls in `beforeLoad` → no race window
-- Single source of truth (`AuthProvider`) → no contradictory state between guards
-- Login form waits for the actual state transition → no premature navigation
-- Removing aggressive preload staleness → guards don't re-run on every mouse hover
+## The Proposals Queue (the trust layer)
 
-## Files touched
-- `src/router.tsx` — context type, remove `defaultPreloadStaleTime`
-- `src/routes/__root.tsx` — wire auth into router context
-- `src/routes/_app.tsx` — read from `context.auth`, wait for `!loading`
-- `src/routes/index.tsx` — read from `context.auth`
-- `src/routes/login.tsx` — `useEffect` to navigate on session arrival, read from `context.auth` in `beforeLoad`
-- `src/lib/auth-context.tsx` — export `AuthState` type for router context typing (already mostly there)
+A new top-level route `/queue` showing every staged proposal as a card:
 
-No DB changes. No new dependencies. Pure client-side wiring fix.
+```text
+┌─────────────────────────────────────────────────────┐
+│ PROPOSAL · Persona · confidence 0.82 · from Notion │
+│                                                     │
+│ Proposed:  "Burned-out founder, 35-50, SaaS"       │
+│ Matches:   Existing persona "Founder, mid-stage"?  │
+│            [merge]  [keep separate]                │
+│                                                     │
+│ Fields:    name, age_range, industry, pain_points  │
+│            [edit inline]                           │
+│                                                     │
+│ Conflicts: industry says "SaaS" — existing says    │
+│            "B2B Services"  ⚠                       │
+│                                                     │
+│ Source:    notion://page-abc123  (open original)   │
+│                                                     │
+│ [Approve & write]  [Edit]  [Reject]  [Hold]        │
+└─────────────────────────────────────────────────────┘
+```
+
+- Filters: by entity type, by source, by confidence, by status
+- Bulk approve for high-confidence + no-conflict proposals
+- Every approval writes to the real table AND records provenance (`source`, `source_ref`, `confidence`, `approved_by`, `approved_at`) on the row
+
+## Domains & personas — making them industry-aware
+
+You're right that personas/domains depend on industry. Two changes:
+1. **Industry** becomes a first-class field on `Relationships` (with a sensible enum + free-text fallback)
+2. **Persona templates** — a small library of starter persona shapes per industry. When you create or pull a persona, the system suggests the matching template's fields to fill in. Templates are editable in Settings → Templates and seeded with a starter set.
+
+## What I need from you (file context)
+
+> "do you still have access to them"
+
+I have the **summarized canon** from earlier in this conversation (the SweetBOS constitution, ERD, component master list, SweetCycle/SweetSync model, cadence vars). The raw uploaded files from earlier turns are no longer directly readable — they were summarized. That's been enough to design the schema correctly.
+
+For Phase 2 specifically I'll need to **re-fetch from Notion via MCP** the canonical lists for:
+- Domain taxonomy (so the dropdown matches your real list)
+- Component master list (so pulled work items match real component IDs)
+- Persona templates per industry (if you have these documented)
+
+I'll do that as the first step of the build, using the already-connected Notion MCP — no extra setup from you.
+
+## Build order
+
+1. **Schema:** `proposals` table (status, entity_type, payload jsonb, source, source_ref, confidence, conflicts jsonb, matched_record_id, approved fields), `sources` table (Notion page/db registry), `industry` + provenance fields on existing entities
+2. **Capture server function:** text → Lovable AI → normalized proposal → `proposals` table
+3. **Notion MCP fetch server function:** pulls a registered source, normalizes each row, stages proposals (dedupe by source_ref)
+4. **External-AI paste server function:** same normalizer path
+5. **Proposals Queue UI** at `/queue` — cards, filters, approve/edit/reject/merge
+6. **Capture UI** at `/capture` — textarea + mic (Web Speech API) + submit
+7. **Sources UI** in Settings — register Notion pages/DBs, map to entity, "Pull now" button
+8. **Persona templates** — seed table + Settings tab to edit
+9. **Industry field** on Relationships + propagate into persona/domain suggestions
+10. Re-fetch canonical lists from Notion to seed enums and templates
+
+## What this gives you
+
+- You talk at it, it stages a proposal, you tap approve. No form-filling.
+- Notion stops being a separate world — it pollinates SweetBOS on demand, with your review.
+- Anything you worked out in another AI lands the same way.
+- Nothing writes without you confirming. Contradictions surface before they corrupt the graph.
+- Industry-aware persona suggestions instead of one generic shape.
+
+## Deferred (still Phase 3)
+- Auto-pull on Notion changes (webhook) — manual pull only for now
+- Voice transcription beyond Web Speech API (e.g. Whisper) — browser native first
+- Multi-step agent that proposes whole campaigns/projects from a single capture — single-entity proposals first, chains next
