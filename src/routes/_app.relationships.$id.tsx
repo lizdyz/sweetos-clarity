@@ -320,22 +320,129 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
   );
 }
 
-function FunnelStat({
+function FunnelEditor<T extends string>({
+  relationshipId,
+  field,
   label,
   value,
+  options,
   tone,
 }: {
+  relationshipId: string;
+  field: "awareness_tier" | "temperature" | "drift_risk";
   label: string;
   value: string | null;
+  options: readonly T[];
   tone: "iris" | "success" | "warning" | "destructive" | "neutral" | "muted";
 }) {
+  const qc = useQueryClient();
+  const mut = useMutation({
+    mutationFn: async (next: string | null) => {
+      const { error } = await supabase.from("relationships").update({ [field]: next }).eq("id", relationshipId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["relationships", "panels", relationshipId] });
+      qc.invalidateQueries({ queryKey: ["relationship-journey"] });
+      toast.success(`${label} updated`);
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Update failed"),
+  });
   return (
     <div className="rounded-xl border border-border bg-surface p-3">
       <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className="mt-1.5">
-        {value ? <Chip tone={tone}>{value}</Chip> : <span className="text-xs text-muted-foreground">—</span>}
+        <Select value={value ?? "__unset"} onValueChange={(v) => mut.mutate(v === "__unset" ? null : v)}>
+          <SelectTrigger className="h-7 w-full border-0 bg-transparent p-0 text-xs hover:bg-muted/40">
+            <SelectValue placeholder="—">
+              {value ? <Chip tone={tone}>{value}</Chip> : <span className="text-xs text-muted-foreground">—</span>}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__unset">—</SelectItem>
+            {options.map((opt) => (
+              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
+  );
+}
+
+function AddPortalButton({ relationshipId }: { relationshipId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<string>("Pre-Mirror");
+  const [version, setVersion] = useState("1");
+  const [url, setUrl] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("relationship_portals").insert({
+        relationship_id: relationshipId,
+        kind,
+        version,
+        url,
+        notes: notes || null,
+        delivered_at: new Date().toISOString(),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["relationship_portals", relationshipId] });
+      qc.invalidateQueries({ queryKey: ["relationship_journey", relationshipId] });
+      qc.invalidateQueries({ queryKey: ["relationship-journey"] });
+      toast.success("Portal logged");
+      setOpen(false);
+      setUrl("");
+      setNotes("");
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const KINDS = ["Pre-Mirror", "Pre-Map", "Pre-Machine", "Mirror Output", "Map Output", "Machine Output", "Sync", "Other"];
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="h-7 gap-1 text-[11px]">
+          <Plus className="h-3 w-3" /> Add portal
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Log a portal artifact</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">Kind</Label>
+            <Select value={kind} onValueChange={setKind}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Version</Label>
+            <Input value={version} onChange={(e) => setVersion(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">URL</Label>
+            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
+          </div>
+          <div>
+            <Label className="text-xs">Notes</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={() => mut.mutate()} disabled={!url || mut.isPending}>
+            {mut.isPending ? "Saving…" : "Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
