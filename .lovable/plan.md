@@ -1,133 +1,141 @@
+# Phase 2.10s — Capture hint-tags, JTBD sampler, smarter sidebar naming
 
-
-# Phase 2.10r — Fix the Spark/Quest confusion. Anchor SweetSync to a client. Honor the doc.
-
-## What's wrong right now (quick truth)
-
-You read it correctly. Today **Sparks and Quests have no `relationship_id`** — they live in your workspace as if they were yours. The doc is explicit: **Sparks/Quests are the SweetSync decomposition path for a specific client**. Sessions (SweetCycle) are the **session path for that same client**. Both advance the same underlying **workflow/capability** (Component) and write to **one shared truth model**.
-
-So Sparks ARE for clients — but they can also reflect *your* internal builds (you are the client of your own SweetBOS). The fix isn't "remove Sparks from your view" — it's **make every Spark/Quest declare who it's for**, and give you two clean lenses: *Client SweetSync* vs *Internal SweetSync*.
-
-I'll also stop using the word **compress** anywhere in the UI/copy (per your note) — replace with **"sessions advance"** / **"session-led path"** vs **"self-paced path"**.
+Three things you asked. One ranked recommendation for each, with the alternates noted so you can override.
 
 ---
 
-## Tier 1 — Anchor + relabel (the core fix)
+## 1. Capture — optional "hint tags" expander (you suggest, AI confirms, queue approves)
 
-### 1. Add `subject` to Quests and Sparks (one client OR internal)
-Tiny additive migration:
-```sql
-ALTER TABLE quests
-  ADD COLUMN relationship_id uuid REFERENCES relationships ON DELETE SET NULL,
-  ADD COLUMN scope text NOT NULL DEFAULT 'client'    -- 'client' | 'internal'
-    CHECK (scope IN ('client','internal')),
-  ADD COLUMN core_workflow_id uuid REFERENCES workflows ON DELETE SET NULL;
-   -- declares the underlying workflow/capability this Quest advances
+**Today:** capture is pure brain-dump. AI infers everything. You can't whisper to it.
 
-ALTER TABLE sparks
-  ADD COLUMN relationship_id uuid REFERENCES relationships ON DELETE SET NULL,
-  ADD COLUMN scope text NOT NULL DEFAULT 'client'
-    CHECK (scope IN ('client','internal'));
+**Add:** a collapsed "**Add hints (optional)**" disclosure under the textarea. Click → expands a 4-row mini-panel:
 
--- Backfill: existing quests/sparks → scope='internal' (they were yours).
-UPDATE quests SET scope='internal' WHERE relationship_id IS NULL;
-UPDATE sparks SET scope='internal' WHERE relationship_id IS NULL;
+- **Domains** — multi-pick from the 22 (typeahead chips).
+- **Tenets** — filtered to your active industry.
+- **Components** — typeahead from existing Components.
+- **Relationship / Person** — link this capture to a client or contact.
+- **Free-form keywords** — comma-separated; passed verbatim to the parser.
+
+These travel with the proposal as `user_hints` (jsonb on `proposals`). The parser **uses them as priors, not gospel** — the AI still proposes its own tags, and the queue review screen shows your hints with a **"You suggested"** chip next to AI's chips so you see exactly where they agreed/disagreed before approving. Nothing writes until you click approve in the queue. Resonance preserved, trust layer intact.
+
+*Tiny touch:* the disclosure is closed by default so the page stays calm when you don't care.
+
+---
+
+## 2. Sidebar reorg — four scenarios, one recommendation
+
+You're right that the IA is dense. Here are four ways to cut it, with pros/cons.
+
+### Scenario A — Verb-first ("What am I doing right now?") **← recommended**
+
+Reframe groups by *action*, not *layer*. Tucks Library/Taxonomies behind one entry.
+
+```
+TODAY        Today · Planner · Calendar · Capture · Queue · My tasks
+DELIVER      OCDA Cockpit · Sessions Bank · SweetCycle · Flightdeck
+              Engagement Plans · Pipeline · Campaigns
+THINK        BizzyBots · Decisions · Delegation Register
+              Measures · Documents
+SWEETSYNC    SweetSync (per client) · Missions · Journeys · Quests · Sparks
+PEOPLE       Relationships · People · Operators · Projects · Tasks
+LIBRARY ▸    (collapsed) Workflows · Session Templates · Playbooks
+              Components · Personas · Outcomes · JTBD · Vault
+              Domains · Tenets
+SETTINGS ▸   Prompts · Excellence · BizzyBot prompts · Open decisions · Team
 ```
 
-A trigger keeps Spark.scope/relationship_id in sync with its parent Quest so they can never drift.
+**Pros:** matches how you actually work ("I'm delivering" / "I'm thinking" / "I'm building the catalog"). Drops from 7 groups to 5 visible. Library + Taxonomies merge — one collapsible vault of definitions.
+**Cons:** "Think" is fuzzier than the others; Decisions/Delegation moving out of Operate may need a beat to relearn.
 
-### 2. Splash a clear filter on `/sparks` and `/quests`
-Top of page tab strip: **All · Internal (mine) · Client SweetSync** plus a relationship picker. Default = **Internal** so you stop seeing client work mixed in with your own. Each row gets a small "👤 Liz" or "🟣 {Client name}" chip so the scope is obvious at a glance.
+### Scenario B — Noun-first, fewer groups
 
-### 3. Rename one route group, add explainer headers
-- `/quests` and `/sparks` get a **PageHeader explainer** (canonical, from the doc): *"Sparks are the atomic unit of self-paced advancement. Sessions move things forward in a guided cadence; Sparks let progress happen between sessions. Both advance the same Components."*
-- New section in sidebar: under **SweetSync**, a single entry **"SweetSync (self-paced)"** that opens `/sweetsync` — a per-relationship board of that client's active Quests + Sparks. The existing `/sweetcycle` (session-led board) stays. Sidebar makes the two paths visually adjacent so the duality reads clearly.
+Keep current structure but merge: **Library + Taxonomies → "Catalog"**, **People + Operators stay**, drop Today subdivision.
+**Pros:** least disruption. **Cons:** still 6 groups; Operate stays bloated (12 items).
 
----
+### Scenario C — Three groups only ("DO / KNOW / TUNE")
 
-## Tier 2 — Wire the two paths to one truth (the doc's core ask)
+DO = Today + Operate + SweetSync. KNOW = Library + Taxonomies + People. TUNE = Settings.
+**Pros:** maximally minimal. **Cons:** DO becomes a 25-item wall.
 
-### 4. The "Core Workflow" link — Quest → Workflow → Components
-The doc's core sentence: *each workflow/capability is the core object*. Today Quests just float. Add `quests.core_workflow_id` (above) so every Quest declares which underlying workflow/capability it advances. On Quest detail:
-- Top card shows the **Core Workflow** + its delivery variations (**Map · Machine · SweetSync** chips, click-to-toggle which variations apply).
-- Below, the existing **Components advanced** list — but now sourced from `workflows.workflow_components` so it's consistent with the session path.
+### Scenario D — Per-relationship-first
 
-This is what closes the loop: a Session advancing Workflow X and a SweetSync Quest advancing Workflow X both write to the same Component maturity.
+Top of sidebar = your active relationships; everything else lives under "Workspace".
+**Pros:** client-first feel. **Cons:** big rebuild; doesn't help the naming problem you raised.
 
-### 5. Session ↔ SweetSync bridge widget
-On each `/relationships/$id` add a small **"Two paths · one truth"** strip:
-```text
-┌──────────────────── Workflow: Pre-call prep ────────────────────┐
-│ Session-led    ▶ 2 sessions held · last Apr 12 · Component 60% │
-│ Self-paced     ▶ 3 of 5 Sparks done · 2 awaiting confirm       │
-│                                                                 │
-│ Pre-filled from sessions: 4 inputs (✓ confirm to lock)          │
-└─────────────────────────────────────────────────────────────────┘
-```
-Reads from existing data (sessions + sparks tagged with the same `core_workflow_id`). No new table. Makes the bridge visible per the doc's *Section 3*.
+**My pick: Scenario A.** Concrete moves it requires:
 
-### 6. Story Trail honors the new model
-`<StoryTrail>` already exists. Tweak the chapter labels to use the doc's vocabulary:
-- "Spark completed by you" / "Spark completed with Liz" / "Spark completed for you" (mapped from `source_of_advancement` enum).
-- Show the **scope chip** (Internal vs Client name) on every chapter so a Component's Story Trail shows both paths interleaved truthfully.
+- **Operate → renamed "Deliver"**, trimmed to 7 items.
+- **New "Think" group** holds OCDA's downstream registers (Decisions, Delegation, BizzyBots, Measures, Documents).
+- **Library + Taxonomies merged** into one collapsible "Library" with a thin separator before Domains/Tenets.
 
 ---
 
-## Tier 3 — Vocabulary cleanup ("compress" → out)
+## 3. Naming fixes you flagged
 
-A focused find/replace pass:
-- "compress / compression" → **"session-led" / "advance through sessions"**
-- Audit copy in: `/sweetcycle` PageHeader, `/sessions` explainers, Story Trail chapter labels, memory file `mem://features/sweetcycle-journey.md`, and the Engagement Plan explainer card.
-- Add a memory rule so I never reintroduce it: `mem://design/canon-vocabulary.md` → "Never use compress/compression. Sessions *advance*; SweetSync *self-paces*. Both write to one shared truth."
+### a. "Sessions" → **"Sessions Bank"** (in the sidebar) / page title stays *"Sessions"* but the PageHeader becomes *"All Mirror, Map, Machine, and Sync sessions — past, scheduled, and templated."* Live ones stay distinguishable via the existing status chip + a new **"Today"** filter chip. Removes the "is this a live thing?" confusion without renaming the URL or table.
+
+### b. "Delegation" → keep route, **rename label to "Delegation Register"** with subtitle *"Work to hand off — the systematize list."* This is the single move that disambiguates it from JTBD on first read.
+
+### c. "Jobs-to-be-done" — promote to **a sampler picker**, not just a list
+
+You nailed it — JTBD should be **selectable** from a pre-seeded library, scoped by Domain + Tenet. Build it in two parts:
+
+- **Seed a JTBD sampler library** — ship ~80 canonical JTBD statements grouped by Domain (e.g., *People: "When I onboard a new advisor, I want to ramp them in 30 days, so I can recover billable capacity"*). Stored as `is_template = true` rows on `jobs_to_be_done`. Filterable by `related_domains` + `related_tenets`.
+- `**<JTBDPicker>` component** — opens from any Persona, Component, or Relationship detail page. You browse the sampler, click to **adopt** a JTBD into that subject (creates a non-template row with `source_jtbd_id` pointing back). On `/library/jtbd` add a **"Sampler / Adopted / All"** tab strip.
+
+Result: JTBD stops being abstract — you click from a real bank of starter statements and they instantly attach to the right Persona/Component, ready to drive lens prompts later.
 
 ---
 
-## Tier 4 — Honest "open decisions" surface (Section 14 of the doc)
+## What this builds
 
-You said open decisions are not failures, they're decisions to mark honestly. Add a tiny `/settings/open-decisions` page that reads from a new `open_decisions` table (5 rows seeded from Section 14) — equivalency rules, maturity thresholds, evidence formalization, decomposition readiness. Each row is a placeholder we update as we calibrate. So you and I never pretend the system is more settled than it is.
+**Migration**
+
+- `proposals.user_hints jsonb` (Capture hints).
+- `jobs_to_be_done.is_template boolean default false` + `source_jtbd_id uuid` self-ref.
+- Seed ~80 template JTBD rows grouped across the 22 Domains (industry-agnostic first pass).
+
+**New components**
+
+- `src/components/capture-hints-panel.tsx` — collapsible disclosure under the textarea.
+- `src/components/hint-vs-ai-diff.tsx` — small chip diff used on the proposal review screen.
+- `src/components/jtbd-picker.tsx` — sampler browser + "Adopt" action.
+
+**Edited**
+
+- `src/components/app-sidebar.tsx` — Scenario A reorg + naming changes.
+- `src/routes/_app.capture.tsx` — mount `<CaptureHintsPanel/>`; pass hints to `captureProposal`.
+- `src/utils/proposals.functions.ts` — accept `user_hints` and forward to the parser.
+- `supabase/functions/parse-capture/index.ts` (or current parser) — read hints as priors; never as overrides.
+- Proposal review screen (in `/queue` or capture-queue-strip) — show **"You suggested"** vs **"AI suggested"** chips side-by-side.
+- `src/routes/_app.library.jtbd.tsx` — Sampler / Adopted / All tabs.
+- `src/routes/_app.personas.$id.tsx` + `_app.components.$id.tsx` + `_app.relationships.$id.tsx` — "+ Add JTBD" opens `<JTBDPicker>`.
+- `src/routes/_app.sessions.index.tsx` (or wherever the list lives) — add "Sessions Bank" PageHeader copy + Today filter chip.
+- `src/routes/_app.delegation.index.tsx` — title becomes "Delegation Register" + subtitle.
+
+**Memory**
+
+- `mem://design/sidebar-ia.md` — rewrite to Scenario A.
+- `mem://features/jtbd.md` — add the sampler/adopted pattern.
+- `mem://design/canon-vocabulary.md` — append: "Sessions Bank, not just Sessions; Delegation Register, not just Delegation."
 
 ---
 
 ## What I'm NOT doing this pass
 
-- ❌ Building the Vault/Portal client renderer (still phase-3).
-- ❌ Adding the 3Cs / governance lens UI (doc Section 6 — needed but not this pass).
-- ❌ Auto-equivalency rules for "Session work pre-fills SweetSync Sparks" — schema lands now (`source_of_advancement`, `confidence` already exist), wiring the *automatic pre-fill* is its own pass once we have one real client running both paths.
-- ❌ Renaming any tables. Sparks stay sparks. Quests stay quests.
-- ❌ Touching the BizzyBots gallery, OCDA Cockpit, or anything we just shipped.
-
----
-
-## Total inventory
-
-**Migration (one):** add `relationship_id`, `scope`, `core_workflow_id` to quests; `relationship_id`, `scope` to sparks; sync trigger; seed `open_decisions` table.
-
-**New files (3):**
-- `src/components/scope-chip.tsx` — internal/client visual chip used everywhere a Spark/Quest is shown.
-- `src/components/two-paths-strip.tsx` — the bridge widget on relationship detail.
-- `src/routes/_app.sweetsync.tsx` — per-relationship self-paced board (mirrors `/sweetcycle` shape).
-
-**Edited files (~7):**
-- `src/routes/_app.sparks.index.tsx` + `_app.quests.index.tsx` — scope tabs + explainer header + scope chip on rows.
-- `src/routes/_app.sparks.$id.tsx` + `_app.quests.$id.tsx` — show scope, core workflow, relationship link.
-- `src/routes/_app.relationships.$id.tsx` — mount `<TwoPathsStrip>`.
-- `src/components/app-sidebar.tsx` — add `/sweetsync` next to `/sweetcycle`.
-- `src/components/story-trail.tsx` — scope chip on chapters; vocabulary tweaks.
-- Vocabulary sweep in `_app.sweetcycle.tsx`, `engagement-plans.$id.tsx`, memory files.
-
-**Memory:**
-- `mem://design/canon-vocabulary.md` (new) — never use "compress."
-- `mem://features/two-paths.md` (new) — Sessions advance, SweetSync self-paces, both write to one truth via `core_workflow_id`.
-- Update `mem://design/canon-sparks-vs-tasks.md` → add scope rule.
-
----
+- Per-relationship-first sidebar (Scenario D).
+- Auto-generating JTBDs from Capture text (sampler-first; AI-from-text is next pass once we see what good looks like).
+- Industry-specific JTBD seeds (start universal-by-Domain; add per-Tenet later).
+- Renaming the `sessions` route or table.
 
 ## Suggested order
 
-1. **Migration + scope chips on lists** — you immediately stop seeing client work mixed with yours.
-2. **Sidebar `/sweetsync` board** — per-client self-paced view goes live.
-3. **Two-paths strip on relationship detail** — the bridge becomes visible.
-4. **Vocabulary sweep + open-decisions page** — clean copy + honest unknowns.
+1. **Sidebar reorg + naming** (Scenario A + Sessions Bank + Delegation Register) — instant readability win, zero migration.
+2. **Capture hints panel + queue diff** — gives you the "tag-as-I-drop" affordance.
+3. **JTBD sampler + picker** — turns the empty list into a real first interaction.
 
-Each step ships independently. Approve and I start at #1.
+Each ships independently. Approve and I'll start at #1.  
+  
+go with; 
 
+A 
