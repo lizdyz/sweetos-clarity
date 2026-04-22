@@ -1,84 +1,114 @@
 
 
-# Pollinating SweetBOS canon ↔ marketing language
+# Tighten the UX Auditor with a hard required-presence checklist
 
-You're working the marketing voice in another space. My job here: make sure what we're **building** can deliver on what you're **promising**, flag anything in your two lists that isn't yet a real capability in the system, and surface canon-truths the marketing doesn't yet know it could claim.
-
-No code changes. This is an alignment pass. Output goes to a single doc you can paste back into your other workspace.
+Your other LLM is right: the current `ux-audit` edge function scores routes against canon rubrics, but it doesn't enforce a **mandatory component-presence check** with auto-HIGH severity. That's the missing teeth. This pass adds it.
 
 ---
 
-## What I'll produce
+## What changes
 
-A single Markdown brief at `/mnt/documents/sweetbos-marketing-alignment.md` with five sections:
+### 1. New audit rule layer in `supabase/functions/ux-audit/index.ts`
 
-### 1. Blind-spot list ↔ system capability map
+Before the AI scoring runs, a **deterministic source scan** checks the route file (and any components it imports) for the seven required-presence items. Each miss is appended to `findings` with `severity: "high"` and a fixed `rule` + `fix_hint` — the AI can't soften or skip them.
 
-For each of your 10 blind spots, I map to the exact SweetBOS surface that delivers on it. Example shape:
+Checklist (mirrors your other LLM's section 10):
 
-| Blind spot claim | Delivered by | Status |
-|---|---|---|
-| "Stress-testing your practice" | UX Auditor + Excellence Matrix + Maturity Thresholds | ✅ live |
-| "Concentration risk — you are 80%" | Operators table (human/workflow/agent) + Delegation Register + Flightdeck | ✅ live |
-| "Rebalancing — who catches drift" | Audit Cadence + UX Auditor + Story Trail | ✅ live |
-| "Benchmarking — measure your own" | Measures (Objectives/KRs/KPIs/CSFs) + measure_health view | ✅ live |
-| "Due diligence on how your practice runs" | Lens Wall (8 BizzyBots F1–F8) + Crib Sheets | ✅ live |
-| "Succession — practice locked in one person" | Brand Canon + Component Outputs + Workflow steps | ✅ live |
-| "Risk mitigation — protection from blind spots" | Canon Guardrails + UX Auditor | ✅ live |
-| "Alpha generation — performance left on table" | Spark Library + Quest Anatomy + SweetSync | ✅ live |
-| "Fiduciary standard for your own business" | Excellence Rubric + L1→L5 thresholds | ✅ live |
-| "Diversification — over-concentrated process/person/client" | Service Shape + Operator workload view + relationship_journey | ✅ live |
+| # | Required item | Detection method | Applies to |
+|---|---|---|---|
+| 1 | `<CanonGuardrail entityKind="...">` mounted at top of body | Regex: `<CanonGuardrail\s+entityKind=` present in route source | All entity detail pages (`/quests/$id`, `/sparks/$id`, `/components/$id`, `/missions/$id`, `/relationships/$id`, `/projects/$id`, `/tasks/$id`, `/operators/$id`, `/journeys/$id`, `/sessions/$id`, `/workflows/$id`, `/personas/$id`, `/playbooks/$id`, `/session-templates/$id`, `/decisions/$id`, `/outcomes/$id`, `/engagement-plans/$id`, `/domain-assessments/$id`, `/domains/$slug`, `/tenets/$slug`) |
+| 2 | `<TimeControls table=... rowId=...>` mounted | Regex: `<TimeControls\s` present | Actionable detail pages (tasks, sessions, projects, quests, missions, outcomes, workflows) |
+| 3 | `<MeasuresPanel subjectType subjectId>` present | Regex: `<MeasuresPanel\s` present | Any page where measures attach (project, relationship, session, mission, outcome, component, domain, tenet) |
+| 4 | `<DomainTenetChips>` rendered as TWO parallel selects | Detect: `<DomainTenetChips` AND no merged `tags` prop combining domains+tenets | Any filter/edit surface that exposes both axes |
+| 5 | Status field uses `<StageSwimlanes>` not plain `<Select>` | Detect: presence of `status` field with a plain `<Select>` and absence of `<StageSwimlanes>` for that field | Index pages with a status column; detail pages with status changes |
+| 6 | Sparks creation UI absent/locked | Regex: any `INSERT into sparks` from client OR a "New Spark" button on a non-system surface = HIGH violation | All routes |
+| 7 | Rollup data read from canonical view, not re-derived in JS | Detect: presence of expensive client-side `.reduce()` / `.filter()` aggregations on raw table queries when a documented view exists (e.g. `relationship_domain_maturity`, `time_grid`, `measure_health`, `operator_workload`, `component_build_pipeline`, `relationship_journey`) | Index pages |
 
-Anything not yet wired gets a ⚠️ with the smallest build needed to make the claim true.
+### 2. Scope-aware enforcement
 
-### 2. Ecosystem-benefit list ↔ system proof
+Not every rule applies to every route. The function will hold a small **route-classification map** so the auditor knows which rules are mandatory for which kind of page:
 
-Same treatment for your 11 ecosystem benefits. The strongest ones are already provable:
-- **"Visibility into their own business they've never had"** → Mirror = Lens Wall + Crib Sheets + Maturity Map (literal product)
-- **"Their expertise captured, documented, transferable"** → Brand Canon + Component Outputs + Sparks (system-generated only, never human — that's a feature, not a limitation)
-- **"A system that holds their standard even when they're not in the room"** → Canon Guardrails + UX Auditor + Workflow approval gates
-- **"A practice that compounds year over year"** → Story Trail + Audit Cadence + relationship_journey view
+```ts
+type RouteKind =
+  | "entity_detail"      // requires #1, #4 (if applicable), #6
+  | "actionable_detail"  // requires #1, #2, #4, #5, #6
+  | "measure_subject"    // requires #1, #3, #6
+  | "index"              // requires #5, #6, #7
+  | "settings" | "operate" | "library" | "other"
+```
 
-### 3. Canon-truths the marketing doesn't yet claim (but could)
+The classifier is a literal lookup table keyed by route path — no inference, no drift. Adding a new route requires adding a row, which is the right friction.
 
-Things the system already does that your two lists don't yet name. Candidates:
+### 3. Findings shape (new fields)
 
-- **Two paths, one truth** — Sessions (guided cadence) and SweetSync (self-paced) both write to the same Components. Marketing equivalent: "Whether we're in the room or you're working between sessions, the practice gets built — once, in one place, never twice."
-- **The Mirror as a literal product, not a metaphor** — `entity_crib_sheets` + `lens_perspectives` are real tables. The Mirror is the F1–F8 Lens Wall rendering of the user's own practice. That's a stronger claim than "we'll help you see your business."
-- **Operators include AI** — humans, workflows, and agents share one operators table with skills/likes/dislikes. Marketing equivalent: "Your AI agents work alongside your humans on the same board, with the same accountability."
-- **Sparks are system-generated only** — never human-written. That's the proof of "the system holds your standard when you're not in the room." It's literally enforced at the database trigger level.
-- **Canon Vault** — your brand voice, your frameworks, your decisions, all versioned. Marketing equivalent: "Your expertise stops living in your head and starts living in a system that can defend itself."
-- **Locked vocabulary** — "session-led path" / "self-paced path" / "Sessions Bank" / "Delegation Register". The product itself refuses to use the wrong words. That's a category claim: *the system has a voice, and it's yours.*
+Each presence-check failure produces:
 
-### 4. Hero sub + closing — canon check
+```ts
+{
+  severity: "high",
+  axis: "canon",
+  rule: "CANON_REQUIRES_<COMPONENT>",      // machine-readable
+  rule_name: "Canon Guardrail must be mounted on entity detail pages",
+  description: "<file> is classified as entity_detail but does not mount <CanonGuardrail>.",
+  fix_hint: "Add `<CanonGuardrail entityKind=\"quest\" />` near the top of the page body, above the tabs.",
+  detected_by: "presence_check",            // distinguishes deterministic vs AI findings
+  canon_ref: "mem://design/entity-canon"
+}
+```
 
-Your two rewrites already align. Two small reinforcements available from canon:
+`detected_by: "presence_check"` is new — it lets the cockpit visually separate hard rule violations from AI-judgment findings.
 
-- **Hero sub** — the line "the diagnosis, the blueprint, and the build all happen in the same relationship" maps cleanly to the canonical three layers (Mirror → Map → Machine) plus the SweetCycle journey view. You could optionally name them, or keep them implicit. My recommendation: keep implicit in the hero, name them on the second scroll.
-- **Closing** — "in one space, with one dedicated person, inside a system built specifically for how expertise-driven practices grow." The system supports this literally: Operators table holds the dedicated person; Flightdeck is the cross-relationship view they work from; SweetCycle is the per-relationship view the client sees. The dedicated-person claim is not aspirational — it's architectural.
+### 4. Score impact (canon axis)
 
-### 5. Risks / things to NOT claim yet
+Canon score on the 1–5 scale now has a hard ceiling driven by presence checks:
 
-- ❌ "Real-time collaboration" — not built; would need realtime channels on more tables
-- ❌ "Mobile-first" — preview is desktop-optimized
-- ❌ "Public client portals at scale" — `/p/$slug/seed` exists but the portal versioning system is still maturing
-- ❌ "Integrations with [CRM/calendar/etc]" — none yet
+- 0 violations → AI judges 1–5 freely
+- 1 violation → canon score capped at 3
+- 2 violations → capped at 2
+- 3+ violations → capped at 1
 
-Better to under-claim and over-deliver than the reverse.
+The AI can't paper over missing components with eloquent prose. This is the teeth.
+
+### 5. Cockpit UI — `/settings/ux-audit`
+
+Two small additions to `_app.settings.ux-audit.tsx`:
+
+- A **"Required-presence violations"** group at the top of each run's findings (collapsed by default if zero, expanded if any). Renders as a red-bordered list with the `fix_hint` as the primary action text.
+- A new column in the runs table: **"Canon misses"** (count of presence-check failures). Sortable. Lets you see at a glance which routes are most off-canon without opening each run.
+
+### 6. `mem://features/ux-auditor.md` update
+
+Append a new section documenting:
+- The presence-check rule list (so future canon edits stay in sync)
+- The route-kind classifier table
+- The score-cap formula
+- How to add a new required-presence rule (one place to edit: a `PRESENCE_RULES` const at the top of the edge function)
+
+---
+
+## Files touched
+
+1. `supabase/functions/ux-audit/index.ts` — add `PRESENCE_RULES`, `ROUTE_CLASSIFIER`, `runPresenceChecks()`, fold results into the existing findings array, apply canon-score cap before insert
+2. `src/routes/_app.settings.ux-audit.tsx` — add presence-violations group + "Canon misses" column
+3. `mem://features/ux-auditor.md` — document the new layer
+4. `mem://design/audit-cadence.md` — note that canon misses are now the headline KPI, not the AI scores
+
+No DB migration needed. No new tables. The existing `ux_audit_runs.findings` jsonb already accepts the new shape.
 
 ---
 
 ## What this is NOT
 
-- Not rewriting your marketing copy — that's your other workspace
-- Not changing any code — pure alignment doc
-- Not deferring Pass 3 — that's still on hold until you say go
+- Not changing the AI prompt itself — the AI keeps doing nuanced judgment work; the presence layer runs **before** it and constrains the canon score
+- Not auto-fixing anything — every finding still requires a human to mount the missing component
+- Not enforcing presence on routes the classifier marks as `other` — index pages don't need `<CanonGuardrail>`, settings pages don't need `<TimeControls>`
+- Not running on every page load — still manual click only
 
 ---
 
 ## After this lands
 
-You'll have one doc to paste into your marketing space. It tells the other LLM (or you) exactly which claims are backed by real system capability, which need a small build to become true, and which canon-truths are still un-claimed leverage.
+The auditor stops being polite. Pick any entity detail route, click Run, and you'll see the seven mandatory components either ✓ present or ❌ missing with the exact JSX snippet to paste in. The canon score becomes a real number, not a vibe.
 
-Reply **"Run alignment pass"** and I'll produce the doc. Or tell me to add/remove sections first.
+Reply **"Run presence-check upgrade"** and I'll ship it.
 
