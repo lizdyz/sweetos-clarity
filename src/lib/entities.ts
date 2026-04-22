@@ -155,6 +155,8 @@ export const ENTITIES: Record<string, EntityDef> = {
       ...TAXONOMY_FIELDS,
     ],
   },
+
+  projects: {
     key: "projects",
     table: "projects",
     label: "Project",
@@ -182,6 +184,8 @@ export const ENTITIES: Record<string, EntityDef> = {
       ...TAXONOMY_FIELDS,
     ],
   },
+
+  tasks: {
     key: "tasks",
     table: "tasks",
     label: "Task",
