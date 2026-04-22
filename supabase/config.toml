@@ -1,1 +1,4 @@
 project_id = "wdywxyucvxzadbpvtdhg"
+
+[functions.generate-lens-perspectives]
+verify_jwt = false
