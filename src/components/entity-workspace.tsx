@@ -239,6 +239,7 @@ function EntityList({
     queryClient.invalidateQueries({ queryKey: [entity.table] });
   }
 
+  const canCreate = entity.canCreate !== false;
   return (
     <div className="px-6 py-5">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -259,11 +260,22 @@ function EntityList({
               className="h-9 w-56 rounded-xl pl-8"
             />
           </div>
-          <Button onClick={() => setCreating(true)} className="bg-iris text-white">
-            <Plus className="mr-1 h-4 w-4" /> New {entity.label.toLowerCase()}
-          </Button>
+          {canCreate && (
+            <Button onClick={() => setCreating(true)} className="bg-iris text-white">
+              <Plus className="mr-1 h-4 w-4" /> New {entity.label.toLowerCase()}
+            </Button>
+          )}
         </div>
       </div>
+
+      {!canCreate && entity.systemGeneratedNote && (
+        <div className="mb-5 rounded-2xl border border-[color:var(--iris-violet)]/25 bg-iris-soft/40 p-4 text-sm">
+          <div className="mb-1 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--iris-violet)]">
+            <Sparkles className="h-3 w-3" /> System-generated
+          </div>
+          <p className="text-muted-foreground">{entity.systemGeneratedNote}</p>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid h-48 place-items-center text-muted-foreground">
@@ -276,11 +288,13 @@ function EntityList({
               <Plus className="h-5 w-5 text-[color:var(--iris-violet)]" />
             </div>
             No {entity.labelPlural.toLowerCase()} yet.
-            <div className="mt-2">
-              <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
-                Create the first one
-              </Button>
-            </div>
+            {canCreate && (
+              <div className="mt-2">
+                <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
+                  Create the first one
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       ) : view === "board" && boardField ? (
