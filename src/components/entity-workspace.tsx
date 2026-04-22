@@ -34,6 +34,7 @@ import { ConfidenceChip, ProgressionChip, StateChip } from "@/components/chips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { KanbanBoard } from "@/components/kanban-board";
+import { TagPicker } from "@/components/tag-picker";
 
 type Row = Record<string, unknown> & { id: string; updated_at?: string; created_at?: string };
 
@@ -55,17 +56,23 @@ function fmtCell(field: FieldDef, value: unknown, refMap?: Record<string, string
     const n = Number(value);
     return Number.isFinite(n) ? `$${n.toLocaleString()}` : String(value);
   }
-  if (field.kind === "multiselect" || field.kind === "tags") {
+  if (field.kind === "domain-tags" || field.kind === "tenet-tags" || field.kind === "component-tags" || field.kind === "multiselect" || field.kind === "tags") {
     const arr = Array.isArray(value) ? value : [];
+    const tone =
+      field.kind === "domain-tags"
+        ? "bg-iris-soft text-foreground border-border-strong"
+        : field.kind === "tenet-tags"
+          ? "bg-[color:var(--success)]/15 text-foreground border-[color:var(--success)]/30"
+          : "bg-muted text-muted-foreground border-border";
     return (
       <div className="flex flex-wrap gap-1">
-        {arr.slice(0, 3).map((v) => (
-          <span key={String(v)} className="rounded-md bg-muted px-1.5 py-0.5 text-[11px]">
+        {arr.slice(0, 4).map((v) => (
+          <span key={String(v)} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[11px]", tone)}>
             {String(v)}
           </span>
         ))}
-        {arr.length > 3 && (
-          <span className="text-[11px] text-muted-foreground">+{arr.length - 3}</span>
+        {arr.length > 4 && (
+          <span className="text-[11px] text-muted-foreground">+{arr.length - 4}</span>
         )}
       </div>
     );
@@ -801,6 +808,36 @@ function FieldEditor({
           </SelectContent>
         </Select>
       </div>
+    );
+  }
+  if (field.kind === "domain-tags") {
+    return (
+      <TagPicker
+        label={field.label}
+        variant="domains"
+        value={(value as string[]) ?? []}
+        onChange={onChange as (v: string[]) => void}
+      />
+    );
+  }
+  if (field.kind === "tenet-tags") {
+    return (
+      <TagPicker
+        label={field.label}
+        variant="tenets"
+        value={(value as string[]) ?? []}
+        onChange={onChange as (v: string[]) => void}
+      />
+    );
+  }
+  if (field.kind === "component-tags") {
+    return (
+      <TagPicker
+        label={field.label}
+        variant="components"
+        value={(value as string[]) ?? []}
+        onChange={onChange as (v: string[]) => void}
+      />
     );
   }
   if (field.kind === "multiselect" || field.kind === "tags") {

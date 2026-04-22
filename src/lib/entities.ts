@@ -61,6 +61,9 @@ export type FieldKind =
   | "select"
   | "multiselect"
   | "tags"
+  | "domain-tags"
+  | "tenet-tags"
+  | "component-tags"
   | "ref";
 
 export interface FieldDef {
@@ -89,6 +92,14 @@ export interface EntityDef {
 
 const owner = (key = "owner", label = "Owner", group = "Identity") =>
   ({ key, label, kind: "select", options: PROJECT_OWNER, group, inList: true } as FieldDef);
+
+// Standard taxonomy fields — Domains (universal lens), Tenets (industry best-practice anchors),
+// Components (reusable scaffolding). Always rendered as three separate sections in the UI.
+const TAXONOMY_FIELDS: FieldDef[] = [
+  { key: "tagged_domains", label: "Domains", kind: "domain-tags", group: "Taxonomy", helper: "Universal lens — which of the 22 domains this touches" },
+  { key: "tagged_tenets", label: "Tenets", kind: "tenet-tags", group: "Taxonomy", helper: "Industry best-practice anchors" },
+  { key: "tagged_components", label: "Components", kind: "component-tags", group: "Taxonomy", helper: "Reusable building blocks involved" },
+];
 
 export const ENTITIES: Record<string, EntityDef> = {
   relationships: {
@@ -141,6 +152,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "execution_prompt", label: "Execution prompt", kind: "longtext", group: "Prompts" },
       { key: "prompt_status", label: "Prompt status", kind: "text", group: "Prompts" },
       { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -169,6 +181,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "client_id", label: "Client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Identity", inList: true },
       { key: "execution_prompt", label: "Execution prompt", kind: "longtext", group: "Prompts" },
       { key: "prompt_status", label: "Prompt status", kind: "text", group: "Prompts" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -237,10 +250,10 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "linked_project_id", label: "Linked project", kind: "ref", refTable: "projects", refLabel: "name", group: "Links" },
       { key: "persona_id", label: "Persona", kind: "ref", refTable: "personas", refLabel: "name", group: "Links" },
       { key: "playbook_id", label: "Playbook", kind: "ref", refTable: "playbooks", refLabel: "name", group: "Links" },
+      { key: "engagement_plan_id", label: "Engagement plan", kind: "ref", refTable: "engagement_plans", refLabel: "plan_name", group: "Links" },
+      ...TAXONOMY_FIELDS,
     ],
   },
-
-  workflows: {
     key: "workflows",
     table: "workflows",
     label: "Workflow",
@@ -284,6 +297,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "execution_prompt", label: "Execution prompt", kind: "longtext", group: "Prompts" },
       { key: "prompt_status", label: "Prompt status", kind: "text", group: "Prompts" },
       { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -303,6 +317,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "implications", label: "Implications", kind: "longtext", group: "Brief" },
       { key: "supersedes", label: "Supersedes", kind: "ref", refTable: "decisions", refLabel: "decision", group: "Links" },
       { key: "related_project_id", label: "Related project", kind: "ref", refTable: "projects", refLabel: "name", group: "Links" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -324,6 +339,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "status", label: "Status", kind: "text", group: "State" },
       { key: "linked_project_id", label: "Linked project", kind: "ref", refTable: "projects", refLabel: "name", group: "Links" },
       { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -350,6 +366,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "execution_prompt", label: "Execution prompt", kind: "longtext", group: "Prompts" },
       { key: "prompt_status", label: "Prompt status", kind: "text", group: "Prompts" },
       { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -369,6 +386,9 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "quality_status", label: "Quality", kind: "select", options: QUALITY_STATUS, group: "State", inList: true },
       { key: "reuse_count", label: "Reuse count", kind: "number", group: "State" },
       { key: "last_reviewed", label: "Last reviewed", kind: "date", group: "State" },
+      { key: "questions_it_answers", label: "Questions it answers", kind: "longtext", group: "Brief" },
+      { key: "typical_session_length", label: "Typical session length", kind: "text", group: "Brief" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -391,6 +411,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "contract_rules_surfaced", label: "Contract rules", kind: "longtext", group: "Brief" },
       { key: "client_journey_note", label: "Client journey note", kind: "longtext", group: "Brief" },
       { key: "what_we_have_learned", label: "What we have learned", kind: "longtext", group: "Learning" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -411,6 +432,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "contract_considerations", label: "Contract considerations", kind: "longtext", group: "Brief" },
       { key: "real_examples", label: "Real examples", kind: "longtext", group: "Brief" },
       { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -449,6 +471,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "client_id", label: "Client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Identity", inList: true },
       { key: "status", label: "Status", kind: "text", group: "State", inList: true },
       { key: "target_timeframe", label: "Target timeframe", kind: "text", group: "State", inList: true },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
@@ -514,6 +537,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "measured_date", label: "Measured date", kind: "date", group: "Measurement", inList: true },
       { key: "client_id", label: "Client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Links", inList: true },
       { key: "component_id", label: "Component", kind: "ref", refTable: "components", refLabel: "name", group: "Links" },
+      ...TAXONOMY_FIELDS,
     ],
   },
 
