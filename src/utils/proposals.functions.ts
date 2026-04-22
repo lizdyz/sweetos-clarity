@@ -292,6 +292,18 @@ export const approveProposal = createServerFn({ method: "POST" })
       delete fields.name;
     }
 
+    // Propagate tags onto the written entity (best-effort; ignored if columns don't exist)
+    const propTyped = prop as unknown as {
+      tagged_domains?: string[] | null;
+      tagged_tenets?: string[] | null;
+      tagged_components?: string[] | null;
+    };
+    const tagPayload = {
+      tagged_domains: propTyped.tagged_domains ?? [],
+      tagged_tenets: propTyped.tagged_tenets ?? [],
+      tagged_components: propTyped.tagged_components ?? [],
+    };
+
     let writtenId: string;
 
     if (data.mergeIntoId) {
@@ -299,6 +311,7 @@ export const approveProposal = createServerFn({ method: "POST" })
         .from(table as never)
         .update({
           ...fields,
+          ...tagPayload,
           source: prop.source,
           source_ref: prop.source_ref,
           confidence: prop.confidence,
@@ -314,6 +327,7 @@ export const approveProposal = createServerFn({ method: "POST" })
         .from(table as never)
         .insert({
           ...fields,
+          ...tagPayload,
           source: prop.source,
           source_ref: prop.source_ref,
           confidence: prop.confidence,
@@ -325,6 +339,12 @@ export const approveProposal = createServerFn({ method: "POST" })
       if (iErr) throw new Error(iErr.message);
       writtenId = (inserted as { id: string }).id;
     }
+
+    // Re-point any attachments from the proposal to the written record
+    await sb
+      .from("capture_attachments")
+      .update({ entity_table: table, entity_id: writtenId } as never)
+      .eq("proposal_id", data.id);
 
     const { error: stampErr } = await sb
       .from("proposals")
