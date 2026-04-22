@@ -320,6 +320,8 @@ export const ENTITIES: Record<string, EntityDef> = {
       ...TAXONOMY_FIELDS,
     ],
   },
+
+  delegation: {
     key: "delegation",
     table: "delegation",
     label: "Delegation item",
