@@ -4972,6 +4972,107 @@ export type Database = {
         }
         Relationships: []
       }
+      spark_template_usages: {
+        Row: {
+          component_id: string | null
+          created_by: string | null
+          id: string
+          kept: boolean | null
+          rating: number | null
+          spark_id: string | null
+          template_id: string
+          used_at: string
+        }
+        Insert: {
+          component_id?: string | null
+          created_by?: string | null
+          id?: string
+          kept?: boolean | null
+          rating?: number | null
+          spark_id?: string | null
+          template_id: string
+          used_at?: string
+        }
+        Update: {
+          component_id?: string | null
+          created_by?: string | null
+          id?: string
+          kept?: boolean | null
+          rating?: number | null
+          spark_id?: string | null
+          template_id?: string
+          used_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spark_template_usages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "spark_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spark_templates: {
+        Row: {
+          applicable_components: string[]
+          applicable_journeys: string[]
+          applicable_maturity_levels: string[]
+          avg_rating: number | null
+          body_template: string
+          created_at: string
+          created_by: string | null
+          id: string
+          intent: string | null
+          name: string
+          notes: string | null
+          origin_spark_id: string | null
+          probes: string[]
+          reuse_count: number
+          source_kind: Database["public"]["Enums"]["spark_template_source"]
+          status: Database["public"]["Enums"]["spark_template_status"]
+          updated_at: string
+        }
+        Insert: {
+          applicable_components?: string[]
+          applicable_journeys?: string[]
+          applicable_maturity_levels?: string[]
+          avg_rating?: number | null
+          body_template: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intent?: string | null
+          name: string
+          notes?: string | null
+          origin_spark_id?: string | null
+          probes?: string[]
+          reuse_count?: number
+          source_kind?: Database["public"]["Enums"]["spark_template_source"]
+          status?: Database["public"]["Enums"]["spark_template_status"]
+          updated_at?: string
+        }
+        Update: {
+          applicable_components?: string[]
+          applicable_journeys?: string[]
+          applicable_maturity_levels?: string[]
+          avg_rating?: number | null
+          body_template?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intent?: string | null
+          name?: string
+          notes?: string | null
+          origin_spark_id?: string | null
+          probes?: string[]
+          reuse_count?: number
+          source_kind?: Database["public"]["Enums"]["spark_template_source"]
+          status?: Database["public"]["Enums"]["spark_template_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sparks: {
         Row: {
           affected_components: string[] | null
@@ -4987,6 +5088,9 @@ export type Database = {
           done_at: string | null
           due_date: string | null
           generated_by_kind: Database["public"]["Enums"]["spark_generator_kind"]
+          generation_tier:
+            | Database["public"]["Enums"]["spark_generation_tier"]
+            | null
           generator_operator_id: string | null
           id: string
           name: string
@@ -5006,6 +5110,7 @@ export type Database = {
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
           spark_type: Database["public"]["Enums"]["spark_type"] | null
+          template_id: string | null
           updated_at: string
         }
         Insert: {
@@ -5022,6 +5127,9 @@ export type Database = {
           done_at?: string | null
           due_date?: string | null
           generated_by_kind?: Database["public"]["Enums"]["spark_generator_kind"]
+          generation_tier?:
+            | Database["public"]["Enums"]["spark_generation_tier"]
+            | null
           generator_operator_id?: string | null
           id?: string
           name: string
@@ -5041,6 +5149,7 @@ export type Database = {
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
           spark_type?: Database["public"]["Enums"]["spark_type"] | null
+          template_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -5057,6 +5166,9 @@ export type Database = {
           done_at?: string | null
           due_date?: string | null
           generated_by_kind?: Database["public"]["Enums"]["spark_generator_kind"]
+          generation_tier?:
+            | Database["public"]["Enums"]["spark_generation_tier"]
+            | null
           generator_operator_id?: string | null
           id?: string
           name?: string
@@ -5076,6 +5188,7 @@ export type Database = {
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
           spark_type?: Database["public"]["Enums"]["spark_type"] | null
+          template_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -5119,6 +5232,13 @@ export type Database = {
             columns: ["relationship_id"]
             isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sparks_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "spark_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -6549,7 +6669,10 @@ export type Database = {
         | "Observation"
         | "System Extract"
         | "Client Self-Report"
+      spark_generation_tier: "template" | "adapted" | "generated"
       spark_generator_kind: "system" | "agent" | "workflow"
+      spark_template_source: "curated" | "promoted_from_ai"
+      spark_template_status: "draft" | "active" | "retired"
       spark_type:
         | "Question"
         | "Creation"
@@ -6877,7 +7000,10 @@ export const Constants = {
         "System Extract",
         "Client Self-Report",
       ],
+      spark_generation_tier: ["template", "adapted", "generated"],
       spark_generator_kind: ["system", "agent", "workflow"],
+      spark_template_source: ["curated", "promoted_from_ai"],
+      spark_template_status: ["draft", "active", "retired"],
       spark_type: [
         "Question",
         "Creation",
