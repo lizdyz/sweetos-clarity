@@ -1,232 +1,97 @@
-# Phase 2.10b: Make Projects + Tasks the operational hub (connections, owners, blockers)
+# Phase 2.10c: SweetCycle Dashboards — make the journey legible
 
-## What's broken
+## What I learned from your portals
 
-You're right — the connections aren't visible. Today:
+Each portal you uploaded tells the same story in a different voice:
 
-- **Project detail** is a generic field editor. It does not show the tasks under that project, who owns each one, what's blocking, or what's next.
-- **Task detail** is a generic field editor. It does not show its parent project, sibling tasks, or the relationship it serves.
-- **Relationship detail** has the new Funnel/Maturity panels but does **not** list the projects or tasks tied to that client.
-- `tasks.waiting_on` and `tasks.dependencies` are free-text strings, not structured links — so "what's blocking what" can't be queried, rolled up, or visualized.
-- No "My queue" / "Per-person workload" view. `owner` is a text enum, not a `profiles.id` FK, so we can't aggregate by real person.
-- Kanban exists generically but there's no project-scoped board, no swimlanes by owner, no blocked-lane.
+- **Bedros (SFG)** — Pre-Mirror. Four "Machine session options" on the table waiting on Mirror to pick three.
+- **DD Humes (Guillaume/Matthew)** — Pre-Engagement. Tools shipped, awaiting "Pathway" decision (Mirror vs. Mirror + Machine).
+- **McLeod Financial (Stuart/Katie/Ricardo)** — Pre-Mirror. Built tools delivered; succession is the spine.
+- **Savoir Wealth (Steven/Jennifer)** — Pre-Mirror. Five domains surfaced; needs the full 22-domain Mirror.
+- **Angela / Recruiter Intelligence** — In-Engagement (build). make sense of the different builds
+- **SparkPath Clarity Call** — Internal session template. Create the interview map as a workflow -
 
-## What lands in 2.10b (no schema breakage, additive only)
+The pattern: every relationship has **a current Engagement stage**, **a current/next Service** (Mirror/Map/Machine/Sync/Connect), **a current SweetCycle phase per session** (Seed→Synthesize→Session→Sync→Ship), and **a portal artifact** that captures the moment. Today the app stores all of this but doesn't render it as a journey — the user has to mentally stitch it together.
 
-### Migration 1 — Structured task connections
+## What's broken (audit)
 
-- `task_dependencies` table: `id, task_id, depends_on_task_id, kind ('blocks'|'related'), created_at, created_by`. Unique on (task_id, depends_on_task_id). Replaces the free-text `dependencies`/`waiting_on` for the connection graph; the text fields stay for narrative context.
-- `tasks.assignee_id uuid` (FK→profiles, nullable). The `owner` text enum stays for legacy rows; new UI prefers `assignee_id`. Backfill rule: when assignee_id is set, it wins.
-- `tasks.blocked` boolean generated column = `waiting_on IS NOT NULL OR EXISTS(unresolved blocker dep)`. Used to power the Blocked lane and counts.
-- View `task_blockers` returning `(task_id, blocker_task_id, blocker_name, blocker_status)` for quick UI rendering.
+1. **No "Where am I?" view.** Relationship detail shows funnel + maturity + plans as flat panels but never as a **timeline**: Pre-Engagement → Mirror → Map → Machine → Sync. There's no "you are here" marker.
+2. **SweetCycle is buried.** The 5-phase ladder (`SweetCycleLadder`) only renders inside the generic entity workspace. There's no per-session board, no "next phase action", no Seed→Ship progress at the relationship level.
+3. **Portal artifacts are orphaned.** Your portals are HTML deliverables sitting outside the app. `relationships.portal_link` exists but isn't surfaced as the prominent CTA it should be, and there's no portal version history or "delivered/viewed" state beyond a single boolean.
+4. **No cross-cutting dashboard.** `/_app/today` shows tasks + sessions in flat lists. There's no **journey view** answering: "Of my 5 active relationships, who is in which stage, what session is next, what's blocking the next ship?"
+5. **Owner ambiguity per phase.** A SweetCycle phase has a natural owner (Seed = client, Synthesize = us, Session = both, Sync = us, Ship = us → client). Today nothing models that, so no one knows who's holding the baton.
+6. **Service ↔ Session linkage is loose.** Sessions can have a `service` text and an `engagement_plan_id`, but not an explicit `engagement_service_id`. So a Map Service with 4 sessions can't roll up "2 of 4 shipped."
 
-### Migration 2 — Project ↔ Relationship clarity
+## Phase 2.10c — what lands
 
-- Add `projects.relationship_id uuid` (FK→relationships, nullable) as the canonical link. Keep `client_id` for back-compat; UI reads relationship_id first, falls back to client_id.
-- View `project_rollup` returning `(project_id, total_tasks, open_tasks, blocked_tasks, overdue_tasks, next_due_date, owners[])` so the project list and detail can show real status without N+1 queries.
+### Migration 1 — Make the journey queryable
 
-### Project detail page rewrite (`_app.projects.$id.tsx`)
+- Add `sessions.engagement_service_id` (FK→engagement_services). Every session ladders Plan → Service → Session.
+- Add `sessions.phase_owner` enum (`client | us | both`) defaulting from `sweetcycle_phase` (Seed=client, Synthesize=us, Session=both, Sync=us, Ship=us).
+- Add `sessions.phase_due_date` (date) and `sessions.phase_blocker` (text). Drives a "what's the next baton handoff" surface.
+- Add `relationship_portals` table: `id, relationship_id, version, kind (Pre-Mirror|Pre-Map|Pre-Machine|Mirror Output|Map Output|Machine Output|Sync), url, delivered_at, viewed_at, notes, created_by, created_at`. Replaces single `portal_link` with a real history. Existing `portal_link` stays for back-compat read.
+- View `relationship_journey`: returns `(relationship_id, current_stage, current_service_id, current_session_id, next_action_owner, next_action_due, ship_count, total_session_count, latest_portal_url)`. One query powers every dashboard card.
 
-Premium card layout, four panels:
+### Migration 2 — Service rollup
 
-1. **Overview card** — name, status, owner, deadline, revenue, linked relationship (clickable).
-2. **Tasks board** — kanban scoped to this project, grouped by status, with a dedicated **Blocked** column. Each card shows assignee avatar, due date, and a red dot if overdue. Inline "Add task" creates with `project_id` prefilled.
-3. **Blockers panel** — flat list of every blocked task in this project with the blocker task name + status. One-click "Mark unblocked" clears `waiting_on` and resolves the dep row.
-4. **People panel** — grouped by `assignee_id` (or `owner` fallback) showing per-person open/blocked/overdue counts and their next due task.
+- View `engagement_service_rollup`: `(service_id, plan_id, relationship_id, service_type, status, sessions_total, sessions_shipped, sessions_in_flight, next_session_date, completion_pct)`.
 
-### Task detail page rewrite (`_app.tasks.$id.tsx`)
+### New route — `/_app/journey` (the hub you've been asking for)
 
-- Header strip: parent project (clickable) · relationship (clickable) · assignee · due · status.
-- **Blocks / Blocked-by** section: pickers to add either direction, rendered as chips with status color.
-- **Dependencies graph** (lightweight): show 1-hop upstream and downstream tasks as a vertical list, no canvas required.
-- Activity: existing fields collapsed into "Details" accordion so the page leads with state and connections, not a wall of inputs.
+The "where is everyone, what's next" board. Three stacked panels, premium card style:
 
-### Relationship detail additions (`_app.relationships.$id.tsx`)
+1. **Stage swimlanes.** Six lanes left-to-right: Awareness · Pre-Engagement · Mirror · Map · Machine · Sync. Each relationship is a card in its current lane showing: name · primary service · next session date · phase-owner chip (client/us/both) · portal CTA.
+2. **This week's batons.** Flat list of every session whose `phase_owner` change is due in the next 7 days, sorted by date. "Steven & Jennifer · Mirror · Sync due Apr 24 · owned by us."
+3. **At risk.** Sessions stuck > 7 days in the same phase, or relationships with `drift_risk` set. One-click open.
 
-Add two more panels under the existing four:
-5. **Projects for this relationship** — list with status, next due, blocked count, "Open" link.
-6. **Open tasks for this relationship** — flat list across all their projects, sortable by due/blocked.
+### Relationship detail — add **Journey strip + SweetCycle board**
 
-### New global views
+On `_app.relationships.$id.tsx`, prepend two panels above the existing six:
 
-- `/_app/queue` already exists for proposals — add a sibling `/_app/my-tasks` route: a single-page view of every task assigned to the logged-in user, grouped by **Today / Overdue / Blocked / Upcoming / Waiting on others**. Becomes the daily start screen.
-- `/_app/people` route: roster of assignees with workload counts (open · blocked · overdue · next due) — the "who's drowning, who's free" view.
+- **Journey strip** (top of page, sticky): horizontal stage tracker (Pre-Engagement → Mirror → Map → Machine → Sync) with the current stage glowing, plus a "Latest portal" pill that links to the most recent `relationship_portals` row, plus delivered/viewed badges.
+- **SweetCycle board** (per active service): for each `engagement_service` with `status=Active`, a 5-column board (Seed/Synthesize/Session/Sync/Ship) where each session appears in its current column. Cards show owner chip, due date, and a red dot if `phase_blocker` is set. Drag-to-advance writes a new `sweetcycle_phase` value.
 
-### Kanban improvements (`kanban-board.tsx`)
+### Session detail — add **Phase timeline + handoff control**
 
-- Add optional **swimlanes** prop (group rows into horizontal bands by a second field, e.g. assignee).
-- Add a permanent **Blocked** column when the entity has the `blocked` field.
-- Card footer shows: assignee chip · due date · blocker count.
+On `_app.sessions.$id.tsx`:
+
+- **Phase timeline** at top: visual 5-step ladder with checkmarks for completed phases, current phase highlighted, owner chip per phase.
+- **Advance phase** action: button "Mark Seed complete → hand off to us for Synthesize" that updates `sweetcycle_phase` and `phase_owner`, recomputes `phase_due_date` (configurable per service), and writes an audit row.
+- **Linked artifacts**: list of `documents` with `related_session_id = this.id` grouped by `session_phase` (Pre-Engagement / Deliverable / Follow-up) — this is where portal HTML files attach.
+
+### Client-facing portal page — `/_app/portals/$relationshipId` (read-mostly)
+
+A trimmed view a client could be linked to (still gated behind auth for now): the journey strip + their current SweetCycle board + their open tasks (filtered by `relationship_id` via projects) + the latest portal link. This is the in-app version of the HTML portals you've been hand-crafting — same shape, populated from live data.
 
 ### Sidebar
 
-- Add "My tasks" and "People" under a new **Work** group above Pipeline.
+Add **Journey** at the very top of the **Pipeline** group (above Relationships). It's the new daily start screen for client-facing work, the way `/my-tasks` is the daily start for execution.
 
-## What I'm NOT doing in 2.10b
+### Memory
 
-- Best-Practice Catalog (Step 2 of 2.10) — still next after this.
-- Agents (Step 3) — after best practices.
-- Notion sync (Step 4) — last.
-- A full graph visualization with edges/nodes canvas. The 1-hop list view is enough for now; a full graph is 2.11+ if you want it.
-- Renaming `owner` to `assignee` everywhere — additive only this pass to avoid breaking existing rows.
+- `mem://features/sweetcycle-journey` — Stage taxonomy (Awareness→Pre-Engagement→Mirror→Map→Machine→Sync), per-phase ownership map, relationship_journey view contract, portal-version semantics.
+- Append index Core: "Every relationship has a current Stage and every active Service has a SweetCycle board (Seed→Synthesize→Session→Sync→Ship). Phase owner is explicit (client/us/both); the baton is never ambiguous."
+
+## What I'm NOT doing in 2.10c
+
+- Importing the four uploaded HTML portals as data. They stay as artifacts — but I'll add a **"Import portal as relationship_portals row"** quick action that asks for URL + kind + version and stores the link. Full HTML→structured ingestion is its own pass.
+- Best-Practice Catalog (Step 2 of original 2.10) — still queued.
+- Agents — still queued after Best Practices.
+- Notion sync — still last.
+- A public unauthenticated portal URL. Client-portal page lives behind auth this pass; public sharing is a follow-up.
 
 ## Files touched
 
 - 2 migrations under `supabase/migrations/`.
-- New routes: `_app.my-tasks.tsx`, `_app.people.tsx`.
-- Rewrites: `_app.projects.$id.tsx`, `_app.tasks.$id.tsx`.
-- Edits: `_app.relationships.$id.tsx` (add 2 panels), `kanban-board.tsx` (swimlanes + blocked column), `entities.ts` (add assignee_id, relationship_id on projects, depends_on_task_ids virtual), `app-sidebar.tsx` (Work group).
-
-## Memory writes
-
-- `mem://features/work-graph` — task_dependencies semantics, blocked-column rule, swimlane convention.
-- Append index Core: "Tasks have structured dependencies (task_dependencies). 'Blocked' is derived, never stored loose. Project detail = tasks board + blockers + people, not a field form."
+- New routes: `src/routes/_app.journey.tsx`, `src/routes/_app.portals.$relationshipId.tsx`.
+- Edits: `src/routes/_app.relationships.$id.tsx` (add Journey strip + SweetCycle board), `src/routes/_app.sessions.$id.tsx` (phase timeline + advance control + artifacts), `src/components/app-sidebar.tsx` (add Journey), `src/lib/entities.ts` (add `engagement_service_id`, `phase_owner`, `phase_due_date`, `phase_blocker` on sessions; add `relationship_portals` entity), `src/lib/enums.ts` (PHASE_OWNER, PORTAL_KIND).
+- New component: `src/components/sweetcycle-board.tsx` (the 5-column board, reusable for relationship detail and the journey route).
 
 ## Suggested order after this
 
-1. **2.10b (this plan)** — operational hub.
-2. **2.10 Step 2** — Best-Practice Catalog.
-3. **2.10 Step 3** — Agents (attachable to tasks/projects, runs feed Queue).
-4. **2.10 Step 4** — Notion MCP push.
+1. **2.10c (this plan)** — Journey + SweetCycle dashboards.
+2. **2.10b leftover polish** — return to Best-Practice Catalog (Step 2 of original 2.10).
+3. **Agents** (Step 3).
+4. **Notion sync** (Step 4).
 
-Approve and I'll build 2.10b end-to-end in one pass.  
-  
-<aside> 🧭
-
-This ERD is the *core operational spine* (Work + People + Outputs + Decisions). It’s based on the live database schemas and the explicit relation properties that connect them.
-
-</aside>
-
-## Entities (databases)
-
-- **Relationships** (people/companies you work with)
-- **Projects** (units of work)
-- **Tasks** (executable actions)
-- **Campaigns** (multi-project initiatives)
-- **Documents & Deliverables** (artifacts/outputs)
-- **Decisions Log** (append-only canonical decisions)
-
----
-
-## ERD (Mermaid)
-
-```mermaid
-erDiagram
-	RELATIONSHIPS ||--o{ PROJECTS : "Client"
-	PROJECTS ||--o{ TASKS : "Project"
-	RELATIONSHIPS ||--o{ TASKS : "Contact"
-	CAMPAIGNS ||--o{ PROJECTS : "Related Projects"
-	RELATIONSHIPS }o--o{ CAMPAIGNS : "Campaigns"
-	RELATIONSHIPS ||--o{ DOCUMENTS_DELIVERABLES : "For Client"
-	PROJECTS ||--o{ DECISIONS_LOG : "Related Project"
-
-	RELATIONSHIPS {
-		string Name
-		string Company
-		string Role
-		string Email
-		string Type
-		string Status
-		string Pipeline_Stage
-		date Last_Contact
-		date Next_Action_Due
-		string Next_Action
-		string Intelligence_Summary
-		string Portal_Link
-		boolean Portal_Delivered
-		int Sessions_Purchased
-		int Sessions_Used
-		int Sessions_Remaining
-		int SweetConnect_Credits
-	}
-
-	PROJECTS {
-		string Name
-		string Status
-		string Owner
-		string Sprint
-		string Priority
-		string Type
-		date Next_Action_Due
-		string Next_Action
-		date Deadline
-		string Next_Deliverable
-		string Current_Blocker
-		float Revenue_Potential_CAD
-	}
-
-	TASKS {
-		string Name
-		string Status
-		string Owner
-		string Priority
-		date Due_Date
-		string Effort
-		boolean Recurring
-		string Recurring_Cadence
-		string Deliverable_Specific
-		string Waiting_On
-	}
-
-	CAMPAIGNS {
-		string Campaign
-		string Status
-		string Owner
-		string Type
-		date Deadline
-		float Revenue_Target_CAD
-		string Next_Executable_Action
-		string Next_Milestone
-	}
-
-	DOCUMENTS_DELIVERABLES {
-		string Name
-		string Type
-		string Status
-		string Owner
-		string Tone
-		string Version
-		date Last_Reviewed
-		string Drive_Chat_Link
-	}
-
-	DECISIONS_LOG {
-		string Decision
-		string Domain
-		string Status
-		string Made_By
-		date Date_Made
-		string Supersedes
-		string Context
-		string Implications
-	}
-
-```
-
----
-
-## Relationship notes (what each edge means)
-
-1. **Relationships → Projects (Client)**: a project can be scoped to a single client/contact record.
-2. **Projects → Tasks (Project)**: tasks are the executable children of a project.
-3. **Relationships → Tasks (Contact)**: tasks can also be attached directly to a contact (pipeline, follow-ups, etc.).
-4. **Campaigns → Projects (Related Projects)**: campaigns group multiple projects under one initiative.
-5. **Relationships ↔ Campaigns (Campaigns / Contacts)**: many-to-many so a campaign can target multiple contacts and a contact can be part of multiple campaigns.
-6. **Relationships → Documents & Deliverables (For Client)**: documents/portals/contracts can be tied to a client.
-7. **Projects → Decisions Log (Decisions / Related Project)**: decisions can be associated to a specific project to preserve rationale/constraints.
-
----
-
-## Audit summary (core spine)
-
-- The *graph is coherent* and already centered on a strong spine: **Relationships ⇄ (Projects/Tasks/Campaigns) ⇄ Outputs (Docs) + Governance (Decisions)**.
-- You’ve correctly allowed **Tasks** to attach to *either* a **Project** (delivery) or a **Relationship** (pipeline), which is crucial for real operating behavior.
-- Your relations are mostly one-hop navigable (good): from a contact you can traverse to their projects, tasks, campaigns, and documents.
-
-## Gaps / candidates for “next ERD layer”
-
-These are mentioned across the Command Centre but weren’t loaded as core databases in this pass:
-
-- **Deliverable Catalog**, **Input Library**, **Workflow Library**, **QC Log**, **Sessions / Domain Assessments / Playbooks** (if they exist as databases, they’d become additional entities and edges).  
-  
-i thought this might help also
+Approve and I'll build 2.10c end-to-end in one pass. If you'd rather see the **client-facing portal page** built first and the team Journey board second, say "portal first" and I'll re-cut.
