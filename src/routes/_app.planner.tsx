@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Layers, Loader2, Plus, ListChecks, Folder, Megaphone } from "lucide-react";
+import { Layers, Loader2, Plus, ListChecks, Folder, Megaphone, CalendarClock, Lightbulb, Diamond } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,19 +16,25 @@ export const Route = createFileRoute("/_app/planner")({
 });
 
 type Lane = "this_week" | "next_week" | "backlog";
-type Kind = "task" | "project" | "campaign";
+type Kind = "task" | "project" | "session" | "campaign" | "spark" | "decision";
 
 interface Item {
   id: string;
   kind: Kind;
   name: string;
   scheduled_for: string | null;
+  due_date: string | null;
   status: string | null;
 }
 
+const RESCHEDULABLE: Kind[] = ["task", "project", "session", "campaign"];
+const DONE_STATUSES = new Set([
+  "Done", "Complete", "Completed", "Shipped", "Cancelled", "Canceled", "Archived",
+]);
+
 function startOfWeek(d: Date) {
   const x = new Date(d);
-  const day = (x.getDay() + 6) % 7; // Monday = 0
+  const day = (x.getDay() + 6) % 7;
   x.setHours(0, 0, 0, 0);
   x.setDate(x.getDate() - day);
   return x;
@@ -36,17 +42,18 @@ function startOfWeek(d: Date) {
 function fmt(d: Date) {
   return d.toISOString().slice(0, 10);
 }
-
-function laneFor(scheduled: string | null, monThis: string, monNext: string): Lane {
-  if (!scheduled) return "backlog";
-  if (scheduled >= monNext) return scheduled < addDays(monNext, 7) ? "next_week" : "backlog";
-  if (scheduled >= monThis) return "this_week";
-  return "backlog";
-}
 function addDays(iso: string, n: number) {
   const d = new Date(iso);
   d.setDate(d.getDate() + n);
   return fmt(d);
+}
+
+function laneFor(item: Item, monThis: string, monNext: string): Lane {
+  const d = item.scheduled_for ?? item.due_date;
+  if (!d) return "backlog";
+  if (d >= monNext) return d < addDays(monNext, 7) ? "next_week" : "backlog";
+  if (d >= monThis) return "this_week";
+  return "backlog";
 }
 
 function PlannerPage() {
@@ -54,64 +61,47 @@ function PlannerPage() {
   const monThis = fmt(startOfWeek(new Date()));
   const monNext = addDays(monThis, 7);
 
-  const { data: tasks = [], isLoading: lt } = useQuery({
-    queryKey: ["planner", "tasks"],
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["planner", "time_grid"],
     queryFn: async () => {
       const { data, error } = await sb
-        .from("tasks")
-        .select("id, name, scheduled_for, status")
-        .order("scheduled_for", { ascending: true, nullsFirst: false })
-        .limit(200);
+        .from("time_grid")
+        .select("entity_type, entity_id, name, scheduled_for, due_date, status")
+        .limit(500);
       if (error) throw error;
-      return ((data ?? []) as Array<Omit<Item, "kind">>).map((r) => ({ ...r, kind: "task" as const }));
-    },
-  });
-  const { data: projects = [], isLoading: lp } = useQuery({
-    queryKey: ["planner", "projects"],
-    queryFn: async () => {
-      const { data, error } = await sb
-        .from("projects")
-        .select("id, name:project_name, scheduled_for, status")
-        .limit(200);
-      if (error) {
-        // fallback if column name differs
-        const { data: d2, error: e2 } = await sb
-          .from("projects")
-          .select("id, name, scheduled_for, status")
-          .limit(200);
-        if (e2) throw e2;
-        return ((d2 ?? []) as Array<Omit<Item, "kind">>).map((r) => ({ ...r, kind: "project" as const }));
-      }
-      return ((data ?? []) as Array<Omit<Item, "kind">>).map((r) => ({ ...r, kind: "project" as const }));
-    },
-  });
-  const { data: campaigns = [], isLoading: lc } = useQuery({
-    queryKey: ["planner", "campaigns"],
-    queryFn: async () => {
-      const { data, error } = await sb
-        .from("campaigns")
-        .select("id, name:campaign_name, scheduled_for, status")
-        .limit(200);
-      if (error) throw error;
-      return ((data ?? []) as Array<Omit<Item, "kind">>).map((r) => ({ ...r, kind: "campaign" as const }));
+      return (data ?? []).map((r): Item => ({
+        id: r.entity_id,
+        kind: r.entity_type as Kind,
+        name: r.name,
+        scheduled_for: r.scheduled_for,
+        due_date: r.due_date,
+        status: r.status,
+      }));
     },
   });
 
-  const all: Item[] = useMemo(
-    () => [...tasks, ...projects, ...campaigns],
-    [tasks, projects, campaigns],
+  const all = useMemo(
+    () => rows.filter((r) => !DONE_STATUSES.has(r.status ?? "")),
+    [rows],
   );
 
   const byLane = useMemo(() => {
     const g: Record<Lane, Item[]> = { this_week: [], next_week: [], backlog: [] };
-    all.forEach((it) => g[laneFor(it.scheduled_for, monThis, monNext)].push(it));
+    all.forEach((it) => g[laneFor(it, monThis, monNext)].push(it));
     return g;
   }, [all, monThis, monNext]);
 
   const move = useMutation({
     mutationFn: async ({ item, lane }: { item: Item; lane: Lane }) => {
+      if (!RESCHEDULABLE.includes(item.kind)) {
+        throw new Error(`Cannot reschedule a ${item.kind} from here.`);
+      }
       const scheduled = lane === "this_week" ? monThis : lane === "next_week" ? monNext : null;
-      const table = item.kind === "task" ? "tasks" : item.kind === "project" ? "projects" : "campaigns";
+      const table =
+        item.kind === "task" ? "tasks" :
+        item.kind === "project" ? "projects" :
+        item.kind === "session" ? "sessions" :
+        "campaigns";
       const { error } = await sb.from(table).update({ scheduled_for: scheduled }).eq("id", item.id);
       if (error) throw error;
     },
@@ -135,18 +125,16 @@ function PlannerPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const isLoading = lt || lp || lc;
-
   return (
     <div className="px-6 py-6">
       <PageHeader
         icon={<Layers className="h-5 w-5" />}
         title="Planner"
-        purpose="The write side of Today. Decide what you're working on this week, next week, or later — then Today shows you what's due."
+        purpose="Decide what you're working on this week, next week, or later — across tasks, projects, sessions, campaigns, sparks, and decisions."
         whatYouCanDo={[
           "Drag any card between lanes to reschedule",
           "Quick-add a task at the bottom of a lane",
-          "See workload at a glance",
+          "See workload across every actionable kind at a glance",
         ]}
       />
       {isLoading ? (
@@ -188,11 +176,13 @@ function LaneCard({
   onAdd: (name: string) => void;
 }) {
   const [draft, setDraft] = useState("");
-  const counts = {
-    task: items.filter((i) => i.kind === "task").length,
-    project: items.filter((i) => i.kind === "project").length,
-    campaign: items.filter((i) => i.kind === "campaign").length,
-  };
+  const counts = items.reduce(
+    (acc, i) => {
+      acc[i.kind] = (acc[i.kind] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<Kind, number>,
+  );
   return (
     <Card
       className="panel-raised flex min-h-[60vh] flex-col gap-2 p-3"
@@ -207,8 +197,15 @@ function LaneCard({
       <div className="mb-1 flex items-center justify-between">
         <h2 className="text-sm font-semibold tracking-tight">{LANE_LABEL[lane]}</h2>
         <span className="text-[10px] text-muted-foreground">
-          {counts.task} · {counts.project} · {counts.campaign}
+          {items.length} item{items.length === 1 ? "" : "s"}
         </span>
+      </div>
+      <div className="flex flex-wrap gap-1 pb-1">
+        {(Object.keys(counts) as Kind[]).map((k) => (
+          <Badge key={k} variant="outline" className="h-4 px-1 text-[9px]">
+            {k} {counts[k]}
+          </Badge>
+        ))}
       </div>
       <div className="flex-1 space-y-1.5 overflow-y-auto">
         {items.length === 0 && (
@@ -243,23 +240,39 @@ function LaneCard({
   );
 }
 
-const KIND_ICON = { task: ListChecks, project: Folder, campaign: Megaphone } as const;
+const KIND_ICON: Record<Kind, typeof ListChecks> = {
+  task: ListChecks,
+  project: Folder,
+  session: CalendarClock,
+  campaign: Megaphone,
+  spark: Lightbulb,
+  decision: Diamond,
+};
 const KIND_TONE: Record<Kind, string> = {
   task: "bg-iris/10 text-[color:var(--iris-violet)]",
   project: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  session: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
   campaign: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  spark: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
+  decision: "bg-rose-500/10 text-rose-700 dark:text-rose-400",
 };
 
 function ItemCard({ item }: { item: Item }) {
   const Icon = KIND_ICON[item.kind];
+  const draggable = RESCHEDULABLE.includes(item.kind);
+  const date = item.scheduled_for ?? item.due_date;
   return (
     <div
-      draggable
+      draggable={draggable}
       onDragStart={(e) => {
+        if (!draggable) return;
         e.dataTransfer.setData("application/json", JSON.stringify(item));
         e.dataTransfer.effectAllowed = "move";
       }}
-      className="group cursor-grab rounded-lg border border-border/60 bg-surface px-2.5 py-2 text-xs shadow-[var(--shadow-glass)] transition hover:border-iris/40 active:cursor-grabbing"
+      className={cn(
+        "group rounded-lg border border-border/60 bg-surface px-2.5 py-2 text-xs shadow-[var(--shadow-glass)] transition hover:border-iris/40",
+        draggable ? "cursor-grab active:cursor-grabbing" : "cursor-default opacity-90",
+      )}
     >
       <div className="flex items-start gap-2">
         <span className={cn("mt-0.5 grid h-5 w-5 place-items-center rounded-md", KIND_TONE[item.kind])}>
@@ -273,7 +286,7 @@ function ItemCard({ item }: { item: Item }) {
                 {item.status}
               </Badge>
             )}
-            {item.scheduled_for && <span>· {item.scheduled_for}</span>}
+            {date && <span>· {date}</span>}
           </div>
         </div>
       </div>
