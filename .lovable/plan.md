@@ -1,228 +1,105 @@
 
 
-# Phase 2.10p — Capture-as-Vault, JTBD home, Components-that-ship-assets, SweetCycle clarity, Engagement Plan explainer, Decisions vs Delegation
+# Phase 2.10q (revised) — Less new, more sharp. Story Trail in. Noise out.
 
-Six concrete things you asked, answered with build + explainer. No fluff.
-
----
-
-## 1. Answers first (no code) — what these things ARE
-
-### 🟣 Engagement Plan
-**The contract for one client over a stretch of time (3–12 months).** It bundles:
-- **Services purchased** (e.g. *1 Mirror + 3 Maps + 1 Sync*) → `engagement_services` rows.
-- **Roadmap** of which Domains/Tenets we'll move (`expected_domains`, `machine_roadmap`).
-- **Revenue terms** (`total_revenue_usd`).
-- **Expected sessions** — services consume sessions, those sessions appear in SweetCycle.
-
-It's the **wrapper**: Relationship → **Engagement Plan** → Services → Sessions → Deliverables.
-A relationship without a plan = ad-hoc work. A plan = a real engagement.
-
-I'll add a one-paragraph explainer card at the top of `/engagement-plans` AND `/engagement-plans/$id` so this is never a mystery again.
-
-### 🟣 SweetCycle
-The 5-phase rhythm a single session moves through: **Seed** (client preps) → **Synthesize** (we analyze) → **Session** (live) → **Sync** (recap & confirm) → **Ship** (delivered). It's a **board view of all sessions for one client**, grouped by which phase they're in. Useful when you're juggling 5 sessions for one client and want to see "what's mine to do right now vs waiting on them."
-
-The page exists but feels thin. I'll fix that (see §4).
-
-### 🟣 Decisions vs Delegation
-- **Decisions** (`decisions` table) = **a choice made**, with rationale. Fields: `decision`, `context`, `implications`, `made_by`, `date_made`, `supersedes`. Lives in OCDA → Decide column. *"On 2026-04-12 we decided to use Stripe over Paddle because…"*
-- **Delegation** (`delegation` table) = **work that should leave Liz's plate**. Fields: `task_or_responsibility`, `currently_done_by`, `can_be_delegated_to`, `effort_to_hand_off`, `only_liz_can_do_this_because`, `what_would_make_it_delegatable`. *Delegation register* — not "do this task," but "this is something we want to systematize and hand off."
-
-They look similar but solve different jobs. I'll add canonical PageHeader copy to both so this is obvious on the page.
-
-### 🟣 Where Jobs-To-Be-Done live
-**Right now: nowhere explicitly.** The schema has no JTBD field. They're implicit inside Personas (`audience_primary_concern`), Components (`questions_it_answers`), and Outcomes. I'll add a real home (see §6).
+You're right. Last plan was 13 new components and 3 new routes. That's noise. Here's the same intent, ranked, with most "new" stuff replaced by **upgrades to things we already have**.
 
 ---
 
-## 2. Capture = the Vault (clean storage, browsable per-person, per-resource)
+## What I'm pulling — ranked by leverage
 
-**Today:** `/capture` uploads files to the `captures` bucket attached to a proposal. Once approved → file is "kind of there" but there's no browsable Vault.
+### 🟢 Tier 1 — High leverage, low surface area (build now)
 
-**Fix:**
-- **Promote `capture_attachments` into a real Vault** — every uploaded file (from Capture, from Sessions, from Documents) lands in one queryable surface.
-- **New route `/vault`** under Library — searchable / filterable by: Person, Relationship, Domain, Tenet, Component, MIME type, source (capture | session | document | external_ai). Grid view with thumbnails for images, type-badge for PDFs/docs.
-- **Per-Person Vault tab** on `/people/$id` — every file ever attached to anything tagged with this person.
-- **Per-Resource Vault tab** on Components, Personas, Domains, Tenets — files tagged to that subject.
-- **Client portal vs internal Vault separation:** add `visibility text CHECK ('internal' | 'client_shared' | 'public')` to `capture_attachments`. Client portal (relationship_portals) only ever sees `client_shared`. The internal Vault sees everything.
-- **Better extraction at capture time:** extend `extractTextIfPossible` to also handle PDFs (use `pdf-parse-fork` lite at edge) and images (Lovable AI vision OCR via `gemini-2.5-flash`) so attached files are searchable, not opaque.
-- **Audit log every file event** (uploaded · linked · shared-with-client · removed) into `entity_audit_log`.
+#### 1. **Story Trail** — the single best pattern from sparkflow
+A chronological **narrative timeline** of a Quest / Journey / Component / Relationship — chapters for completed milestones, the active one pulsing, locked ones dimmed. Reads like a story instead of a log.
 
-This makes Capture's promise real: **anything you drop in is filed, tagged, searchable, and visible in the right place.**
+**No new tables.** It's a *view* that composes data we already have:
+- `sparks` (completed → chapter beats)
+- `quests` + `quest_components` (chapter headers)
+- `entity_audit_log` (timestamps + actors)
+- `component_outputs` (artifacts produced — appear inline as "📎 PRD shipped here")
+- `decisions` (decisions made — appear as inline diamonds)
 
----
+**One new component** `<StoryTrail subject={...} />`, mounted as a tab on:
+- `/quests/$id` (replaces flat list view)
+- `/journeys/$id`
+- `/components/$id` (the "how this Component matured" story)
+- `/relationships/$id` (the "what we did together" story — also the basis of the future client portal recap)
 
-## 3. SweetCycle — make it actually useful
+This is the *audit trail made beautiful*, and it's the natural reading view of work. Highest leverage thing in the whole sparkflow project.
 
-**Today:** pick a relationship → see sessions in 5 columns. Functional but "so what?".
+#### 2. **Upgrade the existing `/today` page** (don't replace it)
+Today already has Overdue / Due Today / This Week / Blocked / Sessions / Relationships sections. Just add **two strips above** them:
+- **OCDA tile strip** (Observe / Choose / Decide / Act counts, click → OCDA Cockpit) — 60 lines.
+- **Decision Queue widget** (5 items waiting on me) — 40 lines.
 
-**Fix:**
-- **Default to "all my active relationships"** so you don't have to pick one. Compact swimlane per relationship, each row = one client's SweetCycle in 5 mini-columns.
-- Pick a relationship → expand to the current full board.
-- **Phase blockers surface at the top:** "🟠 3 sessions blocked at Sync waiting on client confirm" with click-through.
-- **Owner badges on every card:** `you` / `liz` / `client` / `both` — color-coded so "what's on my plate today" is obvious.
-- **Phase-due heatmap strip** above the board: red/amber/green by `phase_due_date` so you see overdue at a glance.
-- **Each card** shows mini service-progress (`2/4 Map sessions used`) and links to the underlying engagement_plan.
-- **Empty state** gets a real CTA: "Schedule the first session for {client}" → opens the planner-add popover prefilled.
+No "Morning Scan" rebrand. No new file. Just enrich what's there. ~100 lines total.
 
----
+#### 3. **Liz Dependency gauge on `/delegation`** (one component, no schema)
+Read existing `delegation` rows, compute "% where `currently_done_by` = 'Liz' AND `can_be_delegated_to` is null" → big gauge + per-category bars at the top of `/delegation`. One component, ~150 lines. Makes the delegation register *visual* without any schema changes.
 
-## 4. Components that ship usable assets (emails, newsletters, PRDs, etc.)
+### 🟡 Tier 2 — Worth building, scope down to one component each
 
-You asked: *"can [Components] produce usable assets like emails or newsletters, or PRDs?"* — yes, this is exactly what they should do.
+#### 4. **Spark Completion polish** (in place, no new flow file)
+Edit the existing `_app.sparks.$id.tsx` to add:
+- An **Impact Preview** strip at the top: "Completing this advances Component X · advances Quest Y · captures Z" — read straight from existing `sparks.affected_components` + `sparks.quest_id`.
+- A small **completion celebration** (confetti + 1-second toast on save) — `canvas-confetti` lib, ~20 lines.
 
-Schema today: `components` has `name`, `maturity_level`, `quality_status`. There's no link to an actual produced thing. Fix:
+No `<SparkCompletionFlow>` orchestration component, no `<CelebrationSequence>` 4-step overlay. Same outcome, 1/10 the surface area.
 
-**New table `component_outputs`** (the deliverables a Component produces):
-```sql
-CREATE TABLE component_outputs (
-  id uuid PK,
-  component_id uuid → components,
-  output_kind text CHECK (output_kind IN
-    ('email','newsletter','prd','playbook','one_pager','spec','script',
-     'template','presentation','workflow_doc','training','other')),
-  title text,
-  status text CHECK (status IN ('draft','in_review','approved','published','retired')),
-  storage_path text,           -- the file in the captures bucket
-  body_md text,                -- inline content for short outputs (emails, snippets)
-  generation_prompt text,      -- the system prompt used (links to system_prompts)
-  generated_by_operator_id uuid → operators,
-  version int DEFAULT 1,
-  supersedes uuid → component_outputs,
-  visibility text CHECK ('internal','client_shared','public') DEFAULT 'internal',
-  approved_by uuid, approved_at,
-  created_at, updated_at
-);
-```
+#### 5. **Excellence Advisor as a sort, not a page**
+Drop the `/operate/excellence-advisor` route. Instead: on the existing **Components list** and **Domains** pages add a **"Sort: Needs attention"** option that ranks by `(execution_gap × low_excellence_score)`. Users get the prioritized list without a new page to maintain.
 
-**On every Component detail page** new section: **"Outputs this Component produces"** — tile grid of output kinds. Click → preview / download / share with client. "+ Generate output" → picks an Output Kind → runs the lens-attached prompt against the Component's content + Persona context → drafts an email/newsletter/PRD as `status='draft'`. Human reviews, edits, approves → status moves to `approved` → file becomes available in Vault and (if `client_shared`) in the client's portal.
+### 🔴 Tier 3 — Cut from this pass
 
-**Each Output Kind has its own editable system prompt** in the Prompt Console (`system_prompts.key='output.email'`, `output.newsletter`, `output.prd`, etc.) — so "what a great PRD looks like" is editable, modular, versioned.
-
-This wires the loop: **Component matures → it ships things → those things land in the Vault and the client portal.**
+- ❌ **Pre-Assessment Wizard / AssessmentResults** — large surface, premature. We don't yet have enough seeded relationships for this to pay back. Defer to when onboarding is the bottleneck.
+- ❌ **Agent Swarm gallery rework** — current `/bizzybots` already works. Retitle column groupings only if you want.
+- ❌ **QuestMapView** as a separate component — Story Trail (Tier 1 #1) does the same job better with chapters.
+- ❌ **OKRDashboard** — `<MeasuresPanel>` already exists. Add a small visual tweak (progress bar per KR) inside it, no new component.
+- ❌ **BulkParseReview generalization** — wait until we hit the second use case.
 
 ---
 
-## 5. Jobs-To-Be-Done — give them a real home
+## What this builds — total inventory
 
-JTBD is core to your model but has no table. Add one:
+**New files (only 2):**
+- `src/components/story-trail.tsx` — the chapter timeline component.
+- `src/components/liz-dependency-gauge.tsx` — gauge + per-category bars.
 
-```sql
-CREATE TABLE jobs_to_be_done (
-  id uuid PK,
-  statement text NOT NULL,           -- "When I'm onboarding a new client, I want to…"
-  job_type text CHECK ('functional','emotional','social'),
-  context text,                      -- the situation
-  desired_outcome text,              -- the success measure
-  current_solution text,             -- what they do today
-  pain_severity int CHECK (1..5),
-  -- linkage
-  persona_id uuid → personas,
-  relationship_id uuid → relationships,
-  related_domains text[],
-  related_components uuid[],
-  related_outcomes uuid[],
-  status text CHECK ('discovered','validated','addressed','retired') DEFAULT 'discovered',
-  source text,                       -- 'session','capture','interview','signal_scanner'
-  source_ref text,
-  created_at, updated_at
-);
-```
+**Edited files (5):**
+- `src/routes/_app.today.tsx` — add OCDA tile strip + Decision Queue widget inline.
+- `src/routes/_app.sparks.$id.tsx` — add Impact Preview strip + confetti on completion.
+- `src/routes/_app.delegation.index.tsx` — mount `<LizDependencyGauge>` at top.
+- `src/routes/_app.quests.$id.tsx` + `_app.journeys.$id.tsx` + `_app.components.$id.tsx` + `_app.relationships.$id.tsx` — add **Story Trail** tab.
+- `src/components/measures-panel.tsx` — small KR progress-bar tweak.
 
-**New route `/library/jtbd`** — list, filter by Persona / Domain / pain severity. Detail shows: linked Components that *address* the job, linked Outcomes that *measure* progress, sessions/sparks that *surfaced* it.
+**Dependencies:**
+- `canvas-confetti` (~3KB).
 
-**Surfaced everywhere it matters:**
-- Persona detail → "JTBDs this persona has."
-- Component detail → "JTBDs this component addresses."
-- Capture → AI parser learns to detect JTBD-shaped statements and stage them as `entity_type='jtbd'` proposals.
-- OCDA Cockpit → JTBDs can sit in the **Observe** column.
+**Schema changes: none.** Everything composes existing data.
 
-So the answer to *"where do my jobs-to-be-done live?"* becomes: **`/library/jtbd`, surfaced wherever they're relevant.**
+**Memory:**
+- `mem://design/story-trail.md` — Story Trail is the canonical narrative read of any subject's progress.
+- Update `mem://index.md` Core: "Audit/progress reads as a Story Trail timeline; never a flat log when a Story Trail will do."
 
 ---
 
-## 6. Decisions & Delegation — clarify the page purpose
+## Why this is the right move
 
-Two tiny but high-value fixes:
+You said: *"you're creating a lot of new things when maybe you should be optimizing"*. So:
 
-- **`/decisions`** PageHeader: *"A choice you made and why. Decisions are the **Decide** stage of OCDA — they capture what was chosen, the context, the implications, and what they supersede."* Add an **"Open in OCDA Cockpit"** link.
-- **`/delegation`** PageHeader: *"The register of work that should leave your plate. Each row = a responsibility currently owned by you that we want to systematize, train someone on, or hand to an agent. Different from Tasks (which are doing) — Delegation is **planning to hand off**."* Add a "Convert to Workflow" CTA on each row (creates a draft workflow scaffold from `task_or_responsibility` + `what_would_make_it_delegatable`).
+- **Tier 1 ships in one pass.** It's two new components and four edited routes.
+- **Story Trail is the headline.** It changes how you *read* the system without rebuilding it.
+- **Tier 2 is in-place polish.** Sparks, /today, /delegation get sharper without new pages.
+- **Tier 3 is parked, not deleted.** When onboarding becomes the bottleneck or the BizzyBots gallery actually feels cluttered, we revisit.
 
-Both keep their existing data; they just stop being mysterious.
+## Suggested order
 
----
+1. **Story Trail** — `<StoryTrail>` component + Quest detail mount. *Single highest-impact change. Ship and feel it.*
+2. **Mount Story Trail** on Journeys, Components, Relationships.
+3. **`/today` enrichment** + **Liz Dependency gauge**.
+4. **Spark Impact Preview + confetti**.
+5. **MeasuresPanel KR bar tweak**.
 
-## 7. ERD reality check (the deep look you asked for)
-
-I read the schema — 80 tables. The shape is sound. Three observations worth your time:
-
-1. **Components are already the spine** — they're linked from projects (`project_components`), tasks (`task_components`), workflows (`workflow_components`), sessions (`session_components`). Adding `component_outputs` (§4) closes the missing loop: *what a mature Component actually produces.*
-2. **`capture_attachments` is underused** — it has `entity_table` + `entity_id` already, so promoting it to a Vault is mostly a UI / extraction job, not a schema rebuild.
-3. **`relationship_portals`** already exists — that's the client-facing surface. The visibility flag in §2 is the bridge: the portal renders only `client_shared` items.
-
-No table renames, no destructive migrations.
-
----
-
-## 8. Files & migration
-
-**Migration `<ts>_vault_outputs_jtbd.sql`:**
-- `capture_attachments`: add `visibility`, `tagged_domains text[]`, `tagged_tenets text[]`, `tagged_components uuid[]`, `tagged_personas uuid[]`, `extracted_text text`, `audit_logged bool`.
-- New `component_outputs` table + RLS + audit triggers.
-- New `jobs_to_be_done` table + RLS.
-- Seed `system_prompts` rows: `output.email`, `output.newsletter`, `output.prd`, `output.one_pager`, `capture.parse.jtbd`.
-
-**New components:**
-- `src/components/vault-grid.tsx` — searchable file grid with type icons + thumbnails.
-- `src/components/vault-filters.tsx` — Person/Relationship/Domain/Tenet/Component/Visibility filters.
-- `src/components/component-output-tile.tsx` — single output card with preview + actions.
-- `src/components/component-output-generator.tsx` — kind picker + prompt editor + run button.
-- `src/components/jtbd-card.tsx` + `src/components/jtbd-list.tsx`.
-- `src/components/sweetcycle-multi-rel-board.tsx` — all-relationships compact swimlane view.
-- `src/components/sweetcycle-blockers-strip.tsx` — top-of-page blocker surface.
-- `src/components/decisions-explainer.tsx` + `src/components/delegation-explainer.tsx`.
-
-**New routes:**
-- `src/routes/_app.vault.tsx`
-- `src/routes/_app.library.jtbd.tsx`
-- `src/routes/_app.library.jtbd.$id.tsx`
-
-**Edited:**
-- `src/routes/_app.capture.tsx` — also write `tagged_*` to `capture_attachments`; add "View in Vault" link.
-- `src/routes/_app.sweetcycle.tsx` — multi-relationship default, blockers strip, owner badges.
-- `src/routes/_app.engagement-plans.index.tsx` — explainer card at top.
-- `src/routes/_app.engagement-plans.$id.tsx` — explainer line in header.
-- `src/routes/_app.decisions.index.tsx` + `_app.delegation.index.tsx` — PageHeader copy + CTAs.
-- `src/routes/_app.components.$id.tsx` — Outputs section.
-- `src/routes/_app.personas.$id.tsx` — JTBDs tab.
-- `src/routes/_app.people.tsx` (or person detail if it exists) — Vault tab.
-- `src/components/app-sidebar.tsx` — add **Library → Vault**, **Library → JTBD**.
-- `supabase/functions/parse-capture/index.ts` (or the existing capture parser) — add JTBD detection.
-- `src/integrations/supabase/types.ts` — auto-regenerated.
-
-**Edge function (new):**
-- `supabase/functions/generate-component-output/index.ts` — takes (component_id, output_kind), pulls Component context + Persona + Relationship, runs the matching `system_prompts` row, writes a draft `component_outputs` row.
-
-**Memory updates:**
-- `mem://design/canon-vault.md` (new) — Vault is the unified file surface; client portal sees `client_shared` only.
-- `mem://features/component-outputs.md` (new) — Components produce typed Outputs (email, newsletter, PRD…); each kind has an editable system prompt.
-- `mem://features/jtbd.md` (new) — JTBD lives in `jobs_to_be_done`, surfaced under Library and on Persona/Component detail.
-- `mem://design/sidebar-ia.md` — append: Library now includes Vault and JTBD.
-
----
-
-## What I'm NOT doing this pass
-
-- Real PDF OCR pipeline beyond Lovable-AI vision (good enough for MVP).
-- Building the client portal renderer for `client_shared` items — schema flag goes in; portal UI in next pass.
-- Bulk-tagging existing `capture_attachments` retroactively (you'll tag as you go, or I can run a one-shot AI tagger if you want).
-- Output kinds beyond the 12 listed.
-
-## Suggested order after
-
-1. **2.10p (this plan)** — Vault + Component Outputs + JTBD + SweetCycle clarity + Decisions/Delegation copy.
-2. **First Component-shipped Email** — pick one Component, generate its email, ship to one client.
-3. **Client portal renderer** that displays `client_shared` Vault items.
-4. **JTBD-aware Lens prompts** — feed the BizzyBot generation with this Persona's JTBDs.
+Each step is 30–90 minutes and shippable on its own.
 
