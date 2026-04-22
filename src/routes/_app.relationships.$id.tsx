@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { Chip } from "@/components/chips";
-import { Plus } from "lucide-react";
+import { Plus, ExternalLink } from "lucide-react";
+import { SweetCycleBoard, type SweetSession } from "@/components/sweetcycle-board";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
   component: RelationshipDetail,
