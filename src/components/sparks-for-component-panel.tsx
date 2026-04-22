@@ -88,7 +88,7 @@ export function SparksForComponentPanel({ componentId }: { componentId: string }
       ) : (
         <ul className="divide-y divide-border">
           {sparks.map((s) => {
-            const tier = s.generation_tier && TIER_META[s.generation_tier];
+            const tier = s.generation_tier ? TIER_META[s.generation_tier] : undefined;
             const TierIcon = tier?.icon;
             return (
               <li key={s.id}>
