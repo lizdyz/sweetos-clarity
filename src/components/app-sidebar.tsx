@@ -13,6 +13,9 @@ import {
   Gauge,
   Map,
   Bot,
+  Calendar,
+  Layers,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,6 +24,7 @@ interface NavItem {
   to: string;
   label: string;
   icon?: LucideIcon;
+  hint?: string;
 }
 
 interface NavGroup {
@@ -52,9 +56,13 @@ const PRIMARY: NavGroup[] = [
   {
     label: "Operate",
     items: [
-      { to: "/flightdeck", label: "Flightdeck", icon: Map },
+      { to: "/flightdeck", label: "Flightdeck", icon: Map, hint: "Cross-relationship cockpit" },
+      { to: "/sweetcycle", label: "SweetCycle", icon: Compass, hint: "Active client journey" },
       { to: "/relationships", label: "Relationships", icon: Users },
       { to: "/engagement-plans", label: "Engagement Plans", icon: Compass },
+      { to: "/sessions", label: "Sessions", icon: Calendar, hint: "Scheduled working sessions" },
+      { to: "/campaigns", label: "Campaigns", icon: Megaphone },
+      { to: "/measures", label: "Measures", icon: Gauge, hint: "Objectives, KRs, KPIs, CSFs" },
       { to: "/domains", label: "Domains", icon: Gauge },
       { to: "/workflows", label: "Workflows", icon: Workflow },
       { to: "/settings/excellence", label: "Excellence", icon: Sparkles },
@@ -63,20 +71,19 @@ const PRIMARY: NavGroup[] = [
 ];
 
 const LIBRARY: NavItem[] = [
-  { to: "/personas", label: "Personas" },
-  { to: "/components", label: "Components" },
-  { to: "/playbooks", label: "Playbooks" },
-  { to: "/documents", label: "Documents" },
-  { to: "/decisions", label: "Decisions" },
-  { to: "/delegation", label: "Delegation" },
-  { to: "/sparks", label: "Sparks" },
-  { to: "/quests", label: "Quests" },
-  { to: "/journeys", label: "Journeys" },
-  { to: "/missions", label: "Missions" },
-  { to: "/outcomes", label: "Outcomes" },
-  { to: "/domain-assessments", label: "Domain Assessments" },
-  { to: "/sessions", label: "Sessions" },
-  { to: "/campaigns", label: "Campaigns" },
+  { to: "/personas", label: "Personas", hint: "Who we serve — buyer archetypes" },
+  { to: "/components", label: "Components", hint: "Reusable building blocks" },
+  { to: "/session-templates", label: "Session Templates", hint: "Mirror/Machine/Map session catalog" },
+  { to: "/playbooks", label: "Playbooks", hint: "How a service runs end-to-end" },
+  { to: "/documents", label: "Documents", hint: "Briefs, deliverables, assets" },
+  { to: "/decisions", label: "Decisions", hint: "Logged choices and rationale" },
+  { to: "/delegation", label: "Delegation", hint: "What only Liz can do vs. what's delegatable" },
+  { to: "/sparks", label: "Sparks", hint: "Raw ideas before they become work" },
+  { to: "/quests", label: "Quests", hint: "Outcome-shaped challenges" },
+  { to: "/journeys", label: "Journeys", hint: "Long-arc transformations" },
+  { to: "/missions", label: "Missions", hint: "Strategic bets" },
+  { to: "/outcomes", label: "Outcomes", hint: "Results we want or got" },
+  { to: "/domain-assessments", label: "Domain Assessments", hint: "Maturity scoring sessions" },
 ];
 
 export function AppSidebar() {
@@ -170,6 +177,7 @@ export function AppSidebar() {
                   <li key={item.to}>
                     <Link
                       to={item.to}
+                      title={item.hint}
                       className={cn(
                         "group relative flex items-center gap-2.5 rounded-xl px-3 py-1.5 pl-7 text-sm transition-all duration-150",
                         active

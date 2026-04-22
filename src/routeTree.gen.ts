@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTodayRouteImport } from './routes/_app.today'
+import { Route as AppSweetcycleRouteImport } from './routes/_app.sweetcycle'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppQueueRouteImport } from './routes/_app.queue'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
@@ -88,6 +89,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppTodayRoute = AppTodayRouteImport.update({
   id: '/today',
   path: '/today',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSweetcycleRoute = AppSweetcycleRouteImport.update({
+  id: '/sweetcycle',
+  path: '/sweetcycle',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
@@ -391,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/pipeline': typeof AppPipelineRoute
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
+  '/sweetcycle': typeof AppSweetcycleRoute
   '/today': typeof AppTodayRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
@@ -453,6 +460,7 @@ export interface FileRoutesByTo {
   '/pipeline': typeof AppPipelineRoute
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
+  '/sweetcycle': typeof AppSweetcycleRoute
   '/today': typeof AppTodayRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
@@ -517,6 +525,7 @@ export interface FileRoutesById {
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/queue': typeof AppQueueRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
+  '/_app/sweetcycle': typeof AppSweetcycleRoute
   '/_app/today': typeof AppTodayRoute
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
   '/_app/components/$id': typeof AppComponentsIdRoute
@@ -581,6 +590,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/queue'
     | '/settings'
+    | '/sweetcycle'
     | '/today'
     | '/campaigns/$id'
     | '/components/$id'
@@ -643,6 +653,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/queue'
     | '/settings'
+    | '/sweetcycle'
     | '/today'
     | '/campaigns/$id'
     | '/components/$id'
@@ -706,6 +717,7 @@ export interface FileRouteTypes {
     | '/_app/pipeline'
     | '/_app/queue'
     | '/_app/settings'
+    | '/_app/sweetcycle'
     | '/_app/today'
     | '/_app/campaigns/$id'
     | '/_app/components/$id'
@@ -791,6 +803,13 @@ declare module '@tanstack/react-router' {
       path: '/today'
       fullPath: '/today'
       preLoaderRoute: typeof AppTodayRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sweetcycle': {
+      id: '/_app/sweetcycle'
+      path: '/sweetcycle'
+      fullPath: '/sweetcycle'
+      preLoaderRoute: typeof AppSweetcycleRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings': {
@@ -1229,6 +1248,7 @@ interface AppRouteChildren {
   AppPipelineRoute: typeof AppPipelineRoute
   AppQueueRoute: typeof AppQueueRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
+  AppSweetcycleRoute: typeof AppSweetcycleRoute
   AppTodayRoute: typeof AppTodayRoute
   AppCampaignsIdRoute: typeof AppCampaignsIdRoute
   AppComponentsIdRoute: typeof AppComponentsIdRoute
@@ -1288,6 +1308,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPipelineRoute: AppPipelineRoute,
   AppQueueRoute: AppQueueRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
+  AppSweetcycleRoute: AppSweetcycleRoute,
   AppTodayRoute: AppTodayRoute,
   AppCampaignsIdRoute: AppCampaignsIdRoute,
   AppComponentsIdRoute: AppComponentsIdRoute,
