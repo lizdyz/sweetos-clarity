@@ -117,6 +117,13 @@ export type Database = {
             foreignKeyName: "campaign_projects_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "project_rollup"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "campaign_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -420,6 +427,13 @@ export type Database = {
             foreignKeyName: "decisions_related_project_id_fkey"
             columns: ["related_project_id"]
             isOneToOne: false
+            referencedRelation: "project_rollup"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "decisions_related_project_id_fkey"
+            columns: ["related_project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -494,6 +508,13 @@ export type Database = {
           what_would_make_it_delegatable?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "delegation_linked_project_id_fkey"
+            columns: ["linked_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_rollup"
+            referencedColumns: ["project_id"]
+          },
           {
             foreignKeyName: "delegation_linked_project_id_fkey"
             columns: ["linked_project_id"]
@@ -1514,6 +1535,7 @@ export type Database = {
           project_brief: string | null
           prompt_status: string | null
           proposal_id: string | null
+          relationship_id: string | null
           revenue_potential_usd: number | null
           source: Database["public"]["Enums"]["proposal_source"] | null
           source_ref: string | null
@@ -1545,6 +1567,7 @@ export type Database = {
           project_brief?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
+          relationship_id?: string | null
           revenue_potential_usd?: number | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
@@ -1576,6 +1599,7 @@ export type Database = {
           project_brief?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
+          relationship_id?: string | null
           revenue_potential_usd?: number | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
@@ -1600,6 +1624,13 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
         ]
@@ -2330,6 +2361,13 @@ export type Database = {
             foreignKeyName: "sessions_linked_project_id_fkey"
             columns: ["linked_project_id"]
             isOneToOne: false
+            referencedRelation: "project_rollup"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "sessions_linked_project_id_fkey"
+            columns: ["linked_project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -2648,6 +2686,13 @@ export type Database = {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "project_rollup"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -2842,6 +2887,13 @@ export type Database = {
             foreignKeyName: "workflow_runs_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "project_rollup"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -2991,6 +3043,18 @@ export type Database = {
       }
     }
     Views: {
+      project_rollup: {
+        Row: {
+          blocked_tasks: number | null
+          next_due_date: string | null
+          open_tasks: number | null
+          overdue_tasks: number | null
+          owners: string[] | null
+          project_id: string | null
+          total_tasks: number | null
+        }
+        Relationships: []
+      }
       relationship_domain_maturity: {
         Row: {
           current_level: Database["public"]["Enums"]["maturity_level"] | null
