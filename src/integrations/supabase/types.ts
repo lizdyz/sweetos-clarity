@@ -2327,6 +2327,144 @@ export type Database = {
         }
         Relationships: []
       }
+      key_trend_indicators: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          domain_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          owner_operator_id: string | null
+          relationship_id: string | null
+          scan_frequency: Database["public"]["Enums"]["kti_scan_frequency"]
+          status: Database["public"]["Enums"]["kti_status"]
+          threshold_definition: string
+          trigger_action: Database["public"]["Enums"]["kti_trigger_action"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          owner_operator_id?: string | null
+          relationship_id?: string | null
+          scan_frequency?: Database["public"]["Enums"]["kti_scan_frequency"]
+          status?: Database["public"]["Enums"]["kti_status"]
+          threshold_definition: string
+          trigger_action?: Database["public"]["Enums"]["kti_trigger_action"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          owner_operator_id?: string | null
+          relationship_id?: string | null
+          scan_frequency?: Database["public"]["Enums"]["kti_scan_frequency"]
+          status?: Database["public"]["Enums"]["kti_status"]
+          threshold_definition?: string
+          trigger_action?: Database["public"]["Enums"]["kti_trigger_action"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "key_trend_indicators_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_trend_indicators_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_domain_maturity"
+            referencedColumns: ["domain_id"]
+          },
+          {
+            foreignKeyName: "key_trend_indicators_owner_operator_id_fkey"
+            columns: ["owner_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "key_trend_indicators_owner_operator_id_fkey"
+            columns: ["owner_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_trend_indicators_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "key_trend_indicators_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kti_scans: {
+        Row: {
+          created_by: string | null
+          direction: Database["public"]["Enums"]["kti_direction"]
+          evidence: Json | null
+          fired: boolean
+          id: string
+          kti_id: string
+          notes: string | null
+          observed_value: string | null
+          scanned_at: string
+        }
+        Insert: {
+          created_by?: string | null
+          direction?: Database["public"]["Enums"]["kti_direction"]
+          evidence?: Json | null
+          fired?: boolean
+          id?: string
+          kti_id: string
+          notes?: string | null
+          observed_value?: string | null
+          scanned_at?: string
+        }
+        Update: {
+          created_by?: string | null
+          direction?: Database["public"]["Enums"]["kti_direction"]
+          evidence?: Json | null
+          fired?: boolean
+          id?: string
+          kti_id?: string
+          notes?: string | null
+          observed_value?: string | null
+          scanned_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kti_scans_kti_id_fkey"
+            columns: ["kti_id"]
+            isOneToOne: false
+            referencedRelation: "key_trend_indicators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lens_canon: {
         Row: {
           created_at: string
@@ -6941,6 +7079,10 @@ export type Database = {
         | "Observed"
         | "Verified"
         | "Confirmed"
+      kti_direction: "up" | "down" | "flat" | "fired" | "unknown"
+      kti_scan_frequency: "daily" | "weekly" | "monthly"
+      kti_status: "active" | "paused" | "fired"
+      kti_trigger_action: "task" | "bot_alert" | "flightdeck_flag" | "all"
       lens_subject_kind:
         | "domain"
         | "tenet"
@@ -7268,6 +7410,10 @@ export const Constants = {
         "Verified",
         "Confirmed",
       ],
+      kti_direction: ["up", "down", "flat", "fired", "unknown"],
+      kti_scan_frequency: ["daily", "weekly", "monthly"],
+      kti_status: ["active", "paused", "fired"],
+      kti_trigger_action: ["task", "bot_alert", "flightdeck_flag", "all"],
       lens_subject_kind: [
         "domain",
         "tenet",
