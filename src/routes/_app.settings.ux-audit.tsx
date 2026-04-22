@@ -170,28 +170,58 @@ function UxAuditCockpit() {
             No audits yet. Pick a route above and run your first audit.
           </div>
         ) : (
-          <div className="space-y-2">
-            {Array.from(latestByRoute.values()).map((run) => {
-              const target = AUDIT_TARGETS.find((t) => t.route === run.route_path);
-              return (
-                <UxAuditCard
-                  key={run.id}
-                  run={run}
-                  reauditing={running}
-                  onReaudit={
-                    target
-                      ? () =>
-                          runAudit(
-                            run.route_path,
-                            target.source,
-                            run.ux_issues_user_reported,
-                          )
-                      : undefined
-                  }
-                />
-              );
-            })}
-          </div>
+          <>
+            <div className="rounded-2xl border border-border bg-surface/60 p-3">
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Canon misses by route (most off-canon first)
+              </div>
+              <ul className="divide-y divide-border">
+                {Array.from(latestByRoute.values())
+                  .map((r) => ({
+                    route: r.route_path,
+                    misses: (r.findings ?? []).filter((f) => f.detected_by === "presence_check").length,
+                  }))
+                  .sort((a, b) => b.misses - a.misses)
+                  .map((row) => (
+                    <li key={row.route} className="flex items-center justify-between py-1.5 text-xs">
+                      <span className="truncate font-mono">{row.route}</span>
+                      <span
+                        className={
+                          row.misses === 0
+                            ? "rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300"
+                            : "rounded-md bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:text-rose-300"
+                        }
+                      >
+                        {row.misses}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              {Array.from(latestByRoute.values()).map((run) => {
+                const target = AUDIT_TARGETS.find((t) => t.route === run.route_path);
+                return (
+                  <UxAuditCard
+                    key={run.id}
+                    run={run}
+                    reauditing={running}
+                    onReaudit={
+                      target
+                        ? () =>
+                            runAudit(
+                              run.route_path,
+                              target.source,
+                              run.ux_issues_user_reported,
+                            )
+                        : undefined
+                    }
+                  />
+                );
+              })}
+            </div>
+          </>
         )}
       </section>
     </div>
