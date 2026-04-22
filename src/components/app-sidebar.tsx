@@ -138,6 +138,7 @@ const GROUPS: NavGroup[] = [
     collapsible: true,
     items: [
       { to: "/settings/canon", label: "Entity Canon", icon: Sparkles, hint: "What perfection looks like per entity" },
+      { to: "/settings/lens-canon", label: "Lens Canon", icon: BookOpen, hint: "Curated best-practice Lens perspectives — canon-first, AI on demand" },
       { to: "/settings/prompts", label: "Prompt Console", icon: Wand2, hint: "Every editable AI prompt in one place" },
       { to: "/settings/spark-templates", label: "Spark Library", icon: BookOpen, hint: "Curated, reusable Spark templates" },
       { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "L1→L5 across the 5 Ps" },
