@@ -1,13 +1,17 @@
-import { Calendar, CheckCircle2, Play, Sparkles } from "lucide-react";
+import { Calendar, CalendarClock, CheckCircle2, Lock, Play, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface TimelineStripProps {
   createdAt?: string | null;
   startedAt?: string | null;
+  scheduledFor?: string | null;
+  notBefore?: string | null;
   dueAt?: string | null;
   doneAt?: string | null;
   onChangeStarted?: (v: string | null) => void;
+  onChangeScheduled?: (v: string | null) => void;
+  onChangeNotBefore?: (v: string | null) => void;
   onChangeDue?: (v: string | null) => void;
   onChangeDone?: (v: string | null) => void;
   className?: string;
