@@ -59,10 +59,134 @@ function WorkflowDetail() {
     },
   });
 
+  const { data: rollup } = useQuery({
+    queryKey: ["workflow_rollup", id],
+    queryFn: async () => {
+      const [stepsRes, compsRes, woRes] = await Promise.all([
+        supabase
+          .from("workflow_steps" as never)
+          .select("id, expected_duration_minutes, deliverables")
+          .eq("workflow_id", id),
+        supabase
+          .from("workflow_step_components" as never)
+          .select(
+            "component_id, components(id,name), workflow_step_id, workflow_steps!inner(workflow_id)",
+          )
+          .eq("workflow_steps.workflow_id", id),
+        supabase
+          .from("workflow_outcomes" as never)
+          .select("outcome_id, outcomes(id,description)")
+          .eq("workflow_id", id),
+      ]);
+      const steps = (stepsRes.data ?? []) as Array<{
+        expected_duration_minutes: number | null;
+        deliverables: string[] | null;
+      }>;
+      const totalMin = steps.reduce(
+        (sum, s) => sum + (s.expected_duration_minutes ?? 0),
+        0,
+      );
+      const allDeliverables = steps.flatMap((s) => s.deliverables ?? []);
+      const compRows = (compsRes.data ?? []) as Array<{
+        component_id: string;
+        components: { id: string; name: string } | null;
+      }>;
+      const compMap = new Map<string, string>();
+      compRows.forEach((c) => {
+        if (c.components) compMap.set(c.components.id, c.components.name);
+      });
+      const woRows = (woRes.data ?? []) as Array<{
+        outcome_id: string;
+        outcomes: { id: string; description: string | null } | null;
+      }>;
+      return {
+        totalMinutes: totalMin,
+        deliverables: allDeliverables,
+        components: Array.from(compMap.entries()).map(([cid, name]) => ({
+          id: cid,
+          name,
+        })),
+        outcomes: woRows
+          .map((w) => w.outcomes)
+          .filter((o): o is { id: string; description: string | null } => !!o),
+      };
+    },
+  });
+
   return (
     <div className="relative">
       <EntityDetailPage entityKey="workflows" />
       <div className="space-y-5 px-6 pb-8">
+        {rollup &&
+          (rollup.totalMinutes > 0 ||
+            rollup.components.length > 0 ||
+            rollup.outcomes.length > 0 ||
+            rollup.deliverables.length > 0) && (
+            <section className="panel p-5">
+              <h2 className="mb-3 text-sm font-semibold">What this workflow produces</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Clock className="h-3 w-3" /> Total time
+                  </div>
+                  <p className="text-lg font-semibold">
+                    {rollup.totalMinutes > 0 ? `~${rollup.totalMinutes} min` : "—"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Summed across all steps
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Puzzle className="h-3 w-3" /> Components advanced
+                  </div>
+                  {rollup.components.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No links yet</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {rollup.components.map((c) => (
+                        <span
+                          key={c.id}
+                          className="rounded-full bg-iris-soft px-2 py-0.5 text-[10px]"
+                        >
+                          {c.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Target className="h-3 w-3" /> Outcomes served
+                  </div>
+                  {rollup.outcomes.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No outcome links yet</p>
+                  ) : (
+                    <ul className="space-y-0.5">
+                      {rollup.outcomes.map((o) => (
+                        <li key={o.id} className="text-xs text-foreground/90">
+                          • {o.description ?? "Outcome"}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    📦 Deliverables
+                  </div>
+                  {rollup.deliverables.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">None yet</p>
+                  ) : (
+                    <p className="text-xs text-foreground/90">
+                      {rollup.deliverables.join(" · ")}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
         <section className="panel p-5">
           <div className="mb-3 flex items-center justify-between">
             <div>
