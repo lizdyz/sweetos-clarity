@@ -9,6 +9,7 @@ import { WorkContextStrip } from "@/components/work-context-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
 import { OperatorChip } from "@/components/operator-chip";
+import { CreatedByChip } from "@/components/created-by-chip";
 
 export const Route = createFileRoute("/_app/tasks/$id")({
   component: TaskDetail,
@@ -20,7 +21,8 @@ function TaskDetail() {
   const { id } = Route.useParams();
   return (
     <div className="space-y-5">
-      <div className="flex justify-end px-6 pt-4">
+      <div className="flex items-center justify-end gap-2 px-6 pt-4">
+        <TaskCreatedByChip taskId={id} />
         <TaskOperatorChip taskId={id} />
       </div>
       <WorkContextStrip entityType="task" entityId={id} />
@@ -32,6 +34,22 @@ function TaskDetail() {
       </div>
     </div>
   );
+}
+
+function TaskCreatedByChip({ taskId }: { taskId: string }) {
+  const { data } = useQuery({
+    queryKey: ["tasks", "source", taskId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("source")
+        .eq("id", taskId)
+        .maybeSingle();
+      if (error) return null;
+      return data as { source: string | null } | null;
+    },
+  });
+  return <CreatedByChip source={data?.source} />;
 }
 
 function TaskOperatorChip({ taskId }: { taskId: string }) {

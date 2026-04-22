@@ -3729,9 +3729,12 @@ export type Database = {
           created_by: string
           done_at: string | null
           due_date: string | null
+          generated_by_kind: Database["public"]["Enums"]["spark_generator_kind"]
+          generator_operator_id: string | null
           id: string
           name: string
           not_before: string | null
+          origin_event: string | null
           progression_state:
             | Database["public"]["Enums"]["progression_state"]
             | null
@@ -3759,9 +3762,12 @@ export type Database = {
           created_by?: string
           done_at?: string | null
           due_date?: string | null
+          generated_by_kind?: Database["public"]["Enums"]["spark_generator_kind"]
+          generator_operator_id?: string | null
           id?: string
           name: string
           not_before?: string | null
+          origin_event?: string | null
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
@@ -3789,9 +3795,12 @@ export type Database = {
           created_by?: string
           done_at?: string | null
           due_date?: string | null
+          generated_by_kind?: Database["public"]["Enums"]["spark_generator_kind"]
+          generator_operator_id?: string | null
           id?: string
           name?: string
           not_before?: string | null
+          origin_event?: string | null
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
@@ -3807,6 +3816,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sparks_generator_operator_id_fkey"
+            columns: ["generator_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "sparks_generator_operator_id_fkey"
+            columns: ["generator_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sparks_quest_id_fkey"
             columns: ["quest_id"]
@@ -4268,6 +4291,60 @@ export type Database = {
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_relationship_state: {
+        Row: {
+          created_at: string
+          last_updated: string
+          notes: string | null
+          relationship_id: string
+          source_of_advancement:
+            | Database["public"]["Enums"]["source_of_advancement"]
+            | null
+          state_of_the_thing: string
+          updated_by: string | null
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_updated?: string
+          notes?: string | null
+          relationship_id: string
+          source_of_advancement?:
+            | Database["public"]["Enums"]["source_of_advancement"]
+            | null
+          state_of_the_thing?: string
+          updated_by?: string | null
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string
+          last_updated?: string
+          notes?: string | null
+          relationship_id?: string
+          source_of_advancement?:
+            | Database["public"]["Enums"]["source_of_advancement"]
+            | null
+          state_of_the_thing?: string
+          updated_by?: string | null
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_relationship_state_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "workflow_relationship_state_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
         ]
@@ -5136,6 +5213,7 @@ export type Database = {
         | "Observation"
         | "System Extract"
         | "Client Self-Report"
+      spark_generator_kind: "system" | "agent" | "workflow"
       spark_type:
         | "Question"
         | "Creation"
@@ -5447,6 +5525,7 @@ export const Constants = {
         "System Extract",
         "Client Self-Report",
       ],
+      spark_generator_kind: ["system", "agent", "workflow"],
       spark_type: [
         "Question",
         "Creation",

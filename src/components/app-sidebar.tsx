@@ -9,13 +9,18 @@ import {
   Compass,
   Settings,
   ChevronDown,
-  Library,
   Gauge,
   Map,
   Bot,
   Calendar,
   Layers,
   Megaphone,
+  Library as LibraryIcon,
+  Target,
+  ListChecks,
+  FileText,
+  GitBranch,
+  Send,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,78 +33,122 @@ interface NavItem {
 }
 
 interface NavGroup {
-  label?: string;
+  label: string;
+  caption: string;
   items: NavItem[];
+  /** When true the group renders collapsed by default and can toggle. */
   collapsible?: boolean;
-  defaultOpen?: boolean;
 }
 
-const PRIMARY: NavGroup[] = [
+/**
+ * Canonical IA — mirrors the four layers in the SweetBOS canon docs:
+ *   Today (write surface) · Operate (operator side) · Library (definitions)
+ *   · SweetSync (client side, system-generated) · People · Taxonomies · Settings.
+ *
+ * See `mem://design/sidebar-ia.md` and `mem://design/canon-sparks-vs-tasks.md`.
+ */
+const GROUPS: NavGroup[] = [
   {
+    label: "Today",
+    caption: "Live working surface",
     items: [
       { to: "/today", label: "Today", icon: LayoutDashboard, hint: "Live working surface" },
       { to: "/planner", label: "Planner", icon: Layers, hint: "Plan this week / next / backlog" },
       { to: "/calendar", label: "Calendar", icon: Calendar, hint: "Visual time view" },
-      { to: "/capture", label: "Capture", icon: Sparkles },
-      { to: "/queue", label: "Proposals Queue", icon: Inbox },
-      { to: "/pipeline", label: "Pipeline", icon: Compass },
-    ],
-  },
-  {
-    label: "Work",
-    items: [
-      { to: "/my-tasks", label: "My tasks", icon: Inbox },
-      { to: "/people", label: "People", icon: Users },
-      { to: "/operators", label: "Operators", icon: Bot },
-      { to: "/projects", label: "Projects", icon: Workflow },
-      { to: "/tasks", label: "Tasks", icon: LayoutDashboard },
+      { to: "/capture", label: "Capture", icon: Sparkles, hint: "Get raw input in fast" },
+      { to: "/queue", label: "Proposals Queue", icon: Inbox, hint: "Review system proposals" },
+      { to: "/my-tasks", label: "My tasks", icon: ListChecks, hint: "Work assigned to you" },
     ],
   },
   {
     label: "Operate",
+    caption: "Operator side · SweetCycle delivery",
     items: [
+      { to: "/pipeline", label: "Pipeline", icon: Compass, hint: "Sales & engagement pipeline" },
       { to: "/flightdeck", label: "Flightdeck", icon: Map, hint: "Cross-relationship cockpit" },
       { to: "/sweetcycle", label: "SweetCycle", icon: Compass, hint: "Active client journey" },
-      { to: "/relationships", label: "Relationships", icon: Users },
-      { to: "/engagement-plans", label: "Engagement Plans", icon: Compass },
-      { to: "/sessions", label: "Sessions", icon: Calendar, hint: "Scheduled working sessions" },
-      { to: "/campaigns", label: "Campaigns", icon: Megaphone },
+      { to: "/sessions", label: "Sessions", icon: Calendar, hint: "Mirror / Machine / Map / Sync" },
       { to: "/measures", label: "Measures", icon: Gauge, hint: "Objectives, KRs, KPIs, CSFs" },
+      { to: "/engagement-plans", label: "Engagement Plans", icon: Send, hint: "Contract shape per relationship" },
+      { to: "/campaigns", label: "Campaigns", icon: Megaphone },
+      { to: "/delegation", label: "Delegation", icon: GitBranch, hint: "What only Liz can do" },
+      { to: "/decisions", label: "Decisions", icon: FileText, hint: "Logged choices & rationale" },
+      { to: "/documents", label: "Documents", icon: FileText, hint: "Briefs, deliverables, assets" },
+    ],
+  },
+  {
+    label: "Library",
+    caption: "Definitions · what CAN be done",
+    collapsible: true,
+    items: [
+      { to: "/workflows", label: "Workflows", icon: Workflow, hint: "Stored, versioned, reusable" },
+      { to: "/session-templates", label: "Session Templates", icon: Calendar, hint: "Mirror / Machine / Map / Sync catalog" },
+      { to: "/playbooks", label: "Playbooks", icon: LibraryIcon, hint: "How a service runs end-to-end" },
+      { to: "/personas", label: "Personas", icon: Users, hint: "Buyer archetypes" },
+      { to: "/components", label: "Components", icon: Layers, hint: "Reusable building blocks (maturity-tracked)" },
+      { to: "/outcomes", label: "Outcomes", icon: Target, hint: "Six measurable result types" },
+    ],
+  },
+  {
+    label: "SweetSync",
+    caption: "Client side · system-generated",
+    collapsible: true,
+    items: [
+      { to: "/missions", label: "Missions", icon: Target, hint: "Overarching transformation goal" },
+      { to: "/journeys", label: "Journeys", icon: Compass, hint: "Capability areas (contain Quests)" },
+      { to: "/quests", label: "Quests", icon: Compass, hint: "Group Sparks → advance Components" },
+      { to: "/sparks", label: "Sparks", icon: Sparkles, hint: "System-generated atomic interactions" },
+      { to: "/domain-assessments", label: "Domain Assessments", icon: Gauge, hint: "Maturity scoring" },
+    ],
+  },
+  {
+    label: "People",
+    caption: "Relationships, contacts, operators",
+    collapsible: true,
+    items: [
+      { to: "/relationships", label: "Relationships", icon: Users },
+      { to: "/people", label: "People", icon: Users },
+      { to: "/operators", label: "Operators", icon: Bot, hint: "Humans, workflows & AI agents" },
+      { to: "/projects", label: "Projects", icon: Workflow },
+      { to: "/tasks", label: "Tasks", icon: ListChecks, hint: "Atomic executable work" },
+    ],
+  },
+  {
+    label: "Taxonomies",
+    caption: "Universal vs industry",
+    collapsible: true,
+    items: [
       { to: "/domains", label: "Domains", icon: Gauge, hint: "22 universal areas of excellence" },
-      { to: "/tenets", label: "Tenets", icon: Sparkles, hint: "Industry-specific best-practice anchors" },
-      { to: "/workflows", label: "Workflows", icon: Workflow },
-      { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "Define L1→L5 across the 5 Ps" },
+      { to: "/tenets", label: "Tenets", icon: Sparkles, hint: "Industry-specific anchors" },
+    ],
+  },
+  {
+    label: "Settings",
+    caption: "Rubrics, prompts, team",
+    collapsible: true,
+    items: [
+      { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "L1→L5 across the 5 Ps" },
       { to: "/settings/lenses", label: "BizzyBot prompts", icon: Bot, hint: "Edit AI instructions per Lens" },
+      { to: "/settings", label: "Team & profile", icon: Settings },
     ],
   },
 ];
 
-const LIBRARY: NavItem[] = [
-  { to: "/personas", label: "Personas", hint: "Who we serve — buyer archetypes" },
-  { to: "/components", label: "Components", hint: "Reusable building blocks" },
-  { to: "/session-templates", label: "Session Templates", hint: "Mirror/Machine/Map session catalog" },
-  { to: "/playbooks", label: "Playbooks", hint: "How a service runs end-to-end" },
-  { to: "/documents", label: "Documents", hint: "Briefs, deliverables, assets" },
-  { to: "/decisions", label: "Decisions", hint: "Logged choices and rationale" },
-  { to: "/delegation", label: "Delegation", hint: "What only Liz can do vs. what's delegatable" },
-  { to: "/sparks", label: "Sparks", hint: "Raw ideas before they become work" },
-  { to: "/quests", label: "Quests", hint: "Outcome-shaped challenges" },
-  { to: "/journeys", label: "Journeys", hint: "Long-arc transformations" },
-  { to: "/missions", label: "Missions", hint: "Strategic bets" },
-  { to: "/outcomes", label: "Outcomes", hint: "Results we want or got" },
-  { to: "/domain-assessments", label: "Domain Assessments", hint: "Maturity scoring sessions" },
-];
-
 export function AppSidebar() {
   const location = useLocation();
-  const libraryActive = LIBRARY.some(
-    (i) => location.pathname === i.to || location.pathname.startsWith(i.to + "/"),
-  );
-  const [libOpen, setLibOpen] = useState<boolean>(libraryActive);
 
   function isActive(to: string) {
     return location.pathname === to || location.pathname.startsWith(to + "/");
   }
+
+  // For collapsible groups, default open if any child is currently active.
+  const defaultOpenMap: Record<string, boolean> = {};
+  for (const g of GROUPS) {
+    if (g.collapsible) {
+      defaultOpenMap[g.label] = g.items.some((i) => isActive(i.to));
+    }
+  }
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>(defaultOpenMap);
 
   return (
     <aside className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar/70 backdrop-blur-xl md:flex md:flex-col">
@@ -116,114 +165,82 @@ export function AppSidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {PRIMARY.map((group, gi) => (
-          <div key={gi} className="mb-5">
-            {group.label && (
-              <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {group.label}
-              </div>
-            )}
-            <ul className="space-y-0.5">
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.to);
-                return (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      className={cn(
-                        "group relative flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-150",
-                        active
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[var(--shadow-glass)]"
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                      )}
-                    >
-                      {active && (
-                        <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-iris" />
-                      )}
-                      {Icon && (
-                        <Icon
+        {GROUPS.map((group) => {
+          const open = group.collapsible ? (openMap[group.label] ?? false) : true;
+          return (
+            <div key={group.label} className="mb-4">
+              {group.collapsible ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenMap((m) => ({ ...m, [group.label]: !open }))
+                  }
+                  className="flex w-full items-center justify-between rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground hover:text-foreground"
+                  title={group.caption}
+                >
+                  <span>{group.label}</span>
+                  <ChevronDown
+                    className={cn("h-3 w-3 transition-transform", open && "rotate-180")}
+                  />
+                </button>
+              ) : (
+                <div
+                  className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
+                  title={group.caption}
+                >
+                  {group.label}
+                </div>
+              )}
+              {!group.collapsible && (
+                <div className="px-3 pb-1.5 text-[10px] text-muted-foreground/70">
+                  {group.caption}
+                </div>
+              )}
+              {open && (
+                <ul className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const active = isActive(item.to);
+                    return (
+                      <li key={item.to}>
+                        <Link
+                          to={item.to}
+                          title={item.hint}
                           className={cn(
-                            "h-4 w-4 shrink-0 transition-colors",
-                            active ? "text-[color:var(--iris-violet)]" : "text-muted-foreground",
+                            "group relative flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-150",
+                            active
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[var(--shadow-glass)]"
+                              : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                           )}
-                        />
-                      )}
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-
-        {/* Library — collapsible */}
-        <div className="mb-5">
-          <button
-            type="button"
-            onClick={() => setLibOpen((v) => !v)}
-            className="flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground hover:text-foreground"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <Library className="h-3 w-3" />
-              Library
-            </span>
-            <ChevronDown
-              className={cn("h-3 w-3 transition-transform", libOpen && "rotate-180")}
-            />
-          </button>
-          {libOpen && (
-            <ul className="mt-1 space-y-0.5">
-              {LIBRARY.map((item) => {
-                const active = isActive(item.to);
-                return (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      title={item.hint}
-                      className={cn(
-                        "group relative flex items-center gap-2.5 rounded-xl px-3 py-1.5 pl-7 text-sm transition-all duration-150",
-                        active
-                          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground shadow-[var(--shadow-glass)]"
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                      )}
-                    >
-                      {active && (
-                        <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-iris" />
-                      )}
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-
-        <div>
-          <ul className="space-y-0.5">
-            <li>
-              <Link
-                to="/settings"
-                className={cn(
-                  "group relative flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-150",
-                  isActive("/settings")
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-[var(--shadow-glass)]"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span>Settings & Team</span>
-              </Link>
-            </li>
-          </ul>
-        </div>
+                        >
+                          {active && (
+                            <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-iris" />
+                          )}
+                          {Icon && (
+                            <Icon
+                              className={cn(
+                                "h-4 w-4 shrink-0 transition-colors",
+                                active
+                                  ? "text-[color:var(--iris-violet)]"
+                                  : "text-muted-foreground",
+                              )}
+                            />
+                          )}
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       <div className="border-t border-sidebar-border p-3 text-[11px] text-muted-foreground">
         <div className="flex items-center justify-between">
-          <span>Phase 2.6 · Intelligence</span>
+          <span>Phase 2.10n · Canon</span>
           <span className="font-mono text-[10px] opacity-70">v0.2</span>
         </div>
       </div>
