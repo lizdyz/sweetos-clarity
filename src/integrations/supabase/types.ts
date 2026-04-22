@@ -502,6 +502,7 @@ export type Database = {
           id: string
           implications: string | null
           made_by: string | null
+          ocda_stage: string | null
           related_project_id: string | null
           status: string | null
           supersedes: string | null
@@ -520,6 +521,7 @@ export type Database = {
           id?: string
           implications?: string | null
           made_by?: string | null
+          ocda_stage?: string | null
           related_project_id?: string | null
           status?: string | null
           supersedes?: string | null
@@ -538,6 +540,7 @@ export type Database = {
           id?: string
           implications?: string | null
           made_by?: string | null
+          ocda_stage?: string | null
           related_project_id?: string | null
           status?: string | null
           supersedes?: string | null
@@ -1362,6 +1365,103 @@ export type Database = {
           },
         ]
       }
+      excellence_checklist_proposals: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          domain_id: string | null
+          id: string
+          notes: string | null
+          proposed_text: string
+          rationale: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rubric_id: string | null
+          scanner_run_id: string | null
+          source_snippet: string | null
+          source_url: string | null
+          status: string
+          tenet_id: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          domain_id?: string | null
+          id?: string
+          notes?: string | null
+          proposed_text: string
+          rationale?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rubric_id?: string | null
+          scanner_run_id?: string | null
+          source_snippet?: string | null
+          source_url?: string | null
+          status?: string
+          tenet_id?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          domain_id?: string | null
+          id?: string
+          notes?: string | null
+          proposed_text?: string
+          rationale?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rubric_id?: string | null
+          scanner_run_id?: string | null
+          source_snippet?: string | null
+          source_url?: string | null
+          status?: string
+          tenet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_checklist_proposals_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_checklist_proposals_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_domain_maturity"
+            referencedColumns: ["domain_id"]
+          },
+          {
+            foreignKeyName: "excellence_checklist_proposals_rubric_id_fkey"
+            columns: ["rubric_id"]
+            isOneToOne: false
+            referencedRelation: "excellence_rubric"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_checklist_proposals_rubric_id_fkey"
+            columns: ["rubric_id"]
+            isOneToOne: false
+            referencedRelation: "maturity_threshold_progress"
+            referencedColumns: ["rubric_id"]
+          },
+          {
+            foreignKeyName: "excellence_checklist_proposals_scanner_run_id_fkey"
+            columns: ["scanner_run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_checklist_proposals_tenet_id_fkey"
+            columns: ["tenet_id"]
+            isOneToOne: false
+            referencedRelation: "tenets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       excellence_perspectives: {
         Row: {
           code: string
@@ -1969,6 +2069,7 @@ export type Database = {
       operators: {
         Row: {
           agent_model: string | null
+          agent_role: string | null
           agent_system_prompt: string | null
           availability: string
           avatar_url: string | null
@@ -1988,6 +2089,7 @@ export type Database = {
         }
         Insert: {
           agent_model?: string | null
+          agent_role?: string | null
           agent_system_prompt?: string | null
           availability?: string
           avatar_url?: string | null
@@ -2007,6 +2109,7 @@ export type Database = {
         }
         Update: {
           agent_model?: string | null
+          agent_role?: string | null
           agent_system_prompt?: string | null
           availability?: string
           avatar_url?: string | null
@@ -2464,6 +2567,7 @@ export type Database = {
           next_action_due: string | null
           next_deliverable_specific: string | null
           not_before: string | null
+          ocda_stage: string | null
           operator_id: string | null
           owner: string | null
           priority: string | null
@@ -2501,6 +2605,7 @@ export type Database = {
           next_action_due?: string | null
           next_deliverable_specific?: string | null
           not_before?: string | null
+          ocda_stage?: string | null
           operator_id?: string | null
           owner?: string | null
           priority?: string | null
@@ -2538,6 +2643,7 @@ export type Database = {
           next_action_due?: string | null
           next_deliverable_specific?: string | null
           not_before?: string | null
+          ocda_stage?: string | null
           operator_id?: string | null
           owner?: string | null
           priority?: string | null
@@ -3846,6 +3952,48 @@ export type Database = {
           },
         ]
       }
+      system_prompts: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          model: string | null
+          name: string
+          scope: string | null
+          system_prompt: string | null
+          updated_at: string
+          updated_by: string | null
+          user_prompt_template: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          model?: string | null
+          name: string
+          scope?: string | null
+          system_prompt?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_prompt_template?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          model?: string | null
+          name?: string
+          scope?: string | null
+          system_prompt?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_prompt_template?: string | null
+        }
+        Relationships: []
+      }
       task_components: {
         Row: {
           component_id: string
@@ -3938,6 +4086,7 @@ export type Database = {
           name: string
           not_before: string | null
           notes: string | null
+          ocda_stage: string | null
           operator_id: string | null
           output_format: string | null
           output_link: string | null
@@ -3980,6 +4129,7 @@ export type Database = {
           name: string
           not_before?: string | null
           notes?: string | null
+          ocda_stage?: string | null
           operator_id?: string | null
           output_format?: string | null
           output_link?: string | null
@@ -4022,6 +4172,7 @@ export type Database = {
           name?: string
           not_before?: string | null
           notes?: string | null
+          ocda_stage?: string | null
           operator_id?: string | null
           output_format?: string | null
           output_link?: string | null

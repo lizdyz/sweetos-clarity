@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { captureProposal } from "@/utils/proposals.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { FileDrop, type PendingFile } from "@/components/file-drop";
+import { CaptureQueueStrip } from "@/components/capture-queue-strip";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/capture")({
@@ -276,6 +277,8 @@ function CapturePage() {
           aren't parsed yet.
         </p>
       </Card>
+
+      <CaptureQueueStrip />
     </div>
   );
 }
