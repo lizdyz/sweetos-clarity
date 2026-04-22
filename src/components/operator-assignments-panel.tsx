@@ -405,6 +405,3 @@ function AssignExistingButton({ kind, operatorId }: { kind: EntityKind; operator
     </div>
   );
 }
-
-export const _ = cn;
-export type { Badge as _Badge };
