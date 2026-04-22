@@ -65,7 +65,7 @@ export function StoryTrail({ subjectKind, subjectId, className, limit = 20 }: Pr
         const { data } = await supabase
           .from("sparks")
           .select("id, name, spark_type, progression_state, captured_answer, created_at, done_at")
-          .eq("operator_id", subjectId)
+          .eq("generator_operator_id", subjectId)
           .order("created_at", { ascending: false })
           .limit(limit);
         return data ?? [];
@@ -131,15 +131,6 @@ export function StoryTrail({ subjectKind, subjectId, className, limit = 20 }: Pr
           .select("id, decision, context, date_made, created_at, related_project_id")
           .order("created_at", { ascending: true })
           .limit(50);
-        return data ?? [];
-      }
-      if (subjectKind === "operator" && subjectId) {
-        const { data } = await supabase
-          .from("decisions")
-          .select("id, decision, context, date_made, created_at, created_by")
-          .eq("created_by", subjectId)
-          .order("created_at", { ascending: false })
-          .limit(limit);
         return data ?? [];
       }
       if (isWorkspace) {
