@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTodayRouteImport } from './routes/_app.today'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
+import { Route as AppRelationshipsIndexRouteImport } from './routes/_app.relationships.index'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -39,18 +40,25 @@ const AppPipelineRoute = AppPipelineRouteImport.update({
   path: '/pipeline',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRelationshipsIndexRoute = AppRelationshipsIndexRouteImport.update({
+  id: '/relationships/',
+  path: '/relationships/',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof AppPipelineRoute
   '/today': typeof AppTodayRoute
+  '/relationships/': typeof AppRelationshipsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof AppPipelineRoute
   '/today': typeof AppTodayRoute
+  '/relationships': typeof AppRelationshipsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,13 +67,21 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/today': typeof AppTodayRoute
+  '/_app/relationships/': typeof AppRelationshipsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/pipeline' | '/today'
+  fullPaths: '/' | '/login' | '/pipeline' | '/today' | '/relationships/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/pipeline' | '/today'
-  id: '__root__' | '/' | '/_app' | '/login' | '/_app/pipeline' | '/_app/today'
+  to: '/' | '/login' | '/pipeline' | '/today' | '/relationships'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/pipeline'
+    | '/_app/today'
+    | '/_app/relationships/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -111,17 +127,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPipelineRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/relationships/': {
+      id: '/_app/relationships/'
+      path: '/relationships'
+      fullPath: '/relationships/'
+      preLoaderRoute: typeof AppRelationshipsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppPipelineRoute: typeof AppPipelineRoute
   AppTodayRoute: typeof AppTodayRoute
+  AppRelationshipsIndexRoute: typeof AppRelationshipsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppPipelineRoute: AppPipelineRoute,
   AppTodayRoute: AppTodayRoute,
+  AppRelationshipsIndexRoute: AppRelationshipsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -134,3 +159,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
