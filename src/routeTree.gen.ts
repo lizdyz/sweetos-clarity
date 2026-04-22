@@ -9,38 +9,402 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppTodayRouteImport } from './routes/_app.today'
+import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
+import { Route as AppCaptureRouteImport } from './routes/_app.capture'
+import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
+import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
+import { Route as AppSessionsIndexRouteImport } from './routes/_app.sessions.index'
+import { Route as AppRelationshipsIndexRouteImport } from './routes/_app.relationships.index'
+import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
+import { Route as AppPlaybooksIndexRouteImport } from './routes/_app.playbooks.index'
+import { Route as AppDomainAssessmentsIndexRouteImport } from './routes/_app.domain-assessments.index'
+import { Route as AppDocumentsIndexRouteImport } from './routes/_app.documents.index'
+import { Route as AppDelegationIndexRouteImport } from './routes/_app.delegation.index'
+import { Route as AppDecisionsIndexRouteImport } from './routes/_app.decisions.index'
+import { Route as AppComponentsIndexRouteImport } from './routes/_app.components.index'
+import { Route as AppCampaignsIndexRouteImport } from './routes/_app.campaigns.index'
+import { Route as AppWorkflowsIdRouteImport } from './routes/_app.workflows.$id'
+import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
+import { Route as AppSessionsIdRouteImport } from './routes/_app.sessions.$id'
+import { Route as AppRelationshipsIdRouteImport } from './routes/_app.relationships.$id'
+import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
+import { Route as AppPlaybooksIdRouteImport } from './routes/_app.playbooks.$id'
+import { Route as AppDomainAssessmentsIdRouteImport } from './routes/_app.domain-assessments.$id'
+import { Route as AppDocumentsIdRouteImport } from './routes/_app.documents.$id'
+import { Route as AppDelegationIdRouteImport } from './routes/_app.delegation.$id'
+import { Route as AppDecisionsIdRouteImport } from './routes/_app.decisions.$id'
+import { Route as AppComponentsIdRouteImport } from './routes/_app.components.$id'
+import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppTodayRoute = AppTodayRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPipelineRoute = AppPipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCaptureRoute = AppCaptureRouteImport.update({
+  id: '/capture',
+  path: '/capture',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWorkflowsIndexRoute = AppWorkflowsIndexRouteImport.update({
+  id: '/workflows/',
+  path: '/workflows/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTasksIndexRoute = AppTasksIndexRouteImport.update({
+  id: '/tasks/',
+  path: '/tasks/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSessionsIndexRoute = AppSessionsIndexRouteImport.update({
+  id: '/sessions/',
+  path: '/sessions/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRelationshipsIndexRoute = AppRelationshipsIndexRouteImport.update({
+  id: '/relationships/',
+  path: '/relationships/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlaybooksIndexRoute = AppPlaybooksIndexRouteImport.update({
+  id: '/playbooks/',
+  path: '/playbooks/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDomainAssessmentsIndexRoute =
+  AppDomainAssessmentsIndexRouteImport.update({
+    id: '/domain-assessments/',
+    path: '/domain-assessments/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppDocumentsIndexRoute = AppDocumentsIndexRouteImport.update({
+  id: '/documents/',
+  path: '/documents/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDelegationIndexRoute = AppDelegationIndexRouteImport.update({
+  id: '/delegation/',
+  path: '/delegation/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDecisionsIndexRoute = AppDecisionsIndexRouteImport.update({
+  id: '/decisions/',
+  path: '/decisions/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppComponentsIndexRoute = AppComponentsIndexRouteImport.update({
+  id: '/components/',
+  path: '/components/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCampaignsIndexRoute = AppCampaignsIndexRouteImport.update({
+  id: '/campaigns/',
+  path: '/campaigns/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWorkflowsIdRoute = AppWorkflowsIdRouteImport.update({
+  id: '/workflows/$id',
+  path: '/workflows/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTasksIdRoute = AppTasksIdRouteImport.update({
+  id: '/tasks/$id',
+  path: '/tasks/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSessionsIdRoute = AppSessionsIdRouteImport.update({
+  id: '/sessions/$id',
+  path: '/sessions/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRelationshipsIdRoute = AppRelationshipsIdRouteImport.update({
+  id: '/relationships/$id',
+  path: '/relationships/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlaybooksIdRoute = AppPlaybooksIdRouteImport.update({
+  id: '/playbooks/$id',
+  path: '/playbooks/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDomainAssessmentsIdRoute = AppDomainAssessmentsIdRouteImport.update({
+  id: '/domain-assessments/$id',
+  path: '/domain-assessments/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDocumentsIdRoute = AppDocumentsIdRouteImport.update({
+  id: '/documents/$id',
+  path: '/documents/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDelegationIdRoute = AppDelegationIdRouteImport.update({
+  id: '/delegation/$id',
+  path: '/delegation/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDecisionsIdRoute = AppDecisionsIdRouteImport.update({
+  id: '/decisions/$id',
+  path: '/decisions/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppComponentsIdRoute = AppComponentsIdRouteImport.update({
+  id: '/components/$id',
+  path: '/components/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCampaignsIdRoute = AppCampaignsIdRouteImport.update({
+  id: '/campaigns/$id',
+  path: '/campaigns/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/capture': typeof AppCaptureRoute
+  '/pipeline': typeof AppPipelineRoute
+  '/today': typeof AppTodayRoute
+  '/campaigns/$id': typeof AppCampaignsIdRoute
+  '/components/$id': typeof AppComponentsIdRoute
+  '/decisions/$id': typeof AppDecisionsIdRoute
+  '/delegation/$id': typeof AppDelegationIdRoute
+  '/documents/$id': typeof AppDocumentsIdRoute
+  '/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
+  '/playbooks/$id': typeof AppPlaybooksIdRoute
+  '/projects/$id': typeof AppProjectsIdRoute
+  '/relationships/$id': typeof AppRelationshipsIdRoute
+  '/sessions/$id': typeof AppSessionsIdRoute
+  '/tasks/$id': typeof AppTasksIdRoute
+  '/workflows/$id': typeof AppWorkflowsIdRoute
+  '/campaigns/': typeof AppCampaignsIndexRoute
+  '/components/': typeof AppComponentsIndexRoute
+  '/decisions/': typeof AppDecisionsIndexRoute
+  '/delegation/': typeof AppDelegationIndexRoute
+  '/documents/': typeof AppDocumentsIndexRoute
+  '/domain-assessments/': typeof AppDomainAssessmentsIndexRoute
+  '/playbooks/': typeof AppPlaybooksIndexRoute
+  '/projects/': typeof AppProjectsIndexRoute
+  '/relationships/': typeof AppRelationshipsIndexRoute
+  '/sessions/': typeof AppSessionsIndexRoute
+  '/tasks/': typeof AppTasksIndexRoute
+  '/workflows/': typeof AppWorkflowsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/capture': typeof AppCaptureRoute
+  '/pipeline': typeof AppPipelineRoute
+  '/today': typeof AppTodayRoute
+  '/campaigns/$id': typeof AppCampaignsIdRoute
+  '/components/$id': typeof AppComponentsIdRoute
+  '/decisions/$id': typeof AppDecisionsIdRoute
+  '/delegation/$id': typeof AppDelegationIdRoute
+  '/documents/$id': typeof AppDocumentsIdRoute
+  '/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
+  '/playbooks/$id': typeof AppPlaybooksIdRoute
+  '/projects/$id': typeof AppProjectsIdRoute
+  '/relationships/$id': typeof AppRelationshipsIdRoute
+  '/sessions/$id': typeof AppSessionsIdRoute
+  '/tasks/$id': typeof AppTasksIdRoute
+  '/workflows/$id': typeof AppWorkflowsIdRoute
+  '/campaigns': typeof AppCampaignsIndexRoute
+  '/components': typeof AppComponentsIndexRoute
+  '/decisions': typeof AppDecisionsIndexRoute
+  '/delegation': typeof AppDelegationIndexRoute
+  '/documents': typeof AppDocumentsIndexRoute
+  '/domain-assessments': typeof AppDomainAssessmentsIndexRoute
+  '/playbooks': typeof AppPlaybooksIndexRoute
+  '/projects': typeof AppProjectsIndexRoute
+  '/relationships': typeof AppRelationshipsIndexRoute
+  '/sessions': typeof AppSessionsIndexRoute
+  '/tasks': typeof AppTasksIndexRoute
+  '/workflows': typeof AppWorkflowsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/capture': typeof AppCaptureRoute
+  '/_app/pipeline': typeof AppPipelineRoute
+  '/_app/today': typeof AppTodayRoute
+  '/_app/campaigns/$id': typeof AppCampaignsIdRoute
+  '/_app/components/$id': typeof AppComponentsIdRoute
+  '/_app/decisions/$id': typeof AppDecisionsIdRoute
+  '/_app/delegation/$id': typeof AppDelegationIdRoute
+  '/_app/documents/$id': typeof AppDocumentsIdRoute
+  '/_app/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
+  '/_app/playbooks/$id': typeof AppPlaybooksIdRoute
+  '/_app/projects/$id': typeof AppProjectsIdRoute
+  '/_app/relationships/$id': typeof AppRelationshipsIdRoute
+  '/_app/sessions/$id': typeof AppSessionsIdRoute
+  '/_app/tasks/$id': typeof AppTasksIdRoute
+  '/_app/workflows/$id': typeof AppWorkflowsIdRoute
+  '/_app/campaigns/': typeof AppCampaignsIndexRoute
+  '/_app/components/': typeof AppComponentsIndexRoute
+  '/_app/decisions/': typeof AppDecisionsIndexRoute
+  '/_app/delegation/': typeof AppDelegationIndexRoute
+  '/_app/documents/': typeof AppDocumentsIndexRoute
+  '/_app/domain-assessments/': typeof AppDomainAssessmentsIndexRoute
+  '/_app/playbooks/': typeof AppPlaybooksIndexRoute
+  '/_app/projects/': typeof AppProjectsIndexRoute
+  '/_app/relationships/': typeof AppRelationshipsIndexRoute
+  '/_app/sessions/': typeof AppSessionsIndexRoute
+  '/_app/tasks/': typeof AppTasksIndexRoute
+  '/_app/workflows/': typeof AppWorkflowsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/capture'
+    | '/pipeline'
+    | '/today'
+    | '/campaigns/$id'
+    | '/components/$id'
+    | '/decisions/$id'
+    | '/delegation/$id'
+    | '/documents/$id'
+    | '/domain-assessments/$id'
+    | '/playbooks/$id'
+    | '/projects/$id'
+    | '/relationships/$id'
+    | '/sessions/$id'
+    | '/tasks/$id'
+    | '/workflows/$id'
+    | '/campaigns/'
+    | '/components/'
+    | '/decisions/'
+    | '/delegation/'
+    | '/documents/'
+    | '/domain-assessments/'
+    | '/playbooks/'
+    | '/projects/'
+    | '/relationships/'
+    | '/sessions/'
+    | '/tasks/'
+    | '/workflows/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/capture'
+    | '/pipeline'
+    | '/today'
+    | '/campaigns/$id'
+    | '/components/$id'
+    | '/decisions/$id'
+    | '/delegation/$id'
+    | '/documents/$id'
+    | '/domain-assessments/$id'
+    | '/playbooks/$id'
+    | '/projects/$id'
+    | '/relationships/$id'
+    | '/sessions/$id'
+    | '/tasks/$id'
+    | '/workflows/$id'
+    | '/campaigns'
+    | '/components'
+    | '/decisions'
+    | '/delegation'
+    | '/documents'
+    | '/domain-assessments'
+    | '/playbooks'
+    | '/projects'
+    | '/relationships'
+    | '/sessions'
+    | '/tasks'
+    | '/workflows'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/capture'
+    | '/_app/pipeline'
+    | '/_app/today'
+    | '/_app/campaigns/$id'
+    | '/_app/components/$id'
+    | '/_app/decisions/$id'
+    | '/_app/delegation/$id'
+    | '/_app/documents/$id'
+    | '/_app/domain-assessments/$id'
+    | '/_app/playbooks/$id'
+    | '/_app/projects/$id'
+    | '/_app/relationships/$id'
+    | '/_app/sessions/$id'
+    | '/_app/tasks/$id'
+    | '/_app/workflows/$id'
+    | '/_app/campaigns/'
+    | '/_app/components/'
+    | '/_app/decisions/'
+    | '/_app/delegation/'
+    | '/_app/documents/'
+    | '/_app/domain-assessments/'
+    | '/_app/playbooks/'
+    | '/_app/projects/'
+    | '/_app/relationships/'
+    | '/_app/sessions/'
+    | '/_app/tasks/'
+    | '/_app/workflows/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,21 +412,265 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/today': {
+      id: '/_app/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof AppTodayRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pipeline': {
+      id: '/_app/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof AppPipelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/capture': {
+      id: '/_app/capture'
+      path: '/capture'
+      fullPath: '/capture'
+      preLoaderRoute: typeof AppCaptureRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/workflows/': {
+      id: '/_app/workflows/'
+      path: '/workflows'
+      fullPath: '/workflows/'
+      preLoaderRoute: typeof AppWorkflowsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tasks/': {
+      id: '/_app/tasks/'
+      path: '/tasks'
+      fullPath: '/tasks/'
+      preLoaderRoute: typeof AppTasksIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sessions/': {
+      id: '/_app/sessions/'
+      path: '/sessions'
+      fullPath: '/sessions/'
+      preLoaderRoute: typeof AppSessionsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/relationships/': {
+      id: '/_app/relationships/'
+      path: '/relationships'
+      fullPath: '/relationships/'
+      preLoaderRoute: typeof AppRelationshipsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/projects/': {
+      id: '/_app/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AppProjectsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/playbooks/': {
+      id: '/_app/playbooks/'
+      path: '/playbooks'
+      fullPath: '/playbooks/'
+      preLoaderRoute: typeof AppPlaybooksIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/domain-assessments/': {
+      id: '/_app/domain-assessments/'
+      path: '/domain-assessments'
+      fullPath: '/domain-assessments/'
+      preLoaderRoute: typeof AppDomainAssessmentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/documents/': {
+      id: '/_app/documents/'
+      path: '/documents'
+      fullPath: '/documents/'
+      preLoaderRoute: typeof AppDocumentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/delegation/': {
+      id: '/_app/delegation/'
+      path: '/delegation'
+      fullPath: '/delegation/'
+      preLoaderRoute: typeof AppDelegationIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/decisions/': {
+      id: '/_app/decisions/'
+      path: '/decisions'
+      fullPath: '/decisions/'
+      preLoaderRoute: typeof AppDecisionsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/components/': {
+      id: '/_app/components/'
+      path: '/components'
+      fullPath: '/components/'
+      preLoaderRoute: typeof AppComponentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/campaigns/': {
+      id: '/_app/campaigns/'
+      path: '/campaigns'
+      fullPath: '/campaigns/'
+      preLoaderRoute: typeof AppCampaignsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/workflows/$id': {
+      id: '/_app/workflows/$id'
+      path: '/workflows/$id'
+      fullPath: '/workflows/$id'
+      preLoaderRoute: typeof AppWorkflowsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tasks/$id': {
+      id: '/_app/tasks/$id'
+      path: '/tasks/$id'
+      fullPath: '/tasks/$id'
+      preLoaderRoute: typeof AppTasksIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sessions/$id': {
+      id: '/_app/sessions/$id'
+      path: '/sessions/$id'
+      fullPath: '/sessions/$id'
+      preLoaderRoute: typeof AppSessionsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/relationships/$id': {
+      id: '/_app/relationships/$id'
+      path: '/relationships/$id'
+      fullPath: '/relationships/$id'
+      preLoaderRoute: typeof AppRelationshipsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/projects/$id': {
+      id: '/_app/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/projects/$id'
+      preLoaderRoute: typeof AppProjectsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/playbooks/$id': {
+      id: '/_app/playbooks/$id'
+      path: '/playbooks/$id'
+      fullPath: '/playbooks/$id'
+      preLoaderRoute: typeof AppPlaybooksIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/domain-assessments/$id': {
+      id: '/_app/domain-assessments/$id'
+      path: '/domain-assessments/$id'
+      fullPath: '/domain-assessments/$id'
+      preLoaderRoute: typeof AppDomainAssessmentsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/documents/$id': {
+      id: '/_app/documents/$id'
+      path: '/documents/$id'
+      fullPath: '/documents/$id'
+      preLoaderRoute: typeof AppDocumentsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/delegation/$id': {
+      id: '/_app/delegation/$id'
+      path: '/delegation/$id'
+      fullPath: '/delegation/$id'
+      preLoaderRoute: typeof AppDelegationIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/decisions/$id': {
+      id: '/_app/decisions/$id'
+      path: '/decisions/$id'
+      fullPath: '/decisions/$id'
+      preLoaderRoute: typeof AppDecisionsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/components/$id': {
+      id: '/_app/components/$id'
+      path: '/components/$id'
+      fullPath: '/components/$id'
+      preLoaderRoute: typeof AppComponentsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/campaigns/$id': {
+      id: '/_app/campaigns/$id'
+      path: '/campaigns/$id'
+      fullPath: '/campaigns/$id'
+      preLoaderRoute: typeof AppCampaignsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppCaptureRoute: typeof AppCaptureRoute
+  AppPipelineRoute: typeof AppPipelineRoute
+  AppTodayRoute: typeof AppTodayRoute
+  AppCampaignsIdRoute: typeof AppCampaignsIdRoute
+  AppComponentsIdRoute: typeof AppComponentsIdRoute
+  AppDecisionsIdRoute: typeof AppDecisionsIdRoute
+  AppDelegationIdRoute: typeof AppDelegationIdRoute
+  AppDocumentsIdRoute: typeof AppDocumentsIdRoute
+  AppDomainAssessmentsIdRoute: typeof AppDomainAssessmentsIdRoute
+  AppPlaybooksIdRoute: typeof AppPlaybooksIdRoute
+  AppProjectsIdRoute: typeof AppProjectsIdRoute
+  AppRelationshipsIdRoute: typeof AppRelationshipsIdRoute
+  AppSessionsIdRoute: typeof AppSessionsIdRoute
+  AppTasksIdRoute: typeof AppTasksIdRoute
+  AppWorkflowsIdRoute: typeof AppWorkflowsIdRoute
+  AppCampaignsIndexRoute: typeof AppCampaignsIndexRoute
+  AppComponentsIndexRoute: typeof AppComponentsIndexRoute
+  AppDecisionsIndexRoute: typeof AppDecisionsIndexRoute
+  AppDelegationIndexRoute: typeof AppDelegationIndexRoute
+  AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
+  AppDomainAssessmentsIndexRoute: typeof AppDomainAssessmentsIndexRoute
+  AppPlaybooksIndexRoute: typeof AppPlaybooksIndexRoute
+  AppProjectsIndexRoute: typeof AppProjectsIndexRoute
+  AppRelationshipsIndexRoute: typeof AppRelationshipsIndexRoute
+  AppSessionsIndexRoute: typeof AppSessionsIndexRoute
+  AppTasksIndexRoute: typeof AppTasksIndexRoute
+  AppWorkflowsIndexRoute: typeof AppWorkflowsIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppCaptureRoute: AppCaptureRoute,
+  AppPipelineRoute: AppPipelineRoute,
+  AppTodayRoute: AppTodayRoute,
+  AppCampaignsIdRoute: AppCampaignsIdRoute,
+  AppComponentsIdRoute: AppComponentsIdRoute,
+  AppDecisionsIdRoute: AppDecisionsIdRoute,
+  AppDelegationIdRoute: AppDelegationIdRoute,
+  AppDocumentsIdRoute: AppDocumentsIdRoute,
+  AppDomainAssessmentsIdRoute: AppDomainAssessmentsIdRoute,
+  AppPlaybooksIdRoute: AppPlaybooksIdRoute,
+  AppProjectsIdRoute: AppProjectsIdRoute,
+  AppRelationshipsIdRoute: AppRelationshipsIdRoute,
+  AppSessionsIdRoute: AppSessionsIdRoute,
+  AppTasksIdRoute: AppTasksIdRoute,
+  AppWorkflowsIdRoute: AppWorkflowsIdRoute,
+  AppCampaignsIndexRoute: AppCampaignsIndexRoute,
+  AppComponentsIndexRoute: AppComponentsIndexRoute,
+  AppDecisionsIndexRoute: AppDecisionsIndexRoute,
+  AppDelegationIndexRoute: AppDelegationIndexRoute,
+  AppDocumentsIndexRoute: AppDocumentsIndexRoute,
+  AppDomainAssessmentsIndexRoute: AppDomainAssessmentsIndexRoute,
+  AppPlaybooksIndexRoute: AppPlaybooksIndexRoute,
+  AppProjectsIndexRoute: AppProjectsIndexRoute,
+  AppRelationshipsIndexRoute: AppRelationshipsIndexRoute,
+  AppSessionsIndexRoute: AppSessionsIndexRoute,
+  AppTasksIndexRoute: AppTasksIndexRoute,
+  AppWorkflowsIndexRoute: AppWorkflowsIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
