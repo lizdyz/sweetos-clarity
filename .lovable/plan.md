@@ -1,117 +1,232 @@
+# Phase 2.10b: Make Projects + Tasks the operational hub (connections, owners, blockers)
 
+## What's broken
 
-# Phase 2.10: Audit of unaddressed instructions + decoupling Domains/Tenets + Best-Practice Catalog with evolving Agents
+You're right — the connections aren't visible. Today:
 
-You asked me to look back over everything you've told me and surface what I've missed. I went through the prior turns and the live schema. Here's the honest accounting, then a focused build plan.
+- **Project detail** is a generic field editor. It does not show the tasks under that project, who owns each one, what's blocking, or what's next.
+- **Task detail** is a generic field editor. It does not show its parent project, sibling tasks, or the relationship it serves.
+- **Relationship detail** has the new Funnel/Maturity panels but does **not** list the projects or tasks tied to that client.
+- `tasks.waiting_on` and `tasks.dependencies` are free-text strings, not structured links — so "what's blocking what" can't be queried, rolled up, or visualized.
+- No "My queue" / "Per-person workload" view. `owner` is a text enum, not a `profiles.id` FK, so we can't aggregate by real person.
+- Kanban exists generically but there's no project-scoped board, no swimlanes by owner, no blocked-lane.
 
-## What I missed or got wrong
+## What lands in 2.10b (no schema breakage, additive only)
 
-### 1. Domains and Tenets are still coupled in code
-- The DB has them right: `domains` (22, universal), `industries`, `tenets` (industry-scoped), `domain_tenets` join. Independent taxonomies.
-- But many tables still carry both `tagged_domains` AND `tagged_tenets` as parallel `text[]` arrays on the same record (`campaigns`, `decisions`, `delegation`, `documents`, `missions`, `outcomes`, `personas`, `playbooks`, `projects`, `proposals`, `quests`, `relationships`, `components`). The UI treats them as a single "tag" surface (see `tag-picker.tsx`, `chips.tsx`).
-- Result: at the tagging UI they feel like one thing. They are not. **Domains = universal lens. Tenets = industry-specific best-practice anchors.** They should be tagged in separate UI sections, displayed in separate chip rows, and filtered independently.
+### Migration 1 — Structured task connections
 
-### 2. There is no Best-Practice Catalog
-- You said: *"have the catalog of best practices and then having agents be able to evolve the best practices."*
-- Today's `tenets` table is just `(industry, name, description, sort_order)`. No best-practice statements, no maturity-tied guidance, no versioning, no evolution history, no "an agent improved this on date X" trail.
-- The `excellence_rubric` (5L × 5P × subject) is the closest thing, but it's anchored to Domain/Tenet **subjects**, not to a Tenet's body of best practices. There is no `tenet_best_practices` table.
+- `task_dependencies` table: `id, task_id, depends_on_task_id, kind ('blocks'|'related'), created_at, created_by`. Unique on (task_id, depends_on_task_id). Replaces the free-text `dependencies`/`waiting_on` for the connection graph; the text fields stay for narrative context.
+- `tasks.assignee_id uuid` (FK→profiles, nullable). The `owner` text enum stays for legacy rows; new UI prefers `assignee_id`. Backfill rule: when assignee_id is set, it wins.
+- `tasks.blocked` boolean generated column = `waiting_on IS NOT NULL OR EXISTS(unresolved blocker dep)`. Used to power the Blocked lane and counts.
+- View `task_blockers` returning `(task_id, blocker_task_id, blocker_name, blocker_status)` for quick UI rendering.
 
-### 3. Agents were never built
-- You approved Agents as Phase 2.9 ("standalone prompt + workflow-bound, attachable to Task/Project/Workflow"). I planned 2.8 first and never came back. No `agents`, `agent_attachments`, `agent_runs` tables exist. No edge function. No UI.
-- The "agents evolve best practices" loop you just described requires Agents to exist first.
+### Migration 2 — Project ↔ Relationship clarity
 
-### 4. Notion MCP runtime sync was deferred and never picked back up
-- You wanted the app to read Notion through MCP so you don't double-update. The `mcp-tanstack-start` doc is loaded but no `/api/mcp` route exists, no `notion_links` table, no sync function. Still owed.
+- Add `projects.relationship_id uuid` (FK→relationships, nullable) as the canonical link. Keep `client_id` for back-compat; UI reads relationship_id first, falls back to client_id.
+- View `project_rollup` returning `(project_id, total_tasks, open_tasks, blocked_tasks, overdue_tasks, next_due_date, owners[])` so the project list and detail can show real status without N+1 queries.
 
-### 5. Programmable agents attachable to a Task or Project
-- Your exact words: *"have programmable agents in a sense — so I can tag in onto task or project a workflow or an agent."* Not built. `tasks` and `projects` have no `attached_agent_ids`, no run history surfaced on the detail page.
+### Project detail page rewrite (`_app.projects.$id.tsx`)
 
-### 6. 8 Frameworks + 9 BizzyBots as queryable lenses
-- I flagged this in the 2.7.1 plan and dropped it. `playbooks.bizzybot_signals` is a loose `text[]` and `quests.framework_lens` is free text. No `frameworks` table, no `bizzybots` table, no consistent lens tagging across `quests`/`sparks`/`components`.
+Premium card layout, four panels:
 
-### 7. Audit gaps still partially open after Phase 2.8
-- Per-relationship Maturity Map panel on the relationship detail page: view exists, **panel was not added**.
-- Funnel cards (Awareness / Temperature / Drift) and Proposal card on relationship detail: **not added**.
-- Engagement Plans list filtered by relationship on the relationship detail page: **not added**.
-- Sessions linkage to `engagement_plan_id`: column added, **no UI to set or display it**.
+1. **Overview card** — name, status, owner, deadline, revenue, linked relationship (clickable).
+2. **Tasks board** — kanban scoped to this project, grouped by status, with a dedicated **Blocked** column. Each card shows assignee avatar, due date, and a red dot if overdue. Inline "Add task" creates with `project_id` prefilled.
+3. **Blockers panel** — flat list of every blocked task in this project with the blocker task name + status. One-click "Mark unblocked" clears `waiting_on` and resolves the dep row.
+4. **People panel** — grouped by `assignee_id` (or `owner` fallback) showing per-person open/blocked/overdue counts and their next due task.
 
-### 8. Capture → Queue → Confirm tag flow for the Domain/Tenet split
-- Memory says: *"At capture, AI infers tags (domains/tenets/components). User confirms in Queue."* The Queue UI currently shows them merged. Needs separate "Suggested Domains" vs "Suggested Tenets" sections with independent confirm.
+### Task detail page rewrite (`_app.tasks.$id.tsx`)
 
-### 9. Light-first SweetBot premium feel
-- Your design rules ("light-first, luminous, dimensional, calm") are partially honored. New routes I created (`engagement-plans`) lean on `EntityListPage` defaults — no Funnel-style premium card treatment. Acceptable for list views, but the Relationship detail panels above need to land with the premium card pattern, not a stock table.
+- Header strip: parent project (clickable) · relationship (clickable) · assignee · due · status.
+- **Blocks / Blocked-by** section: pickers to add either direction, rendered as chips with status color.
+- **Dependencies graph** (lightweight): show 1-hop upstream and downstream tasks as a vertical list, no canvas required.
+- Activity: existing fields collapsed into "Details" accordion so the page leads with state and connections, not a wall of inputs.
+
+### Relationship detail additions (`_app.relationships.$id.tsx`)
+
+Add two more panels under the existing four:
+5. **Projects for this relationship** — list with status, next due, blocked count, "Open" link.
+6. **Open tasks for this relationship** — flat list across all their projects, sortable by due/blocked.
+
+### New global views
+
+- `/_app/queue` already exists for proposals — add a sibling `/_app/my-tasks` route: a single-page view of every task assigned to the logged-in user, grouped by **Today / Overdue / Blocked / Upcoming / Waiting on others**. Becomes the daily start screen.
+- `/_app/people` route: roster of assignees with workload counts (open · blocked · overdue · next due) — the "who's drowning, who's free" view.
+
+### Kanban improvements (`kanban-board.tsx`)
+
+- Add optional **swimlanes** prop (group rows into horizontal bands by a second field, e.g. assignee).
+- Add a permanent **Blocked** column when the entity has the `blocked` field.
+- Card footer shows: assignee chip · due date · blocker count.
+
+### Sidebar
+
+- Add "My tasks" and "People" under a new **Work** group above Pipeline.
+
+## What I'm NOT doing in 2.10b
+
+- Best-Practice Catalog (Step 2 of 2.10) — still next after this.
+- Agents (Step 3) — after best practices.
+- Notion sync (Step 4) — last.
+- A full graph visualization with edges/nodes canvas. The 1-hop list view is enough for now; a full graph is 2.11+ if you want it.
+- Renaming `owner` to `assignee` everywhere — additive only this pass to avoid breaking existing rows.
+
+## Files touched
+
+- 2 migrations under `supabase/migrations/`.
+- New routes: `_app.my-tasks.tsx`, `_app.people.tsx`.
+- Rewrites: `_app.projects.$id.tsx`, `_app.tasks.$id.tsx`.
+- Edits: `_app.relationships.$id.tsx` (add 2 panels), `kanban-board.tsx` (swimlanes + blocked column), `entities.ts` (add assignee_id, relationship_id on projects, depends_on_task_ids virtual), `app-sidebar.tsx` (Work group).
+
+## Memory writes
+
+- `mem://features/work-graph` — task_dependencies semantics, blocked-column rule, swimlane convention.
+- Append index Core: "Tasks have structured dependencies (task_dependencies). 'Blocked' is derived, never stored loose. Project detail = tasks board + blockers + people, not a field form."
+
+## Suggested order after this
+
+1. **2.10b (this plan)** — operational hub.
+2. **2.10 Step 2** — Best-Practice Catalog.
+3. **2.10 Step 3** — Agents (attachable to tasks/projects, runs feed Queue).
+4. **2.10 Step 4** — Notion MCP push.
+
+Approve and I'll build 2.10b end-to-end in one pass.  
+  
+<aside> 🧭
+
+This ERD is the *core operational spine* (Work + People + Outputs + Decisions). It’s based on the live database schemas and the explicit relation properties that connect them.
+
+</aside>
+
+## Entities (databases)
+
+- **Relationships** (people/companies you work with)
+- **Projects** (units of work)
+- **Tasks** (executable actions)
+- **Campaigns** (multi-project initiatives)
+- **Documents & Deliverables** (artifacts/outputs)
+- **Decisions Log** (append-only canonical decisions)
 
 ---
 
-## Phase 2.10 — what to build now
+## ERD (Mermaid)
 
-### Part A — Decouple Domains from Tenets in the UI (no schema change)
-- `tag-picker.tsx`: split into two distinct pickers — **Domains picker** (always available, all 22) and **Tenets picker** (filtered by the record's `industry_id` if present, otherwise by the related relationship's industry).
-- `chips.tsx`: render Domain chips and Tenet chips in two separate rows with distinct colors and labels ("Domains" / "Tenets").
-- Entity detail pages: two sections — "Domains (universal lens)" and "Tenets (industry best practices)".
-- Queue confirm step: separate "Confirm domains" and "Confirm tenets" blocks, each with its own accept-all toggle.
+```mermaid
+erDiagram
+	RELATIONSHIPS ||--o{ PROJECTS : "Client"
+	PROJECTS ||--o{ TASKS : "Project"
+	RELATIONSHIPS ||--o{ TASKS : "Contact"
+	CAMPAIGNS ||--o{ PROJECTS : "Related Projects"
+	RELATIONSHIPS }o--o{ CAMPAIGNS : "Campaigns"
+	RELATIONSHIPS ||--o{ DOCUMENTS_DELIVERABLES : "For Client"
+	PROJECTS ||--o{ DECISIONS_LOG : "Related Project"
 
-### Part B — Best-Practice Catalog (new schema)
-New tables:
-- `tenet_best_practices`: `id, tenet_id, statement (text), maturity_level (L1–L5), rationale, sort_order, current_version_id, created_at, updated_by`.
-- `best_practice_versions`: `id, best_practice_id, version_number, statement, rationale, source (manual|agent_run|session), source_ref (uuid), changed_by (uuid), changed_at, summary_of_change`. Append-only history. `tenet_best_practices.current_version_id` points at the live version.
-- `best_practice_evidence`: `id, best_practice_id, evidence_type (session|outcome|document|spark|external), evidence_ref, note, captured_at`. So when an Agent or a Session produces a refinement, the evidence trail is preserved.
+	RELATIONSHIPS {
+		string Name
+		string Company
+		string Role
+		string Email
+		string Type
+		string Status
+		string Pipeline_Stage
+		date Last_Contact
+		date Next_Action_Due
+		string Next_Action
+		string Intelligence_Summary
+		string Portal_Link
+		boolean Portal_Delivered
+		int Sessions_Purchased
+		int Sessions_Used
+		int Sessions_Remaining
+		int SweetConnect_Credits
+	}
 
-UI:
-- New route `/_app/tenets/$slug` already exists for tenet detail — extend it with a **Best Practices** panel: list current statements grouped by maturity level, with a "View history" drawer showing the version diffs.
-- New route `/_app/best-practices` (catalog browser): filterable by industry → tenet → maturity.
+	PROJECTS {
+		string Name
+		string Status
+		string Owner
+		string Sprint
+		string Priority
+		string Type
+		date Next_Action_Due
+		string Next_Action
+		date Deadline
+		string Next_Deliverable
+		string Current_Blocker
+		float Revenue_Potential_CAD
+	}
 
-### Part C — Agents (Phase 2.9 finally landing, scoped tight)
-Schema:
-- `agents`: `id, name, kind (prompt|workflow), system_prompt, model (default google/gemini-2.5-pro), input_schema (jsonb), tools (text[]), workflow_id (nullable, FK→workflows for kind=workflow), enabled, created_by, created_at, updated_at`.
-- `agent_attachments`: `id, agent_id, attached_to_table (tasks|projects|workflows|relationships|engagement_plans), attached_to_id, created_by, created_at`. Polymorphic by table+id.
-- `agent_runs`: `id, agent_id, attachment_id (nullable), input (jsonb), output (jsonb), status (queued|running|succeeded|failed), error, started_at, finished_at, run_by, proposal_id (nullable, FK→proposals)`. Outputs that suggest data writes feed the existing **Queue** as a `proposal` for human confirmation — preserves your trust layer.
+	TASKS {
+		string Name
+		string Status
+		string Owner
+		string Priority
+		date Due_Date
+		string Effort
+		boolean Recurring
+		string Recurring_Cadence
+		string Deliverable_Specific
+		string Waiting_On
+	}
 
-Edge function:
-- `agents-run`: takes `{agent_id, attachment_id?, input}`, calls Lovable AI Gateway with the agent's `system_prompt + model`, persists `agent_runs` row, and (for prompt agents producing structured suggestions) creates a `proposals` row.
+	CAMPAIGNS {
+		string Campaign
+		string Status
+		string Owner
+		string Type
+		date Deadline
+		float Revenue_Target_CAD
+		string Next_Executable_Action
+		string Next_Milestone
+	}
 
-UI:
-- `/_app/agents/index` and `/_app/agents/$id` (CRUD with prompt editor, model picker, tool list).
-- "Attach Agent" button on Task and Project detail pages → modal picker → writes `agent_attachments`.
-- "Runs" tab on Agent detail showing recent `agent_runs` with input/output.
-- "Run agent" action on attached entity → drops a job, shows result in Queue for confirm.
+	DOCUMENTS_DELIVERABLES {
+		string Name
+		string Type
+		string Status
+		string Owner
+		string Tone
+		string Version
+		date Last_Reviewed
+		string Drive_Chat_Link
+	}
 
-### Part D — Agents evolve Best Practices (the loop you asked for)
-- Built-in agent template: **"Best-Practice Refiner"** (kind=prompt). Input: `tenet_id` + recent evidence (session outcomes, sparks, documents tagged with that tenet). Output: proposed edits to one or more `tenet_best_practices` statements with rationale.
-- When run, the agent produces a `proposals` row of `entity_type='best_practice_revision'`. Approving it writes a new `best_practice_versions` row and updates `current_version_id`. Audit trail preserved end-to-end.
-- "Refine with agent" button on the tenet detail Best Practices panel.
+	DECISIONS_LOG {
+		string Decision
+		string Domain
+		string Status
+		string Made_By
+		date Date_Made
+		string Supersedes
+		string Context
+		string Implications
+	}
 
-### Part E — Finish Phase 2.8 leftover UI
-- Relationship detail page (`_app.relationships.$id.tsx`):
-  - **Funnel card**: awareness_tier · temperature · drift_risk (all editable).
-  - **Proposal card**: linked document, sent/expires dates, version.
-  - **Maturity Map panel**: reads `relationship_domain_maturity` view, renders 22-domain grid colored by L1–L5.
-  - **Engagement Plans list**: filtered by `relationship_id`, with quick "New plan" CTA.
-- Sessions detail: add `engagement_plan_id` selector and display.
+```
 
-### Part F — Notion MCP runtime sync (lightweight cut)
-- Install `mcp-tanstack-start`, `@modelcontextprotocol/sdk`, `zod`.
-- Create `/api/mcp` route exposing read-only tools: `search_relationships`, `get_relationship`, `get_engagement_plans`, `get_best_practices_for_tenet`. Auth via a single `MCP_SECRET` you'll set.
-- `notion_links` table (`id, internal_table, internal_id, notion_page_id, last_synced_at`) so we don't double-write.
-- One-way **push** edge function `notion-push` that mirrors a single relationship to a Notion page on save (behind a per-relationship "Sync to Notion" toggle). Two-way pull deferred.
+---
 
-### What I am NOT doing in 2.10
-- 8 Frameworks / 9 BizzyBots as first-class lens tables. Flagged again, deferred to 2.11.
-- Two-way Notion pull (conflict resolution is its own design).
-- Workflow agent runner that walks workflow steps end-to-end (kind=workflow agents will exist as records but the executor is a 2.11 follow-up; prompt agents fully work).
+## Relationship notes (what each edge means)
 
-### Files / migrations
-- 3 migrations: best-practice catalog (Part B), agents tables (Part C), notion_links (Part F).
-- New routes: `/_app/agents/index.tsx`, `/_app/agents/$id.tsx`, `/_app/best-practices.tsx`, `/api/mcp.ts`.
-- Edge functions: `agents-run`, `notion-push`.
-- Edits: `tag-picker.tsx`, `chips.tsx`, `_app.relationships.$id.tsx`, `_app.tenets.$slug.tsx`, `_app.tasks.$id.tsx`, `_app.projects.$id.tsx`, `_app.sessions.$id.tsx`, `app-sidebar.tsx` (add Agents + Best Practices), `entities.ts`, `enums.ts`.
-- Memory: `mem://features/best-practice-catalog`, `mem://features/agents`, `mem://design/domains-vs-tenets-ui`, append Core lines.
+1. **Relationships → Projects (Client)**: a project can be scoped to a single client/contact record.
+2. **Projects → Tasks (Project)**: tasks are the executable children of a project.
+3. **Relationships → Tasks (Contact)**: tasks can also be attached directly to a contact (pipeline, follow-ups, etc.).
+4. **Campaigns → Projects (Related Projects)**: campaigns group multiple projects under one initiative.
+5. **Relationships ↔ Campaigns (Campaigns / Contacts)**: many-to-many so a campaign can target multiple contacts and a contact can be part of multiple campaigns.
+6. **Relationships → Documents & Deliverables (For Client)**: documents/portals/contracts can be tied to a client.
+7. **Projects → Decisions Log (Decisions / Related Project)**: decisions can be associated to a specific project to preserve rationale/constraints.
 
-### Suggested order of delivery (so review stays sane)
-1. Part A (decouple UI) + Part E (finish 2.8 panels) — same migration-free batch, immediate visible win.
-2. Part B (best-practice catalog) + tenet detail panel.
-3. Part C (agents core) + Part D (best-practice refiner agent loop).
-4. Part F (Notion MCP push) — last, gated by you providing the Notion API token + MCP secret.
+---
 
-Approve all four sub-phases as one Phase 2.10, or tell me to do steps 1–2 first and pause before Agents. If you say nothing about ordering, I'll do 1 → 2 → 3 → 4 in sequence and check in after step 2.
+## Audit summary (core spine)
 
+- The *graph is coherent* and already centered on a strong spine: **Relationships ⇄ (Projects/Tasks/Campaigns) ⇄ Outputs (Docs) + Governance (Decisions)**.
+- You’ve correctly allowed **Tasks** to attach to *either* a **Project** (delivery) or a **Relationship** (pipeline), which is crucial for real operating behavior.
+- Your relations are mostly one-hop navigable (good): from a contact you can traverse to their projects, tasks, campaigns, and documents.
+
+## Gaps / candidates for “next ERD layer”
+
+These are mentioned across the Command Centre but weren’t loaded as core databases in this pass:
+
+- **Deliverable Catalog**, **Input Library**, **Workflow Library**, **QC Log**, **Sessions / Domain Assessments / Playbooks** (if they exist as databases, they’d become additional entities and edges).  
+  
+i thought this might help also
