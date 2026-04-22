@@ -1648,6 +1648,7 @@ export type Database = {
           next_actions: string[]
           perspective_md: string | null
           quick_facts: string[]
+          stages_breakdown: Json
           subject_id: string
           subject_kind: Database["public"]["Enums"]["lens_subject_kind"]
           updated_at: string
@@ -1667,6 +1668,7 @@ export type Database = {
           next_actions?: string[]
           perspective_md?: string | null
           quick_facts?: string[]
+          stages_breakdown?: Json
           subject_id: string
           subject_kind: Database["public"]["Enums"]["lens_subject_kind"]
           updated_at?: string
@@ -1686,6 +1688,7 @@ export type Database = {
           next_actions?: string[]
           perspective_md?: string | null
           quick_facts?: string[]
+          stages_breakdown?: Json
           subject_id?: string
           subject_kind?: Database["public"]["Enums"]["lens_subject_kind"]
           updated_at?: string
@@ -1712,11 +1715,14 @@ export type Database = {
           enabled: boolean
           icon_key: string | null
           id: string
+          model: string
           name: string
           sort_order: number
           stages: string[]
+          system_prompt: string | null
           tagline: string
           updated_at: string
+          user_prompt_template: string | null
           what_it_asks: string | null
         }
         Insert: {
@@ -1728,11 +1734,14 @@ export type Database = {
           enabled?: boolean
           icon_key?: string | null
           id?: string
+          model?: string
           name: string
           sort_order?: number
           stages?: string[]
+          system_prompt?: string | null
           tagline: string
           updated_at?: string
+          user_prompt_template?: string | null
           what_it_asks?: string | null
         }
         Update: {
@@ -1744,11 +1753,14 @@ export type Database = {
           enabled?: boolean
           icon_key?: string | null
           id?: string
+          model?: string
           name?: string
           sort_order?: number
           stages?: string[]
+          system_prompt?: string | null
           tagline?: string
           updated_at?: string
+          user_prompt_template?: string | null
           what_it_asks?: string | null
         }
         Relationships: []
