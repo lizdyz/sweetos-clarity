@@ -2497,8 +2497,37 @@ export type Database = {
           },
         ]
       }
+      task_dependencies: {
+        Row: {
+          created_at: string
+          created_by: string
+          depends_on_task_id: string
+          id: string
+          kind: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          depends_on_task_id: string
+          id?: string
+          kind?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          depends_on_task_id?: string
+          id?: string
+          kind?: string
+          task_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
+          assignee_id: string | null
+          blocked: boolean
           confidence: number | null
           context_to_load: string | null
           created_at: string
@@ -2534,6 +2563,8 @@ export type Database = {
           waiting_on: string | null
         }
         Insert: {
+          assignee_id?: string | null
+          blocked?: boolean
           confidence?: number | null
           context_to_load?: string | null
           created_at?: string
@@ -2569,6 +2600,8 @@ export type Database = {
           waiting_on?: string | null
         }
         Update: {
+          assignee_id?: string | null
+          blocked?: boolean
           confidence?: number | null
           context_to_load?: string | null
           created_at?: string
@@ -2604,6 +2637,13 @@ export type Database = {
           waiting_on?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
@@ -2971,6 +3011,15 @@ export type Database = {
           },
         ]
       }
+      task_blockers: {
+        Row: {
+          blocker_name: string | null
+          blocker_status: string | null
+          blocker_task_id: string | null
+          task_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -2981,6 +3030,7 @@ export type Database = {
         Returns: boolean
       }
       is_team_member: { Args: { _user_id: string }; Returns: boolean }
+      recompute_task_blocked: { Args: { _task_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "member"
