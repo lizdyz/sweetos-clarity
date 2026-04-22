@@ -1,168 +1,86 @@
 
 
-# Phase 2.10h: Quality gates (OKRs/KPIs/CSFs), workflow sequencing with human-in-loop, session catalog
+# Phase 2.10h (continued): Drop MeasuresPanel everywhere + live workflow run tracker
 
-You're naming three connected gaps. Let me map each one to a clean structure, then say where the fuzzy parts (Playbook vs Workflow vs Session) actually land.
+The schema and shared primitives shipped. Now wire them into the rest of the app and add the missing live-run experience.
 
-## 1. Quality gates — a polymorphic Measure object
+## What lands in this pass
 
-You want to attach **objectives, key results, KPIs, and CSFs** to anything: operators, projects, tasks, campaigns, workflows, components, relationships. One generic "Measure" object that polymorphs across entities.
+### 1. MeasuresPanel sweep — drop into 8 detail pages
+Mechanical drop-in (`<MeasuresPanel subjectType="..." subjectId={id} />`) under the existing content on:
+- `_app.operators.$id.tsx` (subject_type: `operator`)
+- `_app.projects.$id.tsx` (`project`)
+- `_app.tasks.$id.tsx` (`task`)
+- `_app.campaigns.$id.tsx` (`campaign`)
+- `_app.components.$id.tsx` (`component`)
+- `_app.relationships.$id.tsx` (`relationship`)
+- `_app.missions.$id.tsx` (`mission`)
+- `_app.engagement-plans.$id.tsx` (engagement_service rows in the plan)
 
-**Schema (1 migration):**
+Each sits under the WorkContextStrip / TimelineStrip in a consistent slot.
 
-- `measures` table:
-  - `id`, `kind` enum (`Objective | KeyResult | KPI | CSF`)
-  - `subject_type` enum (`operator | project | task | campaign | workflow | component | relationship | mission | engagement_service`)
-  - `subject_id uuid`
-  - `name text`, `description text`
-  - `target_value numeric`, `target_unit text` (e.g. `%`, `$`, `count`, `days`)
-  - `baseline_value numeric`
-  - `current_value numeric` (last reading)
-  - `direction` enum (`higher_is_better | lower_is_better | hit_target`)
-  - `cadence` enum (`daily | weekly | monthly | quarterly | per_event`)
-  - `parent_measure_id uuid` — KRs hang under Objectives, CSFs can group KPIs
-  - `due_date date`, `done_at timestamptz`, `status text`
-  - `tagged_domains[]`, `tagged_tenets[]` (already-canonical dual axes)
-- `measure_readings` table — append-only journal:
-  - `measure_id`, `value numeric`, `recorded_at timestamptz`, `recorded_by uuid`, `notes text`, `source` (`manual | session | workflow_run | agent`)
-- View `measure_health (measure_id, latest_value, pct_to_target, status_color, last_reading_at)` — drives chip colour everywhere.
+### 2. Workflow run tracker — the live execution view
+- New route `_app.workflows.$id.runs.$runId.tsx`:
+  - Vertical canvas of `workflow_steps` for the workflow.
+  - Each step shows live status from `workflow_step_runs` (pending / in-progress / awaiting-approval / done / rejected / skipped) with timestamps and operator chip.
+  - Current step is highlighted; completed steps collapse; future steps dimmed.
+  - **Approve / Reject** buttons appear on the current step when status is `awaiting_approval` AND current user matches `approval_role` (owner/admin/any_team_member/named_operator).
+  - Approving writes `approval_decision`, `approval_by`, `approval_at`, flips step to `done`, advances `workflow_runs.current_step_id` to next step, inserts next `workflow_step_runs` row as `pending`.
+  - Rejecting writes notes, keeps step in `awaiting_approval`, surfaces the note for revision.
+- New small component `src/components/workflow-run-tracker.tsx` to encapsulate the canvas + approve/reject logic (re-usable from the workflow detail page too as a "Latest run" panel).
+- Workflow detail page (`_app.workflows.$id.tsx`) gets a "Recent runs" list above the step canvas with click → run view, plus a "Start new run" button that creates a `workflow_runs` row + the first `workflow_step_runs` row.
 
-**UI:**
-- New shared `<MeasuresPanel subjectType subjectId />` — dropped into every detail page. Shows nested Objectives → Key Results, and a flat list of KPIs/CSFs. Each row: sparkline + current vs target + cadence + last-recorded chip.
-- Quick "+ reading" inline on each row writes to `measure_readings`.
-- New `/_app/measures` index — global pivot view (filter by subject type, kind, status_color, cadence). Lets you see "all red KPIs across all relationships" in one place.
-- Flightdeck gets a **"Measures due for reading"** panel (cadence-driven; surfaces any measure whose `last_reading_at + cadence < now`).
+### 3. Flightdeck — two new panels
+- **Awaiting your approval**: pulls `workflow_step_runs` where `status = 'awaiting_approval'` and approval_role matches current user (admin / owner / any_team_member / named operator). Each row links to the run view. Approve/Reject inline.
+- **Measures due for reading**: pulls from `measure_health` where `last_reading_at + cadence_interval < now()` (or never recorded). Inline "+reading" mini-form per row.
 
-## 2. Workflows as sequential, components-aware, human-gated flows
+### 4. Sessions wiring — link templates + measures
+- `_app.sessions.$id.tsx`:
+  - Show `session_template_id` chip with template name (clickable → template detail).
+  - Show linked `workflow_run` if the template has `linked_workflow_id` (auto-created when session is scheduled from a template).
+  - Drop in `<MeasuresPanel subjectType="session" subjectId={id} />` (extends the existing 8 — sessions count as the 9th).
+  - "Components built in this session" chip list (from `tagged_components` / step contributions).
+- `_app.sessions.index.tsx`: filter chip for service_type derived from `session_templates.service_type`.
+- `_app.relationships.$id.tsx` session scheduler: use `<SessionTemplatePicker>` filtered by relationship's `service_package`.
 
-Today `workflows` is a flat row. You want a real DAG with:
-- **Steps in order** (with branches optional later)
-- **Component contributions** per step (a workflow step builds/refines a component)
-- **Human-in-the-loop gates** that pause the run for confirmation
-- **Operator assignment** per step (human, agent, or sub-workflow)
-
-**Schema:**
-
-- `workflow_steps` table:
-  - `id`, `workflow_id`, `position int` (order), `name`, `description`
-  - `step_type` enum (`action | gate | branch | sub_workflow`)
-  - `default_operator_id uuid` (operators table — human/agent/workflow)
-  - `requires_human_approval bool`
-  - `approval_role` enum (`owner | admin | any_team_member | named_operator`)
-  - `tagged_components[]` — components this step builds/refines
-  - `produces_document_type text` — names the deliverable (links to `documents.type`)
-  - `expected_duration_minutes int`
-  - `success_criteria text` — what "done" means for this step
-- `workflow_step_dependencies` (step → depends_on_step) — for non-linear branches
-- `workflow_runs` already exists. Add:
-  - `current_step_id uuid`, `awaiting_approval_from uuid`, `approval_requested_at timestamptz`
-- `workflow_step_runs` table — per-step execution log:
-  - `run_id`, `step_id`, `status` (`pending | in_progress | awaiting_approval | approved | rejected | done | skipped`)
-  - `started_at`, `completed_at`, `operator_id` (who actually ran it)
-  - `output_document_id uuid` (link to `documents` row produced)
-  - `notes`, `approval_decision text`, `approval_by uuid`, `approval_at timestamptz`
-
-**UI:**
-- Workflow detail (`/_app/workflows/$id`) gets a **vertical step canvas**:
-  - Each step is a card showing: position · name · operator chip · component chips · "human gate" badge if applicable · expected duration.
-  - Drag to reorder (uses existing `useDragToStatus` pattern adapted for position).
-  - Click a step → side sheet to edit (operator picker, components multi-select, approval toggle, success criteria).
-  - "+ Step" button at any position.
-- Workflow run view (`/_app/workflows/$id/runs/$runId`):
-  - Same vertical canvas but each step shows live status (pending/in-progress/awaiting-approval/done) with timestamps.
-  - "Approve" / "Reject" buttons appear on the current step when `awaiting_approval` AND current user matches `approval_role`.
-  - Approving advances `current_step_id` to next step; rejecting writes notes and stays.
-- Flightdeck: new **"Awaiting your approval"** panel — every `workflow_step_runs` row in `awaiting_approval` matching current user's role.
-
-## 3. Session catalog — where Mirror/Machine sessions are *defined*
-
-You're right that this is fuzzy. Let me name it cleanly:
-
-- **Playbook** = a *template* (industry+persona+service combo). It's the "recipe book."
-- **Workflow** = the *executable* sequence of steps that runs the playbook. Workflows can be triggered standalone or from a playbook.
-- **Session** = a single time-bound human meeting (Mirror/Machine/Map). A session *consumes* one slot of an `engagement_service`.
-- **Component** = the reusable knowledge artifact built/refined inside sessions or by projects/tasks/workflows.
-- **Document** = the deliverable (a brief, a roadmap, a mirror summary). Documents are produced by workflow steps OR sessions.
-
-Where sessions are decided / catalogued:
-
-**New `session_templates` table** — the catalog:
-- `id`, `name` (e.g. "90-min Mirror Discovery"), `service_type` (Mirror/M+M/Machine/Map)
-- `default_duration_minutes`, `default_phase_owner` (already exists as enum)
-- `default_sweetcycle_phase` (Seed/Synthesize/Session/Sync/Ship — already exists)
-- `linked_workflow_id uuid` — the workflow that runs *during* this session type
-- `default_components[]` — components typically built/refined in this session
-- `default_deliverable_template_ids[]` — document templates produced
-- `prep_checklist[]`, `agenda[]`, `closing_checklist[]`
-- `typical_position_in_journey int` — first Mirror, first Machine, etc.
-
-`sessions.session_template_id` (new column) — which template this session was scheduled from. Auto-populates phase, duration, expected components, expected deliverables.
-
-**UI:**
-- New `/_app/session-templates` route — manage the catalog (Mirror Discovery, Mirror Refinement, Machine Build Sprint, Map Quarterly Review, etc.).
-- When scheduling a session on a relationship, picker shows templates filtered by the relationship's `service_package` (if they have Mirror Only, only Mirror templates show).
-- Session detail page shows: linked template · linked workflow run · components built · deliverables produced — so the "what does this session do" question has one screen with the whole answer.
-
-## How the three pieces interconnect
-
-```
-Industry  →  Persona  →  Playbook (template)  →  spawns  →  Workflow (executable steps)
-                                                                ↓
-                                                            Workflow Run
-                                                                ↓ (steps reference)
-                                                            Session(s) ←  scheduled from  →  Session Template
-                                                                ↓ (produces)
-                                                            Documents + Component updates
-                                                                ↓ (measured by)
-                                                            Measures (OKRs/KPIs/CSFs)
-```
-
-Every layer can have Measures attached. Every actionable layer (workflow step, session, document, component) declares which components it advances.
+### 5. Capture/queue: confirmation supports measures suggestion
+- When AI extracts something that looks like a metric ("we want to hit 50 demos this quarter"), the queue confirmation shows a suggested Measure (kind=KPI, target_value=50, target_unit=count, cadence=quarterly, subject inferred from context).
+- User confirms → row created in `measures`. No new schema; just wires the existing extractor to `measures` insert.
 
 ## Files touched
 
-- 1 migration: `<ts>_measures_workflow_steps_session_templates.sql`
-  - new tables: `measures`, `measure_readings`, `workflow_steps`, `workflow_step_dependencies`, `workflow_step_runs`, `session_templates`
-  - new enums: `measure_kind`, `measure_subject_type`, `measure_direction`, `measure_cadence`, `workflow_step_type`, `workflow_step_status`, `approval_role`
-  - new columns: `workflow_runs.current_step_id / awaiting_approval_from / approval_requested_at`, `sessions.session_template_id`
-  - new view: `measure_health`, `workflow_step_pipeline`
-  - RLS: team-read / owner-or-admin-write on all new tables
-- New components:
-  - `src/components/measures-panel.tsx` — drop-in for any detail page
-  - `src/components/measure-row.tsx` — sparkline + reading input
-  - `src/components/workflow-step-canvas.tsx` — vertical drag-to-reorder
-  - `src/components/workflow-step-sheet.tsx` — edit step
-  - `src/components/workflow-run-tracker.tsx` — live run view with approve/reject
-  - `src/components/session-template-picker.tsx`
-- New routes:
-  - `src/routes/_app.measures.tsx` — global pivot
-  - `src/routes/_app.workflows.$id.runs.$runId.tsx` — run view
-  - `src/routes/_app.session-templates.index.tsx` + `_app.session-templates.$id.tsx`
-- Edits:
-  - `src/routes/_app.workflows.$id.tsx` — add step canvas + measures panel
-  - `src/routes/_app.sessions.$id.tsx` — show linked template + workflow run + measures
-  - `src/routes/_app.relationships.$id.tsx` — session scheduler uses templates filtered by `service_package`
-  - `src/routes/_app.flightdeck.tsx` — "Measures due for reading" + "Awaiting your approval" panels
-  - 8 detail pages get `<MeasuresPanel>` drop-in: operators, projects, tasks, campaigns, components, relationships, missions, engagement_services
+- New route: `src/routes/_app.workflows.$id.runs.$runId.tsx`
+- New component: `src/components/workflow-run-tracker.tsx`
+- Edited components: `src/components/measures-panel.tsx` (already exists — verify props), `src/components/session-template-picker.tsx` (verify filter prop)
+- Edited routes (drop-ins, mechanical):
+  - `src/routes/_app.operators.$id.tsx`
+  - `src/routes/_app.projects.$id.tsx`
+  - `src/routes/_app.tasks.$id.tsx`
+  - `src/routes/_app.campaigns.$id.tsx`
+  - `src/routes/_app.components.$id.tsx`
+  - `src/routes/_app.relationships.$id.tsx` (MeasuresPanel + scheduler picker swap)
+  - `src/routes/_app.missions.$id.tsx`
+  - `src/routes/_app.engagement-plans.$id.tsx`
+  - `src/routes/_app.sessions.$id.tsx` (template chip + linked run + measures + components)
+  - `src/routes/_app.sessions.index.tsx` (service_type filter)
+  - `src/routes/_app.workflows.$id.tsx` (Recent runs + Start new run)
+  - `src/routes/_app.flightdeck.tsx` (Awaiting approval + Measures due panels)
+  - `src/routes/_app.capture.tsx` + `src/routes/_app.queue.tsx` (suggested-measure card in confirmation)
 - Memory:
-  - New `mem://features/measures.md` — Measure object model, polymorphic subject, KR↔Objective parent chain, cadence-driven reading reminders.
-  - New `mem://features/workflow-sequencing.md` — workflow_steps, human-in-loop gates, approval_role, run tracker, step → component contribution.
-  - New `mem://features/session-catalog.md` — session_templates as the canonical place where Mirror/Machine sessions are defined; relationship of Playbook → Workflow → Session Template → Session → Documents/Components.
-  - Append `mem://index.md` Core: "Measures (Objective/KR/KPI/CSF) are polymorphic — attach to any subject via measures.subject_type/subject_id. Always shown via `<MeasuresPanel>`."
-  - Append `mem://index.md` Core: "Workflows are sequential step DAGs. Steps may require human approval (workflow_step_runs.status='awaiting_approval'). Sessions are defined in session_templates and linked to a workflow."
+  - Append `mem://features/measures.md`: capture-time KPI suggestion flow.
+  - Append `mem://features/workflow-sequencing.md`: run tracker UI contract, approval flip logic, next-step spawn.
 
-## What I'm NOT doing in 2.10h
+## What I'm NOT doing in this pass
 
-- Auto-computing KPI values from underlying data (e.g. "tasks completed this week" auto-feeding a KPI) — manual readings only this pass; auto-rollup is a follow-up once the schema is settled.
-- Branching workflow steps (parallel paths, conditional gates) — linear sequence + dependencies table now; visual branch editor is a follow-up.
-- AI-generated workflow steps from a playbook — manual definition this pass.
-- Calendar-based session scheduling UX — picker + template selection now; full calendar later.
-- Notification/email when an approval is awaiting — Flightdeck panel surfaces it; push later.
+- Auto-rollup KPIs from underlying data (next phase).
+- Branching workflow steps / parallel paths (linear only for now).
+- Email/push notifications for awaiting approvals (Flightdeck panel only).
+- AI-generated suggested measures from `intelligence_summary` (manual + capture-derived only).
 
 ## Suggested order after this
 
-1. **2.10h (this plan)** — measures + sequencing + session catalog.
-2. **AI auto-rollup** for KPIs (e.g. on-time-completion-rate computed from `time_grid`).
+1. **2.10h drop-in sweep (this plan)** — finish wiring measures + run tracker.
+2. **AI auto-rollup** for KPIs computed from `time_grid` / `excellence_scores`.
 3. **Workflow branching** + visual DAG editor.
 4. **AI playbook → workflow generator**.
 5. **Notion sync**.
