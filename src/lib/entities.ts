@@ -1,0 +1,510 @@
+import {
+  RELATIONSHIP_TYPES,
+  RELATIONSHIP_STATUS,
+  PIPELINE_STAGE,
+  MIRROR_STATUS,
+  ACTIVE_SERVICES,
+  TOUCHPOINT_TYPES,
+  INTELLIGENCE_CONFIDENCE,
+  PROJECT_OWNER,
+  PROJECT_PRIORITY,
+  PROJECT_STATUS,
+  PROJECT_TYPE,
+  SPRINT,
+  TASK_OWNER,
+  TASK_PRIORITY,
+  TASK_STATUS,
+  EFFORT,
+  RECURRING_CADENCE,
+  SESSION_SERVICE,
+  DELIVERY_VARIATION,
+  SWEETCYCLE_PHASE,
+  SEED_STATUS,
+  SYNC_STATUS,
+  SHIP_STATUS,
+  PROGRESSION_STATE,
+  SOURCE_OF_ADVANCEMENT,
+  QUALITY_STATUS,
+  STATE_OF_THE_THING,
+  DOCUMENT_TYPE,
+  DOCUMENT_STATUS,
+  TONE_VOICE,
+  DECISION_STATUS,
+  DELEGATION_DONE_BY,
+  DELEGATION_TARGET,
+  DELEGATION_TYPE,
+  DELEGATION_EFFORT,
+  CAMPAIGN_TYPE,
+  PERSONA_SECTOR,
+  PERSONA_STRUCTURE,
+  PERSONA_AUTONOMY,
+  PERSONA_REGISTRATION,
+  SPEC_STATUS,
+  MATURITY_LEVEL,
+  OUTCOME_TYPE,
+  SPARK_TYPE,
+} from "@/lib/enums";
+
+export type FieldKind =
+  | "text"
+  | "longtext"
+  | "number"
+  | "currency"
+  | "date"
+  | "boolean"
+  | "select"
+  | "multiselect"
+  | "tags"
+  | "ref";
+
+export interface FieldDef {
+  key: string;
+  label: string;
+  kind: FieldKind;
+  options?: readonly string[];
+  refTable?: string;
+  refLabel?: string;
+  group?: string;
+  inList?: boolean; // show in table list
+  primary?: boolean; // primary headline column
+  helper?: string;
+}
+
+export interface EntityDef {
+  key: string;
+  table: string;
+  label: string;
+  labelPlural: string;
+  icon?: string;
+  primaryField: string; // name field
+  fields: FieldDef[];
+  defaultSort?: { key: string; dir: "asc" | "desc" };
+}
+
+const owner = (key = "owner", label = "Owner", group = "Identity") =>
+  ({ key, label, kind: "select", options: PROJECT_OWNER, group, inList: true } as FieldDef);
+
+export const ENTITIES: Record<string, EntityDef> = {
+  relationships: {
+    key: "relationships",
+    table: "relationships",
+    label: "Relationship",
+    labelPlural: "Relationships",
+    primaryField: "name",
+    defaultSort: { key: "updated_at", dir: "desc" },
+    fields: [
+      { key: "name", label: "Name", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "company", label: "Company", kind: "text", group: "Identity", inList: true },
+      { key: "role", label: "Role", kind: "text", group: "Identity" },
+      { key: "email", label: "Email", kind: "text", group: "Identity" },
+      { key: "type", label: "Type", kind: "select", options: RELATIONSHIP_TYPES, group: "Identity", inList: true },
+      { key: "status", label: "Status", kind: "select", options: RELATIONSHIP_STATUS, group: "State", inList: true },
+      { key: "pipeline_stage", label: "Pipeline stage", kind: "select", options: PIPELINE_STAGE, group: "State", inList: true },
+      { key: "mirror_status", label: "Mirror status", kind: "select", options: MIRROR_STATUS, group: "State" },
+      { key: "active_services", label: "Active services", kind: "multiselect", options: ACTIVE_SERVICES, group: "State" },
+      { key: "geography", label: "Geography", kind: "text", group: "Identity" },
+      { key: "ai_sophistication", label: "AI sophistication", kind: "text", group: "Identity" },
+      { key: "last_contact", label: "Last contact", kind: "date", group: "Touchpoints" },
+      { key: "last_touchpoint_type", label: "Last touchpoint", kind: "select", options: TOUCHPOINT_TYPES, group: "Touchpoints" },
+      { key: "ideal_next_touchpoint", label: "Ideal next touchpoint", kind: "select", options: TOUCHPOINT_TYPES, group: "Touchpoints" },
+      { key: "brief_for_next_touchpoint", label: "Brief for next touchpoint", kind: "longtext", group: "Touchpoints" },
+      { key: "next_action", label: "Next action", kind: "text", group: "Touchpoints", inList: true },
+      { key: "next_action_due", label: "Next action due", kind: "date", group: "Touchpoints", inList: true },
+      { key: "portal_delivered", label: "Portal delivered", kind: "boolean", group: "Touchpoints" },
+      { key: "portal_link", label: "Portal link", kind: "text", group: "Touchpoints" },
+      { key: "sessions_purchased", label: "Sessions purchased", kind: "number", group: "Engagement" },
+      { key: "sessions_used", label: "Sessions used", kind: "number", group: "Engagement" },
+      { key: "sweetconnect_credits", label: "SweetConnect credits", kind: "number", group: "Engagement" },
+      { key: "sweetconnect_credits_used", label: "SweetConnect credits used", kind: "number", group: "Engagement" },
+      { key: "revenue_potential_usd", label: "Revenue potential (USD)", kind: "currency", group: "Engagement" },
+      { key: "intelligence_summary", label: "Intelligence summary", kind: "longtext", group: "Intelligence" },
+      { key: "intelligence_confidence", label: "Confidence", kind: "select", options: INTELLIGENCE_CONFIDENCE, group: "Intelligence", inList: true },
+      { key: "narrative_persona", label: "Narrative persona", kind: "text", group: "Intelligence" },
+      { key: "persona_id", label: "Persona", kind: "ref", refTable: "personas", refLabel: "name", group: "Intelligence" },
+      { key: "execution_prompt", label: "Execution prompt", kind: "longtext", group: "Prompts" },
+      { key: "prompt_status", label: "Prompt status", kind: "text", group: "Prompts" },
+      { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+    ],
+  },
+
+  projects: {
+    key: "projects",
+    table: "projects",
+    label: "Project",
+    labelPlural: "Projects",
+    primaryField: "name",
+    defaultSort: { key: "updated_at", dir: "desc" },
+    fields: [
+      { key: "name", label: "Name", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "status", label: "Status", kind: "select", options: PROJECT_STATUS, group: "State", inList: true },
+      owner("owner", "Owner"),
+      { key: "priority", label: "Priority", kind: "select", options: PROJECT_PRIORITY, group: "State", inList: true },
+      { key: "sprint", label: "Sprint", kind: "select", options: SPRINT, group: "State", inList: true },
+      { key: "type", label: "Type", kind: "select", options: PROJECT_TYPE, group: "Identity" },
+      { key: "deadline", label: "Deadline", kind: "date", group: "State", inList: true },
+      { key: "next_action", label: "Next action", kind: "text", group: "State" },
+      { key: "next_action_due", label: "Next action due", kind: "date", group: "State" },
+      { key: "next_deliverable_specific", label: "Next deliverable", kind: "longtext", group: "Delivery" },
+      { key: "current_blocker_specific", label: "Current blocker", kind: "longtext", group: "Delivery" },
+      { key: "dependencies", label: "Dependencies", kind: "longtext", group: "Delivery" },
+      { key: "project_brief", label: "Project brief", kind: "longtext", group: "Brief" },
+      { key: "revenue_potential_usd", label: "Revenue potential (USD)", kind: "currency", group: "Engagement" },
+      { key: "client_id", label: "Client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Identity", inList: true },
+      { key: "execution_prompt", label: "Execution prompt", kind: "longtext", group: "Prompts" },
+      { key: "prompt_status", label: "Prompt status", kind: "text", group: "Prompts" },
+    ],
+  },
+
+  tasks: {
+    key: "tasks",
+    table: "tasks",
+    label: "Task",
+    labelPlural: "Tasks",
+    primaryField: "name",
+    defaultSort: { key: "due_date", dir: "asc" },
+    fields: [
+      { key: "name", label: "Task", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "status", label: "Status", kind: "select", options: TASK_STATUS, group: "State", inList: true },
+      { key: "owner", label: "Owner", kind: "select", options: TASK_OWNER, group: "Identity", inList: true },
+      { key: "priority", label: "Priority", kind: "select", options: TASK_PRIORITY, group: "State", inList: true },
+      { key: "due_date", label: "Due", kind: "date", group: "State", inList: true },
+      { key: "effort", label: "Effort", kind: "select", options: EFFORT, group: "State" },
+      { key: "recurring", label: "Recurring", kind: "boolean", group: "Cadence" },
+      { key: "recurring_cadence", label: "Cadence", kind: "select", options: RECURRING_CADENCE, group: "Cadence" },
+      { key: "for_whom", label: "For whom", kind: "text", group: "Identity" },
+      { key: "success_criteria", label: "Success criteria", kind: "longtext", group: "Delivery" },
+      { key: "dependencies", label: "Dependencies", kind: "longtext", group: "Delivery" },
+      { key: "waiting_on", label: "Waiting on", kind: "text", group: "State" },
+      { key: "context_to_load", label: "Context to load", kind: "longtext", group: "Delivery" },
+      { key: "execution_prompt", label: "Execution prompt", kind: "longtext", group: "Prompts" },
+      { key: "prompt_status", label: "Prompt status", kind: "text", group: "Prompts" },
+      { key: "output_format", label: "Output format", kind: "text", group: "Delivery" },
+      { key: "output_link", label: "Output link", kind: "text", group: "Delivery" },
+      { key: "deliverable_specific", label: "Deliverable specific", kind: "longtext", group: "Delivery" },
+      { key: "project_id", label: "Project", kind: "ref", refTable: "projects", refLabel: "name", group: "Identity", inList: true },
+      { key: "relationship_id", label: "Relationship", kind: "ref", refTable: "relationships", refLabel: "name", group: "Identity" },
+      { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+    ],
+  },
+
+  sessions: {
+    key: "sessions",
+    table: "sessions",
+    label: "Session",
+    labelPlural: "Sessions",
+    primaryField: "name",
+    defaultSort: { key: "session_date", dir: "desc" },
+    fields: [
+      { key: "name", label: "Session", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "service", label: "Service", kind: "select", options: SESSION_SERVICE, group: "Identity", inList: true },
+      { key: "delivery_variation", label: "Delivery variation", kind: "select", options: DELIVERY_VARIATION, group: "Identity" },
+      { key: "status", label: "Status", kind: "text", group: "State", inList: true },
+      { key: "sweetcycle_phase", label: "SweetCycle phase", kind: "select", options: SWEETCYCLE_PHASE, group: "State", inList: true },
+      { key: "session_date", label: "Date", kind: "date", group: "State", inList: true },
+      { key: "session_number", label: "Session #", kind: "number", group: "Identity" },
+      { key: "seed_submitted", label: "Seed submitted", kind: "boolean", group: "Phases" },
+      { key: "seed_status", label: "Seed status", kind: "select", options: SEED_STATUS, group: "Phases" },
+      { key: "sync_status", label: "Sync status", kind: "select", options: SYNC_STATUS, group: "Phases" },
+      { key: "ship_status", label: "Ship status", kind: "select", options: SHIP_STATUS, group: "Phases" },
+      { key: "key_findings", label: "Key findings", kind: "longtext", group: "Findings" },
+      { key: "client_perception_summary", label: "Client perception", kind: "longtext", group: "Findings" },
+      { key: "reality_assessment_summary", label: "Reality assessment", kind: "longtext", group: "Findings" },
+      { key: "biggest_gap", label: "Biggest gap", kind: "longtext", group: "Findings" },
+      { key: "next_recommended_service", label: "Next recommended service", kind: "text", group: "Findings" },
+      { key: "what_i_learned", label: "What I learned (→ Playbook)", kind: "longtext", group: "Findings" },
+      { key: "progression_state", label: "Progression", kind: "select", options: PROGRESSION_STATE, group: "Advancement", inList: true },
+      { key: "source_of_advancement", label: "Source of advancement", kind: "select", options: SOURCE_OF_ADVANCEMENT, group: "Advancement" },
+      { key: "confidence", label: "Confidence", kind: "select", options: INTELLIGENCE_CONFIDENCE, group: "Advancement" },
+      { key: "relationship_id", label: "Client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Links", inList: true },
+      { key: "workflow_id", label: "Workflow", kind: "ref", refTable: "workflows", refLabel: "name", group: "Links" },
+      { key: "linked_project_id", label: "Linked project", kind: "ref", refTable: "projects", refLabel: "name", group: "Links" },
+      { key: "persona_id", label: "Persona", kind: "ref", refTable: "personas", refLabel: "name", group: "Links" },
+      { key: "playbook_id", label: "Playbook", kind: "ref", refTable: "playbooks", refLabel: "name", group: "Links" },
+    ],
+  },
+
+  workflows: {
+    key: "workflows",
+    table: "workflows",
+    label: "Workflow",
+    labelPlural: "Workflows",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Workflow", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "description", label: "Description", kind: "longtext", group: "Identity" },
+      { key: "theme", label: "Theme", kind: "text", group: "Identity", inList: true },
+      { key: "map_available", label: "Map available", kind: "boolean", group: "Delivery", inList: true },
+      { key: "machine_available", label: "Machine available", kind: "boolean", group: "Delivery", inList: true },
+      { key: "sweetsync_decomposed", label: "SweetSync decomposed", kind: "boolean", group: "Delivery", inList: true },
+      { key: "quality_status", label: "Quality status", kind: "select", options: QUALITY_STATUS, group: "Quality", inList: true },
+      { key: "reuse_count", label: "Reuse count", kind: "number", group: "Quality", inList: true },
+      { key: "related_tenets", label: "Related tenets", kind: "tags", group: "Linkage" },
+      { key: "required_inputs", label: "Required inputs", kind: "tags", group: "Linkage" },
+      { key: "origin_client", label: "Origin client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Linkage" },
+      { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+    ],
+  },
+
+  documents: {
+    key: "documents",
+    table: "documents",
+    label: "Document",
+    labelPlural: "Documents",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Document", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "type", label: "Type", kind: "select", options: DOCUMENT_TYPE, group: "Identity", inList: true },
+      { key: "status", label: "Status", kind: "select", options: DOCUMENT_STATUS, group: "State", inList: true },
+      { key: "owner", label: "Owner", kind: "select", options: PROJECT_OWNER, group: "Identity", inList: true },
+      { key: "tone_voice", label: "Tone / voice", kind: "select", options: TONE_VOICE, group: "Identity" },
+      { key: "version", label: "Version", kind: "text", group: "State" },
+      { key: "last_reviewed", label: "Last reviewed", kind: "date", group: "State" },
+      { key: "full_brief", label: "Full brief", kind: "longtext", group: "Brief" },
+      { key: "audience_primary_concern", label: "Audience primary concern", kind: "longtext", group: "Brief" },
+      { key: "length_format", label: "Length / format", kind: "text", group: "Brief" },
+      { key: "drive_chat_link", label: "Drive / chat link", kind: "text", group: "Links" },
+      { key: "for_client_id", label: "For client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Links", inList: true },
+      { key: "execution_prompt", label: "Execution prompt", kind: "longtext", group: "Prompts" },
+      { key: "prompt_status", label: "Prompt status", kind: "text", group: "Prompts" },
+      { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+    ],
+  },
+
+  decisions: {
+    key: "decisions",
+    table: "decisions",
+    label: "Decision",
+    labelPlural: "Decisions",
+    primaryField: "decision",
+    fields: [
+      { key: "decision", label: "Decision", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "status", label: "Status", kind: "select", options: DECISION_STATUS, group: "State", inList: true },
+      { key: "domain", label: "Domain", kind: "text", group: "Identity", inList: true },
+      { key: "date_made", label: "Date made", kind: "date", group: "State", inList: true },
+      { key: "made_by", label: "Made by", kind: "text", group: "Identity" },
+      { key: "context", label: "Context", kind: "longtext", group: "Brief" },
+      { key: "implications", label: "Implications", kind: "longtext", group: "Brief" },
+      { key: "supersedes", label: "Supersedes", kind: "ref", refTable: "decisions", refLabel: "decision", group: "Links" },
+      { key: "related_project_id", label: "Related project", kind: "ref", refTable: "projects", refLabel: "name", group: "Links" },
+    ],
+  },
+
+  delegation: {
+    key: "delegation",
+    table: "delegation",
+    label: "Delegation item",
+    labelPlural: "Delegation",
+    primaryField: "task_or_responsibility",
+    fields: [
+      { key: "task_or_responsibility", label: "Task / responsibility", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "currently_done_by", label: "Currently done by", kind: "select", options: DELEGATION_DONE_BY, group: "State", inList: true },
+      { key: "can_be_delegated_to", label: "Can be delegated to", kind: "select", options: DELEGATION_TARGET, group: "State", inList: true },
+      { key: "category", label: "Category", kind: "text", group: "Identity" },
+      { key: "delegation_type", label: "Delegation type", kind: "select", options: DELEGATION_TYPE, group: "State", inList: true },
+      { key: "effort_to_hand_off", label: "Effort to hand off", kind: "select", options: DELEGATION_EFFORT, group: "State", inList: true },
+      { key: "only_liz_can_do_this_because", label: "Only Liz because…", kind: "longtext", group: "Brief" },
+      { key: "what_would_make_it_delegatable", label: "What would make it delegatable", kind: "longtext", group: "Brief" },
+      { key: "status", label: "Status", kind: "text", group: "State" },
+      { key: "linked_project_id", label: "Linked project", kind: "ref", refTable: "projects", refLabel: "name", group: "Links" },
+      { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+    ],
+  },
+
+  campaigns: {
+    key: "campaigns",
+    table: "campaigns",
+    label: "Campaign",
+    labelPlural: "Campaigns",
+    primaryField: "campaign_name",
+    fields: [
+      { key: "campaign_name", label: "Campaign", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "status", label: "Status", kind: "text", group: "State", inList: true },
+      { key: "type", label: "Type", kind: "select", options: CAMPAIGN_TYPE, group: "Identity", inList: true },
+      { key: "owner", label: "Owner", kind: "select", options: PROJECT_OWNER, group: "Identity", inList: true },
+      { key: "goal", label: "Goal", kind: "longtext", group: "Brief" },
+      { key: "revenue_target_usd", label: "Revenue target (USD)", kind: "currency", group: "Engagement", inList: true },
+      { key: "deadline", label: "Deadline", kind: "date", group: "State", inList: true },
+      { key: "key_deliverables", label: "Key deliverables", kind: "longtext", group: "Delivery" },
+      { key: "next_executable_action", label: "Next executable action", kind: "text", group: "State" },
+      { key: "next_milestone", label: "Next milestone", kind: "text", group: "State" },
+      { key: "brief_for_next_action", label: "Brief for next action", kind: "longtext", group: "Brief" },
+      { key: "blocked_by", label: "Blocked by", kind: "text", group: "State" },
+      { key: "campaign_brief", label: "Campaign brief", kind: "longtext", group: "Brief" },
+      { key: "execution_prompt", label: "Execution prompt", kind: "longtext", group: "Prompts" },
+      { key: "prompt_status", label: "Prompt status", kind: "text", group: "Prompts" },
+      { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+    ],
+  },
+
+  // Scaffolding
+  components: {
+    key: "components",
+    table: "components",
+    label: "Component",
+    labelPlural: "Components",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Component", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "description", label: "Description", kind: "longtext", group: "Identity" },
+      { key: "journey_id", label: "Journey", kind: "ref", refTable: "journeys", refLabel: "name", group: "Identity", inList: true },
+      { key: "current_maturity_level", label: "Maturity", kind: "select", options: MATURITY_LEVEL, group: "State", inList: true },
+      { key: "maturity_threshold_definition", label: "Maturity threshold", kind: "longtext", group: "State" },
+      { key: "quality_status", label: "Quality", kind: "select", options: QUALITY_STATUS, group: "State", inList: true },
+      { key: "reuse_count", label: "Reuse count", kind: "number", group: "State" },
+      { key: "last_reviewed", label: "Last reviewed", kind: "date", group: "State" },
+    ],
+  },
+
+  playbooks: {
+    key: "playbooks",
+    table: "playbooks",
+    label: "Playbook",
+    labelPlural: "Playbooks",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Playbook", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "service", label: "Service", kind: "select", options: SESSION_SERVICE, group: "Identity", inList: true },
+      { key: "persona_id", label: "Persona", kind: "ref", refTable: "personas", refLabel: "name", group: "Identity", inList: true },
+      { key: "cadence", label: "Cadence", kind: "text", group: "State" },
+      { key: "spec_status", label: "Spec status", kind: "select", options: SPEC_STATUS, group: "State", inList: true },
+      { key: "best_practice_path", label: "Best practice path", kind: "longtext", group: "Brief" },
+      { key: "named_alternates", label: "Named alternates", kind: "longtext", group: "Brief" },
+      { key: "seed_intelligence_layer", label: "Seed intelligence layer", kind: "longtext", group: "Brief" },
+      { key: "minimum_viable_seed", label: "Minimum viable seed", kind: "longtext", group: "Brief" },
+      { key: "contract_rules_surfaced", label: "Contract rules", kind: "longtext", group: "Brief" },
+      { key: "client_journey_note", label: "Client journey note", kind: "longtext", group: "Brief" },
+      { key: "what_we_have_learned", label: "What we have learned", kind: "longtext", group: "Learning" },
+    ],
+  },
+
+  personas: {
+    key: "personas",
+    table: "personas",
+    label: "Persona",
+    labelPlural: "Personas",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Persona", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "sector", label: "Sector", kind: "select", options: PERSONA_SECTOR, group: "Identity", inList: true },
+      { key: "practice_structure", label: "Practice structure", kind: "select", options: PERSONA_STRUCTURE, group: "Identity", inList: true },
+      { key: "regulatory_registration", label: "Regulatory registration", kind: "multiselect", options: PERSONA_REGISTRATION, group: "Identity" },
+      { key: "autonomy_level", label: "Autonomy", kind: "select", options: PERSONA_AUTONOMY, group: "Identity" },
+      { key: "spec_status", label: "Spec status", kind: "select", options: SPEC_STATUS, group: "State", inList: true },
+      { key: "seed_adaptation_notes", label: "Seed adaptation notes", kind: "longtext", group: "Brief" },
+      { key: "contract_considerations", label: "Contract considerations", kind: "longtext", group: "Brief" },
+      { key: "real_examples", label: "Real examples", kind: "longtext", group: "Brief" },
+      { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+    ],
+  },
+
+  "domain-assessments": {
+    key: "domain-assessments",
+    table: "domain_assessments",
+    label: "Domain assessment",
+    labelPlural: "Domain Assessments",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Name", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "client_id", label: "Client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Identity", inList: true },
+      { key: "session_id", label: "Session", kind: "ref", refTable: "sessions", refLabel: "name", group: "Identity" },
+      { key: "domain", label: "Domain", kind: "text", group: "Identity", inList: true },
+      { key: "client_score", label: "Client score", kind: "number", group: "Scoring", inList: true },
+      { key: "liz_score", label: "Liz score", kind: "number", group: "Scoring", inList: true },
+      { key: "gap", label: "Gap", kind: "number", group: "Scoring" },
+      { key: "gap_direction", label: "Gap direction", kind: "text", group: "Scoring" },
+      { key: "confidence", label: "Confidence", kind: "select", options: INTELLIGENCE_CONFIDENCE, group: "Scoring", inList: true },
+      { key: "priority", label: "Priority", kind: "text", group: "Scoring" },
+      { key: "assessment_date", label: "Date", kind: "date", group: "Scoring", inList: true },
+      { key: "progression_note", label: "Progression note", kind: "longtext", group: "Notes" },
+      { key: "notes", label: "Notes", kind: "longtext", group: "Notes" },
+    ],
+  },
+
+  missions: {
+    key: "missions",
+    table: "missions",
+    label: "Mission",
+    labelPlural: "Missions",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Mission", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "description", label: "Description", kind: "longtext", group: "Identity" },
+      { key: "client_id", label: "Client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Identity", inList: true },
+      { key: "status", label: "Status", kind: "text", group: "State", inList: true },
+      { key: "target_timeframe", label: "Target timeframe", kind: "text", group: "State", inList: true },
+    ],
+  },
+
+  journeys: {
+    key: "journeys",
+    table: "journeys",
+    label: "Journey",
+    labelPlural: "Journeys",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Journey", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "description", label: "Description", kind: "longtext", group: "Identity" },
+      { key: "status", label: "Status", kind: "text", group: "State", inList: true },
+    ],
+  },
+
+  quests: {
+    key: "quests",
+    table: "quests",
+    label: "Quest",
+    labelPlural: "Quests",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Quest", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "description", label: "Description", kind: "longtext", group: "Identity" },
+      { key: "journey_id", label: "Journey", kind: "ref", refTable: "journeys", refLabel: "name", group: "Identity", inList: true },
+      { key: "framework_lens", label: "Framework lens", kind: "text", group: "Identity" },
+      { key: "bizzybot_perspective", label: "BizzyBot perspective", kind: "text", group: "Identity" },
+      { key: "progression_state", label: "Progression", kind: "select", options: PROGRESSION_STATE, group: "Advancement", inList: true },
+      { key: "source_of_advancement", label: "Source", kind: "select", options: SOURCE_OF_ADVANCEMENT, group: "Advancement" },
+    ],
+  },
+
+  sparks: {
+    key: "sparks",
+    table: "sparks",
+    label: "Spark",
+    labelPlural: "Sparks",
+    primaryField: "name",
+    fields: [
+      { key: "name", label: "Spark", kind: "text", group: "Identity", inList: true, primary: true },
+      { key: "spark_type", label: "Type", kind: "select", options: SPARK_TYPE, group: "Identity", inList: true },
+      { key: "quest_id", label: "Quest", kind: "ref", refTable: "quests", refLabel: "name", group: "Identity", inList: true },
+      { key: "content", label: "Content", kind: "longtext", group: "Identity" },
+      { key: "sequence_order", label: "Order", kind: "number", group: "Identity" },
+      { key: "progression_state", label: "Progression", kind: "select", options: PROGRESSION_STATE, group: "Advancement", inList: true },
+      { key: "source_of_advancement", label: "Source", kind: "select", options: SOURCE_OF_ADVANCEMENT, group: "Advancement" },
+      { key: "captured_answer", label: "Captured answer", kind: "longtext", group: "Advancement" },
+      { key: "confidence", label: "Confidence", kind: "select", options: INTELLIGENCE_CONFIDENCE, group: "Advancement" },
+    ],
+  },
+
+  outcomes: {
+    key: "outcomes",
+    table: "outcomes",
+    label: "Outcome",
+    labelPlural: "Outcomes",
+    primaryField: "outcome_type",
+    fields: [
+      { key: "outcome_type", label: "Type", kind: "select", options: OUTCOME_TYPE, group: "Identity", inList: true, primary: true },
+      { key: "description", label: "Description", kind: "longtext", group: "Identity" },
+      { key: "measured_value", label: "Measured value", kind: "text", group: "Measurement", inList: true },
+      { key: "measured_date", label: "Measured date", kind: "date", group: "Measurement", inList: true },
+      { key: "client_id", label: "Client", kind: "ref", refTable: "relationships", refLabel: "name", group: "Links", inList: true },
+      { key: "component_id", label: "Component", kind: "ref", refTable: "components", refLabel: "name", group: "Links" },
+    ],
+  },
+};
+
+// Per-client workflow state — used inside Workflow detail
+export const WORKFLOW_STATE_FIELDS: FieldDef[] = [
+  { key: "client_id", label: "Client", kind: "ref", refTable: "relationships", refLabel: "name", inList: true },
+  { key: "state_of_the_thing", label: "State of the thing", kind: "select", options: STATE_OF_THE_THING, inList: true },
+  { key: "source_of_advancement", label: "Source of advancement", kind: "select", options: SOURCE_OF_ADVANCEMENT, inList: true },
+  { key: "notes", label: "Notes", kind: "longtext" },
+];
