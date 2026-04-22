@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppVaultRouteImport } from './routes/_app.vault'
 import { Route as AppTodayRouteImport } from './routes/_app.today'
 import { Route as AppSweetcycleRouteImport } from './routes/_app.sweetcycle'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
@@ -68,6 +69,7 @@ import { Route as AppOutcomesIdRouteImport } from './routes/_app.outcomes.$id'
 import { Route as AppOperatorsIdRouteImport } from './routes/_app.operators.$id'
 import { Route as AppOperateOcdaRouteImport } from './routes/_app.operate.ocda'
 import { Route as AppMissionsIdRouteImport } from './routes/_app.missions.$id'
+import { Route as AppLibraryJtbdRouteImport } from './routes/_app.library.jtbd'
 import { Route as AppJourneysIdRouteImport } from './routes/_app.journeys.$id'
 import { Route as AppEngagementPlansIdRouteImport } from './routes/_app.engagement-plans.$id'
 import { Route as AppDomainsSlugRouteImport } from './routes/_app.domains.$slug'
@@ -78,6 +80,7 @@ import { Route as AppDecisionsIdRouteImport } from './routes/_app.decisions.$id'
 import { Route as AppComponentsIdRouteImport } from './routes/_app.components.$id'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
 import { Route as AppSettingsLensesIdRouteImport } from './routes/_app.settings.lenses.$id'
+import { Route as AppLibraryJtbdIdRouteImport } from './routes/_app.library.jtbd.$id'
 import { Route as AppWorkflowsIdRunsRunIdRouteImport } from './routes/_app.workflows.$id.runs.$runId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -93,6 +96,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppVaultRoute = AppVaultRouteImport.update({
+  id: '/vault',
+  path: '/vault',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppTodayRoute = AppTodayRouteImport.update({
   id: '/today',
@@ -377,6 +385,11 @@ const AppMissionsIdRoute = AppMissionsIdRouteImport.update({
   path: '/missions/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLibraryJtbdRoute = AppLibraryJtbdRouteImport.update({
+  id: '/library/jtbd',
+  path: '/library/jtbd',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppJourneysIdRoute = AppJourneysIdRouteImport.update({
   id: '/journeys/$id',
   path: '/journeys/$id',
@@ -427,6 +440,11 @@ const AppSettingsLensesIdRoute = AppSettingsLensesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppSettingsLensesRoute,
 } as any)
+const AppLibraryJtbdIdRoute = AppLibraryJtbdIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppLibraryJtbdRoute,
+} as any)
 const AppWorkflowsIdRunsRunIdRoute = AppWorkflowsIdRunsRunIdRouteImport.update({
   id: '/runs/$runId',
   path: '/runs/$runId',
@@ -450,6 +468,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
   '/today': typeof AppTodayRoute
+  '/vault': typeof AppVaultRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
   '/decisions/$id': typeof AppDecisionsIdRoute
@@ -459,6 +478,7 @@ export interface FileRoutesByFullPath {
   '/domains/$slug': typeof AppDomainsSlugRoute
   '/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/journeys/$id': typeof AppJourneysIdRoute
+  '/library/jtbd': typeof AppLibraryJtbdRouteWithChildren
   '/missions/$id': typeof AppMissionsIdRoute
   '/operate/ocda': typeof AppOperateOcdaRoute
   '/operators/$id': typeof AppOperatorsIdRoute
@@ -501,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/tasks/': typeof AppTasksIndexRoute
   '/tenets/': typeof AppTenetsIndexRoute
   '/workflows/': typeof AppWorkflowsIndexRoute
+  '/library/jtbd/$id': typeof AppLibraryJtbdIdRoute
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -521,6 +542,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
   '/today': typeof AppTodayRoute
+  '/vault': typeof AppVaultRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
   '/decisions/$id': typeof AppDecisionsIdRoute
@@ -530,6 +552,7 @@ export interface FileRoutesByTo {
   '/domains/$slug': typeof AppDomainsSlugRoute
   '/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/journeys/$id': typeof AppJourneysIdRoute
+  '/library/jtbd': typeof AppLibraryJtbdRouteWithChildren
   '/missions/$id': typeof AppMissionsIdRoute
   '/operate/ocda': typeof AppOperateOcdaRoute
   '/operators/$id': typeof AppOperatorsIdRoute
@@ -572,6 +595,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof AppTasksIndexRoute
   '/tenets': typeof AppTenetsIndexRoute
   '/workflows': typeof AppWorkflowsIndexRoute
+  '/library/jtbd/$id': typeof AppLibraryJtbdIdRoute
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -594,6 +618,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/sweetcycle': typeof AppSweetcycleRoute
   '/_app/today': typeof AppTodayRoute
+  '/_app/vault': typeof AppVaultRoute
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
   '/_app/components/$id': typeof AppComponentsIdRoute
   '/_app/decisions/$id': typeof AppDecisionsIdRoute
@@ -603,6 +628,7 @@ export interface FileRoutesById {
   '/_app/domains/$slug': typeof AppDomainsSlugRoute
   '/_app/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/_app/journeys/$id': typeof AppJourneysIdRoute
+  '/_app/library/jtbd': typeof AppLibraryJtbdRouteWithChildren
   '/_app/missions/$id': typeof AppMissionsIdRoute
   '/_app/operate/ocda': typeof AppOperateOcdaRoute
   '/_app/operators/$id': typeof AppOperatorsIdRoute
@@ -645,6 +671,7 @@ export interface FileRoutesById {
   '/_app/tasks/': typeof AppTasksIndexRoute
   '/_app/tenets/': typeof AppTenetsIndexRoute
   '/_app/workflows/': typeof AppWorkflowsIndexRoute
+  '/_app/library/jtbd/$id': typeof AppLibraryJtbdIdRoute
   '/_app/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/_app/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -667,6 +694,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sweetcycle'
     | '/today'
+    | '/vault'
     | '/campaigns/$id'
     | '/components/$id'
     | '/decisions/$id'
@@ -676,6 +704,7 @@ export interface FileRouteTypes {
     | '/domains/$slug'
     | '/engagement-plans/$id'
     | '/journeys/$id'
+    | '/library/jtbd'
     | '/missions/$id'
     | '/operate/ocda'
     | '/operators/$id'
@@ -718,6 +747,7 @@ export interface FileRouteTypes {
     | '/tasks/'
     | '/tenets/'
     | '/workflows/'
+    | '/library/jtbd/$id'
     | '/settings/lenses/$id'
     | '/workflows/$id/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
@@ -738,6 +768,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sweetcycle'
     | '/today'
+    | '/vault'
     | '/campaigns/$id'
     | '/components/$id'
     | '/decisions/$id'
@@ -747,6 +778,7 @@ export interface FileRouteTypes {
     | '/domains/$slug'
     | '/engagement-plans/$id'
     | '/journeys/$id'
+    | '/library/jtbd'
     | '/missions/$id'
     | '/operate/ocda'
     | '/operators/$id'
@@ -789,6 +821,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/tenets'
     | '/workflows'
+    | '/library/jtbd/$id'
     | '/settings/lenses/$id'
     | '/workflows/$id/runs/$runId'
   id:
@@ -810,6 +843,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/sweetcycle'
     | '/_app/today'
+    | '/_app/vault'
     | '/_app/campaigns/$id'
     | '/_app/components/$id'
     | '/_app/decisions/$id'
@@ -819,6 +853,7 @@ export interface FileRouteTypes {
     | '/_app/domains/$slug'
     | '/_app/engagement-plans/$id'
     | '/_app/journeys/$id'
+    | '/_app/library/jtbd'
     | '/_app/missions/$id'
     | '/_app/operate/ocda'
     | '/_app/operators/$id'
@@ -861,6 +896,7 @@ export interface FileRouteTypes {
     | '/_app/tasks/'
     | '/_app/tenets/'
     | '/_app/workflows/'
+    | '/_app/library/jtbd/$id'
     | '/_app/settings/lenses/$id'
     | '/_app/workflows/$id/runs/$runId'
   fileRoutesById: FileRoutesById
@@ -893,6 +929,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/vault': {
+      id: '/_app/vault'
+      path: '/vault'
+      fullPath: '/vault'
+      preLoaderRoute: typeof AppVaultRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/today': {
       id: '/_app/today'
@@ -1286,6 +1329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMissionsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/library/jtbd': {
+      id: '/_app/library/jtbd'
+      path: '/library/jtbd'
+      fullPath: '/library/jtbd'
+      preLoaderRoute: typeof AppLibraryJtbdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/journeys/$id': {
       id: '/_app/journeys/$id'
       path: '/journeys/$id'
@@ -1356,6 +1406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsLensesIdRouteImport
       parentRoute: typeof AppSettingsLensesRoute
     }
+    '/_app/library/jtbd/$id': {
+      id: '/_app/library/jtbd/$id'
+      path: '/$id'
+      fullPath: '/library/jtbd/$id'
+      preLoaderRoute: typeof AppLibraryJtbdIdRouteImport
+      parentRoute: typeof AppLibraryJtbdRoute
+    }
     '/_app/workflows/$id/runs/$runId': {
       id: '/_app/workflows/$id/runs/$runId'
       path: '/runs/$runId'
@@ -1393,6 +1450,18 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
   AppSettingsRouteChildren,
 )
 
+interface AppLibraryJtbdRouteChildren {
+  AppLibraryJtbdIdRoute: typeof AppLibraryJtbdIdRoute
+}
+
+const AppLibraryJtbdRouteChildren: AppLibraryJtbdRouteChildren = {
+  AppLibraryJtbdIdRoute: AppLibraryJtbdIdRoute,
+}
+
+const AppLibraryJtbdRouteWithChildren = AppLibraryJtbdRoute._addFileChildren(
+  AppLibraryJtbdRouteChildren,
+)
+
 interface AppWorkflowsIdRouteChildren {
   AppWorkflowsIdRunsRunIdRoute: typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -1420,6 +1489,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppSweetcycleRoute: typeof AppSweetcycleRoute
   AppTodayRoute: typeof AppTodayRoute
+  AppVaultRoute: typeof AppVaultRoute
   AppCampaignsIdRoute: typeof AppCampaignsIdRoute
   AppComponentsIdRoute: typeof AppComponentsIdRoute
   AppDecisionsIdRoute: typeof AppDecisionsIdRoute
@@ -1429,6 +1499,7 @@ interface AppRouteChildren {
   AppDomainsSlugRoute: typeof AppDomainsSlugRoute
   AppEngagementPlansIdRoute: typeof AppEngagementPlansIdRoute
   AppJourneysIdRoute: typeof AppJourneysIdRoute
+  AppLibraryJtbdRoute: typeof AppLibraryJtbdRouteWithChildren
   AppMissionsIdRoute: typeof AppMissionsIdRoute
   AppOperateOcdaRoute: typeof AppOperateOcdaRoute
   AppOperatorsIdRoute: typeof AppOperatorsIdRoute
@@ -1485,6 +1556,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppSweetcycleRoute: AppSweetcycleRoute,
   AppTodayRoute: AppTodayRoute,
+  AppVaultRoute: AppVaultRoute,
   AppCampaignsIdRoute: AppCampaignsIdRoute,
   AppComponentsIdRoute: AppComponentsIdRoute,
   AppDecisionsIdRoute: AppDecisionsIdRoute,
@@ -1494,6 +1566,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDomainsSlugRoute: AppDomainsSlugRoute,
   AppEngagementPlansIdRoute: AppEngagementPlansIdRoute,
   AppJourneysIdRoute: AppJourneysIdRoute,
+  AppLibraryJtbdRoute: AppLibraryJtbdRouteWithChildren,
   AppMissionsIdRoute: AppMissionsIdRoute,
   AppOperateOcdaRoute: AppOperateOcdaRoute,
   AppOperatorsIdRoute: AppOperatorsIdRoute,

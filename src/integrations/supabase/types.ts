@@ -336,36 +336,60 @@ export type Database = {
           created_by: string
           entity_id: string | null
           entity_table: string | null
+          extracted_text: string | null
           id: string
           mime_type: string | null
           original_name: string
           proposal_id: string | null
           size_bytes: number | null
+          source: string
           storage_path: string
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_personas: string[]
+          tagged_relationships: string[]
+          tagged_tenets: string[]
+          visibility: string
         }
         Insert: {
           created_at?: string
           created_by?: string
           entity_id?: string | null
           entity_table?: string | null
+          extracted_text?: string | null
           id?: string
           mime_type?: string | null
           original_name: string
           proposal_id?: string | null
           size_bytes?: number | null
+          source?: string
           storage_path: string
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_personas?: string[]
+          tagged_relationships?: string[]
+          tagged_tenets?: string[]
+          visibility?: string
         }
         Update: {
           created_at?: string
           created_by?: string
           entity_id?: string | null
           entity_table?: string | null
+          extracted_text?: string | null
           id?: string
           mime_type?: string | null
           original_name?: string
           proposal_id?: string | null
           size_bytes?: number | null
+          source?: string
           storage_path?: string
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_personas?: string[]
+          tagged_relationships?: string[]
+          tagged_tenets?: string[]
+          visibility?: string
         }
         Relationships: [
           {
@@ -373,6 +397,138 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      component_outputs: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          body_md: string | null
+          component_id: string
+          created_at: string
+          created_by: string
+          for_persona_id: string | null
+          for_relationship_id: string | null
+          generated_at: string | null
+          generated_by_model: string | null
+          generated_by_operator_id: string | null
+          generation_prompt_key: string | null
+          id: string
+          notes: string | null
+          output_kind: string
+          status: string
+          storage_path: string | null
+          supersedes: string | null
+          title: string
+          updated_at: string
+          version: number
+          visibility: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body_md?: string | null
+          component_id: string
+          created_at?: string
+          created_by?: string
+          for_persona_id?: string | null
+          for_relationship_id?: string | null
+          generated_at?: string | null
+          generated_by_model?: string | null
+          generated_by_operator_id?: string | null
+          generation_prompt_key?: string | null
+          id?: string
+          notes?: string | null
+          output_kind: string
+          status?: string
+          storage_path?: string | null
+          supersedes?: string | null
+          title: string
+          updated_at?: string
+          version?: number
+          visibility?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body_md?: string | null
+          component_id?: string
+          created_at?: string
+          created_by?: string
+          for_persona_id?: string | null
+          for_relationship_id?: string | null
+          generated_at?: string | null
+          generated_by_model?: string | null
+          generated_by_operator_id?: string | null
+          generation_prompt_key?: string | null
+          id?: string
+          notes?: string | null
+          output_kind?: string
+          status?: string
+          storage_path?: string | null
+          supersedes?: string | null
+          title?: string
+          updated_at?: string
+          version?: number
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "component_outputs_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_build_pipeline"
+            referencedColumns: ["component_id"]
+          },
+          {
+            foreignKeyName: "component_outputs_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_outputs_for_persona_id_fkey"
+            columns: ["for_persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_outputs_for_relationship_id_fkey"
+            columns: ["for_relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "component_outputs_for_relationship_id_fkey"
+            columns: ["for_relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_outputs_generated_by_operator_id_fkey"
+            columns: ["generated_by_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "component_outputs_generated_by_operator_id_fkey"
+            columns: ["generated_by_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_outputs_supersedes_fkey"
+            columns: ["supersedes"]
+            isOneToOne: false
+            referencedRelation: "component_outputs"
             referencedColumns: ["id"]
           },
         ]
@@ -1648,6 +1804,97 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      jobs_to_be_done: {
+        Row: {
+          context: string | null
+          created_at: string
+          created_by: string
+          current_solution: string | null
+          desired_outcome: string | null
+          id: string
+          job_type: string
+          notes: string | null
+          pain_severity: number | null
+          persona_id: string | null
+          related_components: string[]
+          related_domains: string[]
+          related_outcomes: string[]
+          related_tenets: string[]
+          relationship_id: string | null
+          source: string | null
+          source_ref: string | null
+          statement: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          created_by?: string
+          current_solution?: string | null
+          desired_outcome?: string | null
+          id?: string
+          job_type?: string
+          notes?: string | null
+          pain_severity?: number | null
+          persona_id?: string | null
+          related_components?: string[]
+          related_domains?: string[]
+          related_outcomes?: string[]
+          related_tenets?: string[]
+          relationship_id?: string | null
+          source?: string | null
+          source_ref?: string | null
+          statement: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          created_by?: string
+          current_solution?: string | null
+          desired_outcome?: string | null
+          id?: string
+          job_type?: string
+          notes?: string | null
+          pain_severity?: number | null
+          persona_id?: string | null
+          related_components?: string[]
+          related_domains?: string[]
+          related_outcomes?: string[]
+          related_tenets?: string[]
+          relationship_id?: string | null
+          source?: string | null
+          source_ref?: string | null
+          statement?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_to_be_done_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_to_be_done_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "jobs_to_be_done_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       journeys: {
         Row: {

@@ -5,6 +5,8 @@ import { EntityDetailPage } from "@/components/entity-workspace";
 import { ActiveBuildPanel } from "@/components/active-build-panel";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { OperatorChip } from "@/components/operator-chip";
+import { ComponentOutputGenerator } from "@/components/component-output-generator";
+import { JTBDList } from "@/components/jtbd-list";
 
 export const Route = createFileRoute("/_app/components/$id")({
   component: ComponentDetail,
@@ -34,6 +36,12 @@ function ComponentDetail() {
       </div>
       <ActiveBuildPanel componentId={id} />
       <EntityDetailPage entityKey="components" />
+      <div className="px-6">
+        <ComponentOutputGenerator componentId={id} />
+      </div>
+      <div className="px-6">
+        <JTBDList componentId={id} />
+      </div>
       <div className="px-6 pb-8">
         <MeasuresPanel subjectType="component" subjectId={id} />
       </div>
