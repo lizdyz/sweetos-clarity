@@ -87,6 +87,13 @@ export type Database = {
             foreignKeyName: "campaign_contacts_relationship_id_fkey"
             columns: ["relationship_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "campaign_contacts_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
@@ -362,6 +369,13 @@ export type Database = {
             foreignKeyName: "components_session_fk"
             columns: ["created_from_session_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["current_session_id"]
+          },
+          {
+            foreignKeyName: "components_session_fk"
+            columns: ["created_from_session_id"]
+            isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -630,8 +644,22 @@ export type Database = {
             foreignKeyName: "documents_for_client_id_fkey"
             columns: ["for_client_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "documents_for_client_id_fkey"
+            columns: ["for_client_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_related_session_fk"
+            columns: ["related_session_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["current_session_id"]
           },
           {
             foreignKeyName: "documents_related_session_fk"
@@ -714,8 +742,22 @@ export type Database = {
             foreignKeyName: "domain_assessments_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "domain_assessments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_assessments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["current_session_id"]
           },
           {
             foreignKeyName: "domain_assessments_session_id_fkey"
@@ -859,6 +901,13 @@ export type Database = {
             foreignKeyName: "engagement_plans_relationship_id_fkey"
             columns: ["relationship_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "engagement_plans_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
@@ -920,6 +969,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "engagement_plans"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_services_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
           },
           {
             foreignKeyName: "engagement_services_relationship_id_fkey"
@@ -1051,6 +1107,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "excellence_scores_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
           {
             foreignKeyName: "excellence_scores_relationship_id_fkey"
             columns: ["relationship_id"]
@@ -1190,6 +1253,13 @@ export type Database = {
             foreignKeyName: "missions_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "missions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
@@ -1242,6 +1312,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "outcomes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
           {
             foreignKeyName: "outcomes_client_id_fkey"
             columns: ["client_id"]
@@ -1616,6 +1693,13 @@ export type Database = {
             foreignKeyName: "projects_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
@@ -1625,6 +1709,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "proposals"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
           },
           {
             foreignKeyName: "projects_relationship_id_fkey"
@@ -1786,6 +1877,63 @@ export type Database = {
             columns: ["journey_id"]
             isOneToOne: false
             referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_portals: {
+        Row: {
+          created_at: string
+          created_by: string
+          delivered_at: string | null
+          id: string
+          kind: Database["public"]["Enums"]["portal_kind"]
+          notes: string | null
+          relationship_id: string
+          updated_at: string
+          url: string
+          version: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          delivered_at?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["portal_kind"]
+          notes?: string | null
+          relationship_id: string
+          updated_at?: string
+          url: string
+          version?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          delivered_at?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["portal_kind"]
+          notes?: string | null
+          relationship_id?: string
+          updated_at?: string
+          url?: string
+          version?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_portals_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "relationship_portals_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
         ]
@@ -2025,6 +2173,13 @@ export type Database = {
             foreignKeyName: "relationships_referred_by_fkey"
             columns: ["referred_by"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "relationships_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
@@ -2119,6 +2274,13 @@ export type Database = {
             foreignKeyName: "rubric_scores_relationship_id_fkey"
             columns: ["relationship_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "rubric_scores_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
@@ -2159,6 +2321,13 @@ export type Database = {
             foreignKeyName: "session_components_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["current_session_id"]
+          },
+          {
+            foreignKeyName: "session_components_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -2189,6 +2358,13 @@ export type Database = {
             foreignKeyName: "session_deliverables_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["current_session_id"]
+          },
+          {
+            foreignKeyName: "session_deliverables_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -2206,6 +2382,7 @@ export type Database = {
           delivery_variation: string | null
           domain_covered: string | null
           engagement_plan_id: string | null
+          engagement_service_id: string | null
           id: string
           key_findings: string | null
           linked_project_id: string | null
@@ -2217,6 +2394,9 @@ export type Database = {
           next_recommended_service: string | null
           outcome_findings: string | null
           persona_id: string | null
+          phase_blocker: string | null
+          phase_due_date: string | null
+          phase_owner: Database["public"]["Enums"]["phase_owner"] | null
           playbook_id: string | null
           progression_state:
             | Database["public"]["Enums"]["progression_state"]
@@ -2256,6 +2436,7 @@ export type Database = {
           delivery_variation?: string | null
           domain_covered?: string | null
           engagement_plan_id?: string | null
+          engagement_service_id?: string | null
           id?: string
           key_findings?: string | null
           linked_project_id?: string | null
@@ -2269,6 +2450,9 @@ export type Database = {
           next_recommended_service?: string | null
           outcome_findings?: string | null
           persona_id?: string | null
+          phase_blocker?: string | null
+          phase_due_date?: string | null
+          phase_owner?: Database["public"]["Enums"]["phase_owner"] | null
           playbook_id?: string | null
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
@@ -2308,6 +2492,7 @@ export type Database = {
           delivery_variation?: string | null
           domain_covered?: string | null
           engagement_plan_id?: string | null
+          engagement_service_id?: string | null
           id?: string
           key_findings?: string | null
           linked_project_id?: string | null
@@ -2321,6 +2506,9 @@ export type Database = {
           next_recommended_service?: string | null
           outcome_findings?: string | null
           persona_id?: string | null
+          phase_blocker?: string | null
+          phase_due_date?: string | null
+          phase_owner?: Database["public"]["Enums"]["phase_owner"] | null
           playbook_id?: string | null
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
@@ -2358,6 +2546,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sessions_engagement_service_id_fkey"
+            columns: ["engagement_service_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_service_rollup"
+            referencedColumns: ["service_id"]
+          },
+          {
+            foreignKeyName: "sessions_engagement_service_id_fkey"
+            columns: ["engagement_service_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_services"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sessions_linked_project_id_fkey"
             columns: ["linked_project_id"]
             isOneToOne: false
@@ -2384,6 +2586,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "playbooks"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
           },
           {
             foreignKeyName: "sessions_relationship_id_fkey"
@@ -2707,6 +2916,13 @@ export type Database = {
             foreignKeyName: "tasks_relationship_id_fkey"
             columns: ["relationship_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "tasks_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
@@ -2901,6 +3117,13 @@ export type Database = {
             foreignKeyName: "workflow_runs_relationship_id_fkey"
             columns: ["relationship_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
@@ -2960,6 +3183,13 @@ export type Database = {
           workflow_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workflow_states_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
           {
             foreignKeyName: "workflow_states_client_id_fkey"
             columns: ["client_id"]
@@ -3036,6 +3266,13 @@ export type Database = {
             foreignKeyName: "workflows_origin_client_fkey"
             columns: ["origin_client"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "workflows_origin_client_fkey"
+            columns: ["origin_client"]
+            isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
@@ -3043,6 +3280,47 @@ export type Database = {
       }
     }
     Views: {
+      engagement_service_rollup: {
+        Row: {
+          completion_pct: number | null
+          next_session_date: string | null
+          plan_id: string | null
+          relationship_id: string | null
+          service_id: string | null
+          service_type:
+            | Database["public"]["Enums"]["engagement_service_type"]
+            | null
+          sessions_in_flight: number | null
+          sessions_shipped: number | null
+          sessions_total: number | null
+          status:
+            | Database["public"]["Enums"]["engagement_service_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_services_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_services_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "engagement_services_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_rollup: {
         Row: {
           blocked_tasks: number | null
@@ -3070,7 +3348,61 @@ export type Database = {
             foreignKeyName: "excellence_scores_relationship_id_fkey"
             columns: ["relationship_id"]
             isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "excellence_scores_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_journey: {
+        Row: {
+          awareness_tier: Database["public"]["Enums"]["awareness_tier"] | null
+          current_blocker: string | null
+          current_phase: Database["public"]["Enums"]["sweetcycle_phase"] | null
+          current_service_id: string | null
+          current_session_id: string | null
+          current_stage: string | null
+          drift_risk: Database["public"]["Enums"]["drift_risk"] | null
+          latest_portal_delivered_at: string | null
+          latest_portal_kind: Database["public"]["Enums"]["portal_kind"] | null
+          latest_portal_url: string | null
+          latest_portal_viewed_at: string | null
+          name: string | null
+          next_action_due: string | null
+          next_action_owner: Database["public"]["Enums"]["phase_owner"] | null
+          pipeline_stage: string | null
+          primary_service:
+            | Database["public"]["Enums"]["engagement_service_type"]
+            | null
+          relationship_id: string | null
+          service_status:
+            | Database["public"]["Enums"]["engagement_service_status"]
+            | null
+          ship_count: number | null
+          temperature:
+            | Database["public"]["Enums"]["relationship_temperature"]
+            | null
+          total_session_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_engagement_service_id_fkey"
+            columns: ["current_service_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_service_rollup"
+            referencedColumns: ["service_id"]
+          },
+          {
+            foreignKeyName: "sessions_engagement_service_id_fkey"
+            columns: ["current_service_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_services"
             referencedColumns: ["id"]
           },
         ]
@@ -3086,6 +3418,10 @@ export type Database = {
       }
     }
     Functions: {
+      default_phase_owner: {
+        Args: { _phase: Database["public"]["Enums"]["sweetcycle_phase"] }
+        Returns: Database["public"]["Enums"]["phase_owner"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3138,6 +3474,17 @@ export type Database = {
         | "L3 Launching"
         | "L4 Leveraging"
         | "L5 Leading"
+      phase_owner: "client" | "us" | "both"
+      portal_kind:
+        | "Pre-Engagement"
+        | "Pre-Mirror"
+        | "Mirror Output"
+        | "Pre-Map"
+        | "Map Output"
+        | "Pre-Machine"
+        | "Machine Output"
+        | "Sync"
+        | "Other"
       progression_state:
         | "Not Started"
         | "Open"
@@ -3384,6 +3731,18 @@ export const Constants = {
         "L3 Launching",
         "L4 Leveraging",
         "L5 Leading",
+      ],
+      phase_owner: ["client", "us", "both"],
+      portal_kind: [
+        "Pre-Engagement",
+        "Pre-Mirror",
+        "Mirror Output",
+        "Pre-Map",
+        "Map Output",
+        "Pre-Machine",
+        "Machine Output",
+        "Sync",
+        "Other",
       ],
       progression_state: [
         "Not Started",

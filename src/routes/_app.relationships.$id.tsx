@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { Chip } from "@/components/chips";
-import { Plus } from "lucide-react";
+import { Plus, ExternalLink } from "lucide-react";
+import { SweetCycleBoard, type SweetSession } from "@/components/sweetcycle-board";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
   component: RelationshipDetail,
@@ -126,7 +127,11 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
   const maturityMap = new Map(maturity.map((m) => [m.domain_slug, m]));
 
   return (
-    <div className="grid gap-5 px-6 pt-5 lg:grid-cols-2">
+    <div className="space-y-5 pt-5">
+      <div className="px-6">
+        <JourneyStripAndBoard relationshipId={relationshipId} />
+      </div>
+      <div className="grid gap-5 px-6 lg:grid-cols-2">
       {/* Funnel */}
       <section className="panel-raised p-5">
         <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -300,6 +305,7 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
           </ul>
         )}
       </section>
+      </div>
     </div>
   );
 }
@@ -351,4 +357,155 @@ function levelBg(level: string | null | undefined): string {
   if (level.startsWith("L4")) return "border-[color:var(--success)]/30 bg-[color:var(--success)]/10";
   if (level.startsWith("L5")) return "border-[color:var(--iris-violet)]/40 bg-iris-soft";
   return "border-border bg-muted/30";
+}
+
+const STAGE_TIMELINE = ["Pre-Engagement", "Mirror", "Map", "Machine", "Sync"] as const;
+
+function JourneyStripAndBoard({ relationshipId }: { relationshipId: string }) {
+  const { data: journey } = useQuery({
+    queryKey: ["relationship_journey", relationshipId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("relationship_journey")
+        .select("*")
+        .eq("relationship_id", relationshipId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ["engagement_services", "by-rel-active", relationshipId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("engagement_services")
+        .select("id, service_type, status, sessions_purchased, sessions_used")
+        .eq("relationship_id", relationshipId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const serviceIds = services.map((s: { id: string }) => s.id);
+  const { data: sessionsByService = [] } = useQuery({
+    queryKey: ["sessions", "by-services", serviceIds.join(",")],
+    enabled: serviceIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("id, name, sweetcycle_phase, phase_owner, phase_due_date, phase_blocker, session_date, engagement_service_id")
+        .in("engagement_service_id", serviceIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: portals = [] } = useQuery({
+    queryKey: ["relationship_portals", relationshipId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("relationship_portals")
+        .select("id, kind, version, url, delivered_at, viewed_at, created_at")
+        .eq("relationship_id", relationshipId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const currentStage = (() => {
+    const s = (journey?.current_stage ?? "Pre-Engagement") as string;
+    const lower = s.toLowerCase();
+    if (lower.includes("mirror")) return "Mirror";
+    if (lower.includes("map")) return "Map";
+    if (lower.includes("machine")) return "Machine";
+    if (lower.includes("sync")) return "Sync";
+    return "Pre-Engagement";
+  })();
+  const stageIdx = STAGE_TIMELINE.indexOf(currentStage as (typeof STAGE_TIMELINE)[number]);
+
+  return (
+    <div className="space-y-4">
+      {/* Journey strip */}
+      <section className="panel-raised p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Journey
+          </h2>
+          {portals[0] && (
+            <a
+              href={portals[0].url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-iris/10 px-2.5 py-1 text-[11px] font-medium text-[color:var(--iris-violet)] transition-colors hover:bg-iris/20"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {portals[0].kind}
+              {portals[0].version && ` v${portals[0].version}`}
+              {portals[0].delivered_at && (
+                <span className="ml-1 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  Delivered
+                </span>
+              )}
+            </a>
+          )}
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {STAGE_TIMELINE.map((stage, i) => {
+            const reached = i <= stageIdx;
+            const current = i === stageIdx;
+            return (
+              <div key={stage} className="flex items-center gap-2">
+                <div
+                  className={`rounded-xl border px-3 py-1.5 text-xs font-medium transition-all ${
+                    current
+                      ? "border-[color:var(--iris-violet)] bg-iris/15 text-[color:var(--iris-violet)] shadow-[var(--shadow-glow)]"
+                      : reached
+                        ? "border-border bg-muted/40 text-foreground"
+                        : "border-dashed border-border/60 text-muted-foreground"
+                  }`}
+                >
+                  {stage}
+                </div>
+                {i < STAGE_TIMELINE.length - 1 && (
+                  <div className={`h-px w-6 ${i < stageIdx ? "bg-[color:var(--iris-violet)]" : "bg-border"}`} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {journey && (
+          <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+            <span>Sessions: {journey.ship_count}/{journey.total_session_count} shipped</span>
+            {journey.current_phase && <span>· Current phase: <span className="font-medium text-foreground">{journey.current_phase}</span></span>}
+            {journey.next_action_owner && <span>· Owner: <span className="font-medium text-foreground capitalize">{journey.next_action_owner}</span></span>}
+            {journey.next_action_due && <span>· Due {journey.next_action_due}</span>}
+          </div>
+        )}
+      </section>
+
+      {/* SweetCycle boards per active service */}
+      {services.filter((s: { status: string }) => s.status === "Active" || s.status === "In Progress").map((service: { id: string; service_type: string; status: string }) => {
+        const sessions = (sessionsByService as SweetSession[]).filter(
+          (s: SweetSession & { engagement_service_id?: string }) => s.engagement_service_id === service.id,
+        );
+        return (
+          <section key={service.id} className="panel-raised p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                SweetCycle · {service.service_type}
+              </h2>
+              <Chip tone="iris">{service.status}</Chip>
+            </div>
+            <SweetCycleBoard
+              sessions={sessions}
+              emptyHint="No sessions linked to this service yet. Add sessions and set their Engagement Service to populate this board."
+            />
+          </section>
+        );
+      })}
+    </div>
+  );
 }
