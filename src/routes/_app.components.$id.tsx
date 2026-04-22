@@ -8,6 +8,7 @@ import { OperatorChip } from "@/components/operator-chip";
 import { ComponentOutputGenerator } from "@/components/component-output-generator";
 import { JTBDList } from "@/components/jtbd-list";
 import { StoryTrail } from "@/components/story-trail";
+import { CanonGuardrail } from "@/components/canon-guardrail";
 
 export const Route = createFileRoute("/_app/components/$id")({
   component: ComponentDetail,
@@ -25,7 +26,10 @@ function ComponentDetail() {
   });
   return (
     <div className="space-y-5">
-      <div className="flex justify-end px-6 pt-4">
+      <div className="px-6 pt-5">
+        <CanonGuardrail entityKind="component" />
+      </div>
+      <div className="flex justify-end px-6">
         <OperatorChip
           table="components"
           column="responsible_operator_id"

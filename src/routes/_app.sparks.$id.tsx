@@ -8,6 +8,7 @@ import { EntityDetailPage } from "@/components/entity-workspace";
 import { TimeControls } from "@/components/time-controls";
 import { SparkProvenanceChip } from "@/components/spark-provenance-chip";
 import { ScopeChip } from "@/components/scope-chip";
+import { CanonGuardrail } from "@/components/canon-guardrail";
 import { Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/sparks/$id")({
@@ -104,8 +105,11 @@ function SparkDetail() {
 
   return (
     <div className="space-y-5">
+      <div className="px-6 pt-5">
+        <CanonGuardrail entityKind="spark" />
+      </div>
       {data && (
-        <div className="flex flex-wrap items-center gap-2 px-6 pt-4">
+        <div className="flex flex-wrap items-center gap-2 px-6">
           <SparkProvenanceChip
             kind={data.generated_by_kind}
             generatorName={operator?.name}
