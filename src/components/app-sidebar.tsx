@@ -45,11 +45,11 @@ interface NavGroup {
 }
 
 /**
- * Canonical IA — mirrors the four layers in the SweetBOS canon docs:
- *   Today (write surface) · Operate (operator side) · Library (definitions)
- *   · SweetSync (client side, system-generated) · People · Taxonomies · Settings.
+ * Canonical IA — Scenario A "Verb-first":
+ *   TODAY (capture/plan) · DELIVER (run the work) · THINK (registers & analysis)
+ *   · SWEETSYNC (self-paced) · PEOPLE · LIBRARY (collapsed) · SETTINGS.
  *
- * See `mem://design/sidebar-ia.md` and `mem://design/canon-sparks-vs-tasks.md`.
+ * See `mem://design/sidebar-ia.md` and `mem://design/canon-vocabulary.md`.
  */
 const GROUPS: NavGroup[] = [
   {
@@ -59,42 +59,33 @@ const GROUPS: NavGroup[] = [
       { to: "/today", label: "Today", icon: LayoutDashboard, hint: "Live working surface" },
       { to: "/planner", label: "Planner", icon: Layers, hint: "Plan this week / next / backlog" },
       { to: "/calendar", label: "Calendar", icon: Calendar, hint: "Visual time view" },
-      { to: "/capture", label: "Capture + Proposals", icon: Sparkles, hint: "Capture raw input + live proposal review" },
-      { to: "/queue", label: "Proposals (full)", icon: Inbox, hint: "All pending proposals" },
+      { to: "/capture", label: "Capture", icon: Sparkles, hint: "Capture raw input + live proposal review" },
+      { to: "/queue", label: "Queue", icon: Inbox, hint: "All pending proposals" },
       { to: "/my-tasks", label: "My tasks", icon: ListChecks, hint: "Work assigned to you" },
     ],
   },
   {
-    label: "Operate",
-    caption: "Operator side · SweetCycle delivery",
+    label: "Deliver",
+    caption: "Run the work · session-led path",
     items: [
       { to: "/operate/ocda", label: "OCDA Cockpit", icon: Brain, hint: "Observe · Choose · Decide · Act" },
-      { to: "/bizzybots", label: "BizzyBots", icon: Bot, hint: "9 Lens agents — ask any subject" },
-      { to: "/pipeline", label: "Pipeline", icon: Compass, hint: "Sales & engagement pipeline" },
-      { to: "/flightdeck", label: "Flightdeck", icon: Map, hint: "Cross-relationship cockpit" },
+      { to: "/sessions", label: "Sessions Bank", icon: Calendar, hint: "All Mirror / Map / Machine / Sync sessions" },
       { to: "/sweetcycle", label: "SweetCycle", icon: Compass, hint: "Active client journey" },
-      { to: "/sessions", label: "Sessions", icon: Calendar, hint: "Mirror / Machine / Map / Sync" },
-      { to: "/measures", label: "Measures", icon: Gauge, hint: "Objectives, KRs, KPIs, CSFs" },
+      { to: "/flightdeck", label: "Flightdeck", icon: Map, hint: "Cross-relationship cockpit" },
       { to: "/engagement-plans", label: "Engagement Plans", icon: Send, hint: "Contract shape per relationship" },
+      { to: "/pipeline", label: "Pipeline", icon: Compass, hint: "Sales & engagement pipeline" },
       { to: "/campaigns", label: "Campaigns", icon: Megaphone },
-      { to: "/delegation", label: "Delegation", icon: GitBranch, hint: "What only Liz can do" },
-      { to: "/decisions", label: "Decisions", icon: FileText, hint: "Logged choices & rationale" },
-      { to: "/documents", label: "Documents", icon: FileText, hint: "Briefs, deliverables, assets" },
     ],
   },
   {
-    label: "Library",
-    caption: "Definitions · what CAN be done",
-    collapsible: true,
+    label: "Think",
+    caption: "Registers & analysis",
     items: [
-      { to: "/workflows", label: "Workflows", icon: Workflow, hint: "Stored, versioned, reusable" },
-      { to: "/session-templates", label: "Session Templates", icon: Calendar, hint: "Mirror / Machine / Map / Sync catalog" },
-      { to: "/playbooks", label: "Playbooks", icon: LibraryIcon, hint: "How a service runs end-to-end" },
-      { to: "/personas", label: "Personas", icon: Users, hint: "Buyer archetypes" },
-      { to: "/components", label: "Components", icon: Layers, hint: "Reusable building blocks (maturity-tracked)" },
-      { to: "/outcomes", label: "Outcomes", icon: Target, hint: "Six measurable result types" },
-      { to: "/library/jtbd", label: "Jobs-to-be-done", icon: TargetIcon, hint: "What customers hire you for" },
-      { to: "/vault", label: "Vault", icon: Vault, hint: "All captured & generated files" },
+      { to: "/bizzybots", label: "BizzyBots", icon: Bot, hint: "9 Lens agents — ask any subject" },
+      { to: "/decisions", label: "Decisions", icon: FileText, hint: "Logged choices & rationale" },
+      { to: "/delegation", label: "Delegation Register", icon: GitBranch, hint: "Work to hand off — the systematize list" },
+      { to: "/measures", label: "Measures", icon: Gauge, hint: "Objectives, KRs, KPIs, CSFs" },
+      { to: "/documents", label: "Documents", icon: FileText, hint: "Briefs, deliverables, assets" },
     ],
   },
   {
@@ -123,10 +114,19 @@ const GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Taxonomies",
-    caption: "Universal vs industry",
+    label: "Library",
+    caption: "Definitions · what CAN be done",
     collapsible: true,
     items: [
+      { to: "/workflows", label: "Workflows", icon: Workflow, hint: "Stored, versioned, reusable" },
+      { to: "/session-templates", label: "Session Templates", icon: Calendar, hint: "Mirror / Machine / Map / Sync catalog" },
+      { to: "/playbooks", label: "Playbooks", icon: LibraryIcon, hint: "How a service runs end-to-end" },
+      { to: "/components", label: "Components", icon: Layers, hint: "Reusable building blocks (maturity-tracked)" },
+      { to: "/personas", label: "Personas", icon: Users, hint: "Buyer archetypes" },
+      { to: "/outcomes", label: "Outcomes", icon: Target, hint: "Six measurable result types" },
+      { to: "/library/jtbd", label: "Jobs-to-be-done", icon: TargetIcon, hint: "What customers hire you for" },
+      { to: "/vault", label: "Vault", icon: Vault, hint: "All captured & generated files" },
+      // — taxonomies (universal vs industry) —
       { to: "/domains", label: "Domains", icon: Gauge, hint: "22 universal areas of excellence" },
       { to: "/tenets", label: "Tenets", icon: Sparkles, hint: "Industry-specific anchors" },
     ],
