@@ -1,86 +1,129 @@
 
-# Phase 2.6 build plan — confirmed inputs
 
-You answered the two open questions:
+# Phase 2.7: Decouple tenets, model excellence as L1–L5 × 5Ps, auto-tag at capture
 
-- **Tenets are independent of Domains.** Anything (proposal, entity) can be tagged with **N domains and N tenets** (and N components). Tenets carry their own **Category** (Foundation / Specialization / Advanced / Mastery).
-- **Canon is the 22 Domains (D1–D22)** + the **22 Tenets** in your screenshot/text. Both seeded verbatim.
+You're naming three real gaps. Let me address each, then the build.
 
-Build proceeds top-to-bottom.
+## What you said, restated
 
-## 1. Confirm workflow fix
-The build error (`Cannot find name 'user'` at lines 56/87) is stale — current `src/utils/workflows.functions.ts` already uses `userId` from `context`. No-op; will re-trigger build to clear it.
+1. **Domains ≠ Tenets.** Domains are universal across all businesses (D1–D22). Tenets are **niche-dependent** (per industry). They are independent taxonomies. Today the schema already treats them as independent string arrays — good — but the UI (and the seeded tenets from the FA list) blurs them. We need to make tenets **industry-scoped** and stop treating the seeded 22 as universal.
 
-## 2. Migration A — canon reseed (Domains + Tenets, many-to-many)
-- **`tenets`** table reshaped: `id, name, slug, category (enum: Foundation|Specialization|Advanced|Mastery), description, sort_order, enabled` — NO `domain_id` foreign key (tenets stand alone).
-- **`domain_tenets`** join table (`domain_id`, `tenet_id`) — optional affinity mapping, empty by default. Lets a tenet *suggest* relevant domains without forcing 1:1.
-- Wipe prior seed: `delete from rubric_items; delete from rubric_scores; delete from tenets; delete from domains;`
-- Seed **22 domains** (D1 Strategy & Positioning … D22 Monetization) with slug, sort_order 1–22.
-- Seed **22 tenets** verbatim from your list, with category.
-- Seed one starter `rubric_item` per tenet (`prompt = tenet name`, `excellence_definition = tenet description`, scale 0–5) so dashboards render immediately.
+2. **Excellence is a matrix, not a label.** For Domains, Tenets, and Components, "excellence" is defined as **what each looks like at L1 Lacking → L2 Learning → L3 Launching → L4 Leveraging → L5 Leading**, and each is interrogated through the **5 Ps** (the lenses that produce the checklist of what to know). Today `rubric_items` is a flat list per tenet — too thin. It needs to be a **5L × 5P grid** anchored to a Domain / Tenet / Component.
 
-## 3. Migration B — capture upgrade + universal tagging
-- **Storage bucket** `captures` (private). RLS: team members read/insert their own; owner/admin delete.
-- **`capture_attachments`** table: `id, proposal_id (nullable fk), entity_table, entity_id, storage_path, mime_type, size_bytes, original_name, created_by, created_at`. After approval, attachments get re-pointed from proposal to the written record.
-- **Tag columns** added everywhere they're missing:
-  - `proposals.tagged_domains text[], tagged_tenets text[], tagged_components uuid[]`
-  - On entity tables that don't already have them: `tasks, projects, campaigns, sessions, documents, decisions, delegation, outcomes, missions, playbooks, personas, relationships` get the same three columns. (`quests`, `sparks`, `journeys`, `components` already have variants — keep those, don't duplicate.)
+3. **Capture should not make me tag.** Right now `/capture` makes you pick Domains, Tenets, Components manually. That's wrong. The AI should **read the message + files and propose the tags** as part of the proposal. You confirm or edit them in the Queue, not at capture time.
 
-## 4. Capture page upgrade (`/capture`)
-- Drag-drop / file-picker zone above the textarea. Multi-file, 25 MB cap each.
-- Three searchable multi-select tag pickers (chips): **Domains** (22), **Tenets** (22, grouped by Category), **Components** (live from DB).
-- Submit flow: upload files to `captures` bucket → call `captureProposal` with `{ text, attachment_paths[], tagged_domains, tagged_tenets, tagged_components }`.
-- AI normalizer receives: user text + filenames + extracted text from `.txt`/`.md` only. PDFs/images attach but only filename feeds AI (Worker can't run `pdf-parse`; honest limitation, swap to a parsing service later).
-- AI gets the tag context as a hint to pick `entity_type` and pre-fill fields.
+## Build
 
-## 5. Queue page upgrade (`/queue`)
-- Each proposal card shows: tag chips (domain / tenet / component), attachment list with download links.
-- Approve flow: copy tags onto written entity (where columns exist), re-point attachments from proposal_id to the new record's id.
+### 1. Schema: industry-scoped tenets + excellence rubric
 
-## 6. Workflow activation UI
-- "Activate workflow" button on `/workflows/$id` with relationship + project pickers → calls `activateWorkflow` (already wired, file is correct).
-- Show resulting `workflow_runs` row state and a link into the queue for the staged kickoff quest.
+**Migration A — `industries` + scope tenets**
+- New table `industries` (`id, name, slug, sort_order, enabled`). Seed: Financial Advisory, Legal, Accounting, Coaching, Consulting, Other (editable in Settings later).
+- Add `tenets.industry_id uuid` (nullable = universal). Backfill: the 22 seeded FA tenets get `industry_id = Financial Advisory`. Existing `tenets.category` stays (Foundation/Specialization/Advanced/Mastery).
+- Add `relationships.industry_id uuid` so a relationship's domain dashboard can filter to its industry's tenets. Migrate the existing free-text `relationships.industry` value into `industry_id` via a best-effort match, keep the text column as fallback.
+- Drop the universal-tenet UX assumption from the Domain pages and tag pickers. Tenet picker becomes industry-aware.
 
-## 7. EntityWorkspace — view switcher + Kanban
-- Add **Table / Board / Cards** toggle to `EntityWorkspace` header (top of every entity index).
-- Saved-view memory in `localStorage` per entity.
-- **Board (Kanban):** group-by column inferred from each entity's status-like field:
-  - `status` → tasks, projects, campaigns, documents
-  - `progression_state` → quests, sparks, sessions
-  - `pipeline_stage` → relationships
-  - `current_maturity_level` → components
-  - `spec_status` → personas, playbooks
-- Drag between columns via `@dnd-kit/core` (new dep) → optimistic write.
-- Card shows: primary field, owner, due date, tag chips, source/confidence pill.
-- Filter bar: status, owner, source, tag.
-- Per-entity defaults: tasks/quests/sparks/pipeline → Board; documents/components/personas/playbooks → Cards; everything else → Table.
+**Migration B — Excellence Rubric (5L × 5P)**
 
-## 8. Sidebar regroup
-Reorder into operator groups:
-- **Today** · **Capture** · **Queue** · **Pipeline**
-- **Relationships** · **Domains** · **Workflows**
-- **Library** (collapsed): Personas · Components · Playbooks · Documents · Decisions · Delegation · Sparks · Quests · Journeys · Missions · Outcomes · Domain Assessments · Sessions · Projects · Tasks · Campaigns
-- **Settings**
+New tables that replace the thin `rubric_items` model:
 
-(Library defaults collapsed so the daily-driver routes sit above the fold.)
+- `excellence_perspectives` — seeded with the 5 Ps (P1 Purpose, P2 People, P3 Process, P4 Performance, P5 Progress — confirm naming with you in Settings; placeholder until you correct).
+- `maturity_levels` — seeded with L1 Lacking, L2 Learning, L3 Launching, L4 Leveraging, L5 Leading (already an enum; keep enum, mirror as a lookup table for joins).
+- `excellence_rubric` (the matrix row):
+  - `id`
+  - `subject_kind` enum (`domain` | `tenet` | `component`)
+  - `subject_id uuid` (FK by kind, soft)
+  - `level maturity_level` (L1–L5)
+  - `perspective_id uuid` → `excellence_perspectives`
+  - `excellence_definition text` ("what excellent looks like at this level through this lens")
+  - `checklist_items text[]` ("what to know" — the questions/criteria from this 5P lens)
+  - `enabled boolean`
+- `excellence_scores` (per relationship per rubric row): `relationship_id, rubric_id, met boolean, notes, assessed_by, assessed_at`. Sums up per subject to derive current maturity.
+
+`rubric_items` / `rubric_scores` are deprecated but kept (no drop) so existing code keeps compiling; new UI reads the new tables.
+
+### 2. AI auto-tagging at capture (the big UX fix)
+
+**Capture page (`/capture`)**
+- **Remove** the three tag pickers from the form. The user just types/talks/drops files.
+- The form shows a passive hint: "Tags will be inferred — review them in the queue."
+
+**Server function (`captureProposal`)**
+- After AI normalizes the proposal, run a second pass: feed the AI (a) the canonical Domain list (22), (b) the Tenets relevant to the inferred industry (or all if unknown), (c) a short list of recent Components, and ask it to **return** `{ tagged_domains[], tagged_tenets[], tagged_components[], confidence_per_tag }`.
+- Persist these on the proposal as suggestions. Lower-confidence tags marked `suggested` vs `confident`.
+
+**Queue page (`/queue`)**
+- Each proposal card shows the **AI-suggested tags as removable chips** plus an "+ add tag" affordance. User confirms / edits / adds.
+- Approve copies the final tag set to the written entity (already wired).
+- Bulk action: "Accept all suggestions" per card.
+
+### 3. Domain & Tenet & Component pages — show the excellence checklist
+
+- `/domains/$slug`: show the **5L × 5P matrix** for that domain. Each cell shows the excellence definition + checklist. With a relationship selected, cells flip to show **score state** (met / partial / not met) and the rolled-up current maturity level.
+- New `/tenets/$slug` (mirrors domain page) — shows the matrix scoped to the tenet, filtered by the active relationship's industry.
+- `/components/$id` already exists; add the same matrix tab.
+- "What to assess next" recommendation: the lowest-scoring 5P lens at the relationship's current level.
+
+### 4. Settings: Excellence editor
+
+- New `/settings/excellence` route: edit Domains, Industries, Tenets (per industry), and Excellence Rubric cells (5L × 5P × subject). Bulk-paste support for the checklist items.
+- Seed with empty cells; you fill in the canon. AI can also **draft** rubric content from a single sentence per subject, queued as proposals (so the same approval loop applies).
+
+### 5. Sidebar tweak
+
+Add **Industries** under the operate group (small), so the industry list is explicit and editable. Tenets become reachable under each industry rather than globally.
+
+## Data flow after the change
+
+```text
+Capture (text + files, no manual tags)
+        │
+        ▼
+captureProposal  ── AI pass 1: entity_type + fields
+                 ── AI pass 2: suggest tags from canon
+        │
+        ▼
+Proposal (with suggested tag chips + attachments)
+        │
+        ▼
+Queue: review → confirm/edit tags → approve
+        │
+        ▼
+Entity row written, tags + attachments propagated
+        │
+        ▼
+Domain / Tenet / Component pages show 5L × 5P matrix
+with scored state per relationship
+```
 
 ## Files touched
 
 **Migrations**
-- `supabase/migrations/<ts>_phase2.6_canon_reseed.sql` (Domains + Tenets + join + rubric_items)
-- `supabase/migrations/<ts>_phase2.6_capture_files_tags.sql` (bucket + attachments + tag columns)
+- `<ts>_phase2.7_industries_scoped_tenets.sql` — `industries`, `tenets.industry_id`, `relationships.industry_id`, backfill
+- `<ts>_phase2.7_excellence_rubric.sql` — `excellence_perspectives`, `maturity_levels` lookup, `excellence_rubric`, `excellence_scores`, RLS
 
-**Code**
-- `src/utils/proposals.functions.ts` — accept attachments + tags, propagate on approve
-- `src/utils/workflows.functions.ts` — already correct, no edit
-- `src/routes/_app.capture.tsx` — file zone + tag pickers
-- `src/routes/_app.queue.tsx` — render attachments + tags, propagate on approve
-- `src/routes/_app.workflows.$id.tsx` — Activate button + run view
-- `src/components/entity-workspace.tsx` — view switcher + filter bar
-- `src/components/kanban-board.tsx` (new) — reusable board with `@dnd-kit/core`
-- `src/components/tag-picker.tsx` (new) — searchable multi-select for domains/tenets/components
-- `src/components/file-drop.tsx` (new) — upload zone
-- `src/components/app-sidebar.tsx` — regroup + collapsible Library
-- `package.json` — add `@dnd-kit/core`, `@dnd-kit/sortable`
+**Server**
+- `src/utils/proposals.functions.ts` — second AI pass for tag suggestion, persist suggested tags + per-tag confidence
+- `src/utils/excellence.functions.ts` (new) — read/write rubric, compute current maturity per subject per relationship
 
-No destructive changes to existing data outside the explicit domain/tenet reseed (which had only my placeholder seed in it).
+**UI**
+- `src/routes/_app.capture.tsx` — drop tag pickers, keep file drop, add inference hint
+- `src/routes/_app.queue.tsx` — render AI-suggested tag chips with confirm/edit/add
+- `src/routes/_app.domains.$slug.tsx` — replace flat rubric with 5L × 5P matrix, scored
+- `src/routes/_app.tenets.$slug.tsx` (new) — same matrix, scoped per industry
+- `src/routes/_app.components.$id.tsx` — add Excellence tab with the matrix
+- `src/routes/_app.settings.excellence.tsx` (new) — editor for industries, tenets, rubric cells
+- `src/components/excellence-matrix.tsx` (new) — reusable 5L × 5P grid
+- `src/components/tag-picker.tsx` — make Tenet picker industry-aware (used in Queue, not Capture)
+- `src/components/app-sidebar.tsx` — add Industries; nest Tenets under industry context
+
+## What I'm NOT changing
+
+- Domains canon (22) stays as-is.
+- The seeded 22 FA tenets stay — they're just re-scoped to `industry = Financial Advisory` instead of universal.
+- Existing `tagged_*` array columns stay — they're the persistence shape; only how we *populate* them changes.
+- Workflows, Kanban, Capture file uploads, Queue attachment handling — untouched.
+
+## One quick decision before I build
+
+**The 5 Ps:** I'm using placeholder names (Purpose, People, Process, Performance, Progress) so the schema lands. Confirm or replace with your canonical 5 Ps so I seed `excellence_perspectives` correctly in the same migration. If you want me to leave them as placeholders and you'll edit in `/settings/excellence`, say "placeholder is fine."
+
