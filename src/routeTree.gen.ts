@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppVaultRouteImport } from './routes/_app.vault'
 import { Route as AppTodayRouteImport } from './routes/_app.today'
+import { Route as AppSweetsyncRouteImport } from './routes/_app.sweetsync'
 import { Route as AppSweetcycleRouteImport } from './routes/_app.sweetcycle'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppQueueRouteImport } from './routes/_app.queue'
@@ -55,6 +56,7 @@ import { Route as AppTenetsSlugRouteImport } from './routes/_app.tenets.$slug'
 import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
 import { Route as AppSparksIdRouteImport } from './routes/_app.sparks.$id'
 import { Route as AppSettingsPromptsRouteImport } from './routes/_app.settings.prompts'
+import { Route as AppSettingsOpenDecisionsRouteImport } from './routes/_app.settings.open-decisions'
 import { Route as AppSettingsLensesRouteImport } from './routes/_app.settings.lenses'
 import { Route as AppSettingsExcellenceRouteImport } from './routes/_app.settings.excellence'
 import { Route as AppSessionsIdRouteImport } from './routes/_app.sessions.$id'
@@ -105,6 +107,11 @@ const AppVaultRoute = AppVaultRouteImport.update({
 const AppTodayRoute = AppTodayRouteImport.update({
   id: '/today',
   path: '/today',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSweetsyncRoute = AppSweetsyncRouteImport.update({
+  id: '/sweetsync',
+  path: '/sweetsync',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSweetcycleRoute = AppSweetcycleRouteImport.update({
@@ -314,6 +321,12 @@ const AppSettingsPromptsRoute = AppSettingsPromptsRouteImport.update({
   path: '/prompts',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsOpenDecisionsRoute =
+  AppSettingsOpenDecisionsRouteImport.update({
+    id: '/open-decisions',
+    path: '/open-decisions',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
 const AppSettingsLensesRoute = AppSettingsLensesRouteImport.update({
   id: '/lenses',
   path: '/lenses',
@@ -467,6 +480,7 @@ export interface FileRoutesByFullPath {
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
+  '/sweetsync': typeof AppSweetsyncRoute
   '/today': typeof AppTodayRoute
   '/vault': typeof AppVaultRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
@@ -493,6 +507,7 @@ export interface FileRoutesByFullPath {
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
+  '/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
   '/settings/prompts': typeof AppSettingsPromptsRoute
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
@@ -541,6 +556,7 @@ export interface FileRoutesByTo {
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
+  '/sweetsync': typeof AppSweetsyncRoute
   '/today': typeof AppTodayRoute
   '/vault': typeof AppVaultRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
@@ -567,6 +583,7 @@ export interface FileRoutesByTo {
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
+  '/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
   '/settings/prompts': typeof AppSettingsPromptsRoute
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
@@ -617,6 +634,7 @@ export interface FileRoutesById {
   '/_app/queue': typeof AppQueueRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/sweetcycle': typeof AppSweetcycleRoute
+  '/_app/sweetsync': typeof AppSweetsyncRoute
   '/_app/today': typeof AppTodayRoute
   '/_app/vault': typeof AppVaultRoute
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
@@ -643,6 +661,7 @@ export interface FileRoutesById {
   '/_app/sessions/$id': typeof AppSessionsIdRoute
   '/_app/settings/excellence': typeof AppSettingsExcellenceRoute
   '/_app/settings/lenses': typeof AppSettingsLensesRouteWithChildren
+  '/_app/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
   '/_app/settings/prompts': typeof AppSettingsPromptsRoute
   '/_app/sparks/$id': typeof AppSparksIdRoute
   '/_app/tasks/$id': typeof AppTasksIdRoute
@@ -693,6 +712,7 @@ export interface FileRouteTypes {
     | '/queue'
     | '/settings'
     | '/sweetcycle'
+    | '/sweetsync'
     | '/today'
     | '/vault'
     | '/campaigns/$id'
@@ -719,6 +739,7 @@ export interface FileRouteTypes {
     | '/sessions/$id'
     | '/settings/excellence'
     | '/settings/lenses'
+    | '/settings/open-decisions'
     | '/settings/prompts'
     | '/sparks/$id'
     | '/tasks/$id'
@@ -767,6 +788,7 @@ export interface FileRouteTypes {
     | '/queue'
     | '/settings'
     | '/sweetcycle'
+    | '/sweetsync'
     | '/today'
     | '/vault'
     | '/campaigns/$id'
@@ -793,6 +815,7 @@ export interface FileRouteTypes {
     | '/sessions/$id'
     | '/settings/excellence'
     | '/settings/lenses'
+    | '/settings/open-decisions'
     | '/settings/prompts'
     | '/sparks/$id'
     | '/tasks/$id'
@@ -842,6 +865,7 @@ export interface FileRouteTypes {
     | '/_app/queue'
     | '/_app/settings'
     | '/_app/sweetcycle'
+    | '/_app/sweetsync'
     | '/_app/today'
     | '/_app/vault'
     | '/_app/campaigns/$id'
@@ -868,6 +892,7 @@ export interface FileRouteTypes {
     | '/_app/sessions/$id'
     | '/_app/settings/excellence'
     | '/_app/settings/lenses'
+    | '/_app/settings/open-decisions'
     | '/_app/settings/prompts'
     | '/_app/sparks/$id'
     | '/_app/tasks/$id'
@@ -942,6 +967,13 @@ declare module '@tanstack/react-router' {
       path: '/today'
       fullPath: '/today'
       preLoaderRoute: typeof AppTodayRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sweetsync': {
+      id: '/_app/sweetsync'
+      path: '/sweetsync'
+      fullPath: '/sweetsync'
+      preLoaderRoute: typeof AppSweetsyncRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/sweetcycle': {
@@ -1231,6 +1263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsPromptsRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/open-decisions': {
+      id: '/_app/settings/open-decisions'
+      path: '/open-decisions'
+      fullPath: '/settings/open-decisions'
+      preLoaderRoute: typeof AppSettingsOpenDecisionsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/lenses': {
       id: '/_app/settings/lenses'
       path: '/lenses'
@@ -1437,12 +1476,14 @@ const AppSettingsLensesRouteWithChildren =
 interface AppSettingsRouteChildren {
   AppSettingsExcellenceRoute: typeof AppSettingsExcellenceRoute
   AppSettingsLensesRoute: typeof AppSettingsLensesRouteWithChildren
+  AppSettingsOpenDecisionsRoute: typeof AppSettingsOpenDecisionsRoute
   AppSettingsPromptsRoute: typeof AppSettingsPromptsRoute
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsExcellenceRoute: AppSettingsExcellenceRoute,
   AppSettingsLensesRoute: AppSettingsLensesRouteWithChildren,
+  AppSettingsOpenDecisionsRoute: AppSettingsOpenDecisionsRoute,
   AppSettingsPromptsRoute: AppSettingsPromptsRoute,
 }
 
@@ -1488,6 +1529,7 @@ interface AppRouteChildren {
   AppQueueRoute: typeof AppQueueRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppSweetcycleRoute: typeof AppSweetcycleRoute
+  AppSweetsyncRoute: typeof AppSweetsyncRoute
   AppTodayRoute: typeof AppTodayRoute
   AppVaultRoute: typeof AppVaultRoute
   AppCampaignsIdRoute: typeof AppCampaignsIdRoute
@@ -1555,6 +1597,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppQueueRoute: AppQueueRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppSweetcycleRoute: AppSweetcycleRoute,
+  AppSweetsyncRoute: AppSweetsyncRoute,
   AppTodayRoute: AppTodayRoute,
   AppVaultRoute: AppVaultRoute,
   AppCampaignsIdRoute: AppCampaignsIdRoute,

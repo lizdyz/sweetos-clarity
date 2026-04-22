@@ -17,6 +17,7 @@ import { AWARENESS_TIER, RELATIONSHIP_TEMPERATURE, DRIFT_RISK } from "@/lib/enum
 import { ServiceShapeStrip } from "@/components/service-shape-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { StoryTrail } from "@/components/story-trail";
+import { TwoPathsStrip } from "@/components/two-paths-strip";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
@@ -30,6 +31,9 @@ function RelationshipDetail() {
       <ServiceShapeStrip relationshipId={id} />
       <RelationshipPanels relationshipId={id} />
       <EntityDetailPage entityKey="relationships" />
+      <div className="px-6">
+        <TwoPathsStrip relationshipId={id} />
+      </div>
       <div className="px-6">
         <MeasuresPanel subjectType="relationship" subjectId={id} />
       </div>
