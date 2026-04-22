@@ -68,11 +68,23 @@ function nameField(table: string) {
 
 // ---------- Capture: text -> AI -> proposal ----------
 
+const AttachmentInput = z.object({
+  storage_path: z.string().min(1),
+  original_name: z.string().min(1),
+  mime_type: z.string().optional(),
+  size_bytes: z.number().int().nonnegative().optional(),
+  extracted_text: z.string().optional(),
+});
+
 const CaptureInput = z.object({
   text: z.string().trim().min(2).max(8000),
   source: z.enum(["capture", "external_ai"]).default("capture"),
   sourceLabel: z.string().trim().max(120).optional(),
   model: z.string().trim().max(120).optional(),
+  attachments: z.array(AttachmentInput).max(20).optional(),
+  tagged_domains: z.array(z.string()).max(50).optional(),
+  tagged_tenets: z.array(z.string()).max(50).optional(),
+  tagged_components: z.array(z.string().uuid()).max(50).optional(),
 });
 
 const NORMALIZER_SCHEMA = {
