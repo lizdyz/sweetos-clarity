@@ -77,6 +77,36 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
     },
   });
 
+  const { data: relProjects = [] } = useQuery({
+    queryKey: ["projects", "by-rel", relationshipId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id, name, status, deadline, next_action_due")
+        .or(`relationship_id.eq.${relationshipId},client_id.eq.${relationshipId}`)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const projectIds = relProjects.map((p: any) => p.id);
+  const { data: relTasks = [] } = useQuery({
+    queryKey: ["tasks", "by-rel", relationshipId, projectIds.length],
+    queryFn: async () => {
+      const orParts = [`relationship_id.eq.${relationshipId}`];
+      if (projectIds.length) orParts.push(`project_id.in.(${projectIds.join(",")})`);
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("id, name, status, due_date, blocked, project_id")
+        .or(orParts.join(","))
+        .order("due_date", { ascending: true, nullsFirst: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []).filter((t: any) => !["Done","Complete","Completed","Cancelled","Canceled","Archived"].includes(t.status));
+    },
+  });
+
   const { data: proposalDoc } = useQuery({
     queryKey: ["documents", rel?.proposal_document_id],
     enabled: Boolean(rel?.proposal_document_id),
