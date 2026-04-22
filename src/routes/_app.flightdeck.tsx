@@ -306,8 +306,109 @@ function FlightdeckPage() {
         </Card>
       </div>
 
+      <DoneLogPanel />
+
       <ComponentsInFlightPanel />
     </div>
+  );
+}
+
+type DoneLogRow = {
+  entity_type: string;
+  entity_id: string;
+  name: string | null;
+  done_at: string;
+  relationship_id: string | null;
+};
+
+function DoneLogPanel() {
+  const { data: rows = [] } = useQuery<DoneLogRow[]>({
+    queryKey: ["recent-done-log"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("recent_done_log" as never)
+        .select("*")
+        .order("done_at", { ascending: false })
+        .limit(60);
+      if (error) return [];
+      return (data ?? []) as DoneLogRow[];
+    },
+  });
+
+  const byDay = useMemo(() => {
+    const m = new Map<string, DoneLogRow[]>();
+    rows.forEach((r) => {
+      const day = new Date(r.done_at).toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+      const arr = m.get(day) ?? [];
+      arr.push(r);
+      m.set(day, arr);
+    });
+    return Array.from(m.entries());
+  }, [rows]);
+
+  const TYPE_TO_PATH: Record<string, string> = {
+    task: "/tasks/$id",
+    project: "/projects/$id",
+    session: "/sessions/$id",
+    spark: "/sparks/$id",
+    outcome: "/outcomes/$id",
+  };
+
+  const TYPE_TONE: Record<string, string> = {
+    task: "bg-iris/10 text-[color:var(--iris-violet)]",
+    project: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    session: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    spark: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    outcome: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+  };
+
+  return (
+    <Card className="p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold tracking-tight">Done log · last 14 days</h2>
+        <Badge variant="secondary" className="h-5 text-[10px]">{rows.length}</Badge>
+      </div>
+      {rows.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-6 text-center text-xs text-muted-foreground">
+          No completions in the last 14 days.
+        </div>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {byDay.map(([day, items]) => (
+            <div key={day} className="rounded-xl border border-border/50 bg-card/40 p-2.5">
+              <div className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {day} · {items.length}
+              </div>
+              <ul className="space-y-1">
+                {items.map((it) => (
+                  <li key={`${it.entity_type}-${it.entity_id}`}>
+                    <Link
+                      to={TYPE_TO_PATH[it.entity_type] ?? "/today"}
+                      params={{ id: it.entity_id }}
+                      className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-background p-2 text-xs hover:border-iris/40"
+                    >
+                      <span
+                        className={cn(
+                          "rounded px-1 py-0 text-[9px] font-semibold uppercase tracking-wider",
+                          TYPE_TONE[it.entity_type] ?? "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {it.entity_type}
+                      </span>
+                      <span className="line-clamp-1 flex-1">{it.name ?? "Untitled"}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -397,12 +498,12 @@ function DueThisWeekPanel() {
   const todayIso = today.toISOString().slice(0, 10);
   const weekEndIso = weekEnd.toISOString().slice(0, 10);
 
-  const { data: tasks = [] } = useQuery<Array<{ id: string; title: string; due_date: string }>>({
+  const { data: tasks = [] } = useQuery<Array<{ id: string; name: string; due_date: string }>>({
     queryKey: ["due-week", "tasks", todayIso],
     queryFn: async () => {
       const { data, error } = await sb
         .from("tasks")
-        .select("id, title, due_date, status")
+        .select("id, name, due_date, status")
         .gte("due_date", todayIso)
         .lte("due_date", weekEndIso)
         .order("due_date");
@@ -453,7 +554,7 @@ function DueThisWeekPanel() {
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-3">
-          <DueGroup title="Tasks" items={tasks.map((t) => ({ id: t.id, label: t.title, due: t.due_date, to: "/tasks/$id" }))} />
+          <DueGroup title="Tasks" items={tasks.map((t) => ({ id: t.id, label: t.name, due: t.due_date, to: "/tasks/$id" }))} />
           <DueGroup title="Projects" items={projects.map((p) => ({ id: p.id, label: p.name, due: p.deadline, to: "/projects/$id" }))} />
           <DueGroup title="Campaigns" items={campaigns.map((c) => ({ id: c.id, label: c.campaign_name, due: c.deadline, to: "/campaigns/$id" }))} />
         </div>

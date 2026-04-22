@@ -156,8 +156,29 @@ function ExcellenceSettings() {
             </SelectContent>
           </Select>
         </div>
-        <div className="text-xs text-muted-foreground">
-          {industriesQ.data?.length ?? 0} industries · {(subjectsQ.data ?? []).length} {kind}s
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{industriesQ.data?.length ?? 0} industries · {(subjectsQ.data ?? []).length} {kind}s</span>
+          {subjectId && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              onClick={async () => {
+                const { data, error } = await sb.rpc("seed_excellence_defaults" as never, {
+                  _subject_kind: kind,
+                  _subject_id: subjectId,
+                } as never);
+                if (error) toast.error(error.message);
+                else {
+                  toast.success(`Seeded ${data ?? 0} new cell(s)`);
+                  cellsQ.refetch();
+                }
+              }}
+            >
+              <Sparkles className="mr-1 h-3 w-3" />
+              Seed defaults
+            </Button>
+          )}
         </div>
       </Card>
 

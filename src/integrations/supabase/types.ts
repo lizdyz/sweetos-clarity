@@ -3559,6 +3559,16 @@ export type Database = {
         }
         Relationships: []
       }
+      recent_done_log: {
+        Row: {
+          done_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          name: string | null
+          relationship_id: string | null
+        }
+        Relationships: []
+      }
       relationship_domain_maturity: {
         Row: {
           current_level: Database["public"]["Enums"]["maturity_level"] | null
@@ -3657,6 +3667,13 @@ export type Database = {
       }
       is_team_member: { Args: { _user_id: string }; Returns: boolean }
       recompute_task_blocked: { Args: { _task_id: string }; Returns: undefined }
+      seed_excellence_defaults: {
+        Args: {
+          _subject_id: string
+          _subject_kind: Database["public"]["Enums"]["excellence_subject_kind"]
+        }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "member"
