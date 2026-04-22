@@ -19,6 +19,7 @@ import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppPeopleRouteImport } from './routes/_app.people'
 import { Route as AppMyTasksRouteImport } from './routes/_app.my-tasks'
 import { Route as AppJourneyRouteImport } from './routes/_app.journey'
+import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
@@ -30,6 +31,7 @@ import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.ind
 import { Route as AppPlaybooksIndexRouteImport } from './routes/_app.playbooks.index'
 import { Route as AppPersonasIndexRouteImport } from './routes/_app.personas.index'
 import { Route as AppOutcomesIndexRouteImport } from './routes/_app.outcomes.index'
+import { Route as AppOperatorsIndexRouteImport } from './routes/_app.operators.index'
 import { Route as AppMissionsIndexRouteImport } from './routes/_app.missions.index'
 import { Route as AppJourneysIndexRouteImport } from './routes/_app.journeys.index'
 import { Route as AppEngagementPlansIndexRouteImport } from './routes/_app.engagement-plans.index'
@@ -53,6 +55,7 @@ import { Route as AppPortalsRelationshipIdRouteImport } from './routes/_app.port
 import { Route as AppPlaybooksIdRouteImport } from './routes/_app.playbooks.$id'
 import { Route as AppPersonasIdRouteImport } from './routes/_app.personas.$id'
 import { Route as AppOutcomesIdRouteImport } from './routes/_app.outcomes.$id'
+import { Route as AppOperatorsIdRouteImport } from './routes/_app.operators.$id'
 import { Route as AppMissionsIdRouteImport } from './routes/_app.missions.$id'
 import { Route as AppJourneysIdRouteImport } from './routes/_app.journeys.$id'
 import { Route as AppEngagementPlansIdRouteImport } from './routes/_app.engagement-plans.$id'
@@ -113,6 +116,11 @@ const AppJourneyRoute = AppJourneyRouteImport.update({
   path: '/journey',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFlightdeckRoute = AppFlightdeckRouteImport.update({
+  id: '/flightdeck',
+  path: '/flightdeck',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCaptureRoute = AppCaptureRouteImport.update({
   id: '/capture',
   path: '/capture',
@@ -166,6 +174,11 @@ const AppPersonasIndexRoute = AppPersonasIndexRouteImport.update({
 const AppOutcomesIndexRoute = AppOutcomesIndexRouteImport.update({
   id: '/outcomes/',
   path: '/outcomes/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOperatorsIndexRoute = AppOperatorsIndexRouteImport.update({
+  id: '/operators/',
+  path: '/operators/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMissionsIndexRoute = AppMissionsIndexRouteImport.update({
@@ -285,6 +298,11 @@ const AppOutcomesIdRoute = AppOutcomesIdRouteImport.update({
   path: '/outcomes/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOperatorsIdRoute = AppOperatorsIdRouteImport.update({
+  id: '/operators/$id',
+  path: '/operators/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMissionsIdRoute = AppMissionsIdRouteImport.update({
   id: '/missions/$id',
   path: '/missions/$id',
@@ -340,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
+  '/flightdeck': typeof AppFlightdeckRoute
   '/journey': typeof AppJourneyRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
@@ -357,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/journeys/$id': typeof AppJourneysIdRoute
   '/missions/$id': typeof AppMissionsIdRoute
+  '/operators/$id': typeof AppOperatorsIdRoute
   '/outcomes/$id': typeof AppOutcomesIdRoute
   '/personas/$id': typeof AppPersonasIdRoute
   '/playbooks/$id': typeof AppPlaybooksIdRoute
@@ -380,6 +400,7 @@ export interface FileRoutesByFullPath {
   '/engagement-plans/': typeof AppEngagementPlansIndexRoute
   '/journeys/': typeof AppJourneysIndexRoute
   '/missions/': typeof AppMissionsIndexRoute
+  '/operators/': typeof AppOperatorsIndexRoute
   '/outcomes/': typeof AppOutcomesIndexRoute
   '/personas/': typeof AppPersonasIndexRoute
   '/playbooks/': typeof AppPlaybooksIndexRoute
@@ -395,6 +416,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
+  '/flightdeck': typeof AppFlightdeckRoute
   '/journey': typeof AppJourneyRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
@@ -412,6 +434,7 @@ export interface FileRoutesByTo {
   '/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/journeys/$id': typeof AppJourneysIdRoute
   '/missions/$id': typeof AppMissionsIdRoute
+  '/operators/$id': typeof AppOperatorsIdRoute
   '/outcomes/$id': typeof AppOutcomesIdRoute
   '/personas/$id': typeof AppPersonasIdRoute
   '/playbooks/$id': typeof AppPlaybooksIdRoute
@@ -435,6 +458,7 @@ export interface FileRoutesByTo {
   '/engagement-plans': typeof AppEngagementPlansIndexRoute
   '/journeys': typeof AppJourneysIndexRoute
   '/missions': typeof AppMissionsIndexRoute
+  '/operators': typeof AppOperatorsIndexRoute
   '/outcomes': typeof AppOutcomesIndexRoute
   '/personas': typeof AppPersonasIndexRoute
   '/playbooks': typeof AppPlaybooksIndexRoute
@@ -452,6 +476,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/capture': typeof AppCaptureRoute
+  '/_app/flightdeck': typeof AppFlightdeckRoute
   '/_app/journey': typeof AppJourneyRoute
   '/_app/my-tasks': typeof AppMyTasksRoute
   '/_app/people': typeof AppPeopleRoute
@@ -469,6 +494,7 @@ export interface FileRoutesById {
   '/_app/engagement-plans/$id': typeof AppEngagementPlansIdRoute
   '/_app/journeys/$id': typeof AppJourneysIdRoute
   '/_app/missions/$id': typeof AppMissionsIdRoute
+  '/_app/operators/$id': typeof AppOperatorsIdRoute
   '/_app/outcomes/$id': typeof AppOutcomesIdRoute
   '/_app/personas/$id': typeof AppPersonasIdRoute
   '/_app/playbooks/$id': typeof AppPlaybooksIdRoute
@@ -492,6 +518,7 @@ export interface FileRoutesById {
   '/_app/engagement-plans/': typeof AppEngagementPlansIndexRoute
   '/_app/journeys/': typeof AppJourneysIndexRoute
   '/_app/missions/': typeof AppMissionsIndexRoute
+  '/_app/operators/': typeof AppOperatorsIndexRoute
   '/_app/outcomes/': typeof AppOutcomesIndexRoute
   '/_app/personas/': typeof AppPersonasIndexRoute
   '/_app/playbooks/': typeof AppPlaybooksIndexRoute
@@ -509,6 +536,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/capture'
+    | '/flightdeck'
     | '/journey'
     | '/my-tasks'
     | '/people'
@@ -526,6 +554,7 @@ export interface FileRouteTypes {
     | '/engagement-plans/$id'
     | '/journeys/$id'
     | '/missions/$id'
+    | '/operators/$id'
     | '/outcomes/$id'
     | '/personas/$id'
     | '/playbooks/$id'
@@ -549,6 +578,7 @@ export interface FileRouteTypes {
     | '/engagement-plans/'
     | '/journeys/'
     | '/missions/'
+    | '/operators/'
     | '/outcomes/'
     | '/personas/'
     | '/playbooks/'
@@ -564,6 +594,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/capture'
+    | '/flightdeck'
     | '/journey'
     | '/my-tasks'
     | '/people'
@@ -581,6 +612,7 @@ export interface FileRouteTypes {
     | '/engagement-plans/$id'
     | '/journeys/$id'
     | '/missions/$id'
+    | '/operators/$id'
     | '/outcomes/$id'
     | '/personas/$id'
     | '/playbooks/$id'
@@ -604,6 +636,7 @@ export interface FileRouteTypes {
     | '/engagement-plans'
     | '/journeys'
     | '/missions'
+    | '/operators'
     | '/outcomes'
     | '/personas'
     | '/playbooks'
@@ -620,6 +653,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/capture'
+    | '/_app/flightdeck'
     | '/_app/journey'
     | '/_app/my-tasks'
     | '/_app/people'
@@ -637,6 +671,7 @@ export interface FileRouteTypes {
     | '/_app/engagement-plans/$id'
     | '/_app/journeys/$id'
     | '/_app/missions/$id'
+    | '/_app/operators/$id'
     | '/_app/outcomes/$id'
     | '/_app/personas/$id'
     | '/_app/playbooks/$id'
@@ -660,6 +695,7 @@ export interface FileRouteTypes {
     | '/_app/engagement-plans/'
     | '/_app/journeys/'
     | '/_app/missions/'
+    | '/_app/operators/'
     | '/_app/outcomes/'
     | '/_app/personas/'
     | '/_app/playbooks/'
@@ -750,6 +786,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppJourneyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/flightdeck': {
+      id: '/_app/flightdeck'
+      path: '/flightdeck'
+      fullPath: '/flightdeck'
+      preLoaderRoute: typeof AppFlightdeckRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/capture': {
       id: '/_app/capture'
       path: '/capture'
@@ -825,6 +868,13 @@ declare module '@tanstack/react-router' {
       path: '/outcomes'
       fullPath: '/outcomes/'
       preLoaderRoute: typeof AppOutcomesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/operators/': {
+      id: '/_app/operators/'
+      path: '/operators'
+      fullPath: '/operators/'
+      preLoaderRoute: typeof AppOperatorsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/missions/': {
@@ -988,6 +1038,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutcomesIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/operators/$id': {
+      id: '/_app/operators/$id'
+      path: '/operators/$id'
+      fullPath: '/operators/$id'
+      preLoaderRoute: typeof AppOperatorsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/missions/$id': {
       id: '/_app/missions/$id'
       path: '/missions/$id'
@@ -1075,6 +1132,7 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppCaptureRoute: typeof AppCaptureRoute
+  AppFlightdeckRoute: typeof AppFlightdeckRoute
   AppJourneyRoute: typeof AppJourneyRoute
   AppMyTasksRoute: typeof AppMyTasksRoute
   AppPeopleRoute: typeof AppPeopleRoute
@@ -1092,6 +1150,7 @@ interface AppRouteChildren {
   AppEngagementPlansIdRoute: typeof AppEngagementPlansIdRoute
   AppJourneysIdRoute: typeof AppJourneysIdRoute
   AppMissionsIdRoute: typeof AppMissionsIdRoute
+  AppOperatorsIdRoute: typeof AppOperatorsIdRoute
   AppOutcomesIdRoute: typeof AppOutcomesIdRoute
   AppPersonasIdRoute: typeof AppPersonasIdRoute
   AppPlaybooksIdRoute: typeof AppPlaybooksIdRoute
@@ -1114,6 +1173,7 @@ interface AppRouteChildren {
   AppEngagementPlansIndexRoute: typeof AppEngagementPlansIndexRoute
   AppJourneysIndexRoute: typeof AppJourneysIndexRoute
   AppMissionsIndexRoute: typeof AppMissionsIndexRoute
+  AppOperatorsIndexRoute: typeof AppOperatorsIndexRoute
   AppOutcomesIndexRoute: typeof AppOutcomesIndexRoute
   AppPersonasIndexRoute: typeof AppPersonasIndexRoute
   AppPlaybooksIndexRoute: typeof AppPlaybooksIndexRoute
@@ -1128,6 +1188,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCaptureRoute: AppCaptureRoute,
+  AppFlightdeckRoute: AppFlightdeckRoute,
   AppJourneyRoute: AppJourneyRoute,
   AppMyTasksRoute: AppMyTasksRoute,
   AppPeopleRoute: AppPeopleRoute,
@@ -1145,6 +1206,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEngagementPlansIdRoute: AppEngagementPlansIdRoute,
   AppJourneysIdRoute: AppJourneysIdRoute,
   AppMissionsIdRoute: AppMissionsIdRoute,
+  AppOperatorsIdRoute: AppOperatorsIdRoute,
   AppOutcomesIdRoute: AppOutcomesIdRoute,
   AppPersonasIdRoute: AppPersonasIdRoute,
   AppPlaybooksIdRoute: AppPlaybooksIdRoute,
@@ -1167,6 +1229,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEngagementPlansIndexRoute: AppEngagementPlansIndexRoute,
   AppJourneysIndexRoute: AppJourneysIndexRoute,
   AppMissionsIndexRoute: AppMissionsIndexRoute,
+  AppOperatorsIndexRoute: AppOperatorsIndexRoute,
   AppOutcomesIndexRoute: AppOutcomesIndexRoute,
   AppPersonasIndexRoute: AppPersonasIndexRoute,
   AppPlaybooksIndexRoute: AppPlaybooksIndexRoute,

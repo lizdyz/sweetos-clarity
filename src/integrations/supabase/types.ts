@@ -1265,6 +1265,74 @@ export type Database = {
           },
         ]
       }
+      operators: {
+        Row: {
+          agent_model: string | null
+          agent_system_prompt: string | null
+          availability: string
+          avatar_url: string | null
+          created_at: string
+          created_by: string
+          dislikes: string[]
+          enabled: boolean
+          id: string
+          kind: Database["public"]["Enums"]["operator_kind"]
+          likes: string[]
+          name: string
+          notes: string | null
+          profile_id: string | null
+          skills: string[]
+          updated_at: string
+          workflow_id: string | null
+        }
+        Insert: {
+          agent_model?: string | null
+          agent_system_prompt?: string | null
+          availability?: string
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string
+          dislikes?: string[]
+          enabled?: boolean
+          id?: string
+          kind: Database["public"]["Enums"]["operator_kind"]
+          likes?: string[]
+          name: string
+          notes?: string | null
+          profile_id?: string | null
+          skills?: string[]
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          agent_model?: string | null
+          agent_system_prompt?: string | null
+          availability?: string
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string
+          dislikes?: string[]
+          enabled?: boolean
+          id?: string
+          kind?: Database["public"]["Enums"]["operator_kind"]
+          likes?: string[]
+          name?: string
+          notes?: string | null
+          profile_id?: string | null
+          skills?: string[]
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operators_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outcomes: {
         Row: {
           client_id: string | null
@@ -2789,6 +2857,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          operator_id: string | null
           output_format: string | null
           output_link: string | null
           owner: string | null
@@ -2826,6 +2895,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          operator_id?: string | null
           output_format?: string | null
           output_link?: string | null
           owner?: string | null
@@ -2863,6 +2933,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          operator_id?: string | null
           output_format?: string | null
           output_link?: string | null
           owner?: string | null
@@ -2889,6 +2960,20 @@ export type Database = {
             columns: ["assignee_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "tasks_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
             referencedColumns: ["id"]
           },
           {
@@ -3321,6 +3406,22 @@ export type Database = {
           },
         ]
       }
+      operator_workload: {
+        Row: {
+          availability: string | null
+          avatar_url: string | null
+          blocked_tasks: number | null
+          enabled: boolean | null
+          kind: Database["public"]["Enums"]["operator_kind"] | null
+          name: string | null
+          next_due: string | null
+          open_tasks: number | null
+          operator_id: string | null
+          overdue_tasks: number | null
+          skills: string[] | null
+        }
+        Relationships: []
+      }
       project_rollup: {
         Row: {
           blocked_tasks: number | null
@@ -3474,6 +3575,7 @@ export type Database = {
         | "L3 Launching"
         | "L4 Leveraging"
         | "L5 Leading"
+      operator_kind: "human" | "workflow" | "agent"
       phase_owner: "client" | "us" | "both"
       portal_kind:
         | "Pre-Engagement"
@@ -3732,6 +3834,7 @@ export const Constants = {
         "L4 Leveraging",
         "L5 Leading",
       ],
+      operator_kind: ["human", "workflow", "agent"],
       phase_owner: ["client", "us", "both"],
       portal_kind: [
         "Pre-Engagement",
