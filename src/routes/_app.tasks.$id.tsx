@@ -36,6 +36,22 @@ function TaskDetail() {
   );
 }
 
+function TaskCreatedByChip({ taskId }: { taskId: string }) {
+  const { data } = useQuery({
+    queryKey: ["tasks", "source", taskId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("source")
+        .eq("id", taskId)
+        .maybeSingle();
+      if (error) return null;
+      return data as { source: string | null } | null;
+    },
+  });
+  return <CreatedByChip source={data?.source} />;
+}
+
 function TaskOperatorChip({ taskId }: { taskId: string }) {
   const { data } = useQuery({
     queryKey: ["tasks", "operator", taskId],
