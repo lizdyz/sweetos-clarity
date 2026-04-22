@@ -1,5 +1,352 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { EntityListPage } from "@/components/entity-workspace";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { sb } from "@/lib/sb";
+import { useAuth } from "@/lib/auth-context";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/chips";
+import {
+  Search,
+  Filter,
+  ListChecks,
+  AlertTriangle,
+  CalendarClock,
+  Flame,
+  Link as LinkIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format, parseISO, isPast, isToday } from "date-fns";
+
 export const Route = createFileRoute("/_app/tasks/")({
-  component: () => <EntityListPage entityKey="tasks" />,
+  component: TasksIndexPage,
 });
+
+interface TaskRow {
+  id: string;
+  name: string;
+  status: string | null;
+  due_date: string | null;
+  scheduled_for: string | null;
+  blocked: boolean | null;
+  assignee_id: string | null;
+  operator_id: string | null;
+  relationship_id: string | null;
+  project_id: string | null;
+  updated_at: string;
+  created_by: string;
+}
+interface BlockerRow {
+  task_id: string;
+  blocker_task_id: string;
+  blocker_name: string;
+  blocker_status: string | null;
+}
+interface RelMin {
+  id: string;
+  name: string;
+}
+interface OpMin {
+  id: string;
+  display_name: string | null;
+}
+
+type Mode = "all" | "mine" | "blocked" | "overdue" | "unscheduled";
+type GroupBy = "status" | "relationship" | "operator" | "due";
+
+const STATUS_ORDER = ["In Progress", "Not Started", "Waiting", "Blocked", "Done"];
+
+function dueBucket(t: TaskRow): string {
+  if (!t.due_date) return "Unscheduled";
+  const d = parseISO(t.due_date);
+  if (isPast(d) && !isToday(d)) return "Overdue";
+  if (isToday(d)) return "Today";
+  const diff = (d.getTime() - Date.now()) / 86_400_000;
+  if (diff <= 7) return "This week";
+  if (diff <= 30) return "This month";
+  return "Later";
+}
+
+function TasksIndexPage() {
+  const { user } = useAuth();
+  const [q, setQ] = useState("");
+  const [mode, setMode] = useState<Mode>("all");
+  const [groupBy, setGroupBy] = useState<GroupBy>("status");
+
+  const { data: tasks = [] } = useQuery<TaskRow[]>({
+    queryKey: ["tasks-index"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("tasks")
+        .select("id, name, status, due_date, scheduled_for, blocked, assignee_id, operator_id, relationship_id, project_id, updated_at, created_by")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: blockers = [] } = useQuery<BlockerRow[]>({
+    queryKey: ["task-blockers-index"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("task_blockers").select("*");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: rels = [] } = useQuery<RelMin[]>({
+    queryKey: ["relationships-min-for-tasks"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("relationships").select("id, name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: ops = [] } = useQuery<OpMin[]>({
+    queryKey: ["operators-min-for-tasks"],
+    queryFn: async () => {
+      const { data, error } = await sb.from("operators").select("id, display_name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const blockerMap = useMemo(() => {
+    const m = new Map<string, BlockerRow[]>();
+    blockers.forEach((b) => {
+      const arr = m.get(b.task_id) ?? [];
+      arr.push(b);
+      m.set(b.task_id, arr);
+    });
+    return m;
+  }, [blockers]);
+  const relMap = useMemo(() => new Map(rels.map((r) => [r.id, r.name])), [rels]);
+  const opMap = useMemo(() => new Map(ops.map((o) => [o.id, o.display_name ?? "—"])), [ops]);
+
+  const filtered = useMemo(() => {
+    return tasks.filter((t) => {
+      if (q && !t.name.toLowerCase().includes(q.toLowerCase())) return false;
+      if (mode === "mine" && t.created_by !== user?.id && t.assignee_id !== user?.id) return false;
+      if (mode === "blocked" && !t.blocked) return false;
+      if (mode === "overdue") {
+        if (!t.due_date) return false;
+        const d = parseISO(t.due_date);
+        if (!isPast(d) || isToday(d)) return false;
+        if (t.status === "Done") return false;
+      }
+      if (mode === "unscheduled" && (t.due_date || t.scheduled_for)) return false;
+      return true;
+    });
+  }, [tasks, q, mode, user?.id]);
+
+  const groups = useMemo(() => {
+    const m = new Map<string, TaskRow[]>();
+    filtered.forEach((t) => {
+      let key = "—";
+      if (groupBy === "status") key = t.status ?? "—";
+      if (groupBy === "relationship")
+        key = t.relationship_id ? (relMap.get(t.relationship_id) ?? "—") : "No relationship";
+      if (groupBy === "operator")
+        key = t.operator_id ? (opMap.get(t.operator_id) ?? "—") : "Unassigned";
+      if (groupBy === "due") key = dueBucket(t);
+      const arr = m.get(key) ?? [];
+      arr.push(t);
+      m.set(key, arr);
+    });
+    const entries = Array.from(m.entries());
+    if (groupBy === "status") {
+      entries.sort(
+        (a, b) => STATUS_ORDER.indexOf(a[0]) - STATUS_ORDER.indexOf(b[0]),
+      );
+    } else if (groupBy === "due") {
+      const order = ["Overdue", "Today", "This week", "This month", "Later", "Unscheduled"];
+      entries.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
+    } else {
+      entries.sort((a, b) => a[0].localeCompare(b[0]));
+    }
+    return entries;
+  }, [filtered, groupBy, relMap, opMap]);
+
+  const blockedCount = tasks.filter((t) => t.blocked).length;
+  const overdueCount = tasks.filter(
+    (t) => t.due_date && isPast(parseISO(t.due_date)) && !isToday(parseISO(t.due_date)) && t.status !== "Done",
+  ).length;
+
+  return (
+    <div className="mx-auto max-w-[1500px] space-y-5 p-6">
+      <header className="flex items-center gap-3">
+        <div className="grid h-10 w-10 place-items-center rounded-xl bg-iris/10 text-[color:var(--iris-violet)]">
+          <ListChecks className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Tasks</h1>
+          <p className="text-sm text-muted-foreground">
+            {tasks.length} total · <span className="text-destructive">{overdueCount} overdue</span> ·{" "}
+            <span className="text-[color:var(--warning-foreground)]">{blockedCount} blocked</span>
+          </p>
+        </div>
+        <Link to="/tasks/$id" params={{ id: "new" }}>
+          <Button size="sm">+ New task</Button>
+        </Link>
+      </header>
+
+      <Card className="p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Filter className="h-3 w-3" /> Show
+          </div>
+          {(
+            [
+              { id: "all", label: "All" },
+              { id: "mine", label: "Mine" },
+              { id: "blocked", label: `Blocked (${blockedCount})` },
+              { id: "overdue", label: `Overdue (${overdueCount})` },
+              { id: "unscheduled", label: "Unscheduled" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setMode(opt.id)}
+              className={cn(
+                "rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                mode === opt.id
+                  ? "border-iris bg-iris-soft"
+                  : "border-border bg-background hover:bg-muted",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+
+          <span className="ml-2 text-[11px] uppercase tracking-wider text-muted-foreground">Group by</span>
+          {(
+            [
+              { id: "status", label: "Status" },
+              { id: "due", label: "Due" },
+              { id: "relationship", label: "Relationship" },
+              { id: "operator", label: "Operator" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setGroupBy(opt.id)}
+              className={cn(
+                "rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                groupBy === opt.id
+                  ? "border-iris bg-iris-soft"
+                  : "border-border bg-background hover:bg-muted",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+
+          <div className="relative ml-auto">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search…"
+              className="h-8 w-[200px] pl-7 text-xs"
+            />
+          </div>
+        </div>
+      </Card>
+
+      {groups.length === 0 ? (
+        <Card className="p-10 text-center text-sm text-muted-foreground">
+          No tasks match these filters.
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {groups.map(([groupKey, items]) => (
+            <Card key={groupKey} className="overflow-hidden p-0">
+              <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {groupKey}
+                </div>
+                <div className="text-[10px] text-muted-foreground tabular-nums">{items.length}</div>
+              </div>
+              <div className="divide-y divide-border/50">
+                {items.map((t) => {
+                  const taskBlockers = blockerMap.get(t.id) ?? [];
+                  const due = t.due_date ? parseISO(t.due_date) : null;
+                  const isDueOverdue = due ? isPast(due) && !isToday(due) && t.status !== "Done" : false;
+                  return (
+                    <Link
+                      key={t.id}
+                      to="/tasks/$id"
+                      params={{ id: t.id }}
+                      className="block px-4 py-3 transition-colors hover:bg-muted/40"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "truncate font-medium",
+                                t.status === "Done" && "text-muted-foreground line-through",
+                              )}
+                            >
+                              {t.name}
+                            </span>
+                            {t.status && (
+                              <Chip tone="neutral" className="h-4 text-[9px]">
+                                {t.status}
+                              </Chip>
+                            )}
+                            {t.blocked && (
+                              <Chip tone="warning" className="h-4 text-[9px]">
+                                <AlertTriangle className="h-2.5 w-2.5" />
+                                Blocked
+                              </Chip>
+                            )}
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            {due && (
+                              <Chip
+                                tone={isDueOverdue ? "destructive" : "muted"}
+                                className="h-4 text-[9px]"
+                              >
+                                <CalendarClock className="h-2.5 w-2.5" />
+                                {isDueOverdue && <Flame className="h-2.5 w-2.5" />}
+                                {format(due, "MMM d")}
+                              </Chip>
+                            )}
+                            {t.operator_id && (
+                              <span className="rounded-full border border-border bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                                {opMap.get(t.operator_id) ?? "—"}
+                              </span>
+                            )}
+                            {t.relationship_id && (
+                              <span className="rounded-full border border-border bg-iris-soft px-1.5 py-0.5 text-[9px]">
+                                {relMap.get(t.relationship_id) ?? "—"}
+                              </span>
+                            )}
+                          </div>
+                          {taskBlockers.length > 0 && (
+                            <div className="mt-1.5 flex items-start gap-1.5 rounded-md bg-[color:var(--warning)]/8 px-2 py-1 text-[10px] text-[color:var(--warning-foreground)]">
+                              <LinkIcon className="mt-0.5 h-2.5 w-2.5 shrink-0" />
+                              <span className="line-clamp-1">
+                                Blocked by:{" "}
+                                {taskBlockers
+                                  .map((b) => `${b.blocker_name} (${b.blocker_status ?? "—"})`)
+                                  .join(" · ")}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
