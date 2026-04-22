@@ -88,6 +88,17 @@ export interface EntityDef {
   primaryField: string; // name field
   fields: FieldDef[];
   defaultSort?: { key: string; dir: "asc" | "desc" };
+  /**
+   * Whether humans can create rows of this entity from the UI. Default true.
+   * Sparks are system-generated only (Canon §9) — set to false to hide
+   * the "+ New" button and replace with an explainer banner.
+   */
+  canCreate?: boolean;
+  /**
+   * Optional banner shown at the top of the list when canCreate === false,
+   * explaining where the rows come from.
+   */
+  systemGeneratedNote?: string;
 }
 
 const owner = (key = "owner", label = "Owner", group = "Identity") =>
@@ -515,6 +526,9 @@ export const ENTITIES: Record<string, EntityDef> = {
     label: "Spark",
     labelPlural: "Sparks",
     primaryField: "name",
+    canCreate: false,
+    systemGeneratedNote:
+      "Sparks are atomic interactions the system generates — Question, Creation, Definition, Decision, Reflection, Action — to advance a Component. They appear here for you to review, confirm, edit, or skip. To spawn new Sparks, create a Quest or run a Curator.",
     fields: [
       { key: "name", label: "Spark", kind: "text", group: "Identity", inList: true, primary: true },
       { key: "spark_type", label: "Type", kind: "select", options: SPARK_TYPE, group: "Identity", inList: true },
@@ -525,6 +539,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { key: "source_of_advancement", label: "Source", kind: "select", options: SOURCE_OF_ADVANCEMENT, group: "Advancement" },
       { key: "captured_answer", label: "Captured answer", kind: "longtext", group: "Advancement" },
       { key: "confidence", label: "Confidence", kind: "select", options: INTELLIGENCE_CONFIDENCE, group: "Advancement" },
+      { key: "origin_event", label: "Origin event", kind: "text", group: "Provenance", inList: true },
     ],
   },
 
