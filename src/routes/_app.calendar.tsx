@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_app/calendar")({
   component: CalendarPage,
 });
 
-const KIND_TONE: Record<CalendarEvent["kind"], string> = {
+const KIND_TONE: Record<CalendarEvent["kind"] | "spark", string> = {
   task: "bg-iris/15 text-[color:var(--iris-violet)] border-iris/30",
   session: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
   campaign: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
