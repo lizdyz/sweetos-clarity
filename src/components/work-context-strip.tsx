@@ -104,16 +104,17 @@ export function WorkContextStrip({
   });
 
   const blockerIds = data?.blocked_by_tasks ?? [];
+  type BlockerRow = { id: string; name: string; status: string | null };
   const { data: blockers } = useQuery({
     queryKey: ["context_blockers", blockerIds.join(",")],
     queryFn: async () => {
-      if (blockerIds.length === 0) return [];
+      if (blockerIds.length === 0) return [] as BlockerRow[];
       const { data, error } = await supabase
         .from("tasks")
         .select("id, name, status")
         .in("id", blockerIds);
       if (error) throw error;
-      return (data ?? []).filter((t) => !["Done", "Complete", "Completed"].includes(t.status ?? ""));
+      return ((data ?? []) as BlockerRow[]).filter((t) => !["Done", "Complete", "Completed"].includes(t.status ?? ""));
     },
     enabled: blockerIds.length > 0,
   });

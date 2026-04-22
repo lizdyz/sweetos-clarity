@@ -62,16 +62,17 @@ export function ComponentLinkPanel({ projectId, className }: ComponentLinkPanelP
   });
 
   const componentIds = links.map((l) => l.component_id);
+  type CRow = { id: string; name: string; current_maturity_level: string | null };
   const { data: components = [] } = useQuery({
     queryKey: ["components_for_links", componentIds.join(",")],
     queryFn: async () => {
-      if (componentIds.length === 0) return [];
+      if (componentIds.length === 0) return [] as CRow[];
       const { data, error } = await supabase
         .from("components")
         .select("id, name, current_maturity_level")
         .in("id", componentIds);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as CRow[];
     },
     enabled: componentIds.length > 0,
   });
@@ -83,7 +84,7 @@ export function ComponentLinkPanel({ projectId, className }: ComponentLinkPanelP
       if (search.trim()) q = q.ilike("name", `%${search.trim()}%`);
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []).filter((c) => !componentIds.includes(c.id));
+      return ((data ?? []) as CRow[]).filter((c) => !componentIds.includes(c.id));
     },
     enabled: pickerOpen,
   });
