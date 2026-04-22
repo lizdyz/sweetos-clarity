@@ -578,6 +578,36 @@ export type Database = {
           },
         ]
       }
+      domain_tenets: {
+        Row: {
+          domain_id: string
+          tenet_id: string
+        }
+        Insert: {
+          domain_id: string
+          tenet_id: string
+        }
+        Update: {
+          domain_id?: string
+          tenet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_tenets_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_tenets_tenet_id_fkey"
+            columns: ["tenet_id"]
+            isOneToOne: false
+            referencedRelation: "tenets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domains: {
         Row: {
           color: string
@@ -1980,10 +2010,10 @@ export type Database = {
       }
       tenets: {
         Row: {
+          category: Database["public"]["Enums"]["tenet_category"]
           created_at: string
           created_by: string | null
           description: string | null
-          domain_id: string
           enabled: boolean
           excellence_definition: string | null
           id: string
@@ -1993,10 +2023,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: Database["public"]["Enums"]["tenet_category"]
           created_at?: string
           created_by?: string | null
           description?: string | null
-          domain_id: string
           enabled?: boolean
           excellence_definition?: string | null
           id?: string
@@ -2006,10 +2036,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: Database["public"]["Enums"]["tenet_category"]
           created_at?: string
           created_by?: string | null
           description?: string | null
-          domain_id?: string
           enabled?: boolean
           excellence_definition?: string | null
           id?: string
@@ -2018,15 +2048,7 @@ export type Database = {
           sort_order?: number
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "tenets_domain_id_fkey"
-            columns: ["domain_id"]
-            isOneToOne: false
-            referencedRelation: "domains"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -2388,6 +2410,7 @@ export type Database = {
         | "Adopted"
         | "Sustained"
       sweetcycle_phase: "Seed" | "Synthesize" | "Session" | "Sync" | "Ship"
+      tenet_category: "Foundation" | "Specialization" | "Advanced" | "Mastery"
       workflow_run_status:
         | "planned"
         | "running"
@@ -2604,6 +2627,7 @@ export const Constants = {
         "Sustained",
       ],
       sweetcycle_phase: ["Seed", "Synthesize", "Session", "Sync", "Ship"],
+      tenet_category: ["Foundation", "Specialization", "Advanced", "Mastery"],
       workflow_run_status: [
         "planned",
         "running",
