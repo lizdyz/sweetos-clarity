@@ -4,6 +4,7 @@ import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { Calendar, ExternalLink, Layers } from "lucide-react";
+import { OperatorChip } from "@/components/operator-chip";
 
 export const Route = createFileRoute("/_app/sessions/$id")({
   component: SessionDetail,

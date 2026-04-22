@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { ActiveBuildPanel } from "@/components/active-build-panel";
 import { MeasuresPanel } from "@/components/measures-panel";
+import { OperatorChip } from "@/components/operator-chip";
 
 export const Route = createFileRoute("/_app/components/$id")({
   component: ComponentDetail,

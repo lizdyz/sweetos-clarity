@@ -8,6 +8,7 @@ import { Plus, X, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { WorkContextStrip } from "@/components/work-context-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
+import { OperatorChip } from "@/components/operator-chip";
 
 export const Route = createFileRoute("/_app/tasks/$id")({
   component: TaskDetail,

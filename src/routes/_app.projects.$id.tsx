@@ -9,6 +9,7 @@ import { ComponentLinkPanel } from "@/components/component-link-panel";
 import { WorkContextStrip } from "@/components/work-context-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
+import { OperatorChip } from "@/components/operator-chip";
 
 export const Route = createFileRoute("/_app/projects/$id")({
   component: ProjectDetail,
