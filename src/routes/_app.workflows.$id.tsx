@@ -30,6 +30,16 @@ export const Route = createFileRoute("/_app/workflows/$id")({
   component: WorkflowDetail,
 });
 
+interface WorkflowRun {
+  id: string;
+  status: string;
+  progress_pct: number | null;
+  created_at: string;
+  relationship_id: string | null;
+  project_id: string | null;
+  notes: string | null;
+}
+
 function WorkflowDetail() {
   const { id } = useParams({ from: "/_app/workflows/$id" });
   const [activateOpen, setActivateOpen] = useState(false);
@@ -43,7 +53,7 @@ function WorkflowDetail() {
         .eq("workflow_id", id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as WorkflowRun[];
     },
   });
 
@@ -147,7 +157,7 @@ function ActivateSheet({
         .select("id, name")
         .order("name");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Array<{ id: string; name: string }>;
     },
   });
   const { data: projects } = useQuery({
@@ -158,7 +168,7 @@ function ActivateSheet({
         .select("id, name")
         .order("name");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Array<{ id: string; name: string }>;
     },
   });
 
