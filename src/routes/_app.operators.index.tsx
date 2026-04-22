@@ -268,18 +268,6 @@ function NewOperatorDialog({
     },
     onError: (e: Error) => toast.error(e.message),
   });
-    onSuccess: () => {
-      toast.success("Operator created");
-      qc.invalidateQueries({ queryKey: ["operators"] });
-      qc.invalidateQueries({ queryKey: ["operator-workload"] });
-      onOpenChange(false);
-      setName("");
-      setProfileId("");
-      setWorkflowId("");
-      setAgentPrompt("");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
