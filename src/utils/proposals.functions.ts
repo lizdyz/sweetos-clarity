@@ -165,7 +165,36 @@ export const captureProposal = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { sb, userId } = await requireUser();
     const model = data.model || "google/gemini-3-flash-preview";
-    const parsed = await callNormalizer(data.text, model);
+
+    // Augment text with attachment context for the AI
+    const attachmentNotes = (data.attachments ?? [])
+      .map((a) => {
+        const txt = a.extracted_text?.trim();
+        return txt
+          ? `\n\n[Attachment: ${a.original_name}]\n${txt.slice(0, 4000)}`
+          : `\n\n[Attached file: ${a.original_name}]`;
+      })
+      .join("");
+
+    const tagHint =
+      [
+        data.tagged_domains?.length
+          ? `Tagged domains: ${data.tagged_domains.join(", ")}`
+          : null,
+        data.tagged_tenets?.length
+          ? `Tagged tenets: ${data.tagged_tenets.join(", ")}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+    const augmentedText = [
+      data.text,
+      tagHint ? `\n\n---\nUser tags:\n${tagHint}` : "",
+      attachmentNotes,
+    ].join("");
+
+    const parsed = await callNormalizer(augmentedText, model);
 
     // Try to find an existing record by name fuzzy match
     const table = ENTITY_TABLE[parsed.entity_type];
@@ -198,12 +227,32 @@ export const captureProposal = createServerFn({ method: "POST" })
         ai_notes: parsed.reasoning ?? null,
         matched_record_id: matchedId,
         matched_record_table: matchedId ? table : null,
+        tagged_domains: data.tagged_domains ?? [],
+        tagged_tenets: data.tagged_tenets ?? [],
+        tagged_components: data.tagged_components ?? [],
         created_by: userId,
-      })
+      } as never)
       .select("*")
       .single();
 
     if (error) throw new Error(error.message);
+
+    const proposalRow = row as { id: string };
+
+    // Link any uploaded attachments to this proposal
+    if (data.attachments?.length) {
+      await sb.from("capture_attachments").insert(
+        data.attachments.map((a) => ({
+          proposal_id: proposalRow.id,
+          storage_path: a.storage_path,
+          original_name: a.original_name,
+          mime_type: a.mime_type ?? null,
+          size_bytes: a.size_bytes ?? null,
+          created_by: userId,
+        })) as never,
+      );
+    }
+
     return { proposal: row };
   });
 
