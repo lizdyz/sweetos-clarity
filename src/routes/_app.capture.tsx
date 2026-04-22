@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { captureProposal } from "@/utils/proposals.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { FileDrop, type PendingFile } from "@/components/file-drop";
-import { TagPicker } from "@/components/tag-picker";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/capture")({
@@ -39,12 +38,14 @@ async function extractTextIfPossible(file: File): Promise<string | undefined> {
 function CapturePage() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [last, setLast] = useState<{ entity_type: string; confidence: number; id: string } | null>(null);
+  const [last, setLast] = useState<{
+    entity_type: string;
+    confidence: number;
+    id: string;
+    suggested_tags?: { domains: string[]; tenets: string[]; components: string[] };
+  } | null>(null);
   const [listening, setListening] = useState(false);
   const [files, setFiles] = useState<PendingFile[]>([]);
-  const [taggedDomains, setTaggedDomains] = useState<string[]>([]);
-  const [taggedTenets, setTaggedTenets] = useState<string[]>([]);
-  const [taggedComponents, setTaggedComponents] = useState<string[]>([]);
   const recRef = useRef<Recognition | null>(null);
   const baseTextRef = useRef("");
 
@@ -134,18 +135,28 @@ function CapturePage() {
           text: text.trim() || `Captured ${attachments.length} attachment(s)`,
           source,
           attachments,
-          tagged_domains: taggedDomains,
-          tagged_tenets: taggedTenets,
-          tagged_components: taggedComponents,
         },
       });
-      const p = res.proposal as { id: string; entity_type: string; confidence: number };
-      setLast({ id: p.id, entity_type: p.entity_type, confidence: p.confidence });
+      const p = res.proposal as {
+        id: string;
+        entity_type: string;
+        confidence: number;
+        tagged_domains?: string[];
+        tagged_tenets?: string[];
+        tagged_components?: string[];
+      };
+      setLast({
+        id: p.id,
+        entity_type: p.entity_type,
+        confidence: p.confidence,
+        suggested_tags: {
+          domains: p.tagged_domains ?? [],
+          tenets: p.tagged_tenets ?? [],
+          components: p.tagged_components ?? [],
+        },
+      });
       setText("");
       setFiles([]);
-      setTaggedDomains([]);
-      setTaggedTenets([]);
-      setTaggedComponents([]);
       baseTextRef.current = "";
       toast.success(`Staged a ${p.entity_type} proposal.`);
     } catch (err) {
@@ -166,7 +177,7 @@ function CapturePage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Universal Capture</h1>
           <p className="text-sm text-muted-foreground">
-            Type, talk, or drop files. Tag what it's about. Nothing is written until you approve it.
+            Type, talk, or drop files. The AI infers the entity, tags, and links — review in the queue.
           </p>
         </div>
       </div>
@@ -178,14 +189,8 @@ function CapturePage() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="e.g. New persona — burned-out solo founder in legaltech, 35-50, struggling with client intake..."
-          className="min-h-[140px] resize-none border-0 bg-transparent text-[15px] focus-visible:ring-0"
+          className="min-h-[160px] resize-none border-0 bg-transparent text-[15px] focus-visible:ring-0"
         />
-
-        <div className="grid gap-3 border-t pt-3 sm:grid-cols-3">
-          <TagPicker label="Domains" variant="domains" value={taggedDomains} onChange={setTaggedDomains} />
-          <TagPicker label="Tenets" variant="tenets" value={taggedTenets} onChange={setTaggedTenets} />
-          <TagPicker label="Components" variant="components" value={taggedComponents} onChange={setTaggedComponents} />
-        </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
           <div className="flex items-center gap-2">
@@ -235,6 +240,20 @@ function CapturePage() {
               Staged a <span className="text-[color:var(--iris-violet)]">{last.entity_type}</span> proposal
               {" "}<span className="text-muted-foreground">· confidence {(last.confidence * 100).toFixed(0)}%</span>
             </div>
+            {last.suggested_tags && (last.suggested_tags.domains.length > 0 || last.suggested_tags.tenets.length > 0) && (
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {last.suggested_tags.domains.map((d) => (
+                  <span key={`d-${d}`} className="rounded-md bg-iris-soft px-1.5 py-0.5 text-[10px] font-medium">
+                    {d}
+                  </span>
+                ))}
+                {last.suggested_tags.tenets.map((t) => (
+                  <span key={`t-${t}`} className="rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="mt-1 text-xs text-muted-foreground">
               Review and approve it in the queue before it's written.
             </div>
@@ -251,8 +270,8 @@ function CapturePage() {
       <Card className="panel-raised mt-4 flex items-start gap-3 p-4 text-sm">
         <AlertCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
         <p className="text-muted-foreground">
-          Tags help the AI route the proposal and pre-link it to the right Domains, Tenets, and Components.
-          Text is extracted from <code className="rounded bg-muted px-1 text-[11px]">.txt</code> /{" "}
+          Tags will be inferred — review them in the queue. Text is extracted from{" "}
+          <code className="rounded bg-muted px-1 text-[11px]">.txt</code> /{" "}
           <code className="rounded bg-muted px-1 text-[11px]">.md</code> files; PDFs and images attach but
           aren't parsed yet.
         </p>
