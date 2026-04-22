@@ -71,19 +71,6 @@ function OperatorDetailPage() {
     },
   });
 
-  const { data: tasks = [] } = useQuery<{ id: string; name: string; status: string | null; due_date: string | null; blocked: boolean | null }[]>({
-    queryKey: ["operator-tasks", id],
-    queryFn: async () => {
-      const { data, error } = await sb
-        .from("tasks")
-        .select("id, name, status, due_date, blocked")
-        .eq("operator_id", id)
-        .order("due_date", { ascending: true, nullsFirst: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
   const update = useMutation({
     mutationFn: async (patch: Partial<Operator>) => {
       const { error } = await sb.from("operators").update(patch).eq("id", id);
