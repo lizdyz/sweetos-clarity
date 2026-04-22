@@ -15,8 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Radar, Loader2, Play, Inbox, Flame, Eye } from "lucide-react";
+import { Radar, Loader2, Play, Inbox, Flame, Eye, Globe } from "lucide-react";
 import { KtiPanel } from "@/components/kti-panel";
+import { InboundSignalCard, type InboundSignal } from "@/components/inbound-signal-card";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_app/sweetscan")({
 
 /**
  * SweetScan — the outside-in intelligence surface.
- * Forward radar (KTIs) · Rubric scanner · Signal inbox.
+ * Forward radar (KTIs) · Rubric scanner · World Watch · Signal inbox.
  * See `mem://design/sweetscan-as-eyes-and-ears.md`.
  */
 function SweetScanPage() {
@@ -45,12 +46,15 @@ function SweetScanPage() {
       </header>
 
       <Tabs defaultValue="radar">
-        <TabsList className="grid w-full max-w-xl grid-cols-3">
+        <TabsList className="grid w-full max-w-3xl grid-cols-4">
           <TabsTrigger value="radar" className="gap-1.5">
             <Radar className="h-3.5 w-3.5" /> Forward radar
           </TabsTrigger>
           <TabsTrigger value="rubric" className="gap-1.5">
             <Eye className="h-3.5 w-3.5" /> Rubric scanner
+          </TabsTrigger>
+          <TabsTrigger value="world" className="gap-1.5">
+            <Globe className="h-3.5 w-3.5" /> World Watch
           </TabsTrigger>
           <TabsTrigger value="inbox" className="gap-1.5">
             <Inbox className="h-3.5 w-3.5" /> Signal inbox
@@ -62,6 +66,9 @@ function SweetScanPage() {
         </TabsContent>
         <TabsContent value="rubric" className="pt-4">
           <RubricScannerTab />
+        </TabsContent>
+        <TabsContent value="world" className="pt-4">
+          <WorldWatchTab />
         </TabsContent>
         <TabsContent value="inbox" className="pt-4">
           <SignalInboxTab />
@@ -225,6 +232,47 @@ function RubricScannerTab() {
   );
 }
 
+function WorldWatchTab() {
+  const { data: rels = [] } = useQuery({
+    queryKey: ["sweetscan", "relationships"],
+    queryFn: async () => {
+      const { data } = await sb.from("relationships").select("id, name").order("name");
+      return data ?? [];
+    },
+  });
+
+  return (
+    <Card className="panel-raised p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Globe className="h-4 w-4 text-[color:var(--iris-violet)]" />
+        <h3 className="text-sm font-semibold">World Watch by client</h3>
+      </div>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Pick a relationship to see its forward radar + everything tagged to that client from
+        Capture and external sources.
+      </p>
+      {rels.length === 0 ? (
+        <p className="py-6 text-center text-xs text-muted-foreground">No relationships yet.</p>
+      ) : (
+        <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+          {(rels as Array<{ id: string; name: string }>).map((r) => (
+            <li key={r.id}>
+              <Link
+                to="/relationships/$id"
+                params={{ id: r.id }}
+                className="flex items-center gap-2 rounded-md border border-border/40 bg-card/40 px-2 py-1.5 text-xs hover:bg-iris-soft/40"
+              >
+                <Globe className="h-3 w-3 text-muted-foreground" />
+                <span className="truncate font-medium">{r.name}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
 interface KtiScanRow {
   id: string;
   kti_id: string;
@@ -271,8 +319,48 @@ function SignalInboxTab() {
     },
   });
 
+  const { data: inbound = [] } = useQuery<InboundSignal[]>({
+    queryKey: ["sweetscan", "inbound"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("inbound_signals")
+        .select(
+          "id, source_kind, source_url, summary, classified_kind, classified_subject_type, classified_subject_id, confidence, status, created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return (data ?? []) as InboundSignal[];
+    },
+  });
+
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-3">
+      <Card className="panel-raised p-4">
+        <header className="mb-3 flex items-center gap-2">
+          <Inbox className="h-3.5 w-3.5 text-[color:var(--iris-violet)]" />
+          <h3 className="text-sm font-semibold">Inbound captures</h3>
+          <span className="ml-auto text-[10px] text-muted-foreground">{inbound.length}</span>
+        </header>
+        {inbound.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            Nothing inbound yet. Drop articles, podcasts, or transcripts in{" "}
+            <Link to="/capture" className="text-[color:var(--iris-violet)] hover:underline">
+              Capture
+            </Link>
+            .
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {inbound.map((s) => (
+              <li key={s.id}>
+                <InboundSignalCard signal={s} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
       <Card className="panel-raised p-4">
         <header className="mb-3 flex items-center gap-2">
           <Flame className="h-3.5 w-3.5 text-amber-500" />

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Moon, Search, Sun, Sparkles, LogOut, Menu } from "lucide-react";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { BotAlertsBell } from "@/components/bot-alerts-bell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,6 +74,8 @@ export function AppTopBar() {
             soon
           </span>
         </Button>
+
+        <BotAlertsBell />
 
         <Button
           variant="ghost"

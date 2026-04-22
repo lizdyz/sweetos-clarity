@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/chips";
+import { TasksPipelineRibbon } from "@/components/tasks-pipeline-ribbon";
+import { TaskProvenanceChip, type SpawnedByKind } from "@/components/task-provenance-chip";
 import {
   Search,
   Filter,
@@ -15,9 +17,13 @@ import {
   CalendarClock,
   Flame,
   Link as LinkIcon,
+  Zap,
+  Target,
+  TrendingUp,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, parseISO, isPast, isToday } from "date-fns";
+import { format, parseISO, isPast, isToday, differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/_app/tasks/")({
   component: TasksIndexPage,
@@ -36,6 +42,8 @@ interface TaskRow {
   project_id: string | null;
   updated_at: string;
   created_by: string;
+  spawned_by_kind: SpawnedByKind;
+  spawned_by_id: string | null;
 }
 interface BlockerRow {
   task_id: string;
@@ -55,7 +63,8 @@ interface OpMin {
 type Mode = "all" | "mine" | "blocked" | "overdue" | "unscheduled";
 type GroupBy = "status" | "relationship" | "operator" | "due";
 
-const STATUS_ORDER = ["In Progress", "Not Started", "Waiting", "Blocked", "Done"];
+const STATUS_ORDER = ["In Progress", "Not Started", "To Do", "Waiting", "Blocked", "Done"];
+const CLOSED = new Set(["Done", "Complete", "Completed", "Cancelled", "Canceled", "Archived"]);
 
 function dueBucket(t: TaskRow): string {
   if (!t.due_date) return "Unscheduled";
@@ -66,6 +75,13 @@ function dueBucket(t: TaskRow): string {
   if (diff <= 7) return "This week";
   if (diff <= 30) return "This month";
   return "Later";
+}
+
+interface NextUpItem {
+  task: TaskRow;
+  reason: "due-today" | "kti-fire" | "leverage" | "stalled";
+  badge: string;
+  blocksCount?: number;
 }
 
 function TasksIndexPage() {
@@ -79,10 +95,12 @@ function TasksIndexPage() {
     queryFn: async () => {
       const { data, error } = await sb
         .from("tasks")
-        .select("id, name, status, due_date, scheduled_for, blocked, assignee_id, operator_id, relationship_id, project_id, updated_at, created_by")
+        .select(
+          "id, name, status, due_date, scheduled_for, blocked, assignee_id, operator_id, relationship_id, project_id, updated_at, created_by, spawned_by_kind, spawned_by_id",
+        )
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as TaskRow[];
     },
   });
 
@@ -113,6 +131,7 @@ function TasksIndexPage() {
     },
   });
 
+  // blocker_task_id is the blocker; task_id is what it blocks. Map blocker → list of tasks it unblocks.
   const blockerMap = useMemo(() => {
     const m = new Map<string, BlockerRow[]>();
     blockers.forEach((b) => {
@@ -122,8 +141,68 @@ function TasksIndexPage() {
     });
     return m;
   }, [blockers]);
+
+  const blocksMap = useMemo(() => {
+    // For each task, how many other tasks does it block?
+    const m = new Map<string, number>();
+    blockers.forEach((b) => {
+      m.set(b.blocker_task_id, (m.get(b.blocker_task_id) ?? 0) + 1);
+    });
+    return m;
+  }, [blockers]);
+
   const relMap = useMemo(() => new Map(rels.map((r) => [r.id, r.name])), [rels]);
   const opMap = useMemo(() => new Map(ops.map((o) => [o.id, o.display_name ?? "—"])), [ops]);
+
+  // ─── NEXT UP LANE ────────────────────────────────────────────────────────
+  const nextUp = useMemo<NextUpItem[]>(() => {
+    const open = tasks.filter((t) => !CLOSED.has(t.status ?? ""));
+    const items: NextUpItem[] = [];
+    const seen = new Set<string>();
+
+    // 1. Unblocked & due today
+    for (const t of open) {
+      if (t.blocked) continue;
+      if (!t.due_date) continue;
+      if (!isToday(parseISO(t.due_date))) continue;
+      if (seen.has(t.id)) continue;
+      items.push({ task: t, reason: "due-today", badge: "Due today" });
+      seen.add(t.id);
+    }
+    // 2. Unblocked & spawned by KTI
+    for (const t of open) {
+      if (t.blocked) continue;
+      if (t.spawned_by_kind !== "kti") continue;
+      if (seen.has(t.id)) continue;
+      items.push({ task: t, reason: "kti-fire", badge: "From KTI fire" });
+      seen.add(t.id);
+    }
+    // 3. Unblocking the most other work
+    const leverage = open
+      .filter((t) => !t.blocked && (blocksMap.get(t.id) ?? 0) > 0 && !seen.has(t.id))
+      .sort((a, b) => (blocksMap.get(b.id) ?? 0) - (blocksMap.get(a.id) ?? 0))
+      .slice(0, 3);
+    for (const t of leverage) {
+      items.push({
+        task: t,
+        reason: "leverage",
+        badge: `Unblocks ${blocksMap.get(t.id)}`,
+        blocksCount: blocksMap.get(t.id),
+      });
+      seen.add(t.id);
+    }
+    // 4. Started but stalled ≥3 days
+    for (const t of open) {
+      if (t.status !== "In Progress") continue;
+      if (differenceInDays(new Date(), new Date(t.updated_at)) < 3) continue;
+      if (seen.has(t.id)) continue;
+      items.push({ task: t, reason: "stalled", badge: "Stalled" });
+      seen.add(t.id);
+      if (items.length >= 8) break;
+    }
+
+    return items.slice(0, 8);
+  }, [tasks, blocksMap]);
 
   const filtered = useMemo(() => {
     return tasks.filter((t) => {
@@ -134,7 +213,7 @@ function TasksIndexPage() {
         if (!t.due_date) return false;
         const d = parseISO(t.due_date);
         if (!isPast(d) || isToday(d)) return false;
-        if (t.status === "Done") return false;
+        if (CLOSED.has(t.status ?? "")) return false;
       }
       if (mode === "unscheduled" && (t.due_date || t.scheduled_for)) return false;
       return true;
@@ -171,7 +250,7 @@ function TasksIndexPage() {
 
   const blockedCount = tasks.filter((t) => t.blocked).length;
   const overdueCount = tasks.filter(
-    (t) => t.due_date && isPast(parseISO(t.due_date)) && !isToday(parseISO(t.due_date)) && t.status !== "Done",
+    (t) => t.due_date && isPast(parseISO(t.due_date)) && !isToday(parseISO(t.due_date)) && !CLOSED.has(t.status ?? ""),
   ).length;
 
   return (
@@ -191,6 +270,52 @@ function TasksIndexPage() {
           <Button size="sm">+ New task</Button>
         </Link>
       </header>
+
+      {/* Pipeline ribbon */}
+      <TasksPipelineRibbon />
+
+      {/* Next up lane */}
+      {nextUp.length > 0 && (
+        <Card className="overflow-hidden p-0">
+          <div className="flex items-center gap-2 border-b border-border/60 bg-iris-soft/40 px-4 py-2">
+            <Zap className="h-3.5 w-3.5 text-[color:var(--iris-violet)]" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider">
+              Next up
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              · highest-leverage moves right now
+            </span>
+            <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">
+              {nextUp.length}
+            </span>
+          </div>
+          <div className="divide-y divide-border/50">
+            {nextUp.map(({ task: t, reason, badge }) => (
+              <Link
+                key={`nx-${t.id}`}
+                to="/tasks/$id"
+                params={{ id: t.id }}
+                className="flex items-center gap-2 px-4 py-2 text-xs hover:bg-muted/40"
+              >
+                <ReasonDot reason={reason} />
+                <span className="truncate font-medium">{t.name}</span>
+                <span className="shrink-0 rounded-full border border-border bg-background px-1.5 py-0 text-[9px] font-medium text-muted-foreground">
+                  {badge}
+                </span>
+                <TaskProvenanceChip kind={t.spawned_by_kind} id={t.spawned_by_id} />
+                {t.relationship_id && (
+                  <span className="shrink-0 rounded-full bg-iris-soft px-1.5 py-0 text-[9px]">
+                    {relMap.get(t.relationship_id) ?? "—"}
+                  </span>
+                )}
+                <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
+                  {t.due_date ? format(parseISO(t.due_date), "MMM d") : "—"}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card className="p-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -272,8 +397,9 @@ function TasksIndexPage() {
               <div className="divide-y divide-border/50">
                 {items.map((t) => {
                   const taskBlockers = blockerMap.get(t.id) ?? [];
+                  const blocksN = blocksMap.get(t.id) ?? 0;
                   const due = t.due_date ? parseISO(t.due_date) : null;
-                  const isDueOverdue = due ? isPast(due) && !isToday(due) && t.status !== "Done" : false;
+                  const isDueOverdue = due ? isPast(due) && !isToday(due) && !CLOSED.has(t.status ?? "") : false;
                   return (
                     <Link
                       key={t.id}
@@ -287,7 +413,7 @@ function TasksIndexPage() {
                             <span
                               className={cn(
                                 "truncate font-medium",
-                                t.status === "Done" && "text-muted-foreground line-through",
+                                CLOSED.has(t.status ?? "") && "text-muted-foreground line-through",
                               )}
                             >
                               {t.name}
@@ -305,6 +431,15 @@ function TasksIndexPage() {
                             )}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            {/* Provenance chip — why does this task exist */}
+                            <TaskProvenanceChip kind={t.spawned_by_kind} id={t.spawned_by_id} />
+                            {/* Downstream — what does this task unblock */}
+                            {blocksN > 0 && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/30 bg-purple-500/10 px-1.5 py-0 text-[9px] font-medium text-purple-600 dark:text-purple-400">
+                                <LinkIcon className="h-2.5 w-2.5" />
+                                Unblocks {blocksN}
+                              </span>
+                            )}
                             {due && (
                               <Chip
                                 tone={isDueOverdue ? "destructive" : "muted"}
@@ -349,4 +484,14 @@ function TasksIndexPage() {
       )}
     </div>
   );
+}
+
+function ReasonDot({ reason }: { reason: NextUpItem["reason"] }) {
+  if (reason === "due-today")
+    return <Target className="h-3 w-3 shrink-0 text-emerald-500" aria-label="Due today" />;
+  if (reason === "kti-fire")
+    return <Flame className="h-3 w-3 shrink-0 text-amber-500" aria-label="KTI fire" />;
+  if (reason === "leverage")
+    return <TrendingUp className="h-3 w-3 shrink-0 text-purple-500" aria-label="High leverage" />;
+  return <Clock className="h-3 w-3 shrink-0 text-orange-500" aria-label="Stalled" />;
 }

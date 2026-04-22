@@ -71,6 +71,60 @@ export type Database = {
           },
         ]
       }
+      bot_alerts: {
+        Row: {
+          body: string | null
+          created_at: string
+          for_user_id: string | null
+          id: string
+          kind: string
+          read_at: string | null
+          relationship_id: string | null
+          source_id: string | null
+          source_kind: string | null
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          for_user_id?: string | null
+          id?: string
+          kind: string
+          read_at?: string | null
+          relationship_id?: string | null
+          source_id?: string | null
+          source_kind?: string | null
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          for_user_id?: string | null
+          id?: string
+          kind?: string
+          read_at?: string | null
+          relationship_id?: string | null
+          source_id?: string | null
+          source_kind?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_alerts_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "bot_alerts_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cadence_settings: {
         Row: {
           category: string
@@ -2161,6 +2215,71 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "maturity_threshold_progress"
             referencedColumns: ["rubric_id"]
+          },
+        ]
+      }
+      inbound_signals: {
+        Row: {
+          capture_attachment_id: string | null
+          classified_kind: string | null
+          classified_subject_id: string | null
+          classified_subject_type: string | null
+          confidence: number | null
+          created_at: string
+          created_by: string
+          id: string
+          raw_payload: Json
+          routed_to_id: string | null
+          routed_to_kind: string | null
+          source_kind: Database["public"]["Enums"]["inbound_signal_source"]
+          source_url: string | null
+          status: Database["public"]["Enums"]["inbound_signal_status"]
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          capture_attachment_id?: string | null
+          classified_kind?: string | null
+          classified_subject_id?: string | null
+          classified_subject_type?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          raw_payload?: Json
+          routed_to_id?: string | null
+          routed_to_kind?: string | null
+          source_kind: Database["public"]["Enums"]["inbound_signal_source"]
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["inbound_signal_status"]
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          capture_attachment_id?: string | null
+          classified_kind?: string | null
+          classified_subject_id?: string | null
+          classified_subject_type?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          raw_payload?: Json
+          routed_to_id?: string | null
+          routed_to_kind?: string | null
+          source_kind?: Database["public"]["Enums"]["inbound_signal_source"]
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["inbound_signal_status"]
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbound_signals_capture_attachment_id_fkey"
+            columns: ["capture_attachment_id"]
+            isOneToOne: false
+            referencedRelation: "capture_attachments"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5739,6 +5858,10 @@ export type Database = {
           scheduled_for: string | null
           source: Database["public"]["Enums"]["proposal_source"] | null
           source_ref: string | null
+          spawned_by_id: string | null
+          spawned_by_kind:
+            | Database["public"]["Enums"]["task_spawned_by_kind"]
+            | null
           status: string | null
           success_criteria: string | null
           tagged_components: string[]
@@ -5782,6 +5905,10 @@ export type Database = {
           scheduled_for?: string | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
+          spawned_by_id?: string | null
+          spawned_by_kind?:
+            | Database["public"]["Enums"]["task_spawned_by_kind"]
+            | null
           status?: string | null
           success_criteria?: string | null
           tagged_components?: string[]
@@ -5825,6 +5952,10 @@ export type Database = {
           scheduled_for?: string | null
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
+          spawned_by_id?: string | null
+          spawned_by_kind?:
+            | Database["public"]["Enums"]["task_spawned_by_kind"]
+            | null
           status?: string | null
           success_criteria?: string | null
           tagged_components?: string[]
@@ -7073,6 +7204,13 @@ export type Database = {
         | "SweetConnect"
       excellence_score_state: "not_assessed" | "not_met" | "partial" | "met"
       excellence_subject_kind: "domain" | "tenet" | "component"
+      inbound_signal_source:
+        | "url"
+        | "podcast"
+        | "transcript"
+        | "screenshot"
+        | "text"
+      inbound_signal_status: "pending" | "routed" | "dismissed"
       intelligence_confidence:
         | "Not Yet Verified"
         | "Inferred"
@@ -7218,6 +7356,13 @@ export type Database = {
         | "Adopted"
         | "Sustained"
       sweetcycle_phase: "Seed" | "Synthesize" | "Session" | "Sync" | "Ship"
+      task_spawned_by_kind:
+        | "kti"
+        | "spark"
+        | "decision"
+        | "capture"
+        | "workflow"
+        | "manual"
       tenet_category: "Foundation" | "Specialization" | "Advanced" | "Mastery"
       workflow_run_status:
         | "planned"
@@ -7403,6 +7548,14 @@ export const Constants = {
       ],
       excellence_score_state: ["not_assessed", "not_met", "partial", "met"],
       excellence_subject_kind: ["domain", "tenet", "component"],
+      inbound_signal_source: [
+        "url",
+        "podcast",
+        "transcript",
+        "screenshot",
+        "text",
+      ],
+      inbound_signal_status: ["pending", "routed", "dismissed"],
       intelligence_confidence: [
         "Not Yet Verified",
         "Inferred",
@@ -7555,6 +7708,14 @@ export const Constants = {
         "Sustained",
       ],
       sweetcycle_phase: ["Seed", "Synthesize", "Session", "Sync", "Ship"],
+      task_spawned_by_kind: [
+        "kti",
+        "spark",
+        "decision",
+        "capture",
+        "workflow",
+        "manual",
+      ],
       tenet_category: ["Foundation", "Specialization", "Advanced", "Mastery"],
       workflow_run_status: [
         "planned",
