@@ -146,6 +146,9 @@ export type Database = {
           source: Database["public"]["Enums"]["proposal_source"] | null
           source_ref: string | null
           status: string | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           target_persona: string[] | null
           type: string | null
           updated_at: string
@@ -173,6 +176,9 @@ export type Database = {
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           target_persona?: string[] | null
           type?: string | null
           updated_at?: string
@@ -200,6 +206,9 @@ export type Database = {
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           target_persona?: string[] | null
           type?: string | null
           updated_at?: string
@@ -207,6 +216,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "campaigns_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capture_attachments: {
+        Row: {
+          created_at: string
+          created_by: string
+          entity_id: string | null
+          entity_table: string | null
+          id: string
+          mime_type: string | null
+          original_name: string
+          proposal_id: string | null
+          size_bytes: number | null
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          entity_id?: string | null
+          entity_table?: string | null
+          id?: string
+          mime_type?: string | null
+          original_name: string
+          proposal_id?: string | null
+          size_bytes?: number | null
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          entity_id?: string | null
+          entity_table?: string | null
+          id?: string
+          mime_type?: string | null
+          original_name?: string
+          proposal_id?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capture_attachments_proposal_id_fkey"
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
@@ -306,6 +362,9 @@ export type Database = {
           related_project_id: string | null
           status: string | null
           supersedes: string | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           updated_at: string
         }
         Insert: {
@@ -321,6 +380,9 @@ export type Database = {
           related_project_id?: string | null
           status?: string | null
           supersedes?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
         }
         Update: {
@@ -336,6 +398,9 @@ export type Database = {
           related_project_id?: string | null
           status?: string | null
           supersedes?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
         }
         Relationships: [
@@ -369,6 +434,9 @@ export type Database = {
           notes: string | null
           only_liz_can_do_this_because: string | null
           status: string | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           task_or_responsibility: string
           updated_at: string
           what_would_make_it_delegatable: string | null
@@ -386,6 +454,9 @@ export type Database = {
           notes?: string | null
           only_liz_can_do_this_because?: string | null
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           task_or_responsibility: string
           updated_at?: string
           what_would_make_it_delegatable?: string | null
@@ -403,6 +474,9 @@ export type Database = {
           notes?: string | null
           only_liz_can_do_this_because?: string | null
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           task_or_responsibility?: string
           updated_at?: string
           what_would_make_it_delegatable?: string | null
@@ -434,6 +508,9 @@ export type Database = {
           owner: string | null
           prompt_status: string | null
           status: string | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           tone_voice: string | null
           type: string | null
           updated_at: string
@@ -456,6 +533,9 @@ export type Database = {
           owner?: string | null
           prompt_status?: string | null
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           tone_voice?: string | null
           type?: string | null
           updated_at?: string
@@ -478,6 +558,9 @@ export type Database = {
           owner?: string | null
           prompt_status?: string | null
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           tone_voice?: string | null
           type?: string | null
           updated_at?: string
@@ -578,6 +661,36 @@ export type Database = {
           },
         ]
       }
+      domain_tenets: {
+        Row: {
+          domain_id: string
+          tenet_id: string
+        }
+        Insert: {
+          domain_id: string
+          tenet_id: string
+        }
+        Update: {
+          domain_id?: string
+          tenet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_tenets_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_tenets_tenet_id_fkey"
+            columns: ["tenet_id"]
+            isOneToOne: false
+            referencedRelation: "tenets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domains: {
         Row: {
           color: string
@@ -666,6 +779,9 @@ export type Database = {
           id: string
           name: string
           status: string | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           target_timeframe: string | null
           updated_at: string
         }
@@ -678,6 +794,9 @@ export type Database = {
           id?: string
           name: string
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           target_timeframe?: string | null
           updated_at?: string
         }
@@ -690,6 +809,9 @@ export type Database = {
           id?: string
           name?: string
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           target_timeframe?: string | null
           updated_at?: string
         }
@@ -714,6 +836,9 @@ export type Database = {
           measured_date: string | null
           measured_value: string | null
           outcome_type: string
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           updated_at: string
         }
         Insert: {
@@ -726,6 +851,9 @@ export type Database = {
           measured_date?: string | null
           measured_value?: string | null
           outcome_type: string
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
         }
         Update: {
@@ -738,6 +866,9 @@ export type Database = {
           measured_date?: string | null
           measured_value?: string | null
           outcome_type?: string
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
         }
         Relationships: [
@@ -815,6 +946,9 @@ export type Database = {
           source: Database["public"]["Enums"]["proposal_source"] | null
           source_ref: string | null
           spec_status: Database["public"]["Enums"]["spec_status"] | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           updated_at: string
         }
         Insert: {
@@ -835,6 +969,9 @@ export type Database = {
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           spec_status?: Database["public"]["Enums"]["spec_status"] | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
         }
         Update: {
@@ -855,6 +992,9 @@ export type Database = {
           source?: Database["public"]["Enums"]["proposal_source"] | null
           source_ref?: string | null
           spec_status?: Database["public"]["Enums"]["spec_status"] | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
         }
         Relationships: [
@@ -915,6 +1055,9 @@ export type Database = {
           seed_intelligence_layer: string | null
           service: string | null
           spec_status: Database["public"]["Enums"]["spec_status"] | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           updated_at: string
           what_we_have_learned: string | null
         }
@@ -935,6 +1078,9 @@ export type Database = {
           seed_intelligence_layer?: string | null
           service?: string | null
           spec_status?: Database["public"]["Enums"]["spec_status"] | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
           what_we_have_learned?: string | null
         }
@@ -955,6 +1101,9 @@ export type Database = {
           seed_intelligence_layer?: string | null
           service?: string | null
           spec_status?: Database["public"]["Enums"]["spec_status"] | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
           what_we_have_learned?: string | null
         }
@@ -1021,6 +1170,9 @@ export type Database = {
           source_ref: string | null
           sprint: string | null
           status: string | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           type: string | null
           updated_at: string
         }
@@ -1049,6 +1201,9 @@ export type Database = {
           source_ref?: string | null
           sprint?: string | null
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           type?: string | null
           updated_at?: string
         }
@@ -1077,6 +1232,9 @@ export type Database = {
           source_ref?: string | null
           sprint?: string | null
           status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           type?: string | null
           updated_at?: string
         }
@@ -1118,6 +1276,9 @@ export type Database = {
           source_label: string | null
           source_ref: string | null
           status: Database["public"]["Enums"]["proposal_status"]
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           updated_at: string
           written_record_id: string | null
           written_record_table: string | null
@@ -1142,6 +1303,9 @@ export type Database = {
           source_label?: string | null
           source_ref?: string | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
           written_record_id?: string | null
           written_record_table?: string | null
@@ -1166,6 +1330,9 @@ export type Database = {
           source_label?: string | null
           source_ref?: string | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
           written_record_id?: string | null
           written_record_table?: string | null
@@ -1284,6 +1451,9 @@ export type Database = {
           status: string | null
           sweetconnect_credits: number | null
           sweetconnect_credits_used: number | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           type: string | null
           updated_at: string
         }
@@ -1330,6 +1500,9 @@ export type Database = {
           status?: string | null
           sweetconnect_credits?: number | null
           sweetconnect_credits_used?: number | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           type?: string | null
           updated_at?: string
         }
@@ -1376,6 +1549,9 @@ export type Database = {
           status?: string | null
           sweetconnect_credits?: number | null
           sweetconnect_credits_used?: number | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           type?: string | null
           updated_at?: string
         }
@@ -1603,6 +1779,9 @@ export type Database = {
             | Database["public"]["Enums"]["sweetcycle_phase"]
             | null
           sync_status: string | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           updated_at: string
           what_i_learned: string | null
           workflow_id: string | null
@@ -1642,6 +1821,9 @@ export type Database = {
             | Database["public"]["Enums"]["sweetcycle_phase"]
             | null
           sync_status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
           what_i_learned?: string | null
           workflow_id?: string | null
@@ -1681,6 +1863,9 @@ export type Database = {
             | Database["public"]["Enums"]["sweetcycle_phase"]
             | null
           sync_status?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
           what_i_learned?: string | null
           workflow_id?: string | null
@@ -1887,6 +2072,9 @@ export type Database = {
           source_ref: string | null
           status: string | null
           success_criteria: string | null
+          tagged_components: string[]
+          tagged_domains: string[]
+          tagged_tenets: string[]
           updated_at: string
           waiting_on: string | null
         }
@@ -1919,6 +2107,9 @@ export type Database = {
           source_ref?: string | null
           status?: string | null
           success_criteria?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
           waiting_on?: string | null
         }
@@ -1951,6 +2142,9 @@ export type Database = {
           source_ref?: string | null
           status?: string | null
           success_criteria?: string | null
+          tagged_components?: string[]
+          tagged_domains?: string[]
+          tagged_tenets?: string[]
           updated_at?: string
           waiting_on?: string | null
         }
@@ -1980,10 +2174,10 @@ export type Database = {
       }
       tenets: {
         Row: {
+          category: Database["public"]["Enums"]["tenet_category"]
           created_at: string
           created_by: string | null
           description: string | null
-          domain_id: string
           enabled: boolean
           excellence_definition: string | null
           id: string
@@ -1993,10 +2187,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: Database["public"]["Enums"]["tenet_category"]
           created_at?: string
           created_by?: string | null
           description?: string | null
-          domain_id: string
           enabled?: boolean
           excellence_definition?: string | null
           id?: string
@@ -2006,10 +2200,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: Database["public"]["Enums"]["tenet_category"]
           created_at?: string
           created_by?: string | null
           description?: string | null
-          domain_id?: string
           enabled?: boolean
           excellence_definition?: string | null
           id?: string
@@ -2018,15 +2212,7 @@ export type Database = {
           sort_order?: number
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "tenets_domain_id_fkey"
-            columns: ["domain_id"]
-            isOneToOne: false
-            referencedRelation: "domains"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -2388,6 +2574,7 @@ export type Database = {
         | "Adopted"
         | "Sustained"
       sweetcycle_phase: "Seed" | "Synthesize" | "Session" | "Sync" | "Ship"
+      tenet_category: "Foundation" | "Specialization" | "Advanced" | "Mastery"
       workflow_run_status:
         | "planned"
         | "running"
@@ -2604,6 +2791,7 @@ export const Constants = {
         "Sustained",
       ],
       sweetcycle_phase: ["Seed", "Synthesize", "Session", "Sync", "Ship"],
+      tenet_category: ["Foundation", "Specialization", "Advanced", "Mastery"],
       workflow_run_status: [
         "planned",
         "running",

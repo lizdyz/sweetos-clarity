@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { captureProposal } from "@/utils/proposals.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { FileDrop, type PendingFile } from "@/components/file-drop";
+import { TagPicker } from "@/components/tag-picker";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/capture")({
@@ -22,11 +25,26 @@ type Recognition = {
   lang: string;
 };
 
+const TEXT_EXTRACTABLE = /\.(txt|md|markdown)$/i;
+
+async function extractTextIfPossible(file: File): Promise<string | undefined> {
+  if (!TEXT_EXTRACTABLE.test(file.name)) return undefined;
+  try {
+    return (await file.text()).slice(0, 8000);
+  } catch {
+    return undefined;
+  }
+}
+
 function CapturePage() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<{ entity_type: string; confidence: number; id: string } | null>(null);
   const [listening, setListening] = useState(false);
+  const [files, setFiles] = useState<PendingFile[]>([]);
+  const [taggedDomains, setTaggedDomains] = useState<string[]>([]);
+  const [taggedTenets, setTaggedTenets] = useState<string[]>([]);
+  const [taggedComponents, setTaggedComponents] = useState<string[]>([]);
   const recRef = useRef<Recognition | null>(null);
   const baseTextRef = useRef("");
 
@@ -72,15 +90,62 @@ function CapturePage() {
     }
   }
 
+  async function uploadFiles(): Promise<
+    Array<{
+      storage_path: string;
+      original_name: string;
+      mime_type?: string;
+      size_bytes?: number;
+      extracted_text?: string;
+    }>
+  > {
+    if (files.length === 0) return [];
+    const { data: userResp } = await supabase.auth.getUser();
+    const uid = userResp.user?.id ?? "anon";
+    const out = [];
+    for (const f of files) {
+      const path = `${uid}/${Date.now()}-${crypto.randomUUID()}-${f.file.name}`;
+      const { error } = await supabase.storage
+        .from("captures")
+        .upload(path, f.file, { contentType: f.file.type, upsert: false });
+      if (error) {
+        throw new Error(`Upload failed for ${f.file.name}: ${error.message}`);
+      }
+      const extracted = await extractTextIfPossible(f.file);
+      out.push({
+        storage_path: path,
+        original_name: f.file.name,
+        mime_type: f.file.type || undefined,
+        size_bytes: f.file.size,
+        extracted_text: extracted,
+      });
+    }
+    return out;
+  }
+
   async function submit(source: "capture" | "external_ai") {
-    if (text.trim().length < 2) return;
+    if (text.trim().length < 2 && files.length === 0) return;
     setBusy(true);
     setLast(null);
     try {
-      const res = await captureProposal({ data: { text: text.trim(), source } });
+      const attachments = await uploadFiles();
+      const res = await captureProposal({
+        data: {
+          text: text.trim() || `Captured ${attachments.length} attachment(s)`,
+          source,
+          attachments,
+          tagged_domains: taggedDomains,
+          tagged_tenets: taggedTenets,
+          tagged_components: taggedComponents,
+        },
+      });
       const p = res.proposal as { id: string; entity_type: string; confidence: number };
       setLast({ id: p.id, entity_type: p.entity_type, confidence: p.confidence });
       setText("");
+      setFiles([]);
+      setTaggedDomains([]);
+      setTaggedTenets([]);
+      setTaggedComponents([]);
       baseTextRef.current = "";
       toast.success(`Staged a ${p.entity_type} proposal.`);
     } catch (err) {
@@ -89,6 +154,8 @@ function CapturePage() {
       setBusy(false);
     }
   }
+
+  const canSubmit = !busy && (text.trim().length >= 2 || files.length > 0);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
@@ -99,19 +166,28 @@ function CapturePage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Universal Capture</h1>
           <p className="text-sm text-muted-foreground">
-            Type or talk. Nothing is written until you approve it in the Queue.
+            Type, talk, or drop files. Tag what it's about. Nothing is written until you approve it.
           </p>
         </div>
       </div>
 
-      <Card className="panel-raised p-4">
+      <Card className="panel-raised space-y-4 p-4">
+        <FileDrop files={files} onChange={setFiles} disabled={busy} />
+
         <Textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="e.g. New persona — burned-out solo founder in legaltech, 35-50, struggling with client intake..."
-          className="min-h-[160px] resize-none border-0 bg-transparent text-[15px] focus-visible:ring-0"
+          className="min-h-[140px] resize-none border-0 bg-transparent text-[15px] focus-visible:ring-0"
         />
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+
+        <div className="grid gap-3 border-t pt-3 sm:grid-cols-3">
+          <TagPicker label="Domains" variant="domains" value={taggedDomains} onChange={setTaggedDomains} />
+          <TagPicker label="Tenets" variant="tenets" value={taggedTenets} onChange={setTaggedTenets} />
+          <TagPicker label="Components" variant="components" value={taggedComponents} onChange={setTaggedComponents} />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -124,7 +200,7 @@ function CapturePage() {
               {listening ? "Stop" : "Talk"}
             </Button>
             <span className="text-xs text-muted-foreground">
-              {text.length} chars
+              {text.length} chars · {files.length} file{files.length === 1 ? "" : "s"}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -132,7 +208,7 @@ function CapturePage() {
               type="button"
               variant="ghost"
               size="sm"
-              disabled={busy || text.trim().length < 2}
+              disabled={!canSubmit}
               onClick={() => submit("external_ai")}
             >
               From another AI
@@ -140,7 +216,7 @@ function CapturePage() {
             <Button
               type="button"
               size="sm"
-              disabled={busy || text.trim().length < 2}
+              disabled={!canSubmit}
               onClick={() => submit("capture")}
               className="gap-1.5"
             >
@@ -175,9 +251,10 @@ function CapturePage() {
       <Card className="panel-raised mt-4 flex items-start gap-3 p-4 text-sm">
         <AlertCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
         <p className="text-muted-foreground">
-          Capture stages a single best-guess proposal. Pasting work from another AI?
-          Use <strong>From another AI</strong> so the source is recorded. Notion sync lives
-          in <Link to="/settings" className="underline">Settings → Sources</Link>.
+          Tags help the AI route the proposal and pre-link it to the right Domains, Tenets, and Components.
+          Text is extracted from <code className="rounded bg-muted px-1 text-[11px]">.txt</code> /{" "}
+          <code className="rounded bg-muted px-1 text-[11px]">.md</code> files; PDFs and images attach but
+          aren't parsed yet.
         </p>
       </Card>
     </div>

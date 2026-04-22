@@ -68,11 +68,23 @@ function nameField(table: string) {
 
 // ---------- Capture: text -> AI -> proposal ----------
 
+const AttachmentInput = z.object({
+  storage_path: z.string().min(1),
+  original_name: z.string().min(1),
+  mime_type: z.string().optional(),
+  size_bytes: z.number().int().nonnegative().optional(),
+  extracted_text: z.string().optional(),
+});
+
 const CaptureInput = z.object({
   text: z.string().trim().min(2).max(8000),
   source: z.enum(["capture", "external_ai"]).default("capture"),
   sourceLabel: z.string().trim().max(120).optional(),
   model: z.string().trim().max(120).optional(),
+  attachments: z.array(AttachmentInput).max(20).optional(),
+  tagged_domains: z.array(z.string()).max(50).optional(),
+  tagged_tenets: z.array(z.string()).max(50).optional(),
+  tagged_components: z.array(z.string().uuid()).max(50).optional(),
 });
 
 const NORMALIZER_SCHEMA = {
@@ -153,7 +165,36 @@ export const captureProposal = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { sb, userId } = await requireUser();
     const model = data.model || "google/gemini-3-flash-preview";
-    const parsed = await callNormalizer(data.text, model);
+
+    // Augment text with attachment context for the AI
+    const attachmentNotes = (data.attachments ?? [])
+      .map((a) => {
+        const txt = a.extracted_text?.trim();
+        return txt
+          ? `\n\n[Attachment: ${a.original_name}]\n${txt.slice(0, 4000)}`
+          : `\n\n[Attached file: ${a.original_name}]`;
+      })
+      .join("");
+
+    const tagHint =
+      [
+        data.tagged_domains?.length
+          ? `Tagged domains: ${data.tagged_domains.join(", ")}`
+          : null,
+        data.tagged_tenets?.length
+          ? `Tagged tenets: ${data.tagged_tenets.join(", ")}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+    const augmentedText = [
+      data.text,
+      tagHint ? `\n\n---\nUser tags:\n${tagHint}` : "",
+      attachmentNotes,
+    ].join("");
+
+    const parsed = await callNormalizer(augmentedText, model);
 
     // Try to find an existing record by name fuzzy match
     const table = ENTITY_TABLE[parsed.entity_type];
@@ -186,12 +227,32 @@ export const captureProposal = createServerFn({ method: "POST" })
         ai_notes: parsed.reasoning ?? null,
         matched_record_id: matchedId,
         matched_record_table: matchedId ? table : null,
+        tagged_domains: data.tagged_domains ?? [],
+        tagged_tenets: data.tagged_tenets ?? [],
+        tagged_components: data.tagged_components ?? [],
         created_by: userId,
-      })
+      } as never)
       .select("*")
       .single();
 
     if (error) throw new Error(error.message);
+
+    const proposalRow = row as { id: string };
+
+    // Link any uploaded attachments to this proposal
+    if (data.attachments?.length) {
+      await sb.from("capture_attachments").insert(
+        data.attachments.map((a) => ({
+          proposal_id: proposalRow.id,
+          storage_path: a.storage_path,
+          original_name: a.original_name,
+          mime_type: a.mime_type ?? null,
+          size_bytes: a.size_bytes ?? null,
+          created_by: userId,
+        })) as never,
+      );
+    }
+
     return { proposal: row };
   });
 
@@ -231,6 +292,18 @@ export const approveProposal = createServerFn({ method: "POST" })
       delete fields.name;
     }
 
+    // Propagate tags onto the written entity (best-effort; ignored if columns don't exist)
+    const propTyped = prop as unknown as {
+      tagged_domains?: string[] | null;
+      tagged_tenets?: string[] | null;
+      tagged_components?: string[] | null;
+    };
+    const tagPayload = {
+      tagged_domains: propTyped.tagged_domains ?? [],
+      tagged_tenets: propTyped.tagged_tenets ?? [],
+      tagged_components: propTyped.tagged_components ?? [],
+    };
+
     let writtenId: string;
 
     if (data.mergeIntoId) {
@@ -238,6 +311,7 @@ export const approveProposal = createServerFn({ method: "POST" })
         .from(table as never)
         .update({
           ...fields,
+          ...tagPayload,
           source: prop.source,
           source_ref: prop.source_ref,
           confidence: prop.confidence,
@@ -253,6 +327,7 @@ export const approveProposal = createServerFn({ method: "POST" })
         .from(table as never)
         .insert({
           ...fields,
+          ...tagPayload,
           source: prop.source,
           source_ref: prop.source_ref,
           confidence: prop.confidence,
@@ -264,6 +339,12 @@ export const approveProposal = createServerFn({ method: "POST" })
       if (iErr) throw new Error(iErr.message);
       writtenId = (inserted as { id: string }).id;
     }
+
+    // Re-point any attachments from the proposal to the written record
+    await sb
+      .from("capture_attachments")
+      .update({ entity_table: table, entity_id: writtenId } as never)
+      .eq("proposal_id", data.id);
 
     const { error: stampErr } = await sb
       .from("proposals")
