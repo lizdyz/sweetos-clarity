@@ -2313,6 +2313,45 @@ export type Database = {
           },
         ]
       }
+      open_decisions: {
+        Row: {
+          area: string
+          created_at: string
+          created_by: string | null
+          current_position: string | null
+          id: string
+          notes: string | null
+          sort_order: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          created_at?: string
+          created_by?: string | null
+          current_position?: string | null
+          id?: string
+          notes?: string | null
+          sort_order?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          created_at?: string
+          created_by?: string | null
+          current_position?: string | null
+          id?: string
+          notes?: string | null
+          sort_order?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       operators: {
         Row: {
           agent_model: string | null
@@ -3069,6 +3108,7 @@ export type Database = {
         Row: {
           bizzybot_perspective: string | null
           components_advanced: Json | null
+          core_workflow_id: string | null
           created_at: string
           created_by: string
           deliverable_produced_id: string | null
@@ -3080,6 +3120,8 @@ export type Database = {
           progression_state:
             | Database["public"]["Enums"]["progression_state"]
             | null
+          relationship_id: string | null
+          scope: string
           source_of_advancement:
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
@@ -3088,6 +3130,7 @@ export type Database = {
         Insert: {
           bizzybot_perspective?: string | null
           components_advanced?: Json | null
+          core_workflow_id?: string | null
           created_at?: string
           created_by?: string
           deliverable_produced_id?: string | null
@@ -3099,6 +3142,8 @@ export type Database = {
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
+          relationship_id?: string | null
+          scope?: string
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
@@ -3107,6 +3152,7 @@ export type Database = {
         Update: {
           bizzybot_perspective?: string | null
           components_advanced?: Json | null
+          core_workflow_id?: string | null
           created_at?: string
           created_by?: string
           deliverable_produced_id?: string | null
@@ -3118,6 +3164,8 @@ export type Database = {
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
+          relationship_id?: string | null
+          scope?: string
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
@@ -3125,10 +3173,31 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "quests_core_workflow_id_fkey"
+            columns: ["core_workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "quests_journey_id_fkey"
             columns: ["journey_id"]
             isOneToOne: false
             referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quests_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "quests_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
         ]
@@ -4094,7 +4163,9 @@ export type Database = {
           quest_id: string | null
           recurrence_parent_id: string | null
           recurrence_rule: string | null
+          relationship_id: string | null
           scheduled_for: string | null
+          scope: string
           sequence_order: number | null
           source_of_advancement:
             | Database["public"]["Enums"]["source_of_advancement"]
@@ -4127,7 +4198,9 @@ export type Database = {
           quest_id?: string | null
           recurrence_parent_id?: string | null
           recurrence_rule?: string | null
+          relationship_id?: string | null
           scheduled_for?: string | null
+          scope?: string
           sequence_order?: number | null
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
@@ -4160,7 +4233,9 @@ export type Database = {
           quest_id?: string | null
           recurrence_parent_id?: string | null
           recurrence_rule?: string | null
+          relationship_id?: string | null
           scheduled_for?: string | null
+          scope?: string
           sequence_order?: number | null
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
@@ -4195,6 +4270,20 @@ export type Database = {
             columns: ["recurrence_parent_id"]
             isOneToOne: false
             referencedRelation: "sparks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sparks_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "sparks_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
         ]
