@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Settings as SettingsIcon, Wand2, BookOpen, Sparkles, Bot, FileText, ShieldCheck } from "lucide-react";
+import { Settings as SettingsIcon, Wand2, BookOpen, Sparkles, Bot, FileText, ShieldCheck, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/settings")({
@@ -9,6 +9,7 @@ export const Route = createFileRoute("/_app/settings")({
 const NAV: Array<{ to: string; label: string; icon: React.ComponentType<{ className?: string }>; hint?: string; exact?: boolean }> = [
   { to: "/settings", label: "Team & profile", icon: SettingsIcon, exact: true, hint: "Profile · Team · Cadence" },
   { to: "/settings/canon", label: "Entity Canon", icon: ShieldCheck, hint: "What perfection looks like per entity" },
+  { to: "/settings/ux-audit", label: "UI/UX Auditor", icon: Gauge, hint: "Score routes against canon · drift detection" },
   { to: "/settings/lens-canon", label: "Lens Canon", icon: BookOpen, hint: "Curated Lens perspectives — canon-first" },
   { to: "/settings/prompts", label: "Prompt Console", icon: Wand2 },
   { to: "/settings/spark-templates", label: "Spark Library", icon: BookOpen },

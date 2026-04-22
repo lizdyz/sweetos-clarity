@@ -56,6 +56,7 @@ import { Route as AppWorkflowsIdRouteImport } from './routes/_app.workflows.$id'
 import { Route as AppTenetsSlugRouteImport } from './routes/_app.tenets.$slug'
 import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
 import { Route as AppSparksIdRouteImport } from './routes/_app.sparks.$id'
+import { Route as AppSettingsUxAuditRouteImport } from './routes/_app.settings.ux-audit'
 import { Route as AppSettingsSparkTemplatesRouteImport } from './routes/_app.settings.spark-templates'
 import { Route as AppSettingsPromptsRouteImport } from './routes/_app.settings.prompts'
 import { Route as AppSettingsOpenDecisionsRouteImport } from './routes/_app.settings.open-decisions'
@@ -326,6 +327,11 @@ const AppSparksIdRoute = AppSparksIdRouteImport.update({
   path: '/sparks/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsUxAuditRoute = AppSettingsUxAuditRouteImport.update({
+  id: '/ux-audit',
+  path: '/ux-audit',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsSparkTemplatesRoute =
   AppSettingsSparkTemplatesRouteImport.update({
     id: '/spark-templates',
@@ -543,6 +549,7 @@ export interface FileRoutesByFullPath {
   '/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
   '/settings/prompts': typeof AppSettingsPromptsRoute
   '/settings/spark-templates': typeof AppSettingsSparkTemplatesRoute
+  '/settings/ux-audit': typeof AppSettingsUxAuditRoute
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
@@ -623,6 +630,7 @@ export interface FileRoutesByTo {
   '/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
   '/settings/prompts': typeof AppSettingsPromptsRoute
   '/settings/spark-templates': typeof AppSettingsSparkTemplatesRoute
+  '/settings/ux-audit': typeof AppSettingsUxAuditRoute
   '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
@@ -706,6 +714,7 @@ export interface FileRoutesById {
   '/_app/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
   '/_app/settings/prompts': typeof AppSettingsPromptsRoute
   '/_app/settings/spark-templates': typeof AppSettingsSparkTemplatesRoute
+  '/_app/settings/ux-audit': typeof AppSettingsUxAuditRoute
   '/_app/sparks/$id': typeof AppSparksIdRoute
   '/_app/tasks/$id': typeof AppTasksIdRoute
   '/_app/tenets/$slug': typeof AppTenetsSlugRoute
@@ -789,6 +798,7 @@ export interface FileRouteTypes {
     | '/settings/open-decisions'
     | '/settings/prompts'
     | '/settings/spark-templates'
+    | '/settings/ux-audit'
     | '/sparks/$id'
     | '/tasks/$id'
     | '/tenets/$slug'
@@ -869,6 +879,7 @@ export interface FileRouteTypes {
     | '/settings/open-decisions'
     | '/settings/prompts'
     | '/settings/spark-templates'
+    | '/settings/ux-audit'
     | '/sparks/$id'
     | '/tasks/$id'
     | '/tenets/$slug'
@@ -951,6 +962,7 @@ export interface FileRouteTypes {
     | '/_app/settings/open-decisions'
     | '/_app/settings/prompts'
     | '/_app/settings/spark-templates'
+    | '/_app/settings/ux-audit'
     | '/_app/sparks/$id'
     | '/_app/tasks/$id'
     | '/_app/tenets/$slug'
@@ -1324,6 +1336,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSparksIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/ux-audit': {
+      id: '/_app/settings/ux-audit'
+      path: '/ux-audit'
+      fullPath: '/settings/ux-audit'
+      preLoaderRoute: typeof AppSettingsUxAuditRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/spark-templates': {
       id: '/_app/settings/spark-templates'
       path: '/spark-templates'
@@ -1577,6 +1596,7 @@ interface AppSettingsRouteChildren {
   AppSettingsOpenDecisionsRoute: typeof AppSettingsOpenDecisionsRoute
   AppSettingsPromptsRoute: typeof AppSettingsPromptsRoute
   AppSettingsSparkTemplatesRoute: typeof AppSettingsSparkTemplatesRoute
+  AppSettingsUxAuditRoute: typeof AppSettingsUxAuditRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
@@ -1588,6 +1608,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsOpenDecisionsRoute: AppSettingsOpenDecisionsRoute,
   AppSettingsPromptsRoute: AppSettingsPromptsRoute,
   AppSettingsSparkTemplatesRoute: AppSettingsSparkTemplatesRoute,
+  AppSettingsUxAuditRoute: AppSettingsUxAuditRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 
