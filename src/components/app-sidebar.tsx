@@ -23,6 +23,7 @@ import {
   Brain,
   Wand2,
   Vault,
+  Radar,
   Target as TargetIcon,
   BookOpen,
   type LucideIcon,
@@ -121,6 +122,7 @@ const GROUPS: NavGroup[] = [
       { to: "/personas", label: "Personas", icon: Users, hint: "Buyer archetypes" },
       { to: "/outcomes", label: "Outcomes", icon: Target, hint: "Six measurable result types" },
       { to: "/library/jtbd", label: "Jobs-to-be-done", icon: TargetIcon, hint: "What customers hire you for" },
+      { to: "/library/ktis", label: "KTIs", icon: Radar, hint: "Forward-facing signal trackers (not KPIs — KPIs measure the past)" },
       { to: "/vault", label: "Vault", icon: Vault, hint: "All captured & generated files" },
       // — taxonomies (universal vs industry) —
       { to: "/domains", label: "Domains", icon: Gauge, hint: "22 universal areas of excellence" },

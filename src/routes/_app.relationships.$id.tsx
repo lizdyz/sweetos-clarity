@@ -19,6 +19,7 @@ import { MeasuresPanel } from "@/components/measures-panel";
 import { StoryTrail } from "@/components/story-trail";
 import { TwoPathsStrip } from "@/components/two-paths-strip";
 import { BrandCanonEditor } from "@/components/brand-canon-editor";
+import { KtiPanel } from "@/components/kti-panel";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
@@ -40,6 +41,9 @@ function RelationshipDetail() {
       </div>
       <div className="px-6">
         <BrandCanonEditor relationshipId={id} />
+      </div>
+      <div className="px-6">
+        <KtiPanel relationshipId={id} />
       </div>
       <div className="px-6 pb-8">
         <StoryTrail subjectKind="relationship" subjectId={id} />
