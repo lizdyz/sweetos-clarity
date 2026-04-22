@@ -82,9 +82,6 @@ const CaptureInput = z.object({
   sourceLabel: z.string().trim().max(120).optional(),
   model: z.string().trim().max(120).optional(),
   attachments: z.array(AttachmentInput).max(20).optional(),
-  tagged_domains: z.array(z.string()).max(50).optional(),
-  tagged_tenets: z.array(z.string()).max(50).optional(),
-  tagged_components: z.array(z.string().uuid()).max(50).optional(),
 });
 
 const NORMALIZER_SCHEMA = {
@@ -117,13 +114,49 @@ const NORMALIZER_SCHEMA = {
         items: { type: "string" },
         description: "Plain-English notes about contradictions or missing info.",
       },
+      inferred_industry_slug: {
+        type: "string",
+        description: "If the input clearly implies an industry (e.g. financial-advisory, legal, accounting, coaching, consulting), include its slug.",
+      },
     },
     required: ["entity_type", "proposed_fields", "confidence"],
     additionalProperties: false,
   },
 } as const;
 
-async function callNormalizer(text: string, model: string) {
+const TAG_SUGGESTER_SCHEMA = {
+  name: "suggest_tags",
+  description: "Pick the most relevant Domains, Tenets, and Components for this proposal from the supplied canon.",
+  parameters: {
+    type: "object",
+    properties: {
+      tagged_domains: {
+        type: "array",
+        items: { type: "string" },
+        description: "Domain slugs that apply (from the provided canon). 0–5 items.",
+      },
+      tagged_tenets: {
+        type: "array",
+        items: { type: "string" },
+        description: "Tenet slugs that apply (from the provided canon). 0–5 items.",
+      },
+      tagged_components: {
+        type: "array",
+        items: { type: "string" },
+        description: "Component UUIDs that apply (from the provided canon). 0–5 items.",
+      },
+      confidence_per_tag: {
+        type: "object",
+        description: "Optional map of slug/uuid -> confidence (0–1).",
+        additionalProperties: { type: "number" },
+      },
+    },
+    required: ["tagged_domains", "tagged_tenets", "tagged_components"],
+    additionalProperties: false,
+  },
+} as const;
+
+async function callAI(body: Record<string, unknown>) {
   if (!LOVABLE_API_KEY) throw new Error("AI gateway not configured");
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -131,24 +164,28 @@ async function callNormalizer(text: string, model: string) {
       Authorization: `Bearer ${LOVABLE_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are the SweetBOS intake normalizer. Read messy human input and return ONE structured proposal. Pick the single best entity_type. Extract concrete fields (name, description, status, owner, etc.) when present. Never invent data — leave fields out if unclear. Keep 'name' short and human.",
-        },
-        { role: "user", content: text },
-      ],
-      tools: [{ type: "function", function: NORMALIZER_SCHEMA }],
-      tool_choice: { type: "function", function: { name: "stage_proposal" } },
-    }),
+    body: JSON.stringify(body),
   });
   if (res.status === 429) throw new Error("AI rate limit — try again shortly.");
   if (res.status === 402) throw new Error("AI credits exhausted — add funds in Settings → Workspace → Usage.");
   if (!res.ok) throw new Error(`AI gateway error ${res.status}`);
-  const json = await res.json();
+  return res.json();
+}
+
+async function callNormalizer(text: string, model: string) {
+  const json = await callAI({
+    model,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are the SweetBOS intake normalizer. Read messy human input and return ONE structured proposal. Pick the single best entity_type. Extract concrete fields (name, description, status, owner, etc.) when present. Never invent data — leave fields out if unclear. Keep 'name' short and human. If the content clearly implies an industry niche, set inferred_industry_slug.",
+      },
+      { role: "user", content: text },
+    ],
+    tools: [{ type: "function", function: NORMALIZER_SCHEMA }],
+    tool_choice: { type: "function", function: { name: "stage_proposal" } },
+  });
   const call = json?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
   if (!call) throw new Error("AI returned no structured output");
   return JSON.parse(call) as {
@@ -157,6 +194,72 @@ async function callNormalizer(text: string, model: string) {
     confidence: number;
     reasoning?: string;
     conflicts?: string[];
+    inferred_industry_slug?: string;
+  };
+}
+
+interface DomainCanon { slug: string; name: string; description: string | null }
+interface TenetCanon { slug: string; name: string; category: string | null; industry_slug: string | null }
+interface ComponentCanon { id: string; name: string }
+
+async function callTagSuggester(opts: {
+  text: string;
+  entityType: string;
+  proposedFields: Record<string, unknown>;
+  domains: DomainCanon[];
+  tenets: TenetCanon[];
+  components: ComponentCanon[];
+  model: string;
+}) {
+  const { text, entityType, proposedFields, domains, tenets, components, model } = opts;
+  const canonText = [
+    "DOMAINS (slug — name — description):",
+    ...domains.map((d) => `  ${d.slug} — ${d.name}${d.description ? ` — ${d.description}` : ""}`),
+    "",
+    "TENETS (slug — name — category — industry):",
+    ...tenets.map((t) => `  ${t.slug} — ${t.name} — ${t.category ?? "?"} — ${t.industry_slug ?? "universal"}`),
+    "",
+    "RECENT COMPONENTS (uuid — name):",
+    ...components.map((c) => `  ${c.id} — ${c.name}`),
+  ].join("\n");
+
+  const json = await callAI({
+    model,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You assign taxonomy tags to a proposal. Pick ONLY from the supplied canon. Be precise — fewer, accurate tags beat many loose ones. Prefer 1–3 domains, 1–3 tenets, 0–2 components. Return slugs/uuids exactly as given.",
+      },
+      {
+        role: "user",
+        content:
+          `Proposal entity_type: ${entityType}\n` +
+          `Proposed fields: ${JSON.stringify(proposedFields)}\n\n` +
+          `User text:\n${text.slice(0, 4000)}\n\n` +
+          `--- CANON ---\n${canonText}`,
+      },
+    ],
+    tools: [{ type: "function", function: TAG_SUGGESTER_SCHEMA }],
+    tool_choice: { type: "function", function: { name: "suggest_tags" } },
+  });
+  const call = json?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+  if (!call) return { tagged_domains: [], tagged_tenets: [], tagged_components: [], confidence_per_tag: {} };
+  const parsed = JSON.parse(call) as {
+    tagged_domains: string[];
+    tagged_tenets: string[];
+    tagged_components: string[];
+    confidence_per_tag?: Record<string, number>;
+  };
+  // Filter to canon to be safe
+  const dSet = new Set(domains.map((d) => d.slug));
+  const tSet = new Set(tenets.map((t) => t.slug));
+  const cSet = new Set(components.map((c) => c.id));
+  return {
+    tagged_domains: (parsed.tagged_domains ?? []).filter((s) => dSet.has(s)),
+    tagged_tenets: (parsed.tagged_tenets ?? []).filter((s) => tSet.has(s)),
+    tagged_components: (parsed.tagged_components ?? []).filter((s) => cSet.has(s)),
+    confidence_per_tag: parsed.confidence_per_tag ?? {},
   };
 }
 
@@ -166,7 +269,6 @@ export const captureProposal = createServerFn({ method: "POST" })
     const { sb, userId } = await requireUser();
     const model = data.model || "google/gemini-3-flash-preview";
 
-    // Augment text with attachment context for the AI
     const attachmentNotes = (data.attachments ?? [])
       .map((a) => {
         const txt = a.extracted_text?.trim();
@@ -176,27 +278,56 @@ export const captureProposal = createServerFn({ method: "POST" })
       })
       .join("");
 
-    const tagHint =
-      [
-        data.tagged_domains?.length
-          ? `Tagged domains: ${data.tagged_domains.join(", ")}`
-          : null,
-        data.tagged_tenets?.length
-          ? `Tagged tenets: ${data.tagged_tenets.join(", ")}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join("\n");
+    const augmentedText = [data.text, attachmentNotes].join("");
 
-    const augmentedText = [
-      data.text,
-      tagHint ? `\n\n---\nUser tags:\n${tagHint}` : "",
-      attachmentNotes,
-    ].join("");
-
+    // Pass 1 — normalize
     const parsed = await callNormalizer(augmentedText, model);
 
-    // Try to find an existing record by name fuzzy match
+    // Pass 2 — suggest tags from canon
+    const [domainsRes, componentsRes, industriesRes] = await Promise.all([
+      sb.from("domains").select("slug, name, description").eq("enabled", true).order("sort_order"),
+      sb.from("components").select("id, name").order("updated_at", { ascending: false }).limit(40),
+      sb.from("industries").select("id, slug").eq("enabled", true),
+    ]);
+
+    const industryRows = (industriesRes.data ?? []) as Array<{ id: string; slug: string }>;
+    const inferredIndustryId =
+      parsed.inferred_industry_slug
+        ? industryRows.find((i) => i.slug === parsed.inferred_industry_slug)?.id ?? null
+        : null;
+
+    let tenetsQuery = sb.from("tenets").select("slug, name, category, industry_id").eq("enabled", true);
+    if (inferredIndustryId) {
+      tenetsQuery = tenetsQuery.or(`industry_id.eq.${inferredIndustryId},industry_id.is.null`);
+    }
+    const tenetsRes = await tenetsQuery.order("sort_order");
+
+    const industryById = new Map(industryRows.map((i) => [i.id, i.slug]));
+    const tenetsCanon: TenetCanon[] = ((tenetsRes.data ?? []) as Array<{
+      slug: string; name: string; category: string | null; industry_id: string | null;
+    }>).map((t) => ({
+      slug: t.slug,
+      name: t.name,
+      category: t.category,
+      industry_slug: t.industry_id ? industryById.get(t.industry_id) ?? null : null,
+    }));
+
+    let suggestion = { tagged_domains: [] as string[], tagged_tenets: [] as string[], tagged_components: [] as string[], confidence_per_tag: {} as Record<string, number> };
+    try {
+      suggestion = await callTagSuggester({
+        text: augmentedText,
+        entityType: parsed.entity_type,
+        proposedFields: parsed.proposed_fields,
+        domains: (domainsRes.data ?? []) as DomainCanon[],
+        tenets: tenetsCanon,
+        components: ((componentsRes.data ?? []) as ComponentCanon[]),
+        model,
+      });
+    } catch (e) {
+      console.error("tag suggester failed:", e);
+    }
+
+    // Match existing record by name
     const table = ENTITY_TABLE[parsed.entity_type];
     const nf = nameField(table);
     const candidateName = String(parsed.proposed_fields?.[nf] ?? parsed.proposed_fields?.name ?? "").trim();
@@ -227,9 +358,13 @@ export const captureProposal = createServerFn({ method: "POST" })
         ai_notes: parsed.reasoning ?? null,
         matched_record_id: matchedId,
         matched_record_table: matchedId ? table : null,
-        tagged_domains: data.tagged_domains ?? [],
-        tagged_tenets: data.tagged_tenets ?? [],
-        tagged_components: data.tagged_components ?? [],
+        tagged_domains: suggestion.tagged_domains,
+        tagged_tenets: suggestion.tagged_tenets,
+        tagged_components: suggestion.tagged_components,
+        tag_suggestions: {
+          confidence_per_tag: suggestion.confidence_per_tag,
+          inferred_industry_slug: parsed.inferred_industry_slug ?? null,
+        } as never,
         created_by: userId,
       } as never)
       .select("*")
@@ -239,7 +374,6 @@ export const captureProposal = createServerFn({ method: "POST" })
 
     const proposalRow = row as { id: string };
 
-    // Link any uploaded attachments to this proposal
     if (data.attachments?.length) {
       await sb.from("capture_attachments").insert(
         data.attachments.map((a) => ({
@@ -254,6 +388,28 @@ export const captureProposal = createServerFn({ method: "POST" })
     }
 
     return { proposal: row };
+  });
+
+// ---------- Update proposal tags before approve ----------
+
+const UpdateTagsInput = z.object({
+  id: z.string().uuid(),
+  tagged_domains: z.array(z.string()).max(50).optional(),
+  tagged_tenets: z.array(z.string()).max(50).optional(),
+  tagged_components: z.array(z.string().uuid()).max(50).optional(),
+});
+
+export const updateProposalTags = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => UpdateTagsInput.parse(input))
+  .handler(async ({ data }) => {
+    const { sb } = await requireUser();
+    const patch: Record<string, unknown> = {};
+    if (data.tagged_domains !== undefined) patch.tagged_domains = data.tagged_domains;
+    if (data.tagged_tenets !== undefined) patch.tagged_tenets = data.tagged_tenets;
+    if (data.tagged_components !== undefined) patch.tagged_components = data.tagged_components;
+    const { error } = await sb.from("proposals").update(patch as never).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 // ---------- Approve / Reject ----------
@@ -285,14 +441,12 @@ export const approveProposal = createServerFn({ method: "POST" })
       ...(data.fieldOverrides ?? {}),
     };
 
-    // Normalize "name" field key
     const nf = nameField(table);
     if (fields.name && nf !== "name" && !fields[nf]) {
       fields[nf] = fields.name;
       delete fields.name;
     }
 
-    // Propagate tags onto the written entity (best-effort; ignored if columns don't exist)
     const propTyped = prop as unknown as {
       tagged_domains?: string[] | null;
       tagged_tenets?: string[] | null;
@@ -340,7 +494,6 @@ export const approveProposal = createServerFn({ method: "POST" })
       writtenId = (inserted as { id: string }).id;
     }
 
-    // Re-point any attachments from the proposal to the written record
     await sb
       .from("capture_attachments")
       .update({ entity_table: table, entity_id: writtenId } as never)

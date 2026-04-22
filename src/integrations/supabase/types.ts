@@ -733,6 +733,179 @@ export type Database = {
         }
         Relationships: []
       }
+      excellence_perspectives: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      excellence_rubric: {
+        Row: {
+          checklist_items: string[]
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          excellence_definition: string | null
+          id: string
+          level: Database["public"]["Enums"]["maturity_level"]
+          perspective_id: string
+          sort_order: number
+          subject_id: string
+          subject_kind: Database["public"]["Enums"]["excellence_subject_kind"]
+          updated_at: string
+        }
+        Insert: {
+          checklist_items?: string[]
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          excellence_definition?: string | null
+          id?: string
+          level: Database["public"]["Enums"]["maturity_level"]
+          perspective_id: string
+          sort_order?: number
+          subject_id: string
+          subject_kind: Database["public"]["Enums"]["excellence_subject_kind"]
+          updated_at?: string
+        }
+        Update: {
+          checklist_items?: string[]
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          excellence_definition?: string | null
+          id?: string
+          level?: Database["public"]["Enums"]["maturity_level"]
+          perspective_id?: string
+          sort_order?: number
+          subject_id?: string
+          subject_kind?: Database["public"]["Enums"]["excellence_subject_kind"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_rubric_perspective_id_fkey"
+            columns: ["perspective_id"]
+            isOneToOne: false
+            referencedRelation: "excellence_perspectives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      excellence_scores: {
+        Row: {
+          assessed_at: string
+          assessed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          relationship_id: string
+          rubric_id: string
+          state: Database["public"]["Enums"]["excellence_score_state"]
+          updated_at: string
+        }
+        Insert: {
+          assessed_at?: string
+          assessed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_id: string
+          rubric_id: string
+          state?: Database["public"]["Enums"]["excellence_score_state"]
+          updated_at?: string
+        }
+        Update: {
+          assessed_at?: string
+          assessed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_id?: string
+          rubric_id?: string
+          state?: Database["public"]["Enums"]["excellence_score_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_scores_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_scores_rubric_id_fkey"
+            columns: ["rubric_id"]
+            isOneToOne: false
+            referencedRelation: "excellence_rubric"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      industries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       journeys: {
         Row: {
           created_at: string
@@ -1276,6 +1449,7 @@ export type Database = {
           source_label: string | null
           source_ref: string | null
           status: Database["public"]["Enums"]["proposal_status"]
+          tag_suggestions: Json
           tagged_components: string[]
           tagged_domains: string[]
           tagged_tenets: string[]
@@ -1303,6 +1477,7 @@ export type Database = {
           source_label?: string | null
           source_ref?: string | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          tag_suggestions?: Json
           tagged_components?: string[]
           tagged_domains?: string[]
           tagged_tenets?: string[]
@@ -1330,6 +1505,7 @@ export type Database = {
           source_label?: string | null
           source_ref?: string | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          tag_suggestions?: Json
           tagged_components?: string[]
           tagged_domains?: string[]
           tagged_tenets?: string[]
@@ -1422,6 +1598,7 @@ export type Database = {
           id: string
           ideal_next_touchpoint: string | null
           industry: string | null
+          industry_id: string | null
           intelligence_confidence:
             | Database["public"]["Enums"]["intelligence_confidence"]
             | null
@@ -1471,6 +1648,7 @@ export type Database = {
           id?: string
           ideal_next_touchpoint?: string | null
           industry?: string | null
+          industry_id?: string | null
           intelligence_confidence?:
             | Database["public"]["Enums"]["intelligence_confidence"]
             | null
@@ -1520,6 +1698,7 @@ export type Database = {
           id?: string
           ideal_next_touchpoint?: string | null
           industry?: string | null
+          industry_id?: string | null
           intelligence_confidence?:
             | Database["public"]["Enums"]["intelligence_confidence"]
             | null
@@ -1556,6 +1735,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "relationships_industry_id_fkey"
+            columns: ["industry_id"]
+            isOneToOne: false
+            referencedRelation: "industries"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "relationships_persona_fk"
             columns: ["persona_id"]
@@ -2181,6 +2367,7 @@ export type Database = {
           enabled: boolean
           excellence_definition: string | null
           id: string
+          industry_id: string | null
           name: string
           slug: string
           sort_order: number
@@ -2194,6 +2381,7 @@ export type Database = {
           enabled?: boolean
           excellence_definition?: string | null
           id?: string
+          industry_id?: string | null
           name: string
           slug: string
           sort_order?: number
@@ -2207,12 +2395,21 @@ export type Database = {
           enabled?: boolean
           excellence_definition?: string | null
           id?: string
+          industry_id?: string | null
           name?: string
           slug?: string
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenets_industry_id_fkey"
+            columns: ["industry_id"]
+            isOneToOne: false
+            referencedRelation: "industries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -2499,6 +2696,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member"
+      excellence_score_state: "not_assessed" | "not_met" | "partial" | "met"
+      excellence_subject_kind: "domain" | "tenet" | "component"
       intelligence_confidence:
         | "Not Yet Verified"
         | "Inferred"
@@ -2709,6 +2908,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member"],
+      excellence_score_state: ["not_assessed", "not_met", "partial", "met"],
+      excellence_subject_kind: ["domain", "tenet", "component"],
       intelligence_confidence: [
         "Not Yet Verified",
         "Inferred",
