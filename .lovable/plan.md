@@ -1,85 +1,79 @@
 
-# Where we are vs. where you need to be
+# Phase 2.6: Fix workflows, expand canon, capture+files, Kanban tabs
 
-You're right — what's built is **plumbing** (entities, queue, capture, cadence). What's missing is **the part you actually operate from**: domain checklists, tenets, "what excellence looks like," and intelligence workflows you can activate. Let me name the gap honestly, then propose the next pass.
+Four scoped jobs in one pass.
 
-## What Phase 2 already shipped
-- Entity tables (Personas, Missions, Journeys, Quests, Sparks, Outcomes, Components, Playbooks, Domain Assessments, etc.)
-- Capture page (talk/type → AI normalizes → proposal)
-- Proposals Queue (review/approve/edit/reject)
-- Cadence settings (tunable numbers)
-- SweetCycle ladder on Sessions
-- Workflow states panel
+## 1. Fix the workflow build error
+`src/utils/workflows.functions.ts` imports a non-existent `getSupabaseServerClient`. Replace with the real auth pattern used everywhere else:
 
-## What's still NOT built from the original plan
-1. **Domains as a first-class thing** — no Domains page, no tenets, no per-domain assessments shown
-2. **"What excellence looks like"** — no rubrics, no checklists, no scoring against tenets
-3. **Intelligence Workflows** — Workflows exist as a *table* but you can't *activate* one against a relationship/project to actually run it
-4. **Notion MCP pull rail** — capture works, Notion sync was deferred
-5. **Persona templates per industry** — deferred
-6. **Industry field on Relationships** — deferred
-7. **Connective tissue** — nothing visually shows how Domain → Tenet → Assessment → Workflow → Quest → Spark → Session flows. It's all separate pages.
+```ts
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-## What you actually need (reframing the product)
-
-You don't want "12 entity tables in a sidebar." You want **three operational surfaces**:
-
-### 1. Intelligence Dashboards (per Domain)
-A real Domain page. For each domain (Strategy, Brand, Offer, Pipeline, Delivery, Ops, Mindset, etc.):
-- The **tenets** of excellence in that domain
-- A **checklist / rubric** of what excellent looks like (scored 0–5 or red/yellow/green)
-- Current **assessment score** for the active relationship
-- The **workflows** available to lift that domain
-- The **quests/sparks** currently in motion against it
-- A "what would move this most" recommendation
-
-This is the dashboard you keep asking for. It's not a list of records — it's a **state-of-excellence view** per domain, per client.
-
-### 2. Activatable Intelligence Workflows
-Workflows become **runnable templates**, not static records:
-- A workflow has steps, prompts, and expected outputs
-- "Activate" against a Relationship/Project → instantiates Quests + Sparks + Sessions automatically
-- The workflow run shows progress, what's done, what's next, what it produced
-- Outputs land back as proposals in the queue for your approval
-
-This is the "amplifies excellence" piece. Workflows aren't shelf-ware — they generate the work.
-
-### 3. The Connective Spine (one screen that shows it all)
-A new **Relationship Workspace** view:
-```text
-[Relationship: Acme Co.]
-├─ Industry · Stage · Tenets in focus
-├─ Domain Excellence Heatmap  (8 domains, each with score + trend)
-│    └─ click → Domain Intelligence Dashboard
-├─ Active Workflows (running)  → progress bars
-├─ Active Quests / Sparks      → next actions
-└─ Recent Sessions + Outcomes
+export const activateWorkflow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => ActivateInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase: sb, userId } = context;
+    // …existing logic, replace `user.id` with `userId`
+  });
 ```
-This is the page you open in the morning. Everything else feeds it.
+That alone clears the build. Also wire an **"Activate workflow"** button on `/workflows/$id` (already imports `WorkflowStatesPanel`) — small relationship picker → calls `activateWorkflow`.
 
-## Proposed next pass — Phase 2.5: "Make it feel like the product"
+## 2. Seed 22 Domains + 22 Tenets
+Migration that:
+- Wipes the seed rows from the previous migration (`delete from rubric_items`, `delete from tenets`, `delete from domains where created_by is null or seeded`)
+- Inserts your **22 canonical domains** + **22 tenets** (one tenet per domain, 1:1 mapping — confirm in Q1 below if you want a different shape)
+- Re-seeds a default rubric_item per tenet so the Domain Intelligence dashboard renders immediately
 
-Build order, opinionated:
+I need you to confirm the exact 22 names. Two options in Q1.
 
-1. **Domain model upgrade** — `domains`, `tenets`, `rubric_items` tables. Seed with a real starter set (you'll edit). Each tenet belongs to a domain; each rubric_item belongs to a tenet with a 0–5 scale and "what excellent looks like" text.
-2. **Domain Intelligence Dashboard** route at `/domains/$slug` — tenets, rubric checklist, current scores, recommended workflows, in-flight quests/sparks. Per-relationship filter at the top.
-3. **Relationship Workspace** at `/relationships/$id` — the heatmap + active workflows + next actions spine.
-4. **Workflow activation** — "Run this workflow on [Relationship]" button. Creates a `workflow_run` row, generates the planned Quests/Sparks/Sessions as **proposals** in the queue (so you confirm). Run page shows live status.
-5. **Industry field + persona templates** — finally wired so personas auto-suggest fields based on the relationship's industry.
-6. **Notion MCP pull** — the Sources page so canon (domains, tenets, components) pollinates from your existing Notion instead of you typing it.
-7. **Sidebar reorganization** — group by what you *do*, not by table name:
-   - **Today** · **Capture** · **Queue**
-   - **Relationships** (workspaces)
-   - **Domains** (intelligence dashboards)
-   - **Workflows** (activate)
-   - **Library** (Personas, Components, Playbooks, Documents — collapsed)
-   - **Settings**
+## 3. Universal Capture: files + tagging
+Upgrade `/capture` and the proposals pipeline:
 
-## What I need from you before building
+**Storage**
+- New Supabase Storage bucket `captures` (private, RLS: team read/insert)
+- New table `capture_attachments` (`id`, `proposal_id` nullable, `storage_path`, `mime_type`, `size_bytes`, `original_name`, `created_by`, `created_at`)
+- Tagging columns on `proposals`: `tagged_domains text[]`, `tagged_tenets text[]`, `tagged_components uuid[]`
 
-Two quick decisions and one source pull:
-1. **Do I seed Domains + Tenets from a starter set I draft, or pull them from a specific Notion page first?** (Pulling is more accurate but slower; seeding lets us see the UI sooner and edit later.)
-2. **Rubric scale: 0–5 numeric, or red/yellow/green, or both?** (I'd recommend both — score drives the heatmap, color is the at-a-glance.)
-3. If pulling from Notion: paste the Notion URL of your domains/tenets/excellence canon and I'll fetch via MCP as step 0.
+**UI on `/capture`**
+- Drag-drop / file-picker zone above the textarea (multi-file, 25MB each)
+- Three tag pickers (Domains, Tenets, Components) — multi-select, searchable, shown as chips
+- On submit: upload files first, then call `captureProposal` with `{ text, attachments[], tagged_domains, tagged_tenets, tagged_components }`
+- AI normalizer receives file names + extracted text from PDFs/MD/TXT (PDF parsing via `pdf-parse` is Worker-incompatible — for MVP we extract text only from `.txt`/`.md`; PDFs/images are attached but only the filename+user text feed the AI. Honest limitation, easy upgrade later via an external parsing service)
 
-Once you answer, I build in the order above. The first three steps alone will make the app feel like the intelligence cockpit you've been describing instead of a CRUD shell.
+**Queue impact**
+- Proposal cards show attached files (download links) and tag chips
+- Approving a proposal copies tags onto the written entity (when columns exist there) and links attachments to the new record
+
+## 4. Kanban + intuitive tabs
+Add a **view switcher** (Table / Board / Cards) at the top of every entity index page. Pulled into `EntityWorkspace` so all 12 entities get it for free.
+
+**Board (Kanban) view**
+- Group-by column comes from each entity's "status-like" enum: `status` for Tasks/Projects/Campaigns/Documents, `progression_state` for Quests/Sparks/Sessions, `pipeline_stage` for Relationships, `current_maturity_level` for Components, `spec_status` for Personas/Playbooks
+- Drag a card between columns → optimistic update + write
+- Card shows primary field, owner, due date, key chips, source/confidence pill
+- Empty columns render with a soft "+ add" prompt
+
+**Tab intuitiveness**
+- Sidebar reordered into the operator groups already planned (Today · Capture · Queue · Relationships · Domains · Workflows · Library · Settings) — Library collapses Personas/Components/Playbooks/Documents/Decisions/Delegation/Sparks
+- Each entity index gets: filter bar (status, owner, source), saved view memory in `localStorage`, and the new view switcher
+- Per-entity sensible default view: Tasks/Quests/Sparks/Pipeline → Board; Documents/Components/Personas/Playbooks → Cards; everything else → Table
+
+## Build order
+1. **Fix** `workflows.functions.ts` + add Activate button on workflow detail
+2. **Migration A**: storage bucket + `capture_attachments` + tag columns on `proposals` + tag columns on entity tables (`tagged_domains/tenets/components` where missing)
+3. **Migration B**: wipe + reseed 22 domains, 22 tenets, default rubric items
+4. **Capture upgrade**: file uploads, tag pickers, server function changes
+5. **Queue upgrade**: render attachments + tags on cards, propagate on approve
+6. **EntityWorkspace**: view switcher + Kanban board component (reusable, drag-and-drop via `@dnd-kit/core` — already common, add as dep)
+7. **Sidebar regroup** + per-entity default view
+
+## Two quick confirmations before I build
+
+**Q1 — Domains/Tenets shape:** You said "22 domains and 22 tenets." Do you want:
+- (a) **1 tenet per domain** (1:1 — simplest, scoring is per-domain)
+- (b) **22 domains, 22 tenets distributed across them** (some domains have 2-3, others have 1) — if so, paste the list or point me at the Notion page and I'll fetch via MCP first
+
+**Q2 — Domain/tenet names source:** Should I (a) draft the 22 from canon I've seen and you edit in Settings, or (b) pull from a specific Notion page (paste URL)?
+
+Once you answer those two, I execute the build order top to bottom.
