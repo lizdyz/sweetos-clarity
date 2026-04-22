@@ -1,67 +1,95 @@
 
 
-# Phase 2.10d (continued): Seed the canvas + Component dual filters + Maturity cell-cycle
+# Phase 2.10e: Operators (humans, workflows, agents) + rename Journey → Flightdeck
 
-Picking up where the last pass left off. Drag-everywhere is live; now we fill it with real data and finish the inline-editing surfaces.
+Two related moves: introduce a real **Operator** concept (the thing that can do work — human teammate, workflow, or AI agent) with skills and preferences, and rename the cross-relationship dashboard so it stops colliding with your named system parts.
 
-## Part B — Seed migration (idempotent)
+## Why this matters
 
-One migration that uses `ON CONFLICT DO NOTHING` keyed on natural keys (name + relationship_id, or name alone for components) so re-runs are safe.
+- Today **People** lists `profiles` (human teammates only). Tasks have `assignee_id` pointing only at humans. There's no way to assign work to a workflow run or an agent, even though SweetBOS treats them as equivalent doers.
+- **Skills / what they like doing** isn't captured anywhere — so we can't route the right work to the right operator (human or AI) or surface "Liz is the only one who can do this" as a delegation signal.
+- "**Journey**" is overloaded: you already have a `journeys` Library entity, plus the SweetBOS doc names Story Trail, SweetSync, Map, Machine, Mirror as first-class surfaces. The dashboard route needs a name that doesn't compete.
 
-**Relationships (5)**
-- Bedros Sarkissian (SFG) — `pipeline_stage='Pre-Mirror'`, `temperature='Warm'`, `primary_service='Mirror'`.
-- DD Humes (Guillaume + Matthew) — `pipeline_stage='Pre-Engagement'`, `temperature='Warm'`, `current_blocker='Awaiting Pathway decision (Mirror vs Mirror+Machine)'`.
-- McLeod Financial (Stuart, Katie, Ricardo) — `Pre-Mirror`, `Warm`, `primary_service='Mirror'`, `intelligence_summary` notes succession spine.
-- Savoir Wealth (Steven + Jennifer) — `Pre-Mirror`, `Warm`, `intelligence_summary` lists 5 surfaced domains.
-- Angela / Recruiter Intelligence — `In-Engagement`, `primary_service='Machine'`, `service_status='Active'`.
+## Rename: Journey → **Flightdeck**
 
-**relationship_portals (5)** — one row per uploaded HTML portal, `kind` mapped (Pre-Mirror / Pre-Engagement), `version='v1'`, `url` set to the file name placeholder, `notes` carrying the headline insight from each portal.
+Flightdeck is the operator's daily hub: who's flying which engagement, what handoffs are due, what's at risk. It's not a SweetBOS-named noun, so it stays out of the way of Journey/Story Trail/SweetSync.
 
-**Engagement plans + services + sessions**
-- Bedros: Plan "SFG Machine Sprint" → Service `Machine` → 4 sessions (Seed phase) named after the four Machine options.
-- Angela: Plan "Recruiter Intelligence Build" → Service `Machine` → 1 session in `Session` phase.
+- Route: `/_app/journey` → `/_app/flightdeck`.
+- Sidebar label "Journey" → "Flightdeck", icon stays `Map`, position stays at the top of **Operate**.
+- Component file `_app.journey.tsx` → `_app.flightdeck.tsx` (page-level identifiers + headings updated).
+- The `relationship_journey` SQL view keeps its name (it's a data contract, not a UI label), but the page consuming it talks about "Flightdeck" everywhere user-visible.
+- Add a redirect: `/_app/journey` → `/_app/flightdeck` so any bookmarks survive.
 
-**Components (8)** with `related_domains` + `related_tenets` populated, `current_maturity_level='L3 Launching'`, `quality_status='In Use'`:
+## Operators — new first-class concept
 
-| Component | Domain | Tenet |
-|---|---|---|
-| 22-Domain Mirror Assessment | strategy-positioning | F1 Strategic Vision & Purpose |
-| Pathway Decision Worksheet | sales-discovery | S9 Client Discovery & Needs Analysis |
-| 4-Option Machine Session Selector | service-delivery | F3 Operational Excellence |
-| Succession Spine Map | analytics-ci | S15 Business Succession Planning |
-| 5-Domain Quickscan | analytics-ci | A17 Data Intelligence & Analytics |
-| SparkPath Clarity Call Interview Map | sales-discovery | S9 Client Discovery & Needs Analysis |
-| Pre-Engagement Tools Bundle | onboarding-intake | F7 Client Experience Design |
-| Recruiter Intelligence Dashboard | analytics-ci | A17 Data Intelligence & Analytics |
+### Schema (1 migration)
 
-**Sparks (~12)** — every "next idea" mentioned across the 5 portals, each tagged to the correct relationship + domain + tenet, dropped into the Queue at `status='pending'`.
+- New table `operators`:
+  - `id uuid pk`, `name text not null`, `kind operator_kind not null` (`human | workflow | agent`)
+  - `profile_id uuid` (set when kind=human, links to `profiles.id`)
+  - `workflow_id uuid` (set when kind=workflow, links to `workflows.id`)
+  - `agent_model text` (e.g. `google/gemini-2.5-pro`, `openai/gpt-5`) — set when kind=agent
+  - `agent_system_prompt text` — set when kind=agent
+  - `skills text[]` — free-form skill tags (e.g. "copywriting", "SQL", "client-facing", "data viz")
+  - `likes text[]` — what they enjoy doing (drives routing affinity)
+  - `dislikes text[]` — what to avoid sending them
+  - `availability text` — `available | busy | offline | async-only`
+  - `notes text`, `avatar_url text`, `enabled bool default true`
+  - `created_by`, `created_at`, `updated_at`
+- New enum `operator_kind` (`human | workflow | agent`)
+- Backfill: one `operators` row per existing `profiles` row (kind=human, name=display_name, profile_id=that profile, skills/likes/dislikes empty arrays).
+- Add `tasks.operator_id uuid` (nullable) — new canonical assignee. Keep `assignee_id` for back-compat read; new writes go to `operator_id`.
+- View `operator_workload`: `(operator_id, name, kind, open_tasks, blocked_tasks, overdue_tasks, next_due)` — single source for People/Flightdeck panels.
+- RLS: same `is_team_member` read / `created_by` owner-update pattern as other tables.
 
-## Part C — Components ↔ Tenets ↔ Domains in the UI
+### Routes
 
-- **`/_app/components` (list)**: add a filter row with two parallel `Select` filters — Domain (22 universal) and Tenet (22 industry, grouped by Foundation/Specialization/Advanced/Mastery). User can stack both. Active filters render as removable chips above the table.
-- **`/_app/components/$id` (detail)**: add a top strip with two editable chip groups — Domains (left) and Tenets (right). Click chip to remove; "+ Add" opens a popover picker. Writes to `components.related_domains` / `related_tenets`. Small "Best fit" hint under each group computed from the most-frequent pairing across other components in the catalog.
-- **`/_app/journey`**: add a fourth panel **"Components in flight"** — components with `updated_at >= now() - 14 days`, grouped by their first `related_domains[0]`, each row a clickable chip linking to the component detail.
+- `/_app/operators` — list page (replaces what People shows for assignment data, but People stays as the workload card view).
+  - Filter by kind chips (Humans / Workflows / Agents / All).
+  - Each card: name, kind badge, top 3 skills, availability dot, open-task count, "next due".
+  - "+ New operator" → modal with kind selector that progressively reveals the right fields (human → pick profile; workflow → pick workflow; agent → model + prompt).
+- `/_app/operators/$id` — detail page:
+  - Editable strip: skills (chip group with add/remove), likes (chip group), dislikes (chip group), availability (select).
+  - For agents: model picker (Lovable AI supported list), system prompt textarea, "Test prompt" button (queues a test run — stub now, wire later).
+  - For workflows: link to the underlying workflow definition + recent runs.
+  - For humans: shows linked profile + role label.
+  - Their open tasks (board grouped by status) and recent activity.
 
-## Part D — Maturity Map cell-cycle
+### People page (keep, upgrade)
 
-On the relationship detail Maturity Map grid (`excellence-matrix.tsx` cells), make each cell click-to-cycle through `L1 Lacking → L2 Learning → L3 Launching → L4 Leveraging → L5 Leading → (clear)`. Writes to `excellence_scores` via the existing `useDragToStatus`-style mutation pattern, but field is `state` and table is `excellence_scores` keyed by `(relationship_id, rubric_id)` — upsert on conflict.
+Keep `/_app/people` as the workload heatmap. Source it from the `operator_workload` view so it covers humans + workflows + agents in one grid. Add a kind filter at the top.
+
+### Task assignment everywhere
+
+- Anywhere tasks render an "assignee" picker, change the picker to read from `operators` (filtered to enabled) instead of `profiles`. Show kind badge in the dropdown so "@Liz (human)" vs "@Pre-Mirror Workflow" vs "@Drafter Agent" is unambiguous.
+- Tasks list and My Tasks display the operator name + kind chip.
 
 ## Files touched
 
-- 1 seed migration: `supabase/migrations/<ts>_seed_portal_canvas.sql` (idempotent inserts using `ON CONFLICT DO NOTHING` on natural keys; uses `INSERT … SELECT` patterns to look up domain/tenet IDs by slug/code so the migration is portable).
-- Edit: `src/routes/_app.components.index.tsx` — dual filter row + chip strip.
-- Edit: `src/routes/_app.components.$id.tsx` — domain/tenet chip-group editor + "Best fit" hint.
-- Edit: `src/routes/_app.journey.tsx` — add "Components in flight" panel.
-- Edit: `src/components/excellence-matrix.tsx` — cell click-to-cycle handler + optimistic update.
-- Memory: append `mem://design/stage-as-board.md` capturing "every status field renders as a board where columns are draggable; heatmap cells cycle on click."
+- 1 migration: `<ts>_operators_and_skills.sql` (new enum, table, backfill, view, RLS, `tasks.operator_id` column).
+- New: `src/routes/_app.operators.index.tsx`, `src/routes/_app.operators.$id.tsx`, `src/components/operator-picker.tsx` (reusable assignee dropdown).
+- Renamed/edited: `src/routes/_app.journey.tsx` → `src/routes/_app.flightdeck.tsx` (page rewritten with new label; data fetching unchanged).
+- New: `src/routes/_app.journey.tsx` becomes a 1-line redirect to `/flightdeck` for back-compat.
+- Edited: `src/components/app-sidebar.tsx` (rename Journey → Flightdeck; add Operators under Work).
+- Edited: `src/routes/_app.people.tsx` (source from `operator_workload`; add kind filter).
+- Edited: `src/routes/_app.tasks.$id.tsx`, `src/routes/_app.my-tasks.tsx`, kanban/task cards (operator picker + kind chip).
+- Memory updates:
+  - New `mem://features/operators.md` — what an operator is, the three kinds, skills/likes/dislikes routing intent, that tasks assign to operators not profiles.
+  - Append `mem://index.md` Core: "An Operator is the unit that does work — human, workflow, or agent. All three carry skills, likes, dislikes. Tasks assign to operators."
+  - Append `mem://index.md` Core: "Cross-relationship operator dashboard is named Flightdeck. 'Journey' is reserved for the SweetCycle journey concept + the Library Journeys entity."
 
-## What I'm NOT doing in this pass
+## What I'm NOT doing in 2.10e
 
-- Parsing the HTML portals into structured trees (link + headline only).
-- Best-Practice Catalog, Agents, Notion sync — still queued.
-- Drag-and-drop on the Maturity Map (cell-cycle is the right gesture for a 5-state heatmap).
+- Building the actual agent execution runtime (running the system prompt against Lovable AI). The schema + UI lands now; wiring `Test prompt` to a real call is a follow-up.
+- Skill-based auto-routing (suggesting the best operator for a task based on skills/likes). Schema supports it; the suggestion logic lands later.
+- Migrating every legacy `tasks.owner` text value into operators automatically — those keep showing as "legacy owner" buckets on People until the user reassigns.
+- Touching the `journeys` Library entity (different concept; stays).
 
-## Note on idempotency
+## Suggested order after this
 
-The seed migration uses `WHERE NOT EXISTS (SELECT 1 FROM <table> WHERE name = … AND relationship_id = …)` guards rather than unique indexes, so it does not require schema changes and will not break if you've manually added any of these records already.
+1. **2.10e (this plan)** — Operators + Flightdeck rename.
+2. **Best-Practice Catalog** (still queued from original 2.10).
+3. **Agent runtime** — wire operator agents to Lovable AI for real execution.
+4. **Skill-based task routing**.
+5. **Notion sync**.
 
