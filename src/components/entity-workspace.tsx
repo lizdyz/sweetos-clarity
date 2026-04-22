@@ -25,6 +25,7 @@ import {
   X,
   ArrowLeft,
   Loader2,
+  Sparkles,
   Table as TableIcon,
   KanbanSquare,
   LayoutGrid,
