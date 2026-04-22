@@ -127,7 +127,11 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
   const maturityMap = new Map(maturity.map((m) => [m.domain_slug, m]));
 
   return (
-    <div className="grid gap-5 px-6 pt-5 lg:grid-cols-2">
+    <div className="space-y-5 pt-5">
+      <div className="px-6">
+        <JourneyStripAndBoard relationshipId={relationshipId} />
+      </div>
+      <div className="grid gap-5 px-6 lg:grid-cols-2">
       {/* Funnel */}
       <section className="panel-raised p-5">
         <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
