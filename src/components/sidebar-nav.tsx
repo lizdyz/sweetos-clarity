@@ -26,6 +26,7 @@ import {
   Radar,
   Target as TargetIcon,
   BookOpen,
+  FlaskConical,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -76,6 +77,7 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
     caption: "Registers & analysis",
     items: [
       { to: "/bizzybots", label: "BizzyBots", icon: Bot, hint: "9 Lens agents — ask any subject" },
+      { to: "/sandbox", label: "Sandbox", icon: FlaskConical, hint: "Triage raw ideas — run framework lenses, promote to work" },
       { to: "/sweetscan", label: "SweetScan", icon: Radar, hint: "Outside-in intelligence — forward radar + rubric scanner + signal inbox" },
       { to: "/decisions", label: "Decisions", icon: FileText, hint: "Logged choices & rationale" },
       { to: "/delegation", label: "Delegation Register", icon: GitBranch, hint: "Work to hand off — the systematize list" },

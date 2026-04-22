@@ -296,6 +296,15 @@ function CapturePage() {
         </p>
       </Card>
 
+      <Card className="panel-raised mt-3 flex items-center justify-between gap-3 p-3 text-sm">
+        <span className="text-muted-foreground">
+          All captures land in your <span className="font-medium text-foreground">Idea Sandbox</span> for triage.
+        </span>
+        <Link to="/sandbox" className="font-medium text-[color:var(--iris-violet)] hover:underline">
+          Open Sandbox →
+        </Link>
+      </Card>
+
       <CaptureQueueStrip />
     </div>
   );
