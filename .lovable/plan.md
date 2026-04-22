@@ -1,130 +1,114 @@
-# Three things in one focused pass
 
-You're asking for three connected fixes. I'll do all of them.
 
----
+# Lens Generation — Library-first, generate only on demand
 
-## Issue 1 — Settings sub-routes don't render
+You're right. Right now `LensWall` auto-fires `generate-lens-perspectives` the first time anyone visits a Domain or Tenet page (see `lens-wall.tsx` lines 87–96: `autoRunOnEmpty` defaults to `true` and triggers all 8 BizzyBots immediately). That burns credits on every fresh page view before you've even decided the AI take is worth having.
 
-`src/routes/_app.settings.tsx` is a **leaf** with its own Profile/Team/Cadence tabs. It has no `<Outlet />`. The sidebar links (`/settings/prompts`, `/settings/spark-templates`, `/settings/lenses`, `/settings/excellence`, `/settings/open-decisions`) are sibling routes, but visually they have no shared chrome — and the "Team & profile" link points back at `/settings`, so it always looks like Settings "defaulted" to that tab.
-
-**Fix:** Convert Settings into a **layout route** with a left-hand vertical nav rail and an `<Outlet />`. Move the existing Profile/Team/Cadence content into a new leaf `_app.settings.index.tsx`. Every Settings sub-page renders inside the same shell with the nav rail showing the active section.
-
-```
-/settings              → Profile · Team · Cadence (was the whole page)
-/settings/prompts      → Prompt Console
-/settings/spark-templates → Spark Library
-/settings/lenses       → BizzyBot prompts
-/settings/excellence   → Excellence rubric
-/settings/open-decisions → Open decisions
-/settings/canon        → Entity Canon (NEW — see Issue 3)
-```
+The Spark Library three-tier pattern we just shipped is the right answer here too: **best-practice canon first, AI only to evolve it.**
 
 ---
 
-## Issue 2 — Quests don't match the proven model
+## The model
 
-Your old dashboard had **20 Quest templates** structured as `Journey × Level transition × Deliverable type × Duration` (e.g. *"Define Your Value Proposition" — Journey 1, L1→L2, 20 min, document*). The current 8 Quests are open-ended internal questions ("What is the smallest viable Portal?") with no journey, no level transition, no deliverable type, no duration. That's why the Angela one feels off — Quests aren't acting as templates that advance a Component from one maturity level to the next; they're acting as freeform prompts.  
-  
-please note that you need to asses and realize that quests for me might be different then quests for users - think this through deeply
+```
+Tier 1: Canonical Lens Perspectives (curated library)
+        Pre-written, hand-vetted "best-practice" take per (Lens × Domain) and
+        (Lens × Tenet). No AI call. Always shown first.
+                    │ user wants a fresh angle?
+                    ▼
+Tier 2: Generate (AI, on explicit click only)
+        Today's behavior — 8 BizzyBots run, result cached as a versioned
+        perspective. Never auto-fires.
+                    │ great result?
+                    ▼
+Tier 3: Promote to canon
+        Human marks an AI perspective as exemplary → it replaces or supplements
+        the canonical one for that (Lens × Subject) pair.
+```
 
-**Fix:** Bring the canonical Quest model back as **first-class fields**, keeping what already exists.
-
-**Schema migration** (`quests` add columns):
-
-- `from_level` `maturity_level` — e.g. L1 Lacking
-- `to_level` `maturity_level` — e.g. L2 Learning
-- `deliverable_type` text — `document` / `system` / `strategy` / `template` / `sop` / `tool`
-- `duration_minutes` int
-- `quest_number` int — Quest #1, #2 within a Journey
-- `is_template` boolean default false — distinguishes the canonical 20 templates from instances spawned for specific relationships
-
-**Data migration:** seed the **20 canonical Quest templates** from your old dashboard list (12 L1→L2, 8 L2→L3) attached to the matching Journeys. Existing 8 internal "What is..." quests are kept but moved under a new `prompt_quests` concept (or simply tagged `kind='reflection'`) so they don't pollute the canonical catalog.
-
-**UI:**
-
-- `/quests` index — group by Journey, show level-transition badge (L1→L2), duration chip, deliverable-type chip, template vs instance toggle
-- `/quests/$id` detail — show the full anatomy: Journey · Level transition · Duration · Deliverable type · Components advanced · Framework lens
-- "Start this Quest for [Relationship]" button — clones template into an instance bound to a relationship + project
-
-Memory rule added: *"Quests are canonical Journey × Level-transition templates with duration + deliverable type. Instances are clones bound to a relationship."*
+Same shape as Sparks: deterministic library is the default, AI is the evolution lever.
 
 ---
 
-## Issue 3 — No "what perfection looks like" surface per entity (the reinforcement loop)
+## What changes
 
-This is the most important one. You want a place where every entity type (Quest, Spark, Component, Mission, Outcome, Workflow, Session, Operator, Domain, Tenet, Relationship, Project, Task, Journey) has a **canonical definition** — what it IS, what good looks like, what bad looks like, what reinforcement loop keeps it sharp. So when you look at *Angela: recruiter scorecard schema*, you can ask *"does this match what a Quest should be?"* — and if not, refine either the instance or the canon.
-
-**New schema** (1 migration):
+### 1. Schema (1 migration)
 
 ```
-entity_canon
-  id, entity_kind text UNIQUE       -- 'quest' | 'spark' | 'component' | 'mission' | …
-  display_name text
-  one_liner text                    -- "A Quest is a level-transition template…"
-  what_it_is text                   -- long-form definition
-  what_good_looks_like text[]       -- checklist
-  what_bad_looks_like text[]        -- anti-patterns
-  inputs text[]                     -- what feeds it
-  outputs text[]                    -- what it produces
-  reinforcement_loop text           -- how it self-improves
-  example_ids uuid[]                -- pointer(s) to canonical exemplar instances
-  alternate_viewpoints jsonb        -- [{ name, description }] — refinement angles
-  updated_by uuid, updated_at timestamptz
-  
-entity_canon_revisions               -- audit trail of edits, with rationale
-  id, entity_kind, snapshot jsonb, changed_by, changed_at, rationale text
+lens_canon                                    -- the curated best-practice library
+  id, lens_id, subject_kind, subject_id,
+  quick_facts text[], perspective_md text,
+  key_questions text[], watch_outs text[],
+  next_actions text[], stages_breakdown jsonb,
+  source ('curated' | 'promoted_from_ai'),
+  promoted_from_perspective_id uuid null,
+  status ('active' | 'draft' | 'retired'),
+  updated_by, updated_at
+  UNIQUE (lens_id, subject_kind, subject_id)
+
+lens_perspectives  (add 1 column)
+  tier text check (tier in ('canon','generated'))
 ```
 
-**Seed:** populate the 14 entity kinds with first-pass definitions extracted from the memory files (`mem://design/canon-sparks-vs-tasks`, `mem://features/sweetcycle-journey`, etc.) so every entity has a starting canon on day one.
+Existing 4 tables stay; nothing destructive.
 
-**UI — `/settings/canon**` (the new home):
+### 2. Seed canonical perspectives
 
-- Left rail: list of all 14 entity kinds with status pip (defined / draft / needs review)
-- Right pane: editor for the selected kind with all the fields above + revision history
-- "Compare to instances" panel — pulls 3–5 random live instances and shows them side-by-side with the checklist; flag any that miss criteria
+Hand-seed the obvious high-value pairs first — for the 8 BizzyBot Lenses across the 22 Domains and 22 Tenets that's 352 cells, but we only seed where canon truly exists today. First-pass seed: **all 8 Lenses × the 5 Foundation Tenets (F1–F5)** and **all 8 Lenses × Domains in the 5 Ps (P1–P5)** = 80 cells. The rest stay empty until promoted from AI.
 
-**UI — every entity detail page** (Quest, Spark, Component, etc.) gets a small `<CanonGuardrail>` strip at the top:
+Each seed pulls from the Lens prompt templates in `lenses` table + the canon docs already in memory, so the Tier-1 take feels grounded immediately.
 
-- "What good looks like" checklist (auto-rendered from `entity_canon.what_good_looks_like`)
-- "Refine this instance" button — opens the canon for context
-- "This instance teaches the canon" button — promotes a great instance into `example_ids` and optionally proposes new criteria back to the canon (the **reinforcement loop**)
+### 3. Rewrite `LensWall`
 
-**Reinforcement loop (the part you specifically asked for):**
+- **Remove `autoRunOnEmpty` default-true behavior.** It never auto-runs. Period.
+- On mount, query `lens_canon` for the (subject_kind, subject_id) pair for each of the 8 Lenses.
+- If canon exists → render it as a `LensPerspectiveCard` with a `📚 Canon` chip. No spinner, no AI call.
+- If canon is missing → render the card with a placeholder *"No canonical perspective yet — generate to author one"* + a per-card `Generate` button.
+- Keep the global `Generate` / `Regenerate` buttons but they always require an explicit click and they always write to `lens_perspectives` (Tier 2), never overwrite canon.
 
-- When you mark an instance as exemplary → it becomes a referenced example on the canon
-- When you flag an instance as off-canon → optionally edit the canon with rationale, recorded in `entity_canon_revisions`
-- The Canon dashboard shows "drift" — instances that fail any of the `what_good_looks_like` checks. So the system constantly tells you *"these 4 Quests don't match what a Quest should be — fix them or sharpen the definition."*
+### 4. UI provenance
 
-Memory: new file `mem://design/entity-canon.md` + Core rule *"Every entity kind has a canonical definition in `entity_canon`. Detail pages render canon guardrails. Drift is surfaced, not hidden."*
+Each Lens card gets a tier chip:
+- `📚 Canon` — Tier 1 from `lens_canon`
+- `✨ AI` — Tier 2 from `lens_perspectives`
+- Hover on Canon shows `Curated · last updated by Liz · 2d ago`
+- AI cards rated highly surface a `Promote to canon` button → writes the perspective into `lens_canon` with `source='promoted_from_ai'`
 
----
+### 5. Curation surface
 
-## Order of operations (one pass)
+New route `/settings/lens-canon` (lives under the Settings layout we just fixed):
+- Matrix view: Lens (rows) × Subject kind tabs (Domain / Tenet / Component / etc.)
+- Cells colored by status: green = canon active, gray = empty, yellow = AI-only
+- Click a cell → editor with the same fields as `lens_canon` + revision history
+- "Promote latest AI" shortcut per cell
 
-1. **Migration A** — Settings layout: convert `_app.settings.tsx` to layout w/ Outlet + create `_app.settings.index.tsx` with the existing Profile/Team/Cadence content
-2. **Migration B (DB)** — Add `from_level`, `to_level`, `deliverable_type`, `duration_minutes`, `quest_number`, `is_template`, `kind` columns to `quests`
-3. **Migration C (DB)** — Create `entity_canon` + `entity_canon_revisions` tables + RLS
-4. **Migration D (data)** — Seed 20 canonical Quest templates from your old dashboard list, attach to journeys; reclassify existing 8 quests as `kind='reflection'`
-5. **Migration E (data)** — Seed `entity_canon` rows for all 14 entity kinds with first-pass definitions
-6. **Files (parallel writes):**
-  - `src/routes/_app.settings.tsx` — convert to layout shell with left nav rail + Outlet
-  - `src/routes/_app.settings.index.tsx` — Profile/Team/Cadence (moved out)
-  - `src/routes/_app.settings.canon.tsx` — Entity Canon editor
-  - `src/routes/_app.quests.index.tsx` — group by Journey, show templates vs instances, level-transition + duration + deliverable chips
-  - `src/routes/_app.quests.$id.tsx` — full Quest anatomy + "Start for relationship" action
-  - `src/components/canon-guardrail.tsx` — reusable strip for entity detail pages
-  - `src/components/quest-anatomy-card.tsx` — Journey × L→L × Duration × Deliverable
-  - `src/components/app-sidebar.tsx` — add `/settings/canon` link
-7. **Mount `<CanonGuardrail entityKind="quest" />**` on `/quests/$id`, `/sparks/$id`, `/components/$id`, `/missions/$id` to start (others follow as the canon is filled)
-8. **Memory:** `mem://design/entity-canon.md`, `mem://features/quests-canonical.md`, update index Core
+### 6. Memory + canon
+
+- New file `mem://features/lens-library.md` — three-tier rule for Lenses, mirroring Sparks
+- Update `mem://design/lenses-bizzybots.md` — add the canon-first rule
+- Core rule added: *"Lens perspectives never auto-generate. Canon shows first; AI fires only on explicit click; great AI results promote to canon."*
 
 ---
 
 ## What this is NOT
 
+- Not removing the 8 BizzyBots or their prompts — those stay
+- Not deleting existing `lens_perspectives` rows — backfilled with `tier='generated'`
+- Not blocking AI — just moving it from auto-fire to opt-in
 - Not deferring SparkPath Phase B/C, Blockers/Wins routes, or Erica migration — those resume after
-- Not deleting the existing 8 reflection quests — re-tagging them
-- Not auto-mutating instances when canon changes — every "fix to canon" is human-confirmed
 
-After this lands: Settings tabs work, Quests match your proven 20-template model, and every entity has a living definition with a reinforcement loop that surfaces drift instead of hiding it.
+---
+
+## Order of operations (one pass)
+
+1. **Migration A** — `lens_canon` table + `tier` column on `lens_perspectives` + RLS
+2. **Migration B (data)** — seed 80 canonical (Lens × Foundation Tenet) and (Lens × P-Domain) rows; backfill existing perspectives with `tier='generated'`
+3. **File edits:**
+   - `src/components/lens-wall.tsx` — remove `autoRunOnEmpty`, query `lens_canon` first, never auto-fire AI
+   - `src/components/lens-perspective-card.tsx` — tier chip, "Generate" per-card when canon missing, "Promote to canon" when Tier 2
+   - `src/routes/_app.settings.lens-canon.tsx` — new curation matrix
+   - `src/components/app-sidebar.tsx` — add `/settings/lens-canon` link
+4. **Memory:** new `mem://features/lens-library.md`, update `mem://design/lenses-bizzybots.md` and Core index
+
+After this lands: visiting `/tenets/strategic-vision-purpose` shows 8 canonical lens cards instantly with zero AI cost. Generation only fires when you click it to evolve a take or fill a gap.
+
