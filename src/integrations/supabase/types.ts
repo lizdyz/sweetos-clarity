@@ -1041,6 +1041,60 @@ export type Database = {
           },
         ]
       }
+      entity_crib_sheets: {
+        Row: {
+          common_pitfalls: string[]
+          core_principles: string[]
+          created_at: string
+          created_by: string
+          generated_at: string
+          generated_by_model: string | null
+          id: string
+          is_pinned: boolean
+          quick_facts: string[]
+          signature_metrics: string[]
+          subject_id: string
+          subject_kind: Database["public"]["Enums"]["lens_subject_kind"]
+          tldr: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          common_pitfalls?: string[]
+          core_principles?: string[]
+          created_at?: string
+          created_by?: string
+          generated_at?: string
+          generated_by_model?: string | null
+          id?: string
+          is_pinned?: boolean
+          quick_facts?: string[]
+          signature_metrics?: string[]
+          subject_id: string
+          subject_kind: Database["public"]["Enums"]["lens_subject_kind"]
+          tldr?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          common_pitfalls?: string[]
+          core_principles?: string[]
+          created_at?: string
+          created_by?: string
+          generated_at?: string
+          generated_by_model?: string | null
+          id?: string
+          is_pinned?: boolean
+          quick_facts?: string[]
+          signature_metrics?: string[]
+          subject_id?: string
+          subject_kind?: Database["public"]["Enums"]["lens_subject_kind"]
+          tldr?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       excellence_checklist_progress: {
         Row: {
           checked: boolean
@@ -1315,6 +1369,125 @@ export type Database = {
           related_tenets?: string[] | null
           status?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      lens_perspectives: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          created_by: string
+          generated_at: string
+          generated_by_model: string | null
+          id: string
+          is_pinned: boolean
+          key_questions: string[]
+          lens_id: string
+          next_actions: string[]
+          perspective_md: string | null
+          quick_facts: string[]
+          subject_id: string
+          subject_kind: Database["public"]["Enums"]["lens_subject_kind"]
+          updated_at: string
+          version: number
+          watch_outs: string[]
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          generated_at?: string
+          generated_by_model?: string | null
+          id?: string
+          is_pinned?: boolean
+          key_questions?: string[]
+          lens_id: string
+          next_actions?: string[]
+          perspective_md?: string | null
+          quick_facts?: string[]
+          subject_id: string
+          subject_kind: Database["public"]["Enums"]["lens_subject_kind"]
+          updated_at?: string
+          version?: number
+          watch_outs?: string[]
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string
+          generated_at?: string
+          generated_by_model?: string | null
+          id?: string
+          is_pinned?: boolean
+          key_questions?: string[]
+          lens_id?: string
+          next_actions?: string[]
+          perspective_md?: string | null
+          quick_facts?: string[]
+          subject_id?: string
+          subject_kind?: Database["public"]["Enums"]["lens_subject_kind"]
+          updated_at?: string
+          version?: number
+          watch_outs?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lens_perspectives_lens_id_fkey"
+            columns: ["lens_id"]
+            isOneToOne: false
+            referencedRelation: "lenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lenses: {
+        Row: {
+          accent_color: string
+          best_use: string | null
+          bizzybot_emoji: string | null
+          code: string
+          created_at: string
+          enabled: boolean
+          icon_key: string | null
+          id: string
+          name: string
+          sort_order: number
+          stages: string[]
+          tagline: string
+          updated_at: string
+          what_it_asks: string | null
+        }
+        Insert: {
+          accent_color?: string
+          best_use?: string | null
+          bizzybot_emoji?: string | null
+          code: string
+          created_at?: string
+          enabled?: boolean
+          icon_key?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          stages?: string[]
+          tagline: string
+          updated_at?: string
+          what_it_asks?: string | null
+        }
+        Update: {
+          accent_color?: string
+          best_use?: string | null
+          bizzybot_emoji?: string | null
+          code?: string
+          created_at?: string
+          enabled?: boolean
+          icon_key?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          stages?: string[]
+          tagline?: string
+          updated_at?: string
+          what_it_asks?: string | null
         }
         Relationships: []
       }
@@ -4506,6 +4679,13 @@ export type Database = {
         | "Observed"
         | "Verified"
         | "Confirmed"
+      lens_subject_kind:
+        | "domain"
+        | "tenet"
+        | "component"
+        | "relationship"
+        | "mission"
+        | "project"
       maturity_level:
         | "L1 Lacking"
         | "L2 Learning"
@@ -4806,6 +4986,14 @@ export const Constants = {
         "Observed",
         "Verified",
         "Confirmed",
+      ],
+      lens_subject_kind: [
+        "domain",
+        "tenet",
+        "component",
+        "relationship",
+        "mission",
+        "project",
       ],
       maturity_level: [
         "L1 Lacking",
