@@ -7,10 +7,15 @@ import { useQueryClient } from "@tanstack/react-query";
 interface Finding {
   severity: "low" | "medium" | "high";
   rule: string;
+  rule_name?: string;
   message: string;
+  description?: string;
   file: string;
   line: number;
   fix_hint: string;
+  detected_by?: "presence_check" | "ai";
+  canon_ref?: string;
+  axis?: string;
 }
 
 export interface UxAuditRun {
