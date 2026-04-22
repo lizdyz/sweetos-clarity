@@ -1,108 +1,121 @@
-# Spark Library — Deterministic-first, AI-fallback Spark generation
 
-You want Sparks to behave like a **curated, reusable library first** — and only fall through to AI generation when the library can't cover what's needed. Today `generate-component-sparks` calls Gemini every time, which means: no reuse, no quality control, no accumulation of "best Sparks," and unnecessary AI cost on Components we've already mapped.
 
-Here's the model.
+# VOC Interview Map — Make it a complete operating doc, not just 5 stage cards
+
+You're right: the current Voice-of-Customer workflow is just 5 step rows with a name and a description. It doesn't tell you **what good looks like**, **what Components it advances**, **what Outcomes it should produce**, or **what artifacts you walk away with**. It reads like a stub, not a playbook.
+
+The schema already supports almost all of this — it's just not surfaced on the workflow detail page or attached to the seed data. Here's the fix.
 
 ---
 
-## The mental model: three tiers, in order
+## What "complete" looks like for an Interview Map
 
-```
-┌─ Tier 1: Spark Templates (deterministic library) ──────────────┐
-│  Curated, reusable, hand-vetted. Tagged by what they probe.    │
-│  Try these FIRST. Free, instant, consistent quality.           │
-└────────────────────────────────────────────────────────────────┘
-                          │ no template covers the gap?
-                          ▼
-┌─ Tier 2: Adapt template (AI fills slots) ──────────────────────┐
-│  Take the closest template, AI rewrites only the {slots}       │
-│  for this Component's context. Cheap, mostly deterministic.    │
-└────────────────────────────────────────────────────────────────┘
-                          │ still no fit?
-                          ▼
-┌─ Tier 3: Generate fresh (AI from scratch) ─────────────────────┐
-│  Full AI generation as today, but the result becomes a         │
-│  candidate template — promote to library after it proves out.  │
-└────────────────────────────────────────────────────────────────┘
-```
+Every workflow step should answer five questions at a glance:
 
-The library **grows from use**. Every fresh AI Spark that the human keeps and rates ≥4 becomes a template candidate, reviewable in `/settings/spark-templates`.
+1. **What is this stage?** (name + description — already there)
+2. **What does good look like?** (success checklist — missing)
+3. **What Components does it build/advance?** (link to Components — schema exists, not seeded)
+4. **What Outcomes does it serve?** (link to Outcomes/Measures — missing)
+5. **What artifacts come out?** (deliverables list — missing)
+
+And the workflow as a whole should answer:
+
+- **Who is this for?** (Session Template link — exists, render it)
+- **What Outcomes does the whole workflow drive?** (workflow-level Outcomes — missing)
+- **What does the finished engagement produce?** (rolled-up artifact list)
 
 ---
 
 ## What gets built
 
-### 1. New entities (1 migration)
+### 1. Schema additions (1 migration)
 
 ```
-spark_templates
-  id, name, body_template, intent, probes (text[]),
-  applicable_journeys (uuid[]), applicable_components (uuid[]),
-  applicable_maturity_levels (text[]),
-  reuse_count, avg_rating, status (draft|active|retired),
-  source_kind (curated|promoted_from_ai), origin_spark_id
+workflow_steps  (add columns)
+  success_criteria        text[]      -- "what good looks like" checklist
+  deliverables            text[]      -- artifacts produced by this step
+  estimated_duration_min  int         -- how long the step takes
 
-spark_template_usages
-  id, template_id, spark_id, component_id,
-  used_at, kept (bool), rating (1-5)
+workflow_step_components  (new table — link steps to components they advance)
+  workflow_step_id, component_id, contribution_type
+
+workflow_step_outcomes    (new table — link steps to outcomes they serve)
+  workflow_step_id, outcome_id
+
+workflow_outcomes         (new table — workflow-level outcome links)
+  workflow_id, outcome_id
 ```
 
-`sparks` gets two new columns: `template_id` (nullable), `generation_tier` (`template|adapted|generated`).
+`workflow_steps.required_role` and `awaiting_approval` already exist — keep using them.
 
-### 2. Seed the starter library
+### 2. Seed the VOC workflow properly
 
-Seed ~25 canonical templates extracted from your existing 12 Sparks plus the canonical patterns the system already knows it needs (one per common Component intent: *baseline metric*, *interview a stakeholder*, *audit current state*, *draft v1*, *find missing data*, *validate assumption*, etc.). Each tagged with the journeys/maturity levels it applies to.
+Update each of the 5 steps (Seed/Synthesize/Session/Sync/Ship) with:
 
-### 3. Rewrite the generator (`generate-component-sparks` v2)
+- **Success criteria checklist** (3–5 items per stage, e.g. for *Seed*: "Stakeholder has completed pre-interview form", "All 22 domains assigned a confidence rating", "Top 3 friction points named")
+- **Deliverables** (e.g. *Synthesize* → "Tension map", "Hypothesis list", "Question bank")
+- **Component links** — connect steps to the Components they advance (Discovery / Voice of Customer / Insight Capture / Strategic Synthesis from your existing 72 user components)
+- **Estimated duration** per step
+- **Workflow-level Outcomes** — link the whole VOC workflow to the appropriate outcomes (e.g. "Decision-grade clarity on what to build next")
 
-Server function does this in order:
+### 3. Rewrite the workflow step UI
 
-1. **Library lookup** — query `spark_templates` matching the component's journey + current maturity + (not already used in last 30 days for this component). If ≥3 hits, return them as proposals. **No AI call.** Tier = `template`.
-2. **Adapt** — if 1–2 library hits, fill the gap by AI-adapting the closest template's slots (e.g. `{stakeholder_role}`, `{metric_name}`) using the Component's context. Tier = `adapted`.
-3. **Generate fresh** — only if 0 library hits, call Gemini as today. Tier = `generated`. Result is auto-marked `candidate_for_library`.
+**`workflow-step-canvas.tsx`** and **`workflow-step-sheet.tsx`** get a richer card per step:
 
-Each returned Spark carries `template_id` (when applicable) and `generation_tier` so the UI can show provenance.
+```
+┌─ Stage 2: Synthesize ────────────────────── ~90 min ─┐
+│ Turn raw signals into structured tension and        │
+│ hypothesis ready for the live session.              │
+│                                                      │
+│ ✓ What good looks like                              │
+│   ☐ Tension map drafted with ≥3 named tensions      │
+│   ☐ 5–8 hypotheses ranked by confidence             │
+│   ☐ Open questions flagged for the session          │
+│                                                      │
+│ 🧩 Builds these Components                          │
+│   • Strategic Synthesis  • Insight Capture          │
+│                                                      │
+│ 🎯 Serves these Outcomes                            │
+│   • Decision-grade clarity on next bet              │
+│                                                      │
+│ 📦 Deliverables                                     │
+│   Tension map · Hypothesis list · Question bank     │
+└─────────────────────────────────────────────────────┘
+```
 
-### 4. UI: provenance + curation
+### 4. Workflow detail page header
 
-- `**/components/$id` Sparks panel** — each Spark shows a tiny tier chip: `📚 Library` / `🧩 Adapted` / `✨ AI`. Library Sparks show "Used 14× across 6 components" on hover.
-- **Spark detail** — when human marks `kept` or rates the Spark, that writes to `spark_template_usages`. AI-generated Sparks rated ≥4 surface a "Promote to library" button.
-- `**/settings/spark-templates**` (new route) — admin curation page. Filter by status, see reuse_count + avg_rating, edit body, retire/promote, add new templates manually.
+Add a top panel on `/workflows/$id` showing:
 
-### 5. Memory + canon
+- Linked Session Template (already wired — render it)
+- **Workflow Outcomes** (new — what the whole arc serves)
+- **Components advanced** (rolled up from all steps)
+- **Total estimated duration** (summed from steps)
 
-New memory file `mem://features/spark-library.md` documenting the three-tier rule. Index entry. Core rule added: *"Sparks try library → adapt → generate, in that order. Library grows from rated AI generations."*
+### 5. Make this the canonical pattern
 
----
+Once VOC is the model, the same structure applies to every workflow. Update the workflow editor sheet so authoring a new workflow prompts for: success criteria per step, deliverables per step, and workflow-level Outcomes.
 
-## Why this matches what you asked for
-
-- **"Bank of the best sparks, tested and reused"** → `spark_templates` table + reuse_count + avg_rating + curation route.
-- **"Only when they don't suit, create more"** → tier fallthrough logic in the generator; Tier 3 (fresh AI) only fires when library is empty for that context.
-- **"Marry deterministic with probabilistic"** → Tier 1 is fully deterministic; Tier 2 is AI-bounded by a template; Tier 3 is unbounded AI but feeds back into the deterministic layer via promotion.
+Memory rule added: *"Every workflow step carries success_criteria + deliverables + component links + outcome links. Workflows roll up step links to a workflow-level view."*
 
 ---
 
 ## What this is NOT
 
-- Not removing AI generation — keeping it as the safety valve.
-- Not auto-promoting AI Sparks — promotion is human-gated in `/settings/spark-templates`.
-- Not touching SparkPath Phase B/C, Blockers/Wins routes, or Erica migration — those resume after.
-- Not changing the existing 12 Sparks — they stay; they get backfilled with `generation_tier='generated'` and become promotion candidates.
+- Not changing the existing 5-stage names — Seed/Synthesize/Session/Sync/Ship stays
+- Not adding new tables when columns suffice (`success_criteria` and `deliverables` are arrays on the existing table)
+- Not deferring SparkPath Phase B/C, Sparks-Library curation UI, or `/sparks` & `/components/$id` wiring — those resume after this
+- Not touching workflow runs / workflow_step_runs (the *execution* side stays as-is)
 
 ---
 
 ## Order of operations (one pass)
 
-1. **1 schema migration** — `spark_templates`, `spark_template_usages`, 2 new columns on `sparks`, RLS.
-2. **1 data migration** — seed ~25 starter templates + backfill existing 12 Sparks with `generation_tier='generated'`.
-3. **Rewrite** `supabase/functions/generate-component-sparks/index.ts` with the 3-tier logic.
-4. **3 file edits**: `sparks-for-component-panel.tsx` (tier chips), `_app.sparks.$id.tsx` (rate + promote button), `app-sidebar.tsx` (Settings → Spark Templates link).
-5. **1 new route**: `_app.settings.spark-templates.tsx` (curation page).
-6. **1 memory file** + index update.
+1. **1 schema migration** — 3 columns on `workflow_steps` + 3 link tables + RLS
+2. **1 data migration** — fully populate the VOC workflow's 5 steps with success criteria, deliverables, component links, outcome links, durations
+3. **2 file edits** — `src/components/workflow-step-canvas.tsx` (new card layout), `src/components/workflow-step-sheet.tsx` (edit fields for the new attributes)
+4. **1 file edit** — `src/routes/_app.workflows.$id.tsx` (header panel with workflow-level rollup)
+5. **1 memory file** `mem://features/workflow-completeness.md` + index entry
 
-Approve and I run the migrations + edge function rewrite + 4 UI files + memory in one pass.  
-  
-  
-see where else this logic would benefit the entire system as well
+After this lands, the VOC interview map will read as a complete operating doc — every stage shows what good looks like, what it builds, what it serves, and what it produces.
+
