@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/sb";
 import { useAuth } from "@/lib/auth-context";
 import type { EntityDef, FieldDef } from "@/lib/entities";
 import { ENTITIES } from "@/lib/entities";
@@ -264,7 +264,7 @@ function EntityDetail({ entity, id }: { entity: EntityDef; id: string }) {
 
   const del = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from(entity.table).delete().eq("id", id);
+      const { error } = await sb.from(entity.table).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -474,7 +474,7 @@ function EntityFormSheet({
 
       let savedId = row?.id;
       if (row) {
-        const { error } = await supabase.from(entity.table).update(payload).eq("id", row.id);
+        const { error } = await sb.from(entity.table).update(payload).eq("id", row.id);
         if (error) throw error;
         toast.success(`${entity.label} updated`);
       } else {
