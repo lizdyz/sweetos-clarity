@@ -76,6 +76,9 @@ export function TagPicker({ label, variant, value, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
+  // Defensive: rows can return null for tagged_* columns despite the schema default.
+  const safeValue: string[] = Array.isArray(value) ? value : [];
+
   const labelMap = useMemo(() => {
     const m: Record<string, string> = {};
     options.forEach((o) => (m[o.id] = o.label));
