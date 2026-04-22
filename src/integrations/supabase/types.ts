@@ -927,6 +927,7 @@ export type Database = {
           sessions_used: number | null
           start_date: string | null
           status: Database["public"]["Enums"]["engagement_service_status"]
+          target_completion_date: string | null
           total_value_usd: number | null
           updated_at: string
         }
@@ -943,6 +944,7 @@ export type Database = {
           sessions_used?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["engagement_service_status"]
+          target_completion_date?: string | null
           total_value_usd?: number | null
           updated_at?: string
         }
@@ -959,6 +961,7 @@ export type Database = {
           sessions_used?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["engagement_service_status"]
+          target_completion_date?: string | null
           total_value_usd?: number | null
           updated_at?: string
         }
@@ -983,6 +986,60 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "relationships"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      excellence_checklist_progress: {
+        Row: {
+          checked: boolean
+          checked_at: string
+          checked_by: string | null
+          checklist_item_index: number
+          created_at: string
+          id: string
+          notes: string | null
+          relationship_id: string
+          rubric_id: string
+          updated_at: string
+        }
+        Insert: {
+          checked?: boolean
+          checked_at?: string
+          checked_by?: string | null
+          checklist_item_index: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_id: string
+          rubric_id: string
+          updated_at?: string
+        }
+        Update: {
+          checked?: boolean
+          checked_at?: string
+          checked_by?: string | null
+          checklist_item_index?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_id?: string
+          rubric_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_checklist_progress_rubric_id_fkey"
+            columns: ["rubric_id"]
+            isOneToOne: false
+            referencedRelation: "excellence_rubric"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_checklist_progress_rubric_id_fkey"
+            columns: ["rubric_id"]
+            isOneToOne: false
+            referencedRelation: "maturity_threshold_progress"
+            referencedColumns: ["rubric_id"]
           },
         ]
       }
@@ -1127,6 +1184,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "excellence_rubric"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_scores_rubric_id_fkey"
+            columns: ["rubric_id"]
+            isOneToOne: false
+            referencedRelation: "maturity_threshold_progress"
+            referencedColumns: ["rubric_id"]
           },
         ]
       }
@@ -1340,6 +1404,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          done_at: string | null
           id: string
           measured_date: string | null
           measured_value: string | null
@@ -1347,6 +1412,7 @@ export type Database = {
           tagged_components: string[]
           tagged_domains: string[]
           tagged_tenets: string[]
+          target_date: string | null
           updated_at: string
         }
         Insert: {
@@ -1355,6 +1421,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          done_at?: string | null
           id?: string
           measured_date?: string | null
           measured_value?: string | null
@@ -1362,6 +1429,7 @@ export type Database = {
           tagged_components?: string[]
           tagged_domains?: string[]
           tagged_tenets?: string[]
+          target_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -1370,6 +1438,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          done_at?: string | null
           id?: string
           measured_date?: string | null
           measured_value?: string | null
@@ -1377,6 +1446,7 @@ export type Database = {
           tagged_components?: string[]
           tagged_domains?: string[]
           tagged_tenets?: string[]
+          target_date?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2049,10 +2119,15 @@ export type Database = {
           proposal_id: string | null
           proposal_sent_at: string | null
           proposal_version: string | null
+          recommendation_rationale: string | null
+          recommended_package:
+            | Database["public"]["Enums"]["service_package"]
+            | null
           referred_by: string | null
           revenue_potential_usd: number | null
           role: string | null
           service_end_date: string | null
+          service_package: Database["public"]["Enums"]["service_package"] | null
           service_start_date: string | null
           service_status:
             | Database["public"]["Enums"]["engagement_service_status"]
@@ -2116,10 +2191,17 @@ export type Database = {
           proposal_id?: string | null
           proposal_sent_at?: string | null
           proposal_version?: string | null
+          recommendation_rationale?: string | null
+          recommended_package?:
+            | Database["public"]["Enums"]["service_package"]
+            | null
           referred_by?: string | null
           revenue_potential_usd?: number | null
           role?: string | null
           service_end_date?: string | null
+          service_package?:
+            | Database["public"]["Enums"]["service_package"]
+            | null
           service_start_date?: string | null
           service_status?:
             | Database["public"]["Enums"]["engagement_service_status"]
@@ -2183,10 +2265,17 @@ export type Database = {
           proposal_id?: string | null
           proposal_sent_at?: string | null
           proposal_version?: string | null
+          recommendation_rationale?: string | null
+          recommended_package?:
+            | Database["public"]["Enums"]["service_package"]
+            | null
           referred_by?: string | null
           revenue_potential_usd?: number | null
           role?: string | null
           service_end_date?: string | null
+          service_package?:
+            | Database["public"]["Enums"]["service_package"]
+            | null
           service_start_date?: string | null
           service_status?:
             | Database["public"]["Enums"]["engagement_service_status"]
@@ -2741,6 +2830,8 @@ export type Database = {
           content: string | null
           created_at: string
           created_by: string
+          done_at: string | null
+          due_date: string | null
           id: string
           name: string
           progression_state:
@@ -2765,6 +2856,8 @@ export type Database = {
           content?: string | null
           created_at?: string
           created_by?: string
+          done_at?: string | null
+          due_date?: string | null
           id?: string
           name: string
           progression_state?:
@@ -2789,6 +2882,8 @@ export type Database = {
           content?: string | null
           created_at?: string
           created_by?: string
+          done_at?: string | null
+          due_date?: string | null
           id?: string
           name?: string
           progression_state?:
@@ -3406,6 +3501,36 @@ export type Database = {
           },
         ]
       }
+      maturity_threshold_progress: {
+        Row: {
+          current_level: Database["public"]["Enums"]["maturity_level"] | null
+          items_passed_at_level: number | null
+          items_total_at_level: number | null
+          ready_to_advance: boolean | null
+          relationship_id: string | null
+          rubric_id: string | null
+          subject_id: string | null
+          subject_kind:
+            | Database["public"]["Enums"]["excellence_subject_kind"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_scores_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "excellence_scores_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operator_workload: {
         Row: {
           availability: string | null
@@ -3623,6 +3748,12 @@ export type Database = {
       quality_status: "Draft" | "Tested" | "Proven" | "Canonical"
       relationship_temperature: "Warm" | "Cool" | "Cold" | "Paused"
       reusability_tier: "One-Time" | "Relationship" | "Org" | "System"
+      service_package:
+        | "Mirror Only"
+        | "Mirror + Machine"
+        | "Machine Only"
+        | "Map"
+        | "None"
       session_phase: "Pre-Engagement" | "Deliverable" | "Follow-up"
       source_of_advancement:
         | "Seed"
@@ -3885,6 +4016,13 @@ export const Constants = {
       quality_status: ["Draft", "Tested", "Proven", "Canonical"],
       relationship_temperature: ["Warm", "Cool", "Cold", "Paused"],
       reusability_tier: ["One-Time", "Relationship", "Org", "System"],
+      service_package: [
+        "Mirror Only",
+        "Mirror + Machine",
+        "Machine Only",
+        "Map",
+        "None",
+      ],
       session_phase: ["Pre-Engagement", "Deliverable", "Follow-up"],
       source_of_advancement: [
         "Seed",
