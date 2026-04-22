@@ -1,106 +1,85 @@
 
-# Phase 2 Kickoff: Capture, Pollination & Validation
+# Where we are vs. where you need to be
 
-You're naming the thing the system is missing: right now it's a **dashboard of empty tables** with no way to actually feed it. You don't want to click "+ New Persona" 40 times. You want to **talk at it**, have it **pull from your existing Notion**, and then **review and approve** what it proposes — not blindly write.
+You're right — what's built is **plumbing** (entities, queue, capture, cadence). What's missing is **the part you actually operate from**: domain checklists, tenets, "what excellence looks like," and intelligence workflows you can activate. Let me name the gap honestly, then propose the next pass.
 
-This pass turns SweetBOS into that.
+## What Phase 2 already shipped
+- Entity tables (Personas, Missions, Journeys, Quests, Sparks, Outcomes, Components, Playbooks, Domain Assessments, etc.)
+- Capture page (talk/type → AI normalizes → proposal)
+- Proposals Queue (review/approve/edit/reject)
+- Cadence settings (tunable numbers)
+- SweetCycle ladder on Sessions
+- Workflow states panel
 
-## Three input rails into one review queue
+## What's still NOT built from the original plan
+1. **Domains as a first-class thing** — no Domains page, no tenets, no per-domain assessments shown
+2. **"What excellence looks like"** — no rubrics, no checklists, no scoring against tenets
+3. **Intelligence Workflows** — Workflows exist as a *table* but you can't *activate* one against a relationship/project to actually run it
+4. **Notion MCP pull rail** — capture works, Notion sync was deferred
+5. **Persona templates per industry** — deferred
+6. **Industry field on Relationships** — deferred
+7. **Connective tissue** — nothing visually shows how Domain → Tenet → Assessment → Workflow → Quest → Spark → Session flows. It's all separate pages.
 
-Everything you say, paste, or pull becomes a **proposal** — never a direct write. All proposals land in a single **Staging Queue** where you confirm, edit, merge, or reject.
+## What you actually need (reframing the product)
 
+You don't want "12 entity tables in a sidebar." You want **three operational surfaces**:
+
+### 1. Intelligence Dashboards (per Domain)
+A real Domain page. For each domain (Strategy, Brand, Offer, Pipeline, Delivery, Ops, Mindset, etc.):
+- The **tenets** of excellence in that domain
+- A **checklist / rubric** of what excellent looks like (scored 0–5 or red/yellow/green)
+- Current **assessment score** for the active relationship
+- The **workflows** available to lift that domain
+- The **quests/sparks** currently in motion against it
+- A "what would move this most" recommendation
+
+This is the dashboard you keep asking for. It's not a list of records — it's a **state-of-excellence view** per domain, per client.
+
+### 2. Activatable Intelligence Workflows
+Workflows become **runnable templates**, not static records:
+- A workflow has steps, prompts, and expected outputs
+- "Activate" against a Relationship/Project → instantiates Quests + Sparks + Sessions automatically
+- The workflow run shows progress, what's done, what's next, what it produced
+- Outputs land back as proposals in the queue for your approval
+
+This is the "amplifies excellence" piece. Workflows aren't shelf-ware — they generate the work.
+
+### 3. The Connective Spine (one screen that shows it all)
+A new **Relationship Workspace** view:
 ```text
-Voice / Text Capture ─┐
-Notion Pull (MCP)     ├──► Proposals Queue ──► You review ──► Writes to DB
-External AI (paste)   ─┘                       (approve/edit/reject/merge)
+[Relationship: Acme Co.]
+├─ Industry · Stage · Tenets in focus
+├─ Domain Excellence Heatmap  (8 domains, each with score + trend)
+│    └─ click → Domain Intelligence Dashboard
+├─ Active Workflows (running)  → progress bars
+├─ Active Quests / Sparks      → next actions
+└─ Recent Sessions + Outcomes
 ```
+This is the page you open in the morning. Everything else feeds it.
 
-### Rail 1 — Universal Capture (talk or type)
-- Floating capture bar (already stubbed at `/capture`) becomes a real input: textarea + mic button + paste-from-anywhere
-- On submit, calls a server function that sends the raw text to Lovable AI (`google/gemini-3-flash-preview` default, switchable)
-- AI returns: `{ intent, entity_type, proposed_fields, matched_existing_record?, confidence, contradictions[] }`
-- Result lands in the staging queue, not the DB
+## Proposed next pass — Phase 2.5: "Make it feel like the product"
 
-### Rail 2 — Notion MCP pollination
-- New **Sources** page under Settings: lists Notion pages/databases you choose to sync from
-- For each source you pick which SweetBOS entity it maps to (e.g. "this Notion DB → Personas")
-- "Pull from Notion" button fetches via the Notion MCP, runs each row through the same AI normalizer, lands them in the staging queue
-- Re-pull is incremental — already-staged or already-approved Notion rows are deduped by source URL + row ID
+Build order, opinionated:
 
-### Rail 3 — Bring-your-own AI output
-- Paste-in box: "I worked this through with another AI, here's the output"
-- Same normalizer parses it into proposals
-- Provenance on the proposal records "external_ai" + your label (e.g. "ChatGPT", "Claude")
+1. **Domain model upgrade** — `domains`, `tenets`, `rubric_items` tables. Seed with a real starter set (you'll edit). Each tenet belongs to a domain; each rubric_item belongs to a tenet with a 0–5 scale and "what excellent looks like" text.
+2. **Domain Intelligence Dashboard** route at `/domains/$slug` — tenets, rubric checklist, current scores, recommended workflows, in-flight quests/sparks. Per-relationship filter at the top.
+3. **Relationship Workspace** at `/relationships/$id` — the heatmap + active workflows + next actions spine.
+4. **Workflow activation** — "Run this workflow on [Relationship]" button. Creates a `workflow_run` row, generates the planned Quests/Sparks/Sessions as **proposals** in the queue (so you confirm). Run page shows live status.
+5. **Industry field + persona templates** — finally wired so personas auto-suggest fields based on the relationship's industry.
+6. **Notion MCP pull** — the Sources page so canon (domains, tenets, components) pollinates from your existing Notion instead of you typing it.
+7. **Sidebar reorganization** — group by what you *do*, not by table name:
+   - **Today** · **Capture** · **Queue**
+   - **Relationships** (workspaces)
+   - **Domains** (intelligence dashboards)
+   - **Workflows** (activate)
+   - **Library** (Personas, Components, Playbooks, Documents — collapsed)
+   - **Settings**
 
-## The Proposals Queue (the trust layer)
+## What I need from you before building
 
-A new top-level route `/queue` showing every staged proposal as a card:
+Two quick decisions and one source pull:
+1. **Do I seed Domains + Tenets from a starter set I draft, or pull them from a specific Notion page first?** (Pulling is more accurate but slower; seeding lets us see the UI sooner and edit later.)
+2. **Rubric scale: 0–5 numeric, or red/yellow/green, or both?** (I'd recommend both — score drives the heatmap, color is the at-a-glance.)
+3. If pulling from Notion: paste the Notion URL of your domains/tenets/excellence canon and I'll fetch via MCP as step 0.
 
-```text
-┌─────────────────────────────────────────────────────┐
-│ PROPOSAL · Persona · confidence 0.82 · from Notion │
-│                                                     │
-│ Proposed:  "Burned-out founder, 35-50, SaaS"       │
-│ Matches:   Existing persona "Founder, mid-stage"?  │
-│            [merge]  [keep separate]                │
-│                                                     │
-│ Fields:    name, age_range, industry, pain_points  │
-│            [edit inline]                           │
-│                                                     │
-│ Conflicts: industry says "SaaS" — existing says    │
-│            "B2B Services"  ⚠                       │
-│                                                     │
-│ Source:    notion://page-abc123  (open original)   │
-│                                                     │
-│ [Approve & write]  [Edit]  [Reject]  [Hold]        │
-└─────────────────────────────────────────────────────┘
-```
-
-- Filters: by entity type, by source, by confidence, by status
-- Bulk approve for high-confidence + no-conflict proposals
-- Every approval writes to the real table AND records provenance (`source`, `source_ref`, `confidence`, `approved_by`, `approved_at`) on the row
-
-## Domains & personas — making them industry-aware
-
-You're right that personas/domains depend on industry. Two changes:
-1. **Industry** becomes a first-class field on `Relationships` (with a sensible enum + free-text fallback)
-2. **Persona templates** — a small library of starter persona shapes per industry. When you create or pull a persona, the system suggests the matching template's fields to fill in. Templates are editable in Settings → Templates and seeded with a starter set.
-
-## What I need from you (file context)
-
-> "do you still have access to them"
-
-I have the **summarized canon** from earlier in this conversation (the SweetBOS constitution, ERD, component master list, SweetCycle/SweetSync model, cadence vars). The raw uploaded files from earlier turns are no longer directly readable — they were summarized. That's been enough to design the schema correctly.
-
-For Phase 2 specifically I'll need to **re-fetch from Notion via MCP** the canonical lists for:
-- Domain taxonomy (so the dropdown matches your real list)
-- Component master list (so pulled work items match real component IDs)
-- Persona templates per industry (if you have these documented)
-
-I'll do that as the first step of the build, using the already-connected Notion MCP — no extra setup from you.
-
-## Build order
-
-1. **Schema:** `proposals` table (status, entity_type, payload jsonb, source, source_ref, confidence, conflicts jsonb, matched_record_id, approved fields), `sources` table (Notion page/db registry), `industry` + provenance fields on existing entities
-2. **Capture server function:** text → Lovable AI → normalized proposal → `proposals` table
-3. **Notion MCP fetch server function:** pulls a registered source, normalizes each row, stages proposals (dedupe by source_ref)
-4. **External-AI paste server function:** same normalizer path
-5. **Proposals Queue UI** at `/queue` — cards, filters, approve/edit/reject/merge
-6. **Capture UI** at `/capture` — textarea + mic (Web Speech API) + submit
-7. **Sources UI** in Settings — register Notion pages/DBs, map to entity, "Pull now" button
-8. **Persona templates** — seed table + Settings tab to edit
-9. **Industry field** on Relationships + propagate into persona/domain suggestions
-10. Re-fetch canonical lists from Notion to seed enums and templates
-
-## What this gives you
-
-- You talk at it, it stages a proposal, you tap approve. No form-filling.
-- Notion stops being a separate world — it pollinates SweetBOS on demand, with your review.
-- Anything you worked out in another AI lands the same way.
-- Nothing writes without you confirming. Contradictions surface before they corrupt the graph.
-- Industry-aware persona suggestions instead of one generic shape.
-
-## Deferred (still Phase 3)
-- Auto-pull on Notion changes (webhook) — manual pull only for now
-- Voice transcription beyond Web Speech API (e.g. Whisper) — browser native first
-- Multi-step agent that proposes whole campaigns/projects from a single capture — single-entity proposals first, chains next
+Once you answer, I build in the order above. The first three steps alone will make the app feel like the intelligence cockpit you've been describing instead of a CRUD shell.
