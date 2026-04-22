@@ -131,9 +131,9 @@ function LensCanonPage() {
                             className={cn(
                               "h-7 w-full rounded-md border text-[10px] font-medium transition",
                               isSel && "ring-2 ring-primary ring-offset-1",
-                              c?.status === "active" && c.source === "curated" && "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-                              c?.status === "active" && c.source === "promoted_from_ai" && "border-violet-500/40 bg-violet-500/10 text-violet-700 dark:text-violet-300",
-                              c?.status === "draft" && "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+                              c?.status === "active" && c.source === "curated" && "border-success/40 bg-success/10 text-success",
+                              c?.status === "active" && c.source === "promoted_from_ai" && "border-primary/40 bg-primary/10 text-primary",
+                              c?.status === "draft" && "border-warning/40 bg-warning/10 text-warning",
                               !c && "border-border/50 bg-muted/30 text-muted-foreground hover:bg-muted/60",
                             )}
                             title={c ? `${c.source} · ${c.status}` : "No canon yet"}
@@ -152,9 +152,9 @@ function LensCanonPage() {
       </Card>
 
       <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
-        <LegendDot className="border-emerald-500/40 bg-emerald-500/10" /> Active · curated
-        <LegendDot className="border-violet-500/40 bg-violet-500/10" /> Active · promoted from AI
-        <LegendDot className="border-amber-500/40 bg-amber-500/10" /> Draft
+        <LegendDot className="border-success/40 bg-success/10" /> Active · curated
+        <LegendDot className="border-primary/40 bg-primary/10" /> Active · promoted from AI
+        <LegendDot className="border-warning/40 bg-warning/10" /> Draft
         <LegendDot className="border-border/50 bg-muted/30" /> Empty
       </div>
 

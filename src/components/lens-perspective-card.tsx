@@ -272,8 +272,8 @@ function TierChip({ tier, canonStatus }: { tier: "canon" | "generated" | "empty"
         className={cn(
           "h-5 gap-1 px-1.5 text-[10px]",
           isDraft
-            ? "border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-300"
-            : "border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300",
+            ? "border-warning/40 bg-warning/10 text-warning"
+            : "border-success/40 bg-success/10 text-success",
         )}
         title={isDraft ? "Starter canon — refine to make it real." : "Curated best-practice canon"}
       >
@@ -286,7 +286,7 @@ function TierChip({ tier, canonStatus }: { tier: "canon" | "generated" | "empty"
     return (
       <Badge
         variant="outline"
-        className="h-5 gap-1 border-violet-500/40 bg-violet-500/5 px-1.5 text-[10px] text-violet-700 dark:text-violet-300"
+        className="h-5 gap-1 border-primary/40 bg-primary/10 px-1.5 text-[10px] text-primary"
         title="AI-generated. Promote to canon if it's good enough to keep."
       >
         <Sparkles className="h-3 w-3" />
