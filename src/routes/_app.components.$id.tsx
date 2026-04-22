@@ -12,8 +12,26 @@ export const Route = createFileRoute("/_app/components/$id")({
 
 function ComponentDetail() {
   const { id } = Route.useParams();
+  const { data } = useQuery({
+    queryKey: ["components", "operator", id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("components").select("responsible_operator_id").eq("id", id).maybeSingle();
+      if (error) throw error;
+      return data as { responsible_operator_id: string | null } | null;
+    },
+  });
   return (
     <div className="space-y-5">
+      <div className="flex justify-end px-6 pt-4">
+        <OperatorChip
+          table="components"
+          column="responsible_operator_id"
+          rowId={id}
+          operatorId={data?.responsible_operator_id}
+          label="Responsible"
+          invalidateKeys={[["components", "operator", id]]}
+        />
+      </div>
       <ActiveBuildPanel componentId={id} />
       <EntityDetailPage entityKey="components" />
       <div className="px-6 pb-8">
