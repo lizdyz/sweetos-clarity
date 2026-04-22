@@ -7,6 +7,7 @@ import { Chip } from "@/components/chips";
 import { Plus, X, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { WorkContextStrip } from "@/components/work-context-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
+import { TimeControls } from "@/components/time-controls";
 
 export const Route = createFileRoute("/_app/tasks/$id")({
   component: TaskDetail,
@@ -19,12 +20,44 @@ function TaskDetail() {
   return (
     <div className="space-y-5">
       <WorkContextStrip entityType="task" entityId={id} />
+      <TaskTimeBlock taskId={id} />
       <TaskPanels taskId={id} />
       <EntityDetailPage entityKey="tasks" />
       <div className="px-6 pb-8">
         <MeasuresPanel subjectType="task" subjectId={id} />
       </div>
     </div>
+  );
+}
+
+function TaskTimeBlock({ taskId }: { taskId: string }) {
+  const { data } = useQuery({
+    queryKey: ["tasks", "time", taskId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("created_at, scheduled_for, not_before, due_date, recurrence_rule, status")
+        .eq("id", taskId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  if (!data) return null;
+  const isDone = DONE_STATUSES.includes(data.status ?? "");
+  return (
+    <TimeControls
+      table="tasks"
+      rowId={taskId}
+      createdAt={data.created_at}
+      scheduledFor={data.scheduled_for}
+      notBefore={data.not_before}
+      dueAt={data.due_date}
+      doneAt={isDone ? data.created_at : null}
+      doneColumn={null}
+      recurrenceRule={data.recurrence_rule}
+      invalidateKeys={[["tasks", "time", taskId], ["tasks", "panel", taskId]]}
+    />
   );
 }
 
@@ -95,7 +128,6 @@ function TaskPanels({ taskId }: { taskId: string }) {
         .select("id, depends_on_task_id, kind, depends_on:tasks!task_dependencies_depends_on_task_id_fkey(id, name, status)")
         .eq("task_id", taskId);
       if (error) {
-        // Fallback if FK alias not registered
         const { data: d2, error: e2 } = await supabase
           .from("task_dependencies")
           .select("id, depends_on_task_id, kind")
@@ -114,7 +146,6 @@ function TaskPanels({ taskId }: { taskId: string }) {
     },
   });
 
-  // Blocks (these tasks depend on this one)
   const { data: blocks = [] } = useQuery({
     queryKey: ["task_deps", "blocks", taskId],
     queryFn: async () => {
@@ -171,7 +202,6 @@ function TaskPanels({ taskId }: { taskId: string }) {
 
   return (
     <div className="space-y-5 px-6 pt-5">
-      {/* Header */}
       <section className="panel-raised p-5">
         <h1 className="text-xl font-semibold tracking-tight">{task.name}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
@@ -212,7 +242,6 @@ function TaskPanels({ taskId }: { taskId: string }) {
         </div>
       </section>
 
-      {/* Dependencies graph (1-hop) */}
       <section className="panel-raised p-5">
         <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           Connections

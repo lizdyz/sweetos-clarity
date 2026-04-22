@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { sb as supabase } from "@/lib/sb";
@@ -28,6 +28,30 @@ function SessionsIndex() {
     },
   });
 
+  // Pull templates for the selected service_type so we can filter sessions client-side
+  // by their session_template_id (sessions don't have service_type directly).
+  const { data: templateIdsForServiceType } = useQuery({
+    queryKey: ["session_templates_by_service_type", serviceType],
+    enabled: !!serviceType,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("session_templates" as never)
+        .select("id")
+        .eq("enabled", true)
+        .eq("service_type", serviceType!);
+      if (error) throw error;
+      return new Set((data ?? []).map((r: { id: string }) => r.id));
+    },
+  });
+
+  const filterFn = useMemo(() => {
+    if (!serviceType || !templateIdsForServiceType) return undefined;
+    return (row: Record<string, unknown>) => {
+      const tplId = row.session_template_id as string | null | undefined;
+      return !!tplId && templateIdsForServiceType.has(tplId);
+    };
+  }, [serviceType, templateIdsForServiceType]);
+
   return (
     <div className="space-y-3">
       {serviceTypes.length > 0 && (
@@ -56,7 +80,7 @@ function SessionsIndex() {
           ))}
         </div>
       )}
-      <EntityListPage entityKey="sessions" />
+      <EntityListPage entityKey="sessions" rowFilter={filterFn} />
     </div>
   );
 }

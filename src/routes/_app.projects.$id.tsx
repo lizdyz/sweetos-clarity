@@ -8,6 +8,7 @@ import { Plus, ArrowRight, AlertCircle } from "lucide-react";
 import { ComponentLinkPanel } from "@/components/component-link-panel";
 import { WorkContextStrip } from "@/components/work-context-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
+import { TimeControls } from "@/components/time-controls";
 
 export const Route = createFileRoute("/_app/projects/$id")({
   component: ProjectDetail,
@@ -20,6 +21,7 @@ function ProjectDetail() {
   return (
     <div className="space-y-5">
       <WorkContextStrip entityType="project" entityId={id} />
+      <ProjectTimeBlock projectId={id} />
       <ComponentLinkPanel projectId={id} />
       <ProjectPanels projectId={id} />
       <EntityDetailPage entityKey="projects" />
@@ -27,6 +29,36 @@ function ProjectDetail() {
         <MeasuresPanel subjectType="project" subjectId={id} />
       </div>
     </div>
+  );
+}
+
+function ProjectTimeBlock({ projectId }: { projectId: string }) {
+  const { data } = useQuery({
+    queryKey: ["projects", "time", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("created_at, scheduled_for, not_before, deadline, recurrence_rule")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  if (!data) return null;
+  return (
+    <TimeControls
+      table="projects"
+      rowId={projectId}
+      createdAt={data.created_at}
+      scheduledFor={data.scheduled_for}
+      notBefore={data.not_before}
+      dueAt={data.deadline}
+      dueColumn="deadline"
+      doneColumn={null}
+      recurrenceRule={data.recurrence_rule}
+      invalidateKeys={[["projects", "time", projectId], ["projects", "panel", projectId]]}
+    />
   );
 }
 

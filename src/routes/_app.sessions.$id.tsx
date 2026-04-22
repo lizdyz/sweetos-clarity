@@ -126,7 +126,7 @@ function SessionDetail() {
           </section>
         )}
 
-        <MeasuresPanel subjectType="engagement_service" subjectId={id} title="Session measures" />
+        <MeasuresPanel subjectType="session" subjectId={id} title="Session measures" />
       </div>
     </div>
   );

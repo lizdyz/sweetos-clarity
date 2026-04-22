@@ -35,7 +35,8 @@ export type MeasureSubjectType =
   | "component"
   | "relationship"
   | "mission"
-  | "engagement_service";
+  | "engagement_service"
+  | "session";
 
 interface MeasureRow {
   id: string;

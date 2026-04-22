@@ -4531,6 +4531,7 @@ export type Database = {
         | "relationship"
         | "mission"
         | "engagement_service"
+        | "session"
       operator_kind: "human" | "workflow" | "agent"
       phase_owner: "client" | "us" | "both"
       portal_kind:
@@ -4827,6 +4828,7 @@ export const Constants = {
         "relationship",
         "mission",
         "engagement_service",
+        "session",
       ],
       operator_kind: ["human", "workflow", "agent"],
       phase_owner: ["client", "us", "both"],

@@ -13,13 +13,13 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTodayRouteImport } from './routes/_app.today'
+import { Route as AppSweetcycleRouteImport } from './routes/_app.sweetcycle'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppQueueRouteImport } from './routes/_app.queue'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppPeopleRouteImport } from './routes/_app.people'
 import { Route as AppMyTasksRouteImport } from './routes/_app.my-tasks'
 import { Route as AppMeasuresRouteImport } from './routes/_app.measures'
-import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
@@ -90,6 +90,11 @@ const AppTodayRoute = AppTodayRouteImport.update({
   path: '/today',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSweetcycleRoute = AppSweetcycleRouteImport.update({
+  id: '/sweetcycle',
+  path: '/sweetcycle',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -118,11 +123,6 @@ const AppMyTasksRoute = AppMyTasksRouteImport.update({
 const AppMeasuresRoute = AppMeasuresRouteImport.update({
   id: '/measures',
   path: '/measures',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppJourneyRoute = AppJourneyRouteImport.update({
-  id: '/journey',
-  path: '/journey',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFlightdeckRoute = AppFlightdeckRouteImport.update({
@@ -384,13 +384,13 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
-  '/journey': typeof AppJourneyRoute
   '/measures': typeof AppMeasuresRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
+  '/sweetcycle': typeof AppSweetcycleRoute
   '/today': typeof AppTodayRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
@@ -446,13 +446,13 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
   '/flightdeck': typeof AppFlightdeckRoute
-  '/journey': typeof AppJourneyRoute
   '/measures': typeof AppMeasuresRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
+  '/sweetcycle': typeof AppSweetcycleRoute
   '/today': typeof AppTodayRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
@@ -510,13 +510,13 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/capture': typeof AppCaptureRoute
   '/_app/flightdeck': typeof AppFlightdeckRoute
-  '/_app/journey': typeof AppJourneyRoute
   '/_app/measures': typeof AppMeasuresRoute
   '/_app/my-tasks': typeof AppMyTasksRoute
   '/_app/people': typeof AppPeopleRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/queue': typeof AppQueueRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
+  '/_app/sweetcycle': typeof AppSweetcycleRoute
   '/_app/today': typeof AppTodayRoute
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
   '/_app/components/$id': typeof AppComponentsIdRoute
@@ -574,13 +574,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/capture'
     | '/flightdeck'
-    | '/journey'
     | '/measures'
     | '/my-tasks'
     | '/people'
     | '/pipeline'
     | '/queue'
     | '/settings'
+    | '/sweetcycle'
     | '/today'
     | '/campaigns/$id'
     | '/components/$id'
@@ -636,13 +636,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/capture'
     | '/flightdeck'
-    | '/journey'
     | '/measures'
     | '/my-tasks'
     | '/people'
     | '/pipeline'
     | '/queue'
     | '/settings'
+    | '/sweetcycle'
     | '/today'
     | '/campaigns/$id'
     | '/components/$id'
@@ -699,13 +699,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/capture'
     | '/_app/flightdeck'
-    | '/_app/journey'
     | '/_app/measures'
     | '/_app/my-tasks'
     | '/_app/people'
     | '/_app/pipeline'
     | '/_app/queue'
     | '/_app/settings'
+    | '/_app/sweetcycle'
     | '/_app/today'
     | '/_app/campaigns/$id'
     | '/_app/components/$id'
@@ -793,6 +793,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTodayRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/sweetcycle': {
+      id: '/_app/sweetcycle'
+      path: '/sweetcycle'
+      fullPath: '/sweetcycle'
+      preLoaderRoute: typeof AppSweetcycleRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
@@ -833,13 +840,6 @@ declare module '@tanstack/react-router' {
       path: '/measures'
       fullPath: '/measures'
       preLoaderRoute: typeof AppMeasuresRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/journey': {
-      id: '/_app/journey'
-      path: '/journey'
-      fullPath: '/journey'
-      preLoaderRoute: typeof AppJourneyRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/flightdeck': {
@@ -1222,13 +1222,13 @@ const AppWorkflowsIdRouteWithChildren = AppWorkflowsIdRoute._addFileChildren(
 interface AppRouteChildren {
   AppCaptureRoute: typeof AppCaptureRoute
   AppFlightdeckRoute: typeof AppFlightdeckRoute
-  AppJourneyRoute: typeof AppJourneyRoute
   AppMeasuresRoute: typeof AppMeasuresRoute
   AppMyTasksRoute: typeof AppMyTasksRoute
   AppPeopleRoute: typeof AppPeopleRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppQueueRoute: typeof AppQueueRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
+  AppSweetcycleRoute: typeof AppSweetcycleRoute
   AppTodayRoute: typeof AppTodayRoute
   AppCampaignsIdRoute: typeof AppCampaignsIdRoute
   AppComponentsIdRoute: typeof AppComponentsIdRoute
@@ -1281,13 +1281,13 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCaptureRoute: AppCaptureRoute,
   AppFlightdeckRoute: AppFlightdeckRoute,
-  AppJourneyRoute: AppJourneyRoute,
   AppMeasuresRoute: AppMeasuresRoute,
   AppMyTasksRoute: AppMyTasksRoute,
   AppPeopleRoute: AppPeopleRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppQueueRoute: AppQueueRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
+  AppSweetcycleRoute: AppSweetcycleRoute,
   AppTodayRoute: AppTodayRoute,
   AppCampaignsIdRoute: AppCampaignsIdRoute,
   AppComponentsIdRoute: AppComponentsIdRoute,
