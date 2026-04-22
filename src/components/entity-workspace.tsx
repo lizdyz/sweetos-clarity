@@ -104,14 +104,56 @@ export function EntityDetailPage({ entityKey }: { entityKey: string }) {
 // =========================================================================
 // LIST
 // =========================================================================
+type ViewMode = "table" | "board" | "cards";
+
+const BOARD_GROUP_BY: Record<string, { field: string; options: readonly string[] }> = {
+  tasks: { field: "status", options: [] },
+  projects: { field: "status", options: [] },
+  campaigns: { field: "status", options: [] },
+  documents: { field: "status", options: [] },
+  quests: { field: "progression_state", options: [] },
+  sparks: { field: "progression_state", options: [] },
+  sessions: { field: "progression_state", options: [] },
+  relationships: { field: "pipeline_stage", options: [] },
+  components: { field: "current_maturity_level", options: [] },
+  personas: { field: "spec_status", options: [] },
+  playbooks: { field: "spec_status", options: [] },
+};
+
+const DEFAULT_VIEW: Record<string, ViewMode> = {
+  tasks: "board",
+  quests: "board",
+  sparks: "board",
+  relationships: "board",
+  documents: "cards",
+  components: "cards",
+  personas: "cards",
+  playbooks: "cards",
+};
+
 function EntityList({ entity }: { entity: EntityDef }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
+  const storageKey = `entity-view:${entity.key}`;
+  const [view, setView] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return DEFAULT_VIEW[entity.key] ?? "table";
+    return (
+      (window.localStorage.getItem(storageKey) as ViewMode | null) ??
+      DEFAULT_VIEW[entity.key] ??
+      "table"
+    );
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(storageKey, view);
+    }
+  }, [view, storageKey]);
 
   const sortKey = entity.defaultSort?.key ?? "updated_at";
   const sortDir = entity.defaultSort?.dir ?? "desc";
 
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: [entity.table, "list"],
     queryFn: async () => {
@@ -142,16 +184,51 @@ function EntityList({ entity }: { entity: EntityDef }) {
 
   const listFields = entity.fields.filter((f) => f.inList);
 
+  // Determine kanban columns dynamically: union of board's group-by enum + values present in data
+  const boardConfig = BOARD_GROUP_BY[entity.key];
+  const boardField = boardConfig?.field;
+  const boardColumns = useMemo<string[]>(() => {
+    if (!boardField) return [];
+    const fieldDef = entity.fields.find((f) => f.key === boardField);
+    const fromOptions = fieldDef?.options ? Array.from(fieldDef.options) : [];
+    const fromData = Array.from(
+      new Set(
+        (data ?? [])
+          .map((r) => r[boardField] as string | null | undefined)
+          .filter((v): v is string => Boolean(v)),
+      ),
+    );
+    const merged: string[] = [];
+    for (const c of fromOptions) if (!merged.includes(c)) merged.push(c);
+    for (const c of fromData) if (!merged.includes(c)) merged.push(c);
+    return merged;
+  }, [boardField, entity, data]);
+
+  async function moveCard(rowId: string, newValue: string) {
+    if (!boardField) return;
+    const { error } = await supabase
+      .from(entity.table)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update({ [boardField]: newValue } as any)
+      .eq("id", rowId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: [entity.table] });
+  }
+
   return (
     <div className="px-6 py-5">
-      <div className="mb-5 flex items-center justify-between gap-4">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{entity.labelPlural}</h1>
           <p className="text-sm text-muted-foreground">
             {data?.length ?? 0} {entity.labelPlural.toLowerCase()}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <ViewSwitcher view={view} onChange={setView} hasBoard={Boolean(boardField)} />
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -167,71 +244,85 @@ function EntityList({ entity }: { entity: EntityDef }) {
         </div>
       </div>
 
-      <div className="panel overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/40 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <tr>
-                {listFields.map((f) => (
-                  <th key={f.key} className="px-4 py-2.5 font-semibold">
-                    {f.label}
-                  </th>
-                ))}
-                <th className="px-4 py-2.5 font-semibold">Updated</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {isLoading && (
-                <tr>
-                  <td colSpan={listFields.length + 1} className="px-4 py-12 text-center text-muted-foreground">
-                    <Loader2 className="mx-auto h-5 w-5 animate-spin" />
-                  </td>
-                </tr>
-              )}
-              {!isLoading && filtered.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={listFields.length + 1}
-                    className="px-4 py-16 text-center text-sm text-muted-foreground"
-                  >
-                    <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-iris-soft">
-                      <Plus className="h-5 w-5 text-[color:var(--iris-violet)]" />
-                    </div>
-                    No {entity.labelPlural.toLowerCase()} yet.
-                    <div className="mt-2">
-                      <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
-                        Create the first one
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-              {filtered.map((row) => (
-                <tr
-                  key={row.id}
-                  onClick={() => navigate({ to: `/${entity.key}/${row.id}` })}
-                  className="cursor-pointer transition-colors hover:bg-iris-soft/40"
-                >
-                  {listFields.map((f) => (
-                    <td
-                      key={f.key}
-                      className={cn(
-                        "max-w-[260px] truncate px-4 py-2.5",
-                        f.primary && "font-medium text-foreground",
-                      )}
-                    >
-                      {fmtCell(f, row[f.key], f.kind === "ref" ? refMaps[f.refTable!] : undefined)}
-                    </td>
-                  ))}
-                  <td className="px-4 py-2.5 text-[11px] text-muted-foreground">
-                    {row.updated_at ? format(new Date(row.updated_at), "MMM d") : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {isLoading ? (
+        <div className="grid h-48 place-items-center text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
         </div>
-      </div>
+      ) : filtered.length === 0 ? (
+        <div className="panel grid place-items-center px-6 py-16 text-center text-sm text-muted-foreground">
+          <div>
+            <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-iris-soft">
+              <Plus className="h-5 w-5 text-[color:var(--iris-violet)]" />
+            </div>
+            No {entity.labelPlural.toLowerCase()} yet.
+            <div className="mt-2">
+              <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
+                Create the first one
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : view === "board" && boardField ? (
+        <KanbanBoard
+          entity={entity}
+          groupBy={boardField}
+          columns={boardColumns}
+          rows={filtered}
+          onMove={moveCard}
+        />
+      ) : view === "cards" ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((row) => (
+            <EntityCard
+              key={row.id}
+              row={row}
+              entity={entity}
+              onOpen={() => navigate({ to: `/${entity.key}/${row.id}` })}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="panel overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-muted/40 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  {listFields.map((f) => (
+                    <th key={f.key} className="px-4 py-2.5 font-semibold">
+                      {f.label}
+                    </th>
+                  ))}
+                  <th className="px-4 py-2.5 font-semibold">Updated</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((row) => (
+                  <tr
+                    key={row.id}
+                    onClick={() => navigate({ to: `/${entity.key}/${row.id}` })}
+                    className="cursor-pointer transition-colors hover:bg-iris-soft/40"
+                  >
+                    {listFields.map((f) => (
+                      <td
+                        key={f.key}
+                        className={cn(
+                          "max-w-[260px] truncate px-4 py-2.5",
+                          f.primary && "font-medium text-foreground",
+                        )}
+                      >
+                        {fmtCell(f, row[f.key], f.kind === "ref" ? refMaps[f.refTable!] : undefined)}
+                      </td>
+                    ))}
+                    <td className="px-4 py-2.5 text-[11px] text-muted-foreground">
+                      {row.updated_at ? format(new Date(row.updated_at), "MMM d") : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {creating && (
         <EntityFormSheet
@@ -246,6 +337,112 @@ function EntityList({ entity }: { entity: EntityDef }) {
     </div>
   );
 }
+
+function ViewSwitcher({
+  view,
+  onChange,
+  hasBoard,
+}: {
+  view: ViewMode;
+  onChange: (v: ViewMode) => void;
+  hasBoard: boolean;
+}) {
+  const opts: Array<{ key: ViewMode; label: string; icon: typeof TableIcon; disabled?: boolean }> = [
+    { key: "table", label: "Table", icon: TableIcon },
+    { key: "board", label: "Board", icon: KanbanSquare, disabled: !hasBoard },
+    { key: "cards", label: "Cards", icon: LayoutGrid },
+  ];
+  return (
+    <div className="inline-flex items-center rounded-xl border border-border bg-surface p-0.5">
+      {opts.map((o) => {
+        const Icon = o.icon;
+        const active = view === o.key;
+        return (
+          <button
+            key={o.key}
+            type="button"
+            disabled={o.disabled}
+            onClick={() => onChange(o.key)}
+            title={o.disabled ? `${o.label} not available for this entity` : o.label}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
+              active
+                ? "bg-iris text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+              o.disabled && "opacity-40",
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function EntityCard({
+  row,
+  entity,
+  onOpen,
+}: {
+  row: Row;
+  entity: EntityDef;
+  onOpen: () => void;
+}) {
+  const headline = (row[entity.primaryField] as string) || "Untitled";
+  const owner = (row.owner as string) || (row.created_by as string) || null;
+  const due =
+    (row.due_date as string) ||
+    (row.deadline as string) ||
+    (row.next_action_due as string) ||
+    null;
+  const tags = (row.tagged_domains as string[] | null) ?? [];
+  const status =
+    (row.status as string) ||
+    (row.spec_status as string) ||
+    (row.progression_state as string) ||
+    null;
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="panel-raised group flex flex-col gap-2 p-4 text-left transition-shadow hover:shadow-[var(--shadow-glow)]"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="line-clamp-2 text-sm font-medium text-foreground">{headline}</div>
+        {status && (
+          <span className="shrink-0 rounded-md bg-iris-soft px-1.5 py-0.5 text-[10px] uppercase tracking-wider">
+            {status}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+        {owner && <span className="truncate">{owner}</span>}
+        {due && (
+          <>
+            {owner && <span>·</span>}
+            <span>{(() => { try { return format(new Date(due), "MMM d"); } catch { return due; } })()}</span>
+          </>
+        )}
+      </div>
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {tags.slice(0, 4).map((t) => (
+            <span key={t} className="rounded-md bg-muted px-1.5 py-0.5 text-[10px]">
+              {t}
+            </span>
+          ))}
+          {tags.length > 4 && (
+            <span className="text-[10px] text-muted-foreground">+{tags.length - 4}</span>
+          )}
+        </div>
+      )}
+    </button>
+  );
+}
+
 
 // =========================================================================
 // DETAIL
