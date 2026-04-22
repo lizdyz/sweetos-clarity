@@ -1,97 +1,128 @@
-# Phase 2.10c: SweetCycle Dashboards — make the journey legible
+# Phase 2.10d: Drag-anywhere stages + Seed the Canvas from your portals
 
-## What I learned from your portals
+## What you're hitting
 
-Each portal you uploaded tells the same story in a different voice:
+Three problems stacked on the same screen:
 
-- **Bedros (SFG)** — Pre-Mirror. Four "Machine session options" on the table waiting on Mirror to pick three.
-- **DD Humes (Guillaume/Matthew)** — Pre-Engagement. Tools shipped, awaiting "Pathway" decision (Mirror vs. Mirror + Machine).
-- **McLeod Financial (Stuart/Katie/Ricardo)** — Pre-Mirror. Built tools delivered; succession is the spine.
-- **Savoir Wealth (Steven/Jennifer)** — Pre-Mirror. Five domains surfaced; needs the full 22-domain Mirror.
-- **Angela / Recruiter Intelligence** — In-Engagement (build). make sense of the different builds
-- **SparkPath Clarity Call** — Internal session template. Create the interview map as a workflow -
+1. **The Journey board renders as labels, not as a board.** Cards live in stage columns but you can't drag them between stages. Same for the SweetCycle 5-column board on the relationship page, the maturity-level chips, and the awareness/temperature/drift pills. They are *display*, not *manipulation*. That's why it feels like notes.
+2. **The system is empty.** 1 relationship, 0 sessions, 0 services, 0 components, 0 portals. The Journey is "completely empty" because there's no data — not because the page is broken. Until we seed it from the portals you've already built (Bedros, DD Humes, McLeod, Savoir, Angela) and the SparkPath Clarity Call, every dashboard will look hollow.
+3. **Components / Tenets / Domains aren't being mined.** Every portal contains real components-in-the-making (e.g. SFG's "4 Machine Session Options," McLeod's succession spine, the SparkPath Clarity Call interview map). They should be captured as `components` records pre-tagged to domains/tenets, not left as one-off HTML.
 
-The pattern: every relationship has **a current Engagement stage**, **a current/next Service** (Mirror/Map/Machine/Sync/Connect), **a current SweetCycle phase per session** (Seed→Synthesize→Session→Sync→Ship), and **a portal artifact** that captures the moment. Today the app stores all of this but doesn't render it as a journey — the user has to mentally stitch it together.
+## Who the expert is
 
-## What's broken (audit)
+The discipline you're asking for is **operational service design** — specifically the **Service Blueprint + Kanban-style state machine** pattern used by ops-heavy consultancies (think McKinsey Operations, Pipedrive's pipeline UX, Linear's project view, Notion's database-as-board). The person who'd build this calls it: *"every status field is a board, every board column is draggable, every card surfaces the next handoff and who holds the baton."* That's the lens I'm applying below.
 
-1. **No "Where am I?" view.** Relationship detail shows funnel + maturity + plans as flat panels but never as a **timeline**: Pre-Engagement → Mirror → Map → Machine → Sync. There's no "you are here" marker.
-2. **SweetCycle is buried.** The 5-phase ladder (`SweetCycleLadder`) only renders inside the generic entity workspace. There's no per-session board, no "next phase action", no Seed→Ship progress at the relationship level.
-3. **Portal artifacts are orphaned.** Your portals are HTML deliverables sitting outside the app. `relationships.portal_link` exists but isn't surfaced as the prominent CTA it should be, and there's no portal version history or "delivered/viewed" state beyond a single boolean.
-4. **No cross-cutting dashboard.** `/_app/today` shows tasks + sessions in flat lists. There's no **journey view** answering: "Of my 5 active relationships, who is in which stage, what session is next, what's blocking the next ship?"
-5. **Owner ambiguity per phase.** A SweetCycle phase has a natural owner (Seed = client, Synthesize = us, Session = both, Sync = us, Ship = us → client). Today nothing models that, so no one knows who's holding the baton.
-6. **Service ↔ Session linkage is loose.** Sessions can have a `service` text and an `engagement_plan_id`, but not an explicit `engagement_service_id`. So a Map Service with 4 sessions can't roll up "2 of 4 shipped."
+## What lands in 2.10d
 
-## Phase 2.10c — what lands
+### Part A — Make every stage draggable (no schema change)
 
-### Migration 1 — Make the journey queryable
+Convert the static "labeled column" UIs to real drag-to-update boards:
 
-- Add `sessions.engagement_service_id` (FK→engagement_services). Every session ladders Plan → Service → Session.
-- Add `sessions.phase_owner` enum (`client | us | both`) defaulting from `sweetcycle_phase` (Seed=client, Synthesize=us, Session=both, Sync=us, Ship=us).
-- Add `sessions.phase_due_date` (date) and `sessions.phase_blocker` (text). Drives a "what's the next baton handoff" surface.
-- Add `relationship_portals` table: `id, relationship_id, version, kind (Pre-Mirror|Pre-Map|Pre-Machine|Mirror Output|Map Output|Machine Output|Sync), url, delivered_at, viewed_at, notes, created_by, created_at`. Replaces single `portal_link` with a real history. Existing `portal_link` stays for back-compat read.
-- View `relationship_journey`: returns `(relationship_id, current_stage, current_service_id, current_session_id, next_action_owner, next_action_due, ship_count, total_session_count, latest_portal_url)`. One query powers every dashboard card.
+- `**/_app/journey` Stage swimlanes**: drag a relationship card across `Awareness → Pre-Engagement → Mirror → Map → Machine → Sync` writes `relationships.pipeline_stage`. Inline owner pill becomes a click-to-cycle (`client → us → both`).
+- **Relationship detail SweetCycle board**: drag a session card across `Seed → Synthesize → Session → Sync → Ship` writes `sessions.sweetcycle_phase` (the trigger auto-resets `phase_owner`). Drag also recomputes the Journey strip on the same page.
+- **Maturity Map grid (22 domains)**: each domain cell becomes click-to-cycle through `L1 Lacking → L2 Learning → L3 Launching → L4 Leveraging → L5 Leading` writing to `excellence_scores`. No drag — cell-cycle is the right gesture for a 5-state heatmap.
+- **Funnel chips (awareness/temperature/drift)** on the relationship Funnel card: become inline single-select dropdowns (write on change), not read-only chips.
+- **Reusable hook `useDragToStatus**`: extracts the dnd-kit + optimistic-update + toast pattern out of `kanban-board.tsx` so the Journey, SweetCycle, and any future stage-board share one implementation.
 
-### Migration 2 — Service rollup
+Result: anywhere there's a stage column, you can move things. No more "I see it but I can't act on it."
 
-- View `engagement_service_rollup`: `(service_id, plan_id, relationship_id, service_type, status, sessions_total, sessions_shipped, sessions_in_flight, next_session_date, completion_pct)`.
+### Part B — Seed the canvas from your portals + clarity call
 
-### New route — `/_app/journey` (the hub you've been asking for)
+A one-time, idempotent seeding migration that creates real records based on what you've already built:
 
-The "where is everyone, what's next" board. Three stacked panels, premium card style:
+**Relationships seeded (with the right stage + temperature):**
 
-1. **Stage swimlanes.** Six lanes left-to-right: Awareness · Pre-Engagement · Mirror · Map · Machine · Sync. Each relationship is a card in its current lane showing: name · primary service · next session date · phase-owner chip (client/us/both) · portal CTA.
-2. **This week's batons.** Flat list of every session whose `phase_owner` change is due in the next 7 days, sorted by date. "Steven & Jennifer · Mirror · Sync due Apr 24 · owned by us."
-3. **At risk.** Sessions stuck > 7 days in the same phase, or relationships with `drift_risk` set. One-click open.
+- Bedros Sarkissian (SFG) — stage `Pre-Mirror`, temperature `Warm`, primary_service `Mirror`, drift_risk null.
+- DD Humes (Guillaume + Matthew) — stage `Pre-Engagement`, temperature `Warm`, awaiting Pathway decision flagged as `current_blocker`.
+- McLeod Financial (Stuart, Katie, Ricardo) — stage `Pre-Mirror`, temperature `Warm`, primary_service `Mirror`, succession noted.
+- Savoir Wealth (Steven + Jennifer) — stage `Pre-Mirror`, temperature `Warm`, 5 surfaced domains noted in `intelligence_summary`.
+- Angela / Recruiter Intelligence — stage `In-Engagement`, primary_service `Machine`, status `Active`.
 
-### Relationship detail — add **Journey strip + SweetCycle board**
+`**relationship_portals` rows** for each of the 5 client portals you uploaded, kind = `Pre-Mirror` or `Pre-Engagement`, version 1, with the file name as the title.
 
-On `_app.relationships.$id.tsx`, prepend two panels above the existing six:
+**Engagement plans + services + sessions** for the two that have real shape:
 
-- **Journey strip** (top of page, sticky): horizontal stage tracker (Pre-Engagement → Mirror → Map → Machine → Sync) with the current stage glowing, plus a "Latest portal" pill that links to the most recent `relationship_portals` row, plus delivered/viewed badges.
-- **SweetCycle board** (per active service): for each `engagement_service` with `status=Active`, a 5-column board (Seed/Synthesize/Session/Sync/Ship) where each session appears in its current column. Cards show owner chip, due date, and a red dot if `phase_blocker` is set. Drag-to-advance writes a new `sweetcycle_phase` value.
+- Bedros: Plan "SFG Machine Sprint" → Service "Machine" (4 sessions in `Seed`, named after the four options you laid out).
+- Angela: Plan "Recruiter Intelligence Build" → Service "Machine" (1 session in `Session` phase).
 
-### Session detail — add **Phase timeline + handoff control**
+**Components seeded from real artifacts** — these are the building blocks you keep re-using, captured once:
 
-On `_app.sessions.$id.tsx`:
 
-- **Phase timeline** at top: visual 5-step ladder with checkmarks for completed phases, current phase highlighted, owner chip per phase.
-- **Advance phase** action: button "Mark Seed complete → hand off to us for Synthesize" that updates `sweetcycle_phase` and `phase_owner`, recomputes `phase_due_date` (configurable per service), and writes an audit row.
-- **Linked artifacts**: list of `documents` with `related_session_id = this.id` grouped by `session_phase` (Pre-Engagement / Deliverable / Follow-up) — this is where portal HTML files attach.
+| Component                                              | Pre-tagged Domain    | Pre-tagged Tenet                  |
+| ------------------------------------------------------ | -------------------- | --------------------------------- |
+| 22-Domain Mirror Assessment                            | strategy-positioning | Strategic Vision & Purpose        |
+| Pathway Decision Worksheet (Mirror vs. Mirror+Machine) | sales-discovery      | Client Discovery & Needs Analysis |
+| 4-Option Machine Session Selector                      | service-delivery     | Operational Excellence            |
+| Succession Spine Map                                   | analytics-ci         | Business Succession Planning      |
+| 5-Domain Quickscan                                     | analytics-ci         | Data Intelligence & Analytics     |
+| SparkPath Clarity Call Interview Map                   | sales-discovery      | Client Discovery & Needs Analysis |
+| Pre-Engagement Tools Bundle                            | onboarding-intake    | Client Experience Design          |
+| Recruiter Intelligence Dashboard                       | analytics-ci         | Data Intelligence & Analytics     |
 
-### Client-facing portal page — `/_app/portals/$relationshipId` (read-mostly)
 
-A trimmed view a client could be linked to (still gated behind auth for now): the journey strip + their current SweetCycle board + their open tasks (filtered by `relationship_id` via projects) + the latest portal link. This is the in-app version of the HTML portals you've been hand-crafting — same shape, populated from live data.
+Each gets `description`, `questions_it_answers`, `current_maturity_level = L3 Launching`, `quality_status = In Use`, and the `related_domains` / `related_tenets` arrays populated. Quality status, maturity, and tags become editable inline on the component detail page.
 
-### Sidebar
+**Sparks seeded** — every "next idea" surfaced in a portal becomes a `sparks` row tagged to the right relationship + domain + tenet, sitting in the Queue ready to confirm. ~12 sparks total across the 5 portals.
 
-Add **Journey** at the very top of the **Pipeline** group (above Relationships). It's the new daily start screen for client-facing work, the way `/my-tasks` is the daily start for execution.
+### Part C — Components ↔ Tenets ↔ Domains made obvious
 
-### Memory
+- **Component detail page**: add a top strip showing the component's tagged domains (left) and tenets (right) as editable chip groups, with a small "Best fit" hint computed from the most-used pairing across other components.
+- **Component list `/_app/components**`: add a filter row with two parallel filters — Domain (22 universal) and Tenet (22 industry-specific). User can stack both. Clarifies they are independent axes.
+- `**/_app/journey**`: add a fourth panel — **"Components in flight"** — listing components touched in the last 14 days grouped by domain, so when you're working a Mirror you can see "these 3 components are also being refined right now."
 
-- `mem://features/sweetcycle-journey` — Stage taxonomy (Awareness→Pre-Engagement→Mirror→Map→Machine→Sync), per-phase ownership map, relationship_journey view contract, portal-version semantics.
-- Append index Core: "Every relationship has a current Stage and every active Service has a SweetCycle board (Seed→Synthesize→Session→Sync→Ship). Phase owner is explicit (client/us/both); the baton is never ambiguous."
+### Part D — "Capture from portal" quick action
 
-## What I'm NOT doing in 2.10c
+On the relationship detail Journey strip, add an **"+ Add portal"** button → modal with `kind` (Pre-Mirror / Pre-Map / Mirror Output / etc.), `version`, `url`, `notes`. Writes a `relationship_portals` row and bumps `latest_portal_url`. So the next time you ship a portal, it's one click into the system, not lost in a folder.
 
-- Importing the four uploaded HTML portals as data. They stay as artifacts — but I'll add a **"Import portal as relationship_portals row"** quick action that asks for URL + kind + version and stores the link. Full HTML→structured ingestion is its own pass.
-- Best-Practice Catalog (Step 2 of original 2.10) — still queued.
-- Agents — still queued after Best Practices.
-- Notion sync — still last.
-- A public unauthenticated portal URL. Client-portal page lives behind auth this pass; public sharing is a follow-up.
+## What I'm NOT doing in 2.10d
+
+- Full HTML→structured ingestion (parsing the portals into rich object trees) — that's a parser project. We capture the link + the high-signal components by hand this pass.
+- Best-Practice Catalog, Agents, Notion sync — still queued behind this.
+- Drag-and-drop on the Maturity Map (cell-cycle is correct for a heatmap; drag would be wrong gesture).
+- Seeding a 6th portal — stick to the 5 you've shared.
 
 ## Files touched
 
-- 2 migrations under `supabase/migrations/`.
-- New routes: `src/routes/_app.journey.tsx`, `src/routes/_app.portals.$relationshipId.tsx`.
-- Edits: `src/routes/_app.relationships.$id.tsx` (add Journey strip + SweetCycle board), `src/routes/_app.sessions.$id.tsx` (phase timeline + advance control + artifacts), `src/components/app-sidebar.tsx` (add Journey), `src/lib/entities.ts` (add `engagement_service_id`, `phase_owner`, `phase_due_date`, `phase_blocker` on sessions; add `relationship_portals` entity), `src/lib/enums.ts` (PHASE_OWNER, PORTAL_KIND).
-- New component: `src/components/sweetcycle-board.tsx` (the 5-column board, reusable for relationship detail and the journey route).
+- New: `src/hooks/use-drag-to-status.ts`, `src/components/stage-swimlanes.tsx` (drag-enabled wrapper used by Journey + SweetCycle).
+- Edits: `src/routes/_app.journey.tsx` (drag swimlanes + Components-in-flight panel), `src/components/sweetcycle-board.tsx` (drag), `src/routes/_app.relationships.$id.tsx` (Funnel chips → inline editors, Maturity cell-cycle, Add-portal button), `src/routes/_app.components.$id.tsx` (domain/tenet chip strip), `src/routes/_app.components.index.tsx` (dual filter).
+- 1 seed migration under `supabase/migrations/` — idempotent (uses `ON CONFLICT DO NOTHING` keyed on name + relationship_id) so re-runs don't duplicate.
+- Memory: append `mem://features/sweetcycle-journey` with the drag-everywhere convention; add `mem://design/stage-as-board` capturing the rule "every status field renders as a board where columns are draggable."
 
 ## Suggested order after this
 
-1. **2.10c (this plan)** — Journey + SweetCycle dashboards.
-2. **2.10b leftover polish** — return to Best-Practice Catalog (Step 2 of original 2.10).
+1. **2.10d (this plan)** — drag + seed.
+2. **Best-Practice Catalog** (Step 2 of original 2.10).
 3. **Agents** (Step 3).
 4. **Notion sync** (Step 4).
 
-Approve and I'll build 2.10c end-to-end in one pass. If you'd rather see the **client-facing portal page** built first and the team Journey board second, say "portal first" and I'll re-cut.
+Approve and I'll build 2.10d in one pass. If you'd rather I **only seed first** so you can play with real data before the drag work lands, say "seed only" and I'll cut Part A out of this pass.  
+  
+here are the tenets:  
+
+
+
+|            |                                   |                |                                                                    |
+| ---------- | --------------------------------- | -------------- | ------------------------------------------------------------------ |
+| Tenet_Code | Tenet_Name                        | Category       | Description                                                        |
+| F1         | Strategic Vision & Purpose        | Foundation     | Defining purpose, vision, and strategic direction for the practice |
+| F2         | Leadership & Team Development     | Foundation     | Building and leading high-performing teams                         |
+| F3         | Operational Excellence            | Foundation     | Creating efficient, scalable, and repeatable operations            |
+| F4         | Financial Mastery                 | Foundation     | Mastering business financial management and planning               |
+| F5         | Marketing & Positioning           | Foundation     | Positioning practice and building market presence                  |
+| F6         | Sales & Business Development      | Foundation     | Developing business and converting prospects to clients            |
+| F7         | Client Experience Design          | Foundation     | Designing exceptional client experiences                           |
+| F8         | Risk Management & Compliance      | Foundation     | Managing risk and maintaining compliance                           |
+| S9         | Client Discovery & Needs Analysis | Specialization | Deeply understanding client needs, goals, and context              |
+| S10        | Financial Planning Mastery        | Specialization | Mastering comprehensive financial planning                         |
+| S11        | Investment Philosophy & Strategy  | Specialization | Developing coherent investment philosophy and strategy             |
+| S12        | Estate Planning Excellence        | Specialization | Excelling at estate planning and wealth transfer                   |
+| S13        | Tax Planning Integration          | Specialization | Integrating tax planning into all advice                           |
+| S14        | Insurance Strategy                | Specialization | Strategic use of insurance in planning                             |
+| S15        | Business Succession Planning      | Specialization | Planning for business owner transitions and succession             |
+| A16        | Behavioral Finance Application    | Advanced       | Applying behavioral finance principles to client work              |
+| A17        | Data Intelligence & Analytics     | Advanced       | Leveraging data and analytics for insights                         |
+| A18        | Networks & Strategic Partnerships | Advanced       | Building strategic partnerships and networks                       |
+| A19        | Innovation & Adaptation           | Advanced       | Driving innovation and adapting to change                          |
+| A20        | Communication & Client Education  | Advanced       | Communicating complex ideas and educating clients                  |
+| M21        | Crisis Leadership                 | Mastery        | Leading during crisis and uncertainty                              |
+| M22        | Legacy & Industry Contribution    | Mastery        | Contributing to profession and leaving lasting legacy              |
