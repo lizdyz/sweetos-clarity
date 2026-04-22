@@ -23,6 +23,8 @@ import {
   Send,
   Brain,
   Wand2,
+  Vault,
+  Target as TargetIcon,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -91,6 +93,8 @@ const GROUPS: NavGroup[] = [
       { to: "/personas", label: "Personas", icon: Users, hint: "Buyer archetypes" },
       { to: "/components", label: "Components", icon: Layers, hint: "Reusable building blocks (maturity-tracked)" },
       { to: "/outcomes", label: "Outcomes", icon: Target, hint: "Six measurable result types" },
+      { to: "/library/jtbd", label: "Jobs-to-be-done", icon: TargetIcon, hint: "What customers hire you for" },
+      { to: "/vault", label: "Vault", icon: Vault, hint: "All captured & generated files" },
     ],
   },
   {
@@ -245,7 +249,7 @@ export function AppSidebar() {
 
       <div className="border-t border-sidebar-border p-3 text-[11px] text-muted-foreground">
         <div className="flex items-center justify-between">
-          <span>Phase 2.10o · UX Sweep</span>
+          <span>Phase 2.10p · Vault + JTBD</span>
           <span className="font-mono text-[10px] opacity-70">v0.2</span>
         </div>
       </div>
