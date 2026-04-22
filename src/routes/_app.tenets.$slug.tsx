@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { sb } from "@/lib/sb";
 import { ExcellenceMatrix } from "@/components/excellence-matrix";
+import { CribSheetCard } from "@/components/crib-sheet-card";
+import { LensWall } from "@/components/lens-wall";
 
 export const Route = createFileRoute("/_app/tenets/$slug")({
   component: TenetDetail,
@@ -80,13 +82,19 @@ function TenetDetail() {
         </div>
       </header>
 
-      <Card className="panel-raised p-5">
-        <ExcellenceMatrix
-          subjectKind="tenet"
-          subjectId={tenet.id}
-          subjectLabel={tenet.name}
-        />
-      </Card>
+      <div className="space-y-5">
+        <CribSheetCard subjectKind="tenet" subjectId={tenet.id} subjectLabel={tenet.name} />
+
+        <Card className="panel-raised p-5">
+          <ExcellenceMatrix
+            subjectKind="tenet"
+            subjectId={tenet.id}
+            subjectLabel={tenet.name}
+          />
+        </Card>
+
+        <LensWall subjectKind="tenet" subjectId={tenet.id} subjectLabel={tenet.name} />
+      </div>
     </div>
   );
 }

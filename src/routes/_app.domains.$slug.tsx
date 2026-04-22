@@ -4,6 +4,8 @@ import { ArrowLeft, Compass, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { sb } from "@/lib/sb";
 import { ExcellenceMatrix } from "@/components/excellence-matrix";
+import { CribSheetCard } from "@/components/crib-sheet-card";
+import { LensWall } from "@/components/lens-wall";
 
 export const Route = createFileRoute("/_app/domains/$slug")({
   component: DomainDetail,
@@ -73,13 +75,19 @@ function DomainDetail() {
         </div>
       </header>
 
-      <Card className="panel-raised p-5">
-        <ExcellenceMatrix
-          subjectKind="domain"
-          subjectId={domain.id}
-          subjectLabel={domain.name}
-        />
-      </Card>
+      <div className="space-y-5">
+        <CribSheetCard subjectKind="domain" subjectId={domain.id} subjectLabel={domain.name} />
+
+        <Card className="panel-raised p-5">
+          <ExcellenceMatrix
+            subjectKind="domain"
+            subjectId={domain.id}
+            subjectLabel={domain.name}
+          />
+        </Card>
+
+        <LensWall subjectKind="domain" subjectId={domain.id} subjectLabel={domain.name} />
+      </div>
     </div>
   );
 }

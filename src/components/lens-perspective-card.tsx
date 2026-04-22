@@ -205,10 +205,8 @@ function RenderMarkdown({ md }: { md: string }) {
         }
         const isHeading = /^#{1,4}\s+/.test(lines[0]);
         if (isHeading) {
-          const level = lines[0].match(/^#+/)?.[0].length ?? 3;
           const text = lines[0].replace(/^#+\s+/, "");
-          const Tag = (`h${Math.min(level + 2, 6)}` as keyof JSX.IntrinsicElements);
-          return <Tag key={bi} className="text-sm font-semibold">{text}</Tag>;
+          return <h4 key={bi} className="text-sm font-semibold">{text}</h4>;
         }
         return <p key={bi}>{block}</p>;
       })}
