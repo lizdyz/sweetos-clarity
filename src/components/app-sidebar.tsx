@@ -38,6 +38,15 @@ const PRIMARY: NavGroup[] = [
     ],
   },
   {
+    label: "Work",
+    items: [
+      { to: "/my-tasks", label: "My tasks", icon: Inbox },
+      { to: "/people", label: "People", icon: Users },
+      { to: "/projects", label: "Projects", icon: Workflow },
+      { to: "/tasks", label: "Tasks", icon: LayoutDashboard },
+    ],
+  },
+  {
     label: "Operate",
     items: [
       { to: "/relationships", label: "Relationships", icon: Users },
