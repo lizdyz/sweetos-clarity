@@ -73,6 +73,16 @@ function SessionDetail() {
 
   return (
     <div className="space-y-5">
+      <div className="flex justify-end px-6 pt-4">
+        <OperatorChip
+          table="sessions"
+          column="operator_id"
+          rowId={id}
+          operatorId={session?.operator_id}
+          label="Facilitator"
+          invalidateKeys={[["session-meta", id]]}
+        />
+      </div>
       <EntityDetailPage entityKey="sessions" />
       <div className="space-y-5 px-6 pb-8">
         {template && (
