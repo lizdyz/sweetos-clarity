@@ -21,6 +21,8 @@ import {
   FileText,
   GitBranch,
   Send,
+  Brain,
+  Wand2,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -55,8 +57,8 @@ const GROUPS: NavGroup[] = [
       { to: "/today", label: "Today", icon: LayoutDashboard, hint: "Live working surface" },
       { to: "/planner", label: "Planner", icon: Layers, hint: "Plan this week / next / backlog" },
       { to: "/calendar", label: "Calendar", icon: Calendar, hint: "Visual time view" },
-      { to: "/capture", label: "Capture", icon: Sparkles, hint: "Get raw input in fast" },
-      { to: "/queue", label: "Proposals Queue", icon: Inbox, hint: "Review system proposals" },
+      { to: "/capture", label: "Capture + Proposals", icon: Sparkles, hint: "Capture raw input + live proposal review" },
+      { to: "/queue", label: "Proposals (full)", icon: Inbox, hint: "All pending proposals" },
       { to: "/my-tasks", label: "My tasks", icon: ListChecks, hint: "Work assigned to you" },
     ],
   },
@@ -64,6 +66,8 @@ const GROUPS: NavGroup[] = [
     label: "Operate",
     caption: "Operator side · SweetCycle delivery",
     items: [
+      { to: "/operate/ocda", label: "OCDA Cockpit", icon: Brain, hint: "Observe · Choose · Decide · Act" },
+      { to: "/bizzybots", label: "BizzyBots", icon: Bot, hint: "9 Lens agents — ask any subject" },
       { to: "/pipeline", label: "Pipeline", icon: Compass, hint: "Sales & engagement pipeline" },
       { to: "/flightdeck", label: "Flightdeck", icon: Map, hint: "Cross-relationship cockpit" },
       { to: "/sweetcycle", label: "SweetCycle", icon: Compass, hint: "Active client journey" },
@@ -127,6 +131,7 @@ const GROUPS: NavGroup[] = [
     caption: "Rubrics, prompts, team",
     collapsible: true,
     items: [
+      { to: "/settings/prompts", label: "Prompt Console", icon: Wand2, hint: "Every editable AI prompt in one place" },
       { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "L1→L5 across the 5 Ps" },
       { to: "/settings/lenses", label: "BizzyBot prompts", icon: Bot, hint: "Edit AI instructions per Lens" },
       { to: "/settings", label: "Team & profile", icon: Settings },
@@ -240,7 +245,7 @@ export function AppSidebar() {
 
       <div className="border-t border-sidebar-border p-3 text-[11px] text-muted-foreground">
         <div className="flex items-center justify-between">
-          <span>Phase 2.10n · Canon</span>
+          <span>Phase 2.10o · UX Sweep</span>
           <span className="font-mono text-[10px] opacity-70">v0.2</span>
         </div>
       </div>
