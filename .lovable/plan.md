@@ -1,104 +1,132 @@
 
 
-# System Audit & Refactor — a 4-pass cleanup, not one giant rewrite
+# Next move — Pass 2 (route triage), then UI/UX Auditor agent, then Pass 3 (monster files)
 
-You're right that the system has accumulated. Here's the honest state:
+You finished **Pass 1 (security)** cleanly. The honest state right now:
 
-- **78 route files**, only **47 reachable from the sidebar** → 31 orphaned routes
-- **18 components written but never imported** anywhere
-- **136 `as any` casts** in app code, **4 of the top 5 files exceed 600 lines** (one is 1,085)
-- **9 ERROR-level Supabase linter findings** (Security Definer views) + 1 WARN
-- **13 routes that look like they overlap**: `today`, `my-tasks`, `queue`, `planner`, `calendar`, `capture`, `journey` vs `journeys`, `sweetcycle` vs `sweetsync` vs `flightdeck`, `pipeline`
-- A singleton `QueryClient` pattern (against TanStack Start guidance), `console.log` left in code, no dedupe of canon/lens patterns
+- **82 routes**, **45 sidebar entries** → ~6 real orphans (most of the "31 orphans" earlier count was detail routes like `$id` that are reached via parent links, not the sidebar)
+- **14 `as any`** in app code (down from 136 — almost done)
+- **0 `console.log`** (already clean)
+- **4 files >600 lines** still pending (`entity-workspace` 1,085 · `flightdeck` 840 · `relationships.$id` 679 · `entities.ts` 612)
+- **Real duplicates visible in the sidebar today**: `today` vs `my-tasks` vs `queue` vs `planner` · `sweetcycle` vs `sweetsync` vs `flightdeck` vs `pipeline` · `journey` (singular orphan)
+- **Canon debt still open**: `<CanonGuardrail>` not mounted on `/quests/$id`, `/sparks/$id`, `/components/$id`, `/missions/$id`; `<QuestAnatomyCard>` not wired
 
-The right way to attack this is **not** one mega-PR. It's 4 small, themed passes — each independently approvable, each leaves the system better than it found it, none of them break running features. You decide which to run, in what order.
-
----
-
-## Pass 1 — Security & DB hygiene (lowest risk, highest payoff)
-
-Fix what the linter is telling us is actually dangerous.
-
-- **Recreate the 9 Security Definer views** with `security_invoker = true` — these views currently bypass the caller's RLS, which is a real privilege-escalation surface. (We already did this once for `workflow_step_pipeline`; same pattern for the rest: `relationship_journey`, `relationship_domain_maturity`, `time_grid`, `measure_health`, `operator_workload`, `component_build_pipeline`, `excellence_checklist_progress`, `lens_canon_status`.)
-- **Set `search_path = public` on the 1 function flagged** by the WARN.
-- **Run `security--run_security_scan`** and triage anything new.
-- **Add a `db-views` README** in `supabase/` that lists every view + which page reads it (enforces "Views are truth" memory rule).
-
-Output: 1 migration, 0 UI changes. Zero risk to running features.
+Best next move = **three focused passes, in this order**, with the UI/UX Auditor as Pass B because it gives you durable leverage on every future page.
 
 ---
 
-## Pass 2 — Route consolidation & dead-code removal
+## Pass 2A — Route triage & duplicate collapse (do first, ~30 min)
 
-Stop carrying ghosts. This is the clarity pass.
+I produce **one audit table** for your sign-off, then act. Proposed actions (you veto any row):
 
-**Audit:** I'll produce a single table — Route × is-linked × last-meaningful-update × proposed-action — and walk through it with you before deleting anything. Suspected duplicates today:
-
-| Likely keep | Likely retire / fold |
-|---|---|
-| `today` (canonical "now" view) | `my-tasks`, `queue`, `planner` (fold into `today` tabs) |
-| `sweetcycle` (per-relationship journey) | `journey` singular (orphan) |
-| `flightdeck` (cross-relationship operator dash) | possibly `pipeline` if redundant with `flightdeck` filters |
-| `journeys` index/detail (Library) | — |
-| `capture` (intake) | — |
-
-**Component cleanup:** delete the 18 unused components after verifying with one more round of grep + LSP. Confirmed unused so far: `calendar-zoom-toggle`, `help-sheet`, `mini-calendar`, `planner-add-popover`, `protagonist-anchor-card`, `signal-scanner-config`, `lens-tile-grid`, `lens-stage-stepper`, `spark-explainer-card`, `sparks-for-component-panel`, `curator-panel`, `domain-tenet-chips`, `component-chip`, `session-template-picker`. **Hold** on `canon-guardrail`, `quest-anatomy-card`, `lens-perspective-card`, `workflow-step-sheet` — these are slated for the canon-guardrail mounts we already approved and are not yet wired.
-
-**Sidebar reconciliation:** every kept route appears in sidebar exactly once; every retired route either redirects or 404s.
-
-Output: 1 audit table for your sign-off, then ~15 file deletions, sidebar update, redirects for retired URLs. No new features.
-
----
-
-## Pass 3 — File-size & type-safety refactor (the "monster files")
-
-The four files over 600 lines are doing too much.
-
-| File | Lines | Refactor |
+| Route | Action | Why |
 |---|---|---|
-| `entity-workspace.tsx` | 1,085 | Extract per-tab subcomponents (Overview, Lenses, Measures, Components, Audit) into `components/entity-workspace/*.tsx` |
-| `_app.flightdeck.tsx` | 840 | Extract operator-row, swimlane, and filter-bar components |
-| `_app.relationships.$id.tsx` | 679 | Extract header anatomy + tab components |
-| `lib/entities.ts` | 612 | Split into `entities/{registry,queries,labels}.ts` |
+| `/today` | **Keep** as canonical "now" | Already the home of daily work |
+| `/my-tasks` | Fold into `/today?tab=mine` | Same data, different filter |
+| `/queue` | Fold into `/today?tab=queue` | Capture-confirmation belongs in Today flow |
+| `/planner` | Fold into `/today?tab=plan` | Time-blocking is a Today view |
+| `/calendar` | **Keep** | True month/week canvas — distinct from Today |
+| `/flightdeck` | **Keep** as cross-relationship operator dash | |
+| `/pipeline` | Fold into `/flightdeck?view=pipeline` | Pipeline is a Flightdeck lens |
+| `/sweetcycle` | **Keep** as per-relationship journey board | |
+| `/sweetsync` | **Keep** — Sparks-under-Quests workspace | Distinct from Sweetcycle (different entities) |
+| `/journey` (singular) | **Delete** | True orphan, no inbound links |
+| `/journeys` index/detail | **Keep** as Library entity | |
 
-**Type safety:** kill the 55 `as any` in app code (excluding `routeTree.gen.ts` which is autogen). Most are missing types from older Supabase schema reads — regenerate types and replace casts with proper row types.
-
-Output: 0 behavior changes, but every file becomes legible and the type errors stop hiding bugs.
-
----
-
-## Pass 4 — Architectural patterns alignment
-
-Bring the code in line with the rules we've been writing into memory.
-
-- **`QueryClient` lives in `getRouter` factory**, not as a module singleton (TanStack Start invariant — currently risks SSR cache leakage between requests).
-- **Mount the canon guardrails** we already shipped: `<CanonGuardrail entityKind="quest" />` on `/quests/$id`, plus `spark`, `component`, `mission`. (Carrying-over commitment from the entity-canon plan.)
-- **Wire `<QuestAnatomyCard>`** into `/quests/$id` and the templates-vs-instances toggle into `/quests`. (Carrying-over commitment.)
-- **Remove stray `console.log`** statements (only 1 left — easy).
-- **Add a `mem://design/audit-cadence.md`** rule: "Run audit pass after every 5 feature additions; no route ships without a sidebar entry."
-
-Output: ~6 file edits, finishes the canon work we already paid for.
+**Deliverable:** sidebar shrinks from 45 → ~38 entries, 5 routes deleted with redirects (`/my-tasks` → `/today?tab=mine` etc.), no data lost, no behavior change for users who land on the old URLs.
 
 ---
 
-## How I propose we run this
+## Pass 2B — UI/UX Auditor agent (the innovative move you asked for)
 
-1. **You approve the 4-pass framing** (this plan).
-2. I run **Pass 1 (security/DB)** first — single migration, zero risk, gets the linter green.
-3. I produce the **Pass 2 audit table** and we triage routes together before I delete anything.
-4. **Pass 3** in one batched refactor session.
-5. **Pass 4** to close out canon-guardrail debt and align patterns.
+Build a reusable in-app **UI/UX Auditor** that runs against any page on demand. This is the durable win — every page you ever build gets audited the same way.
 
-Each pass = one approval, one focused commit, one clean memory update. No big-bang refactor. Nothing rendered today disappears without you saying "yes" first.
+**Architecture:**
+
+```
+/settings/ux-audit               → new route, the auditor cockpit
+   │
+   ├─ Pick a route (or "audit all visible routes")
+   ├─ Calls edge function: ux-audit
+   │     1. Pulls the route's source file
+   │     2. Pulls Tailwind tokens from src/styles.css
+   │     3. Pulls relevant memory rules (mem://design/*)
+   │     4. Calls Lovable AI (gemini-3-flash-preview) with a structured-
+   │        output tool-call schema → returns scored audit:
+   │           - hierarchy (1-5)
+   │           - density (1-5)
+   │           - empty/loading/error states present (bool)
+   │           - accessibility flags
+   │           - canon adherence (does it mount expected guardrails?)
+   │           - top 3 specific recommendations with line numbers
+   │     5. Persists to ux_audit_runs table
+   │
+   └─ Results: card per route with score chips, expand for findings,
+      "Open file" link, "Re-audit" button, "Mark fixed" toggle
+```
+
+**Three things make this premium, not generic:**
+
+1. **Grounded in your canon** — the prompt includes your workspace rules (light-first SweetBot world, Stage-as-Board, Views-are-Truth, every actionable has TimeControls, etc.) so findings are *your* standards, not generic SaaS standards.
+2. **Drift detection** — flags pages that should mount `<CanonGuardrail>`, `<TimeControls>`, `<MeasuresPanel>` but don't. Same reinforcement-loop philosophy as Entity Canon.
+3. **Trend over time** — `ux_audit_runs` keeps every score so you see whether the codebase is getting cleaner or messier as features land.
+
+**Schema (1 migration):**
+```
+ux_audit_runs
+  id, route_path, audited_at, audited_by,
+  scores jsonb,                  -- {hierarchy:4, density:5, ...}
+  findings jsonb,                -- [{severity, message, file, line, fix_hint}]
+  guardrails_missing text[],     -- ['CanonGuardrail','TimeControls']
+  status ('open'|'acknowledged'|'fixed')
+```
+
+**Files:**
+- `supabase/functions/ux-audit/index.ts` — the AI call with tool-calling schema
+- `src/routes/_app.settings.ux-audit.tsx` — cockpit (audit / re-audit / browse runs)
+- `src/components/ux-audit-card.tsx` — per-route result card
+- 1 migration + RLS
+
+**Cost control:** never auto-fires. Manual click only. Same canon-first / AI-on-demand pattern as Sparks and Lenses.
 
 ---
 
-## What this is NOT
+## Pass 2C — Finish the canon-guardrail debt (one batched edit, ~15 min)
 
-- Not deferring SparkPath Phase B/C, Blockers/Wins, or Erica migration — those resume after Pass 1 (the security pass is a non-blocker).
-- Not deleting any data. Migrations are view-recreates only.
-- Not changing any feature behavior in Pass 1, 3, or 4. Only Pass 2 removes routes — and only with your explicit sign-off on the audit table.
-- Not touching `routeTree.gen.ts`, `types.ts`, or `client.ts` — all autogen.
+Cheap win that completes promised work:
 
-Reply with **"Run Pass 1"** and I'll ship the security-definer fix in one go. Or tell me to reorder the passes if a different one feels more urgent (e.g. "do route cleanup first — the orphans are bothering me").
+- Mount `<CanonGuardrail entityKind="quest">` on `/quests/$id`
+- Mount `<CanonGuardrail entityKind="spark">` on `/sparks/$id`
+- Mount `<CanonGuardrail entityKind="component">` on `/components/$id`
+- Mount `<CanonGuardrail entityKind="mission">` on `/missions/$id`
+- Wire `<QuestAnatomyCard>` into `/quests/$id` header
+- Add templates-vs-instances toggle to `/quests/index`
+
+Makes the Entity Canon system actually visible everywhere it should be.
+
+---
+
+## Pass 3 — Monster files (separate session, ~45 min)
+
+Save for after Pass 2 lands so the auditor can score the refactor.
+
+| File | Lines | Split |
+|---|---|---|
+| `entity-workspace.tsx` | 1,085 | `entity-workspace/{overview,lenses,measures,components,audit}-tab.tsx` |
+| `_app.flightdeck.tsx` | 840 | extract operator-row, swimlane, filter-bar |
+| `_app.relationships.$id.tsx` | 679 | extract header anatomy + tab components |
+| `lib/entities.ts` | 612 | `entities/{registry,queries,labels}.ts` |
+
+Plus kill the remaining 14 `as any` casts.
+
+---
+
+## Order I propose
+
+1. **Pass 2A** — route triage table → you sign off → I delete + redirect (one commit)
+2. **Pass 2C** — canon-guardrail mounts (one commit)
+3. **Pass 2B** — UI/UX Auditor agent (one commit, biggest leverage)
+4. **Pass 3** — monster file refactor (separate session, after auditor is live so it scores the diff)
+
+Reply **"Run 2A"** and I'll produce the audit table for your sign-off as the first action of the next pass. Or say **"Run 2B first — I want the auditor before I touch routes"** if you'd rather have the agent grade the current state as a baseline.
 
