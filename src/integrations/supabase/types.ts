@@ -323,6 +323,7 @@ export type Database = {
           related_domains: string[] | null
           related_tenets: string[] | null
           related_workflows: string[] | null
+          responsible_operator_id: string | null
           reuse_count: number | null
           typical_session_length: string | null
           updated_at: string
@@ -347,6 +348,7 @@ export type Database = {
           related_domains?: string[] | null
           related_tenets?: string[] | null
           related_workflows?: string[] | null
+          responsible_operator_id?: string | null
           reuse_count?: number | null
           typical_session_length?: string | null
           updated_at?: string
@@ -371,6 +373,7 @@ export type Database = {
           related_domains?: string[] | null
           related_tenets?: string[] | null
           related_workflows?: string[] | null
+          responsible_operator_id?: string | null
           reuse_count?: number | null
           typical_session_length?: string | null
           updated_at?: string
@@ -382,6 +385,20 @@ export type Database = {
             columns: ["journey_id"]
             isOneToOne: false
             referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "components_responsible_operator_id_fkey"
+            columns: ["responsible_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "components_responsible_operator_id_fkey"
+            columns: ["responsible_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
             referencedColumns: ["id"]
           },
           {
@@ -2190,6 +2207,7 @@ export type Database = {
           next_action_due: string | null
           next_deliverable_specific: string | null
           not_before: string | null
+          operator_id: string | null
           owner: string | null
           priority: string | null
           project_brief: string | null
@@ -2226,6 +2244,7 @@ export type Database = {
           next_action_due?: string | null
           next_deliverable_specific?: string | null
           not_before?: string | null
+          operator_id?: string | null
           owner?: string | null
           priority?: string | null
           project_brief?: string | null
@@ -2262,6 +2281,7 @@ export type Database = {
           next_action_due?: string | null
           next_deliverable_specific?: string | null
           not_before?: string | null
+          operator_id?: string | null
           owner?: string | null
           priority?: string | null
           project_brief?: string | null
@@ -2295,6 +2315,20 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "projects_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
             referencedColumns: ["id"]
           },
           {
@@ -3103,6 +3137,7 @@ export type Database = {
           name: string
           next_recommended_service: string | null
           not_before: string | null
+          operator_id: string | null
           outcome_findings: string | null
           persona_id: string | null
           phase_blocker: string | null
@@ -3164,6 +3199,7 @@ export type Database = {
           name: string
           next_recommended_service?: string | null
           not_before?: string | null
+          operator_id?: string | null
           outcome_findings?: string | null
           persona_id?: string | null
           phase_blocker?: string | null
@@ -3225,6 +3261,7 @@ export type Database = {
           name?: string
           next_recommended_service?: string | null
           not_before?: string | null
+          operator_id?: string | null
           outcome_findings?: string | null
           persona_id?: string | null
           phase_blocker?: string | null
@@ -3296,6 +3333,20 @@ export type Database = {
             columns: ["linked_project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "sessions_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
             referencedColumns: ["id"]
           },
           {
