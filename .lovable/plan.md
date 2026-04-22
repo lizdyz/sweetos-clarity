@@ -1,79 +1,86 @@
 
-# Phase 2.6: Fix workflows, expand canon, capture+files, Kanban tabs
+# Phase 2.6 build plan — confirmed inputs
 
-Four scoped jobs in one pass.
+You answered the two open questions:
 
-## 1. Fix the workflow build error
-`src/utils/workflows.functions.ts` imports a non-existent `getSupabaseServerClient`. Replace with the real auth pattern used everywhere else:
+- **Tenets are independent of Domains.** Anything (proposal, entity) can be tagged with **N domains and N tenets** (and N components). Tenets carry their own **Category** (Foundation / Specialization / Advanced / Mastery).
+- **Canon is the 22 Domains (D1–D22)** + the **22 Tenets** in your screenshot/text. Both seeded verbatim.
 
-```ts
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+Build proceeds top-to-bottom.
 
-export const activateWorkflow = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => ActivateInput.parse(input))
-  .handler(async ({ data, context }) => {
-    const { supabase: sb, userId } = context;
-    // …existing logic, replace `user.id` with `userId`
-  });
-```
-That alone clears the build. Also wire an **"Activate workflow"** button on `/workflows/$id` (already imports `WorkflowStatesPanel`) — small relationship picker → calls `activateWorkflow`.
+## 1. Confirm workflow fix
+The build error (`Cannot find name 'user'` at lines 56/87) is stale — current `src/utils/workflows.functions.ts` already uses `userId` from `context`. No-op; will re-trigger build to clear it.
 
-## 2. Seed 22 Domains + 22 Tenets
-Migration that:
-- Wipes the seed rows from the previous migration (`delete from rubric_items`, `delete from tenets`, `delete from domains where created_by is null or seeded`)
-- Inserts your **22 canonical domains** + **22 tenets** (one tenet per domain, 1:1 mapping — confirm in Q1 below if you want a different shape)
-- Re-seeds a default rubric_item per tenet so the Domain Intelligence dashboard renders immediately
+## 2. Migration A — canon reseed (Domains + Tenets, many-to-many)
+- **`tenets`** table reshaped: `id, name, slug, category (enum: Foundation|Specialization|Advanced|Mastery), description, sort_order, enabled` — NO `domain_id` foreign key (tenets stand alone).
+- **`domain_tenets`** join table (`domain_id`, `tenet_id`) — optional affinity mapping, empty by default. Lets a tenet *suggest* relevant domains without forcing 1:1.
+- Wipe prior seed: `delete from rubric_items; delete from rubric_scores; delete from tenets; delete from domains;`
+- Seed **22 domains** (D1 Strategy & Positioning … D22 Monetization) with slug, sort_order 1–22.
+- Seed **22 tenets** verbatim from your list, with category.
+- Seed one starter `rubric_item` per tenet (`prompt = tenet name`, `excellence_definition = tenet description`, scale 0–5) so dashboards render immediately.
 
-I need you to confirm the exact 22 names. Two options in Q1.
+## 3. Migration B — capture upgrade + universal tagging
+- **Storage bucket** `captures` (private). RLS: team members read/insert their own; owner/admin delete.
+- **`capture_attachments`** table: `id, proposal_id (nullable fk), entity_table, entity_id, storage_path, mime_type, size_bytes, original_name, created_by, created_at`. After approval, attachments get re-pointed from proposal to the written record.
+- **Tag columns** added everywhere they're missing:
+  - `proposals.tagged_domains text[], tagged_tenets text[], tagged_components uuid[]`
+  - On entity tables that don't already have them: `tasks, projects, campaigns, sessions, documents, decisions, delegation, outcomes, missions, playbooks, personas, relationships` get the same three columns. (`quests`, `sparks`, `journeys`, `components` already have variants — keep those, don't duplicate.)
 
-## 3. Universal Capture: files + tagging
-Upgrade `/capture` and the proposals pipeline:
+## 4. Capture page upgrade (`/capture`)
+- Drag-drop / file-picker zone above the textarea. Multi-file, 25 MB cap each.
+- Three searchable multi-select tag pickers (chips): **Domains** (22), **Tenets** (22, grouped by Category), **Components** (live from DB).
+- Submit flow: upload files to `captures` bucket → call `captureProposal` with `{ text, attachment_paths[], tagged_domains, tagged_tenets, tagged_components }`.
+- AI normalizer receives: user text + filenames + extracted text from `.txt`/`.md` only. PDFs/images attach but only filename feeds AI (Worker can't run `pdf-parse`; honest limitation, swap to a parsing service later).
+- AI gets the tag context as a hint to pick `entity_type` and pre-fill fields.
 
-**Storage**
-- New Supabase Storage bucket `captures` (private, RLS: team read/insert)
-- New table `capture_attachments` (`id`, `proposal_id` nullable, `storage_path`, `mime_type`, `size_bytes`, `original_name`, `created_by`, `created_at`)
-- Tagging columns on `proposals`: `tagged_domains text[]`, `tagged_tenets text[]`, `tagged_components uuid[]`
+## 5. Queue page upgrade (`/queue`)
+- Each proposal card shows: tag chips (domain / tenet / component), attachment list with download links.
+- Approve flow: copy tags onto written entity (where columns exist), re-point attachments from proposal_id to the new record's id.
 
-**UI on `/capture`**
-- Drag-drop / file-picker zone above the textarea (multi-file, 25MB each)
-- Three tag pickers (Domains, Tenets, Components) — multi-select, searchable, shown as chips
-- On submit: upload files first, then call `captureProposal` with `{ text, attachments[], tagged_domains, tagged_tenets, tagged_components }`
-- AI normalizer receives file names + extracted text from PDFs/MD/TXT (PDF parsing via `pdf-parse` is Worker-incompatible — for MVP we extract text only from `.txt`/`.md`; PDFs/images are attached but only the filename+user text feed the AI. Honest limitation, easy upgrade later via an external parsing service)
+## 6. Workflow activation UI
+- "Activate workflow" button on `/workflows/$id` with relationship + project pickers → calls `activateWorkflow` (already wired, file is correct).
+- Show resulting `workflow_runs` row state and a link into the queue for the staged kickoff quest.
 
-**Queue impact**
-- Proposal cards show attached files (download links) and tag chips
-- Approving a proposal copies tags onto the written entity (when columns exist there) and links attachments to the new record
+## 7. EntityWorkspace — view switcher + Kanban
+- Add **Table / Board / Cards** toggle to `EntityWorkspace` header (top of every entity index).
+- Saved-view memory in `localStorage` per entity.
+- **Board (Kanban):** group-by column inferred from each entity's status-like field:
+  - `status` → tasks, projects, campaigns, documents
+  - `progression_state` → quests, sparks, sessions
+  - `pipeline_stage` → relationships
+  - `current_maturity_level` → components
+  - `spec_status` → personas, playbooks
+- Drag between columns via `@dnd-kit/core` (new dep) → optimistic write.
+- Card shows: primary field, owner, due date, tag chips, source/confidence pill.
+- Filter bar: status, owner, source, tag.
+- Per-entity defaults: tasks/quests/sparks/pipeline → Board; documents/components/personas/playbooks → Cards; everything else → Table.
 
-## 4. Kanban + intuitive tabs
-Add a **view switcher** (Table / Board / Cards) at the top of every entity index page. Pulled into `EntityWorkspace` so all 12 entities get it for free.
+## 8. Sidebar regroup
+Reorder into operator groups:
+- **Today** · **Capture** · **Queue** · **Pipeline**
+- **Relationships** · **Domains** · **Workflows**
+- **Library** (collapsed): Personas · Components · Playbooks · Documents · Decisions · Delegation · Sparks · Quests · Journeys · Missions · Outcomes · Domain Assessments · Sessions · Projects · Tasks · Campaigns
+- **Settings**
 
-**Board (Kanban) view**
-- Group-by column comes from each entity's "status-like" enum: `status` for Tasks/Projects/Campaigns/Documents, `progression_state` for Quests/Sparks/Sessions, `pipeline_stage` for Relationships, `current_maturity_level` for Components, `spec_status` for Personas/Playbooks
-- Drag a card between columns → optimistic update + write
-- Card shows primary field, owner, due date, key chips, source/confidence pill
-- Empty columns render with a soft "+ add" prompt
+(Library defaults collapsed so the daily-driver routes sit above the fold.)
 
-**Tab intuitiveness**
-- Sidebar reordered into the operator groups already planned (Today · Capture · Queue · Relationships · Domains · Workflows · Library · Settings) — Library collapses Personas/Components/Playbooks/Documents/Decisions/Delegation/Sparks
-- Each entity index gets: filter bar (status, owner, source), saved view memory in `localStorage`, and the new view switcher
-- Per-entity sensible default view: Tasks/Quests/Sparks/Pipeline → Board; Documents/Components/Personas/Playbooks → Cards; everything else → Table
+## Files touched
 
-## Build order
-1. **Fix** `workflows.functions.ts` + add Activate button on workflow detail
-2. **Migration A**: storage bucket + `capture_attachments` + tag columns on `proposals` + tag columns on entity tables (`tagged_domains/tenets/components` where missing)
-3. **Migration B**: wipe + reseed 22 domains, 22 tenets, default rubric items
-4. **Capture upgrade**: file uploads, tag pickers, server function changes
-5. **Queue upgrade**: render attachments + tags on cards, propagate on approve
-6. **EntityWorkspace**: view switcher + Kanban board component (reusable, drag-and-drop via `@dnd-kit/core` — already common, add as dep)
-7. **Sidebar regroup** + per-entity default view
+**Migrations**
+- `supabase/migrations/<ts>_phase2.6_canon_reseed.sql` (Domains + Tenets + join + rubric_items)
+- `supabase/migrations/<ts>_phase2.6_capture_files_tags.sql` (bucket + attachments + tag columns)
 
-## Two quick confirmations before I build
+**Code**
+- `src/utils/proposals.functions.ts` — accept attachments + tags, propagate on approve
+- `src/utils/workflows.functions.ts` — already correct, no edit
+- `src/routes/_app.capture.tsx` — file zone + tag pickers
+- `src/routes/_app.queue.tsx` — render attachments + tags, propagate on approve
+- `src/routes/_app.workflows.$id.tsx` — Activate button + run view
+- `src/components/entity-workspace.tsx` — view switcher + filter bar
+- `src/components/kanban-board.tsx` (new) — reusable board with `@dnd-kit/core`
+- `src/components/tag-picker.tsx` (new) — searchable multi-select for domains/tenets/components
+- `src/components/file-drop.tsx` (new) — upload zone
+- `src/components/app-sidebar.tsx` — regroup + collapsible Library
+- `package.json` — add `@dnd-kit/core`, `@dnd-kit/sortable`
 
-**Q1 — Domains/Tenets shape:** You said "22 domains and 22 tenets." Do you want:
-- (a) **1 tenet per domain** (1:1 — simplest, scoring is per-domain)
-- (b) **22 domains, 22 tenets distributed across them** (some domains have 2-3, others have 1) — if so, paste the list or point me at the Notion page and I'll fetch via MCP first
-
-**Q2 — Domain/tenet names source:** Should I (a) draft the 22 from canon I've seen and you edit in Settings, or (b) pull from a specific Notion page (paste URL)?
-
-Once you answer those two, I execute the build order top to bottom.
+No destructive changes to existing data outside the explicit domain/tenet reseed (which had only my placeholder seed in it).
