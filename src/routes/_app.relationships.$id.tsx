@@ -183,7 +183,7 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
           <p className="text-sm text-muted-foreground">No engagement plans yet.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {plans.map((p) => (
+            {plans.map((p: any) => (
               <li key={p.id}>
                 <Link
                   to="/engagement-plans/$id"
