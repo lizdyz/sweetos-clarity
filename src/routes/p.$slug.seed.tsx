@@ -45,7 +45,7 @@ function PublicSeedPage() {
         .eq("template_id", seed.template_id)
         .order("sort_order");
 
-      const sectionIds = (sections ?? []).map((s) => s.id);
+      const sectionIds = ((sections ?? []) as Array<{ id: string }>).map((s) => s.id);
       const { data: questions } = await supabase
         .from("seed_template_questions")
         .select("id, section_id, code, prompt, hint, question_type, badge, sort_order")
