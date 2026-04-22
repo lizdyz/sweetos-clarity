@@ -1,10 +1,20 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { Chip } from "@/components/chips";
 import { Plus, ExternalLink } from "lucide-react";
-import { SweetCycleBoard, type SweetSession } from "@/components/sweetcycle-board";
+import { SweetCycleBoard, type SweetSession, type SweetPhase } from "@/components/sweetcycle-board";
+import { useDragToStatus } from "@/hooks/use-drag-to-status";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { AWARENESS_TIER, RELATIONSHIP_TEMPERATURE, DRIFT_RISK } from "@/lib/enums";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
   component: RelationshipDetail,
@@ -132,15 +142,15 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
         <JourneyStripAndBoard relationshipId={relationshipId} />
       </div>
       <div className="grid gap-5 px-6 lg:grid-cols-2">
-      {/* Funnel */}
+      {/* Funnel — inline editors */}
       <section className="panel-raised p-5">
         <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           Funnel
         </h2>
         <div className="grid grid-cols-3 gap-3">
-          <FunnelStat label="Awareness" value={rel.awareness_tier} tone="iris" />
-          <FunnelStat label="Temperature" value={rel.temperature} tone={tempTone(rel.temperature)} />
-          <FunnelStat label="Drift risk" value={rel.drift_risk} tone={driftTone(rel.drift_risk)} />
+          <FunnelEditor relationshipId={relationshipId} field="awareness_tier" label="Awareness" value={rel.awareness_tier} options={AWARENESS_TIER} tone="iris" />
+          <FunnelEditor relationshipId={relationshipId} field="temperature" label="Temperature" value={rel.temperature} options={RELATIONSHIP_TEMPERATURE} tone={tempTone(rel.temperature)} />
+          <FunnelEditor relationshipId={relationshipId} field="drift_risk" label="Drift risk" value={rel.drift_risk} options={DRIFT_RISK} tone={driftTone(rel.drift_risk)} />
         </div>
       </section>
 
@@ -310,22 +320,129 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
   );
 }
 
-function FunnelStat({
+function FunnelEditor<T extends string>({
+  relationshipId,
+  field,
   label,
   value,
+  options,
   tone,
 }: {
+  relationshipId: string;
+  field: "awareness_tier" | "temperature" | "drift_risk";
   label: string;
   value: string | null;
+  options: readonly T[];
   tone: "iris" | "success" | "warning" | "destructive" | "neutral" | "muted";
 }) {
+  const qc = useQueryClient();
+  const mut = useMutation({
+    mutationFn: async (next: string | null) => {
+      const { error } = await supabase.from("relationships").update({ [field]: next }).eq("id", relationshipId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["relationships", "panels", relationshipId] });
+      qc.invalidateQueries({ queryKey: ["relationship-journey"] });
+      toast.success(`${label} updated`);
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Update failed"),
+  });
   return (
     <div className="rounded-xl border border-border bg-surface p-3">
       <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className="mt-1.5">
-        {value ? <Chip tone={tone}>{value}</Chip> : <span className="text-xs text-muted-foreground">—</span>}
+        <Select value={value ?? "__unset"} onValueChange={(v) => mut.mutate(v === "__unset" ? null : v)}>
+          <SelectTrigger className="h-7 w-full border-0 bg-transparent p-0 text-xs hover:bg-muted/40">
+            <SelectValue placeholder="—">
+              {value ? <Chip tone={tone}>{value}</Chip> : <span className="text-xs text-muted-foreground">—</span>}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__unset">—</SelectItem>
+            {options.map((opt) => (
+              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
+  );
+}
+
+function AddPortalButton({ relationshipId }: { relationshipId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<string>("Pre-Mirror");
+  const [version, setVersion] = useState("1");
+  const [url, setUrl] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("relationship_portals").insert({
+        relationship_id: relationshipId,
+        kind,
+        version,
+        url,
+        notes: notes || null,
+        delivered_at: new Date().toISOString(),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["relationship_portals", relationshipId] });
+      qc.invalidateQueries({ queryKey: ["relationship_journey", relationshipId] });
+      qc.invalidateQueries({ queryKey: ["relationship-journey"] });
+      toast.success("Portal logged");
+      setOpen(false);
+      setUrl("");
+      setNotes("");
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const KINDS = ["Pre-Mirror", "Pre-Map", "Pre-Machine", "Mirror Output", "Map Output", "Machine Output", "Sync", "Other"];
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="h-7 gap-1 text-[11px]">
+          <Plus className="h-3 w-3" /> Add portal
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Log a portal artifact</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">Kind</Label>
+            <Select value={kind} onValueChange={setKind}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Version</Label>
+            <Input value={version} onChange={(e) => setVersion(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">URL</Label>
+            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
+          </div>
+          <div>
+            <Label className="text-xs">Notes</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={() => mut.mutate()} disabled={!url || mut.isPending}>
+            {mut.isPending ? "Saving…" : "Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -434,23 +551,26 @@ function JourneyStripAndBoard({ relationshipId }: { relationshipId: string }) {
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Journey
           </h2>
-          {portals[0] && (
-            <a
-              href={portals[0].url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-iris/10 px-2.5 py-1 text-[11px] font-medium text-[color:var(--iris-violet)] transition-colors hover:bg-iris/20"
-            >
-              <ExternalLink className="h-3 w-3" />
-              {portals[0].kind}
-              {portals[0].version && ` v${portals[0].version}`}
-              {portals[0].delivered_at && (
-                <span className="ml-1 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  Delivered
-                </span>
-              )}
-            </a>
-          )}
+          <div className="flex items-center gap-2">
+            {portals[0] && (
+              <a
+                href={portals[0].url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-iris/10 px-2.5 py-1 text-[11px] font-medium text-[color:var(--iris-violet)] transition-colors hover:bg-iris/20"
+              >
+                <ExternalLink className="h-3 w-3" />
+                {portals[0].kind}
+                {portals[0].version && ` v${portals[0].version}`}
+                {portals[0].delivered_at && (
+                  <span className="ml-1 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    Delivered
+                  </span>
+                )}
+              </a>
+            )}
+            <AddPortalButton relationshipId={relationshipId} />
+          </div>
         </div>
         <div className="flex items-center gap-2 overflow-x-auto">
           {STAGE_TIMELINE.map((stage, i) => {
@@ -486,26 +606,56 @@ function JourneyStripAndBoard({ relationshipId }: { relationshipId: string }) {
         )}
       </section>
 
-      {/* SweetCycle boards per active service */}
-      {services.filter((s: { status: string }) => s.status === "Active" || s.status === "In Progress").map((service: { id: string; service_type: string; status: string }) => {
-        const sessions = (sessionsByService as SweetSession[]).filter(
-          (s: SweetSession & { engagement_service_id?: string }) => s.engagement_service_id === service.id,
-        );
-        return (
-          <section key={service.id} className="panel-raised p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                SweetCycle · {service.service_type}
-              </h2>
-              <Chip tone="iris">{service.status}</Chip>
-            </div>
-            <SweetCycleBoard
-              sessions={sessions}
-              emptyHint="No sessions linked to this service yet. Add sessions and set their Engagement Service to populate this board."
-            />
-          </section>
-        );
-      })}
+      <SweetCycleSection
+        services={services as Array<{ id: string; service_type: string; status: string }>}
+        sessionsByService={sessionsByService as Array<SweetSession & { engagement_service_id?: string }>}
+        relationshipId={relationshipId}
+      />
     </div>
+  );
+}
+
+function SweetCycleSection({
+  services,
+  sessionsByService,
+  relationshipId,
+}: {
+  services: Array<{ id: string; service_type: string; status: string }>;
+  sessionsByService: Array<SweetSession & { engagement_service_id?: string }>;
+  relationshipId: string;
+}) {
+  const movePhase = useDragToStatus({
+    table: "sessions",
+    field: "sweetcycle_phase",
+    label: "Phase",
+    invalidate: [
+      ["sessions"],
+      ["relationship_journey", relationshipId],
+      ["relationship-journey"],
+    ],
+  });
+  return (
+    <>
+      {services
+        .filter((s) => s.status === "Active" || s.status === "In Progress")
+        .map((service) => {
+          const sessions = sessionsByService.filter((s) => s.engagement_service_id === service.id);
+          return (
+            <section key={service.id} className="panel-raised p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  SweetCycle · {service.service_type}
+                </h2>
+                <Chip tone="iris">{service.status}</Chip>
+              </div>
+              <SweetCycleBoard
+                sessions={sessions}
+                emptyHint="No sessions linked to this service yet. Add sessions and set their Engagement Service to populate this board."
+                onMove={(id, phase: SweetPhase) => movePhase.mutate({ id, value: phase })}
+              />
+            </section>
+          );
+        })}
+    </>
   );
 }
