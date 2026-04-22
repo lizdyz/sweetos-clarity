@@ -41,12 +41,13 @@ const STAGE_ORDER = [
   "Inactive",
 ];
 
-function tempTone(t: string | null): "neutral" | "amber" | "red" | "success" | "muted" {
+type ChipTone = "neutral" | "iris" | "success" | "warning" | "destructive" | "muted";
+function tempTone(t: string | null): ChipTone {
   switch (t) {
     case "🔥 Hot":
-      return "red";
+      return "destructive";
     case "🌤️ Warm":
-      return "amber";
+      return "warning";
     case "❄️ Cold":
       return "neutral";
     case "🌑 Dormant":
@@ -55,12 +56,12 @@ function tempTone(t: string | null): "neutral" | "amber" | "red" | "success" | "
       return "muted";
   }
 }
-function driftTone(d: string | null): "neutral" | "amber" | "red" | "success" | "muted" {
+function driftTone(d: string | null): ChipTone {
   switch (d) {
     case "🚨 Critical":
-      return "red";
+      return "destructive";
     case "⚠️ At Risk":
-      return "amber";
+      return "warning";
     case "✅ On Track":
       return "success";
     default:
