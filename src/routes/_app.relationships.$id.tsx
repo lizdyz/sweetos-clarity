@@ -1,10 +1,20 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { Chip } from "@/components/chips";
 import { Plus, ExternalLink } from "lucide-react";
-import { SweetCycleBoard, type SweetSession } from "@/components/sweetcycle-board";
+import { SweetCycleBoard, type SweetSession, type SweetPhase } from "@/components/sweetcycle-board";
+import { useDragToStatus } from "@/hooks/use-drag-to-status";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { AWARENESS_TIER, RELATIONSHIP_TEMPERATURE, DRIFT_RISK } from "@/lib/enums";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
   component: RelationshipDetail,
