@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Zap, Loader2, ArrowRight } from "lucide-react";
+import { Zap, Loader2, ArrowRight, Clock, Puzzle, Target } from "lucide-react";
 import { toast } from "sonner";
 import { sb as supabase } from "@/lib/sb";
 import { activateWorkflow } from "@/utils/workflows.functions";
