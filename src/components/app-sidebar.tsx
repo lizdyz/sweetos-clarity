@@ -12,6 +12,7 @@ import {
   Library,
   Gauge,
   Map,
+  Bot,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ const PRIMARY: NavGroup[] = [
     items: [
       { to: "/my-tasks", label: "My tasks", icon: Inbox },
       { to: "/people", label: "People", icon: Users },
+      { to: "/operators", label: "Operators", icon: Bot },
       { to: "/projects", label: "Projects", icon: Workflow },
       { to: "/tasks", label: "Tasks", icon: LayoutDashboard },
     ],
@@ -50,7 +52,7 @@ const PRIMARY: NavGroup[] = [
   {
     label: "Operate",
     items: [
-      { to: "/journey", label: "Journey", icon: Map },
+      { to: "/flightdeck", label: "Flightdeck", icon: Map },
       { to: "/relationships", label: "Relationships", icon: Users },
       { to: "/engagement-plans", label: "Engagement Plans", icon: Compass },
       { to: "/domains", label: "Domains", icon: Gauge },

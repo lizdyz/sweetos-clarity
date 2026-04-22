@@ -1,115 +1,126 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { sb as supabase } from "@/lib/sb";
 import { Chip } from "@/components/chips";
+import { Bot, User, Workflow as WorkflowIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/people")({
   component: PeoplePage,
 });
 
-const DONE_STATUSES = ["Done", "Complete", "Completed", "Cancelled", "Canceled", "Archived"];
+const KIND_META = {
+  human: { label: "Human", icon: User },
+  workflow: { label: "Workflow", icon: WorkflowIcon },
+  agent: { label: "Agent", icon: Bot },
+} as const;
+
+type WorkloadRow = {
+  operator_id: string;
+  name: string;
+  kind: "human" | "workflow" | "agent";
+  availability: string;
+  skills: string[];
+  open_tasks: number;
+  blocked_tasks: number;
+  overdue_tasks: number;
+  next_due: string | null;
+  enabled: boolean;
+};
 
 function PeoplePage() {
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["profiles", "all"],
+  const [filter, setFilter] = useState<"all" | "human" | "workflow" | "agent">("all");
+
+  const { data: workload = [] } = useQuery<WorkloadRow[]>({
+    queryKey: ["operator-workload-people"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("id, display_name, role_label, avatar_url");
+        .from("operator_workload")
+        .select("*")
+        .order("open_tasks", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as WorkloadRow[];
     },
   });
 
-  const { data: tasks = [] } = useQuery({
-    queryKey: ["tasks", "for-people"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("id, name, status, due_date, blocked, assignee_id, owner")
-        .order("due_date", { ascending: true, nullsFirst: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  const today = new Date().toISOString().slice(0, 10);
-
-  const rosterById = new Map<string, any>();
-  profiles.forEach((p: any) => {
-    rosterById.set(p.id, { ...p, key: p.id, label: p.display_name ?? "Unnamed", tasks: [] });
-  });
-  // legacy owner buckets
-  const legacyByName = new Map<string, any>();
-
-  tasks.forEach((t: any) => {
-    if (DONE_STATUSES.includes(t.status)) return;
-    if (t.assignee_id && rosterById.has(t.assignee_id)) {
-      rosterById.get(t.assignee_id).tasks.push(t);
-    } else if (t.owner) {
-      const key = `owner:${t.owner}`;
-      if (!legacyByName.has(key)) {
-        legacyByName.set(key, { key, label: t.owner, role_label: "legacy owner", tasks: [] });
-      }
-      legacyByName.get(key).tasks.push(t);
-    } else {
-      const key = "unassigned";
-      if (!legacyByName.has(key)) {
-        legacyByName.set(key, { key, label: "Unassigned", role_label: null, tasks: [] });
-      }
-      legacyByName.get(key).tasks.push(t);
-    }
-  });
-
-  const roster = [...rosterById.values(), ...legacyByName.values()].sort(
-    (a, b) => b.tasks.length - a.tasks.length,
-  );
+  const filtered = workload.filter((o) => o.enabled !== false && (filter === "all" || o.kind === filter));
 
   return (
     <div className="space-y-5 p-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">People</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Workload across the team. Who's drowning, who's free.
+          Workload across humans, workflows, and agents.
         </p>
       </header>
 
+      <div className="flex flex-wrap gap-1.5">
+        {(["all", "human", "workflow", "agent"] as const).map((k) => (
+          <button
+            key={k}
+            onClick={() => setFilter(k)}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              filter === k
+                ? "bg-iris text-white shadow-sm"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted",
+            )}
+          >
+            {k === "all"
+              ? `All (${workload.length})`
+              : `${KIND_META[k].label}s (${workload.filter((o) => o.kind === k).length})`}
+          </button>
+        ))}
+      </div>
+
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {roster.map((p) => {
-          const open = p.tasks.length;
-          const blocked = p.tasks.filter((t: any) => t.blocked).length;
-          const overdue = p.tasks.filter(
-            (t: any) => t.due_date && t.due_date < today,
-          ).length;
-          const next = p.tasks
-            .filter((t: any) => t.due_date)
-            .sort((a: any, b: any) => (a.due_date ?? "").localeCompare(b.due_date ?? ""))[0];
+        {filtered.map((p) => {
+          const meta = KIND_META[p.kind];
+          const Icon = meta.icon;
           return (
-            <div key={p.key} className="panel-raised p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold">{p.label}</div>
-                  {p.role_label && (
-                    <div className="text-[11px] text-muted-foreground">{p.role_label}</div>
-                  )}
+            <Link
+              key={p.operator_id}
+              to="/operators/$id"
+              params={{ id: p.operator_id }}
+              className="block"
+            >
+              <div className="panel-raised p-4 transition-all hover:shadow-md">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-muted">
+                      <Icon className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold">{p.name}</div>
+                      <div className="text-[11px] text-muted-foreground capitalize">
+                        {meta.label} · {p.availability}
+                      </div>
+                    </div>
+                  </div>
+                  <Chip tone={p.open_tasks > 10 ? "destructive" : p.open_tasks > 5 ? "warning" : "iris"}>
+                    {p.open_tasks} open
+                  </Chip>
                 </div>
-                <Chip tone={open > 10 ? "destructive" : open > 5 ? "warning" : "iris"}>
-                  {open} open
-                </Chip>
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <Mini label="Blocked" value={blocked} tone={blocked ? "destructive" : "muted"} />
-                <Mini label="Overdue" value={overdue} tone={overdue ? "warning" : "muted"} />
-                <Mini label="Open" value={open} tone="neutral" />
-              </div>
-              {next && (
-                <div className="mt-3 truncate border-t border-border pt-2 text-[11px] text-muted-foreground">
-                  Next: {next.name} · {new Date(next.due_date).toLocaleDateString()}
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <Mini label="Blocked" value={p.blocked_tasks} tone={p.blocked_tasks ? "destructive" : "muted"} />
+                  <Mini label="Overdue" value={p.overdue_tasks} tone={p.overdue_tasks ? "warning" : "muted"} />
+                  <Mini label="Open" value={p.open_tasks} tone="neutral" />
                 </div>
-              )}
-            </div>
+                {p.next_due && (
+                  <div className="mt-3 truncate border-t border-border pt-2 text-[11px] text-muted-foreground">
+                    Next due: {new Date(p.next_due).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            </Link>
           );
         })}
+        {filtered.length === 0 && (
+          <div className="col-span-full rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+            No operators match this filter.
+          </div>
+        )}
       </div>
     </div>
   );
