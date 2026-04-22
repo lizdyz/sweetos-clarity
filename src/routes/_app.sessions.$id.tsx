@@ -15,6 +15,7 @@ interface SessionRow {
   name: string | null;
   session_template_id: string | null;
   tagged_components: string[] | null;
+  operator_id: string | null;
 }
 
 interface TemplateRow {
@@ -33,7 +34,7 @@ function SessionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sessions")
-        .select("id, name, session_template_id, tagged_components")
+        .select("id, name, session_template_id, tagged_components, operator_id")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
