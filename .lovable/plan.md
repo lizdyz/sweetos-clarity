@@ -1,71 +1,60 @@
 
 
-# Phase 2.10v — Step 2: Bring the dead index pages alive
+# Pause Phase 2.10v · Seed the Components library from your SweetBOS Inventory
 
-Step 1 (Today + Planner on `time_grid`) is shipped. Continuing with the next shippable slice.
+## Where we are
 
-## What this step delivers
+Step 2 of 2.10v shipped (live index pages on rollup views). Steps 4–5 (Blockers/Wins routes, Ready-to-advance badges, engagement rollups) are still queued. **None of that is blocking** — the index pages work standalone.
 
-Three skeleton index pages (`/projects`, `/relationships`, `/tasks`) get rebuilt to read from the rollup views that already exist. Plus the Components index gets the build-pipeline upgrade. No migration, no new tables — pure UI plumbing into views the database already computes.
+You're asking the bigger question: *"my Components library is thin — can we fill it with solid ideas that actually make sense for clients?"* Yes. And it's worth doing **now**, before more rollup polish, because every page we just rebuilt (`/components`, `/projects`, project↔component contributions, ready-to-advance badges) is **dramatically more useful when there are real components to roll up against.** Eight components is barely enough to demonstrate the system. Twenty is a real library.
 
-## Per-page changes
+## What I propose to seed
 
-### `/projects` — from 5-line stub to live heat map
-Reads `project_rollup` joined with `projects`. Each row shows:
-- Name + relationship
-- Stat chips: **open · blocked · overdue · next due**
-- Owner avatars
-- Visual heat: red ring if `overdue > 0`, amber if `blocked > 0`, neutral otherwise
-- Filter chips: *All · Stuck (overdue OR blocked) · Mine · By relationship*
-- Sort: *Most overdue · Soonest due · Recently touched*
+Your inventory file describes **10 platform-level components** — Profile, Dashboard, Active Transformation, LizBot, Vault, Resource Library, Analytics, Sessions Hub, Community, Portal — each with rich, fully-fleshed metadata (purpose, what user does there, contains, USER value, SYSTEM value, plus the Portal's full audience-view spec).
 
-### `/relationships` — from 5-line stub to journey-aware list
-Reads `relationship_journey` (one row per relationship with stage/temperature/drift/primary service pre-joined).
-- Card per relationship: name · pipeline stage chip · temperature dot · drift indicator · primary service · current SweetCycle stage
-- Filter chips: *Stage · Temperature · Drift risk · Has subscription*
-- Sort: *Stage progression · Temperature · Drift risk · Recently touched*
-- Empty state with "Add relationship" CTA
+These are **the most fully-flushed-out** ideas in the file. They're the SweetBOS product surface every advisor relationship will eventually map against, so they're a genuinely valuable library entry, not filler.
 
-### `/tasks` — from 5-line stub to operator workspace
-Reads `tasks` joined with `work_context` (tags, relationship, component contributions) + `task_blockers` (resolved blocker names).
-- Group-by toggle: *Status · Relationship · Operator · Due bucket*
-- Each row: name · status chip · due chip · operator chip · relationship chip · inline blocker chain (when blocked)
-- Filter chips: *Mine · Blocked · Overdue · Unscheduled*
-- Drag-to-status reusing `<StageSwimlanes>` when grouped by status
+I'll seed **all 10** as Components with these field mappings:
 
-### `/components` — pipeline-aware
-Reads `components` joined with `component_build_pipeline`. Each row shows:
-- Name · current maturity level chip
-- Activity chips: **active projects · active tasks · last touched**
-- Sort: *Most-moved this week · Maturity · Alphabetical*
-- Filter chips: *All · Active · Stalled (no activity 30d) · By domain*
+| Inventory column | Components column |
+|---|---|
+| `Component_Name` (with icon prefix) | `name` |
+| `Primary_Purpose` + `User_Goes_Here_To` (joined) | `description` |
+| Inferred from richness | `current_maturity_level` (L3 Launching for 8, L4 Leveraging for Portal + Dashboard since they have explicit audience/curation specs) |
+| `Contains` (split into bullet list) | `maturity_threshold_definition` *(the "what good looks like" criteria)* |
+| Derived from purpose | `questions_it_answers` |
+| `["Product","Process"]` for all | `related_domains` |
+| `"60-90 min discovery + iterative build"` (Portal/Dashboard get longer) | `typical_session_length` |
+| `["SweetBOS Platform"]` | `used_in_offerings` |
+| Quality stamp | `quality_status = 'Approved'` |
+
+**Special case — Portal:** the inventory has a full Page-2 audience spec (SELF/PROSPECT/PARTNER/COMMUNITY views, default visibility, control mechanism, data sources). I'll fold that into Portal's `description` + `maturity_threshold_definition` so it lands as the most-detailed component in the library, not a stub.
 
 ## What this builds
 
-**No migration.** All four views already exist.
+**One migration file.** Pure `INSERT … ON CONFLICT (name) DO NOTHING` so re-running is idempotent and existing components are untouched.
 
-**New components**
-- `src/components/rollup-stat-chip.tsx` — small numeric chip with tone (neutral/amber/red) used across all four pages.
-- `src/components/heat-ring.tsx` — colored border-ring wrapper for cards based on overdue/blocked state.
+- `supabase/migrations/<timestamp>_seed_sweetbos_platform_components.sql` — 10 inserts with the field mapping above.
 
-**Edited routes**
-- `src/routes/_app.projects.index.tsx`
-- `src/routes/_app.relationships.index.tsx`
-- `src/routes/_app.tasks.index.tsx`
-- `src/routes/_app.components.index.tsx`
+**No code changes.** No new components, no route edits, no memory changes. The existing `/components` index will immediately show the new entries with their maturity levels and (zero) build-pipeline activity. They become available as tag targets for tasks/projects/sessions that build them, and as link targets in Vault.
 
-**Memory**
-- `mem://design/views-as-truth.md` *(new)* — the hard rule + canonical view→page mapping so this doesn't regress.
+## What this is NOT
 
-## What's NOT in this step
-- `/think/blockers` and `/think/wins` routes — Step 4.
-- `<ReadyToAdvanceBadge>` — Step 5.
-- Engagement plan + subscription rollups — Step 5.
-- Sidebar reorg (Blockers + Recent wins entries) — moves to Step 4 when those routes exist.
+- Not finishing 2.10v Steps 4–5 (Blockers/Wins routes, Ready-to-advance badges). I can resume after.
+- Not seeding Domains, Tenets, JTBD, Personas, Outcomes, or Workflows from the inventory. The file's Pages 3–20 are empty — the only fully-fleshed sheets are the Components one and the Portal spec. I'm not going to invent content for the empty sheets; if you have other sheets you want seeded, share them and I'll do the same disciplined mapping.
+- Not deduping or rewriting your existing 8 components (Recruiter Intelligence Dashboard, Succession Spine Map, etc.). They stay as-is. The seed only adds names that don't exist.
 
 ## Why this order
 
-Index pages are the daily entry point to entities. Today they're empty stubs that force users to click through to find anything useful. After this step, the four busiest list pages tell you *where the heat is* before you click. That's a far bigger daily-quality win than building the two new niche routes first.
+1. **Right now** you have 8 components. Most are recruiter/succession-domain. The product-surface components (Vault, Portal, Sessions Hub) are referenced everywhere in the codebase but **don't exist as records**, so they can't be tagged, contributed to, or rolled up. That's a quiet hole.
+2. After seeding, every project/task/session that touches the Vault page can declare `project_components` against the real Vault component → the build-pipeline view starts showing real heat.
+3. The 2.10v polish steps (Ready-to-advance badges, blockers route) are *more impressive on a populated library* than on a stub one. Seeding first makes those steps land harder.
 
-Ready to ship Step 2.
+## Suggested order
+
+1. **Seed the 10 inventory components** *(this pass — single migration, no risk)*.
+2. **Resume 2.10v Step 4** — `/think/blockers` + `/think/wins` routes + sidebar entries.
+3. **2.10v Step 5** — Engagement-plan rollups, subscription card on rollup, Ready-to-advance badges across Domain / SweetCycle / Today.
+
+Approve and I run the seed migration. If you want me to **also** finish 2.10v Step 4 in the same pass, say so and I'll batch them.
 
