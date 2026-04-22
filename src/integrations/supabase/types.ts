@@ -1713,6 +1713,101 @@ export type Database = {
           },
         ]
       }
+      entity_canon: {
+        Row: {
+          alternate_viewpoints: Json
+          created_at: string
+          display_name: string
+          entity_kind: string
+          example_ids: string[]
+          id: string
+          inputs: string[]
+          one_liner: string | null
+          outputs: string[]
+          reinforcement_loop: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          what_bad_looks_like: string[]
+          what_good_looks_like: string[]
+          what_it_is: string | null
+        }
+        Insert: {
+          alternate_viewpoints?: Json
+          created_at?: string
+          display_name: string
+          entity_kind: string
+          example_ids?: string[]
+          id?: string
+          inputs?: string[]
+          one_liner?: string | null
+          outputs?: string[]
+          reinforcement_loop?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          what_bad_looks_like?: string[]
+          what_good_looks_like?: string[]
+          what_it_is?: string | null
+        }
+        Update: {
+          alternate_viewpoints?: Json
+          created_at?: string
+          display_name?: string
+          entity_kind?: string
+          example_ids?: string[]
+          id?: string
+          inputs?: string[]
+          one_liner?: string | null
+          outputs?: string[]
+          reinforcement_loop?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          what_bad_looks_like?: string[]
+          what_good_looks_like?: string[]
+          what_it_is?: string | null
+        }
+        Relationships: []
+      }
+      entity_canon_revisions: {
+        Row: {
+          canon_id: string | null
+          changed_at: string
+          changed_by: string | null
+          entity_kind: string
+          id: string
+          rationale: string | null
+          snapshot: Json
+        }
+        Insert: {
+          canon_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          entity_kind: string
+          id?: string
+          rationale?: string | null
+          snapshot: Json
+        }
+        Update: {
+          canon_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          entity_kind?: string
+          id?: string
+          rationale?: string | null
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_canon_revisions_canon_id_fkey"
+            columns: ["canon_id"]
+            isOneToOne: false
+            referencedRelation: "entity_canon"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_crib_sheets: {
         Row: {
           common_pitfalls: string[]
@@ -3754,19 +3849,27 @@ export type Database = {
           created_at: string
           created_by: string
           deliverable_produced_id: string | null
+          deliverable_type: string | null
           description: string | null
+          duration_minutes: number | null
           framework_lens: string | null
+          from_level: Database["public"]["Enums"]["maturity_level"] | null
           id: string
+          is_template: boolean
           journey_id: string | null
+          kind: string
           name: string
           progression_state:
             | Database["public"]["Enums"]["progression_state"]
             | null
+          quest_number: number | null
           relationship_id: string | null
           scope: string
           source_of_advancement:
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
+          template_id: string | null
+          to_level: Database["public"]["Enums"]["maturity_level"] | null
           updated_at: string
         }
         Insert: {
@@ -3776,19 +3879,27 @@ export type Database = {
           created_at?: string
           created_by?: string
           deliverable_produced_id?: string | null
+          deliverable_type?: string | null
           description?: string | null
+          duration_minutes?: number | null
           framework_lens?: string | null
+          from_level?: Database["public"]["Enums"]["maturity_level"] | null
           id?: string
+          is_template?: boolean
           journey_id?: string | null
+          kind?: string
           name: string
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
+          quest_number?: number | null
           relationship_id?: string | null
           scope?: string
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
+          template_id?: string | null
+          to_level?: Database["public"]["Enums"]["maturity_level"] | null
           updated_at?: string
         }
         Update: {
@@ -3798,19 +3909,27 @@ export type Database = {
           created_at?: string
           created_by?: string
           deliverable_produced_id?: string | null
+          deliverable_type?: string | null
           description?: string | null
+          duration_minutes?: number | null
           framework_lens?: string | null
+          from_level?: Database["public"]["Enums"]["maturity_level"] | null
           id?: string
+          is_template?: boolean
           journey_id?: string | null
+          kind?: string
           name?: string
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
+          quest_number?: number | null
           relationship_id?: string | null
           scope?: string
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
+          template_id?: string | null
+          to_level?: Database["public"]["Enums"]["maturity_level"] | null
           updated_at?: string
         }
         Relationships: [
@@ -3840,6 +3959,13 @@ export type Database = {
             columns: ["relationship_id"]
             isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quests_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
             referencedColumns: ["id"]
           },
         ]

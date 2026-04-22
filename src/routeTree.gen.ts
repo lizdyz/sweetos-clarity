@@ -32,6 +32,7 @@ import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.i
 import { Route as AppTenetsIndexRouteImport } from './routes/_app.tenets.index'
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
 import { Route as AppSparksIndexRouteImport } from './routes/_app.sparks.index'
+import { Route as AppSettingsIndexRouteImport } from './routes/_app.settings.index'
 import { Route as AppSessionsIndexRouteImport } from './routes/_app.sessions.index'
 import { Route as AppSessionTemplatesIndexRouteImport } from './routes/_app.session-templates.index'
 import { Route as AppRelationshipsIndexRouteImport } from './routes/_app.relationships.index'
@@ -61,6 +62,7 @@ import { Route as AppSettingsPromptsRouteImport } from './routes/_app.settings.p
 import { Route as AppSettingsOpenDecisionsRouteImport } from './routes/_app.settings.open-decisions'
 import { Route as AppSettingsLensesRouteImport } from './routes/_app.settings.lenses'
 import { Route as AppSettingsExcellenceRouteImport } from './routes/_app.settings.excellence'
+import { Route as AppSettingsCanonRouteImport } from './routes/_app.settings.canon'
 import { Route as AppSessionsIdRouteImport } from './routes/_app.sessions.$id'
 import { Route as AppSessionTemplatesIdRouteImport } from './routes/_app.session-templates.$id'
 import { Route as AppRelationshipsIdRouteImport } from './routes/_app.relationships.$id'
@@ -201,6 +203,11 @@ const AppSparksIndexRoute = AppSparksIndexRouteImport.update({
   id: '/sparks/',
   path: '/sparks/',
   getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSessionsIndexRoute = AppSessionsIndexRouteImport.update({
   id: '/sessions/',
@@ -349,6 +356,11 @@ const AppSettingsLensesRoute = AppSettingsLensesRouteImport.update({
 const AppSettingsExcellenceRoute = AppSettingsExcellenceRouteImport.update({
   id: '/excellence',
   path: '/excellence',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsCanonRoute = AppSettingsCanonRouteImport.update({
+  id: '/canon',
+  path: '/canon',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSessionsIdRoute = AppSessionsIdRouteImport.update({
@@ -525,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/relationships/$id': typeof AppRelationshipsIdRouteWithChildren
   '/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
+  '/settings/canon': typeof AppSettingsCanonRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
   '/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
@@ -554,6 +567,7 @@ export interface FileRoutesByFullPath {
   '/relationships/': typeof AppRelationshipsIndexRoute
   '/session-templates/': typeof AppSessionTemplatesIndexRoute
   '/sessions/': typeof AppSessionsIndexRoute
+  '/settings/': typeof AppSettingsIndexRoute
   '/sparks/': typeof AppSparksIndexRoute
   '/tasks/': typeof AppTasksIndexRoute
   '/tenets/': typeof AppTenetsIndexRoute
@@ -577,7 +591,6 @@ export interface FileRoutesByTo {
   '/pipeline': typeof AppPipelineRoute
   '/planner': typeof AppPlannerRoute
   '/queue': typeof AppQueueRoute
-  '/settings': typeof AppSettingsRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
   '/sweetsync': typeof AppSweetsyncRoute
   '/today': typeof AppTodayRoute
@@ -604,6 +617,7 @@ export interface FileRoutesByTo {
   '/relationships/$id': typeof AppRelationshipsIdRouteWithChildren
   '/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
+  '/settings/canon': typeof AppSettingsCanonRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
   '/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
@@ -633,6 +647,7 @@ export interface FileRoutesByTo {
   '/relationships': typeof AppRelationshipsIndexRoute
   '/session-templates': typeof AppSessionTemplatesIndexRoute
   '/sessions': typeof AppSessionsIndexRoute
+  '/settings': typeof AppSettingsIndexRoute
   '/sparks': typeof AppSparksIndexRoute
   '/tasks': typeof AppTasksIndexRoute
   '/tenets': typeof AppTenetsIndexRoute
@@ -685,6 +700,7 @@ export interface FileRoutesById {
   '/_app/relationships/$id': typeof AppRelationshipsIdRouteWithChildren
   '/_app/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/_app/sessions/$id': typeof AppSessionsIdRoute
+  '/_app/settings/canon': typeof AppSettingsCanonRoute
   '/_app/settings/excellence': typeof AppSettingsExcellenceRoute
   '/_app/settings/lenses': typeof AppSettingsLensesRouteWithChildren
   '/_app/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
@@ -714,6 +730,7 @@ export interface FileRoutesById {
   '/_app/relationships/': typeof AppRelationshipsIndexRoute
   '/_app/session-templates/': typeof AppSessionTemplatesIndexRoute
   '/_app/sessions/': typeof AppSessionsIndexRoute
+  '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/sparks/': typeof AppSparksIndexRoute
   '/_app/tasks/': typeof AppTasksIndexRoute
   '/_app/tenets/': typeof AppTenetsIndexRoute
@@ -766,6 +783,7 @@ export interface FileRouteTypes {
     | '/relationships/$id'
     | '/session-templates/$id'
     | '/sessions/$id'
+    | '/settings/canon'
     | '/settings/excellence'
     | '/settings/lenses'
     | '/settings/open-decisions'
@@ -795,6 +813,7 @@ export interface FileRouteTypes {
     | '/relationships/'
     | '/session-templates/'
     | '/sessions/'
+    | '/settings/'
     | '/sparks/'
     | '/tasks/'
     | '/tenets/'
@@ -818,7 +837,6 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/planner'
     | '/queue'
-    | '/settings'
     | '/sweetcycle'
     | '/sweetsync'
     | '/today'
@@ -845,6 +863,7 @@ export interface FileRouteTypes {
     | '/relationships/$id'
     | '/session-templates/$id'
     | '/sessions/$id'
+    | '/settings/canon'
     | '/settings/excellence'
     | '/settings/lenses'
     | '/settings/open-decisions'
@@ -874,6 +893,7 @@ export interface FileRouteTypes {
     | '/relationships'
     | '/session-templates'
     | '/sessions'
+    | '/settings'
     | '/sparks'
     | '/tasks'
     | '/tenets'
@@ -925,6 +945,7 @@ export interface FileRouteTypes {
     | '/_app/relationships/$id'
     | '/_app/session-templates/$id'
     | '/_app/sessions/$id'
+    | '/_app/settings/canon'
     | '/_app/settings/excellence'
     | '/_app/settings/lenses'
     | '/_app/settings/open-decisions'
@@ -954,6 +975,7 @@ export interface FileRouteTypes {
     | '/_app/relationships/'
     | '/_app/session-templates/'
     | '/_app/sessions/'
+    | '/_app/settings/'
     | '/_app/sparks/'
     | '/_app/tasks/'
     | '/_app/tenets/'
@@ -1133,6 +1155,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sparks/'
       preLoaderRoute: typeof AppSparksIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/settings/': {
+      id: '/_app/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AppSettingsIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
     }
     '/_app/sessions/': {
       id: '/_app/sessions/'
@@ -1337,6 +1366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsExcellenceRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/canon': {
+      id: '/_app/settings/canon'
+      path: '/canon'
+      fullPath: '/settings/canon'
+      preLoaderRoute: typeof AppSettingsCanonRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/sessions/$id': {
       id: '/_app/sessions/$id'
       path: '/sessions/$id'
@@ -1534,19 +1570,23 @@ const AppSettingsLensesRouteWithChildren =
   AppSettingsLensesRoute._addFileChildren(AppSettingsLensesRouteChildren)
 
 interface AppSettingsRouteChildren {
+  AppSettingsCanonRoute: typeof AppSettingsCanonRoute
   AppSettingsExcellenceRoute: typeof AppSettingsExcellenceRoute
   AppSettingsLensesRoute: typeof AppSettingsLensesRouteWithChildren
   AppSettingsOpenDecisionsRoute: typeof AppSettingsOpenDecisionsRoute
   AppSettingsPromptsRoute: typeof AppSettingsPromptsRoute
   AppSettingsSparkTemplatesRoute: typeof AppSettingsSparkTemplatesRoute
+  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsCanonRoute: AppSettingsCanonRoute,
   AppSettingsExcellenceRoute: AppSettingsExcellenceRoute,
   AppSettingsLensesRoute: AppSettingsLensesRouteWithChildren,
   AppSettingsOpenDecisionsRoute: AppSettingsOpenDecisionsRoute,
   AppSettingsPromptsRoute: AppSettingsPromptsRoute,
   AppSettingsSparkTemplatesRoute: AppSettingsSparkTemplatesRoute,
+  AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 
 const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
