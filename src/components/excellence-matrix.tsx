@@ -300,11 +300,25 @@ export function ExcellenceMatrix({ subjectKind, subjectId, subjectLabel }: Props
                         key={p.id}
                         className="align-top rounded-lg border border-border/60 bg-surface p-2"
                       >
-                        {cell.excellence_definition && (
-                          <p className="mb-1.5 text-[11px] leading-snug text-foreground/90">
-                            {cell.excellence_definition}
-                          </p>
-                        )}
+                        <div className="mb-1 flex items-start justify-between gap-1">
+                          {cell.excellence_definition ? (
+                            <p className="text-[11px] leading-snug text-foreground/90">
+                              {cell.excellence_definition}
+                            </p>
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground">—</span>
+                          )}
+                          {activeRel && (
+                            <button
+                              type="button"
+                              onClick={() => setThresholdOpen(true)}
+                              title="Open maturity ladder"
+                              className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            >
+                              <Info className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
                         {cell.checklist_items.length > 0 && (
                           <ul className="mb-2 space-y-0.5">
                             {cell.checklist_items.map((item, i) => (
@@ -344,6 +358,18 @@ export function ExcellenceMatrix({ subjectKind, subjectId, subjectLabel }: Props
         <p className="text-center text-[11px] text-muted-foreground">
           Pick a relationship to start scoring this matrix.
         </p>
+      )}
+
+      {activeRel && (
+        <MaturityThresholdSheet
+          open={thresholdOpen}
+          onOpenChange={setThresholdOpen}
+          subjectKind={subjectKind}
+          subjectId={subjectId}
+          subjectLabel={subjectLabel}
+          relationshipId={activeRel}
+          currentLevel={currentMaturity}
+        />
       )}
     </div>
   );
