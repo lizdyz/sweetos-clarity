@@ -38,7 +38,8 @@ export interface WorkflowStepRow {
   tagged_components: string[];
   produces_document_type: string | null;
   expected_duration_minutes: number | null;
-  success_criteria: string | null;
+  success_criteria: string[] | null;
+  deliverables: string[] | null;
 }
 
 interface Props {
@@ -57,7 +58,12 @@ export function WorkflowStepSheet({ step, onClose, onSaved }: Props) {
   const [duration, setDuration] = useState(
     step.expected_duration_minutes ? String(step.expected_duration_minutes) : "",
   );
-  const [successCriteria, setSuccessCriteria] = useState(step.success_criteria ?? "");
+  const [successCriteria, setSuccessCriteria] = useState(
+    (step.success_criteria ?? []).join("\n"),
+  );
+  const [deliverables, setDeliverables] = useState(
+    (step.deliverables ?? []).join("\n"),
+  );
   const [producesType, setProducesType] = useState(step.produces_document_type ?? "");
   const [busy, setBusy] = useState(false);
 
@@ -85,7 +91,14 @@ export function WorkflowStepSheet({ step, onClose, onSaved }: Props) {
         requires_human_approval: requiresApproval,
         approval_role: requiresApproval ? approvalRole : null,
         expected_duration_minutes: duration ? Number(duration) : null,
-        success_criteria: successCriteria.trim() || null,
+        success_criteria: successCriteria
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        deliverables: deliverables
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean),
         produces_document_type: producesType.trim() || null,
       };
       const { error } = await supabase
@@ -222,13 +235,29 @@ export function WorkflowStepSheet({ step, onClose, onSaved }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Success criteria</Label>
+            <Label>Success criteria — one per line</Label>
             <Textarea
               value={successCriteria}
               onChange={(e) => setSuccessCriteria(e.target.value)}
-              rows={2}
-              placeholder="What does done look like for this step?"
+              rows={4}
+              placeholder={"Stakeholder has completed pre-interview\nAll domains rated for confidence\nTop 3 friction points named"}
             />
+            <p className="text-[11px] text-muted-foreground">
+              Each line becomes a checklist item showing what good looks like.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Deliverables — one per line</Label>
+            <Textarea
+              value={deliverables}
+              onChange={(e) => setDeliverables(e.target.value)}
+              rows={3}
+              placeholder={"Tension map\nHypothesis list\nQuestion bank"}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Artifacts the step produces. Shown on the step card.
+            </p>
           </div>
         </div>
         <div className="sticky bottom-0 -mx-6 mt-6 flex items-center justify-between gap-2 border-t border-border bg-background/95 px-6 py-3 backdrop-blur">
