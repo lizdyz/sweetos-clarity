@@ -39,7 +39,8 @@ interface NavItem {
 const NAV: NavItem[] = [
   { to: "/today", label: "Today", icon: LayoutDashboard, group: "Overview" },
   { to: "/pipeline", label: "Pipeline", icon: Compass, group: "Overview" },
-  { to: "/capture", label: "Capture", icon: Sparkles, group: "Overview", soon: true },
+  { to: "/capture", label: "Capture", icon: Sparkles, group: "Overview" },
+  { to: "/queue", label: "Proposals Queue", icon: Inbox, group: "Overview" },
 
   { to: "/relationships", label: "Relationships", icon: Users, group: "Operate" },
   { to: "/projects", label: "Projects", icon: FolderKanban, group: "Operate" },
@@ -63,7 +64,6 @@ const NAV: NavItem[] = [
   { to: "/decisions", label: "Decisions", icon: GitBranch, group: "Knowledge" },
   { to: "/documents", label: "Documents", icon: FileText, group: "Knowledge" },
 
-  { to: "/review", label: "Review Queue", icon: Inbox, group: "Intelligence", soon: true },
   { to: "/search", label: "Search", icon: Search, group: "Intelligence", soon: true },
 
   { to: "/settings", label: "Settings & Team", icon: Settings, group: "System" },
