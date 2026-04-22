@@ -30,7 +30,7 @@ const PHASE_HINT: Record<SweetPhase, string> = {
   Seed: "Client prep",
   Synthesize: "Our analysis",
   Session: "Live work",
-  Sync: "Recap & decide",
+  Sync: "Recap & confirm",
   Ship: "Delivered",
 };
 
