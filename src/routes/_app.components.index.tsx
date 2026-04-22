@@ -35,7 +35,10 @@ interface ComponentRow {
   related_domains: string[] | null;
   related_tenets: string[] | null;
   updated_at: string;
+  component_kind: ComponentKind | null;
+  journey_id: string | null;
 }
+interface JourneyRow { id: string; name: string; }
 interface PipelineRow {
   component_id: string;
   active_project_count: number | null;
