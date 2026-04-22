@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "admin" | "member";
 
-interface AuthState {
+export interface AuthState {
   session: Session | null;
   user: User | null;
   loading: boolean;
