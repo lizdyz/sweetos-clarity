@@ -260,10 +260,10 @@ function CapturePage() {
             </div>
           </div>
           <Link
-            to="/queue"
+            to="/capture"
             className="text-sm font-medium text-[color:var(--iris-violet)] hover:underline"
           >
-            Open queue →
+            Refresh queue →
           </Link>
         </Card>
       )}

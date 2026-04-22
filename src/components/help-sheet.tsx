@@ -37,12 +37,9 @@ const GLOSSARY: GlossaryEntry[] = [
   { to: "/documents", title: "Documents", purpose: "Briefs, deliverables, assets.", group: "Operate", source: "Canon §10" },
 
   // Today (operator write surface)
-  { to: "/today", title: "Today", purpose: "Live working surface. Everything due, scheduled, or active right now.", group: "Today", source: "App canon" },
-  { to: "/planner", title: "Planner", purpose: "Plan this week / next / backlog.", group: "Today", source: "App canon" },
+  { to: "/today", title: "Today", purpose: "Live working surface. Everything due, scheduled, or active right now. Includes My Tasks and Planner views.", group: "Today", source: "App canon" },
   { to: "/calendar", title: "Calendar", purpose: "Visual time view across every actionable record.", group: "Today", source: "App canon" },
-  { to: "/capture", title: "Capture", purpose: "Get raw input into the system fast — one screen, no friction.", group: "Today", source: "App canon" },
-  { to: "/queue", title: "Proposals Queue", purpose: "Review system / agent proposals before they become real records.", group: "Today", source: "App canon" },
-  { to: "/my-tasks", title: "My Tasks", purpose: "Atomic executable work assigned to you. Created by you, an agent, or a workflow.", group: "Today", source: "Canon §9 Tasks" },
+  { to: "/capture", title: "Capture", purpose: "Get raw input into the system fast — and review pending proposals before they become real records.", group: "Today", source: "App canon" },
   { to: "/tasks", title: "Tasks", purpose: "Atomic executable work. Created by you, an agent, or a workflow. Has a clear deliverable.", group: "Today", source: "Canon §9 Tasks" },
 
   // People & Relationships

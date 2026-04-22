@@ -77,7 +77,7 @@ export function CaptureQueueStrip() {
             Approve here — no extra screen needed
           </span>
         </div>
-        <Link to="/queue" className="text-xs font-medium text-[color:var(--iris-violet)] hover:underline">
+        <Link to="/capture" className="text-xs font-medium text-[color:var(--iris-violet)] hover:underline">
           Open full queue →
         </Link>
       </div>
