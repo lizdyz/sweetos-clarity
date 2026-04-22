@@ -51,6 +51,7 @@ import { Route as AppDelegationIndexRouteImport } from './routes/_app.delegation
 import { Route as AppDecisionsIndexRouteImport } from './routes/_app.decisions.index'
 import { Route as AppComponentsIndexRouteImport } from './routes/_app.components.index'
 import { Route as AppCampaignsIndexRouteImport } from './routes/_app.campaigns.index'
+import { Route as PSlugSeedRouteImport } from './routes/p.$slug.seed'
 import { Route as AppWorkflowsIdRouteImport } from './routes/_app.workflows.$id'
 import { Route as AppTenetsSlugRouteImport } from './routes/_app.tenets.$slug'
 import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
@@ -82,6 +83,7 @@ import { Route as AppDecisionsIdRouteImport } from './routes/_app.decisions.$id'
 import { Route as AppComponentsIdRouteImport } from './routes/_app.components.$id'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
 import { Route as AppSettingsLensesIdRouteImport } from './routes/_app.settings.lenses.$id'
+import { Route as AppRelationshipsIdSparkpathRouteImport } from './routes/_app.relationships.$id.sparkpath'
 import { Route as AppLibraryJtbdIdRouteImport } from './routes/_app.library.jtbd.$id'
 import { Route as AppWorkflowsIdRunsRunIdRouteImport } from './routes/_app.workflows.$id.runs.$runId'
 
@@ -296,6 +298,11 @@ const AppCampaignsIndexRoute = AppCampaignsIndexRouteImport.update({
   path: '/campaigns/',
   getParentRoute: () => AppRoute,
 } as any)
+const PSlugSeedRoute = PSlugSeedRouteImport.update({
+  id: '/p/$slug/seed',
+  path: '/p/$slug/seed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppWorkflowsIdRoute = AppWorkflowsIdRouteImport.update({
   id: '/workflows/$id',
   path: '/workflows/$id',
@@ -453,6 +460,12 @@ const AppSettingsLensesIdRoute = AppSettingsLensesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppSettingsLensesRoute,
 } as any)
+const AppRelationshipsIdSparkpathRoute =
+  AppRelationshipsIdSparkpathRouteImport.update({
+    id: '/sparkpath',
+    path: '/sparkpath',
+    getParentRoute: () => AppRelationshipsIdRoute,
+  } as any)
 const AppLibraryJtbdIdRoute = AppLibraryJtbdIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -502,7 +515,7 @@ export interface FileRoutesByFullPath {
   '/portals/$relationshipId': typeof AppPortalsRelationshipIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/quests/$id': typeof AppQuestsIdRoute
-  '/relationships/$id': typeof AppRelationshipsIdRoute
+  '/relationships/$id': typeof AppRelationshipsIdRouteWithChildren
   '/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
@@ -513,6 +526,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
   '/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
+  '/p/$slug/seed': typeof PSlugSeedRoute
   '/campaigns/': typeof AppCampaignsIndexRoute
   '/components/': typeof AppComponentsIndexRoute
   '/decisions/': typeof AppDecisionsIndexRoute
@@ -537,6 +551,7 @@ export interface FileRoutesByFullPath {
   '/tenets/': typeof AppTenetsIndexRoute
   '/workflows/': typeof AppWorkflowsIndexRoute
   '/library/jtbd/$id': typeof AppLibraryJtbdIdRoute
+  '/relationships/$id/sparkpath': typeof AppRelationshipsIdSparkpathRoute
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -578,7 +593,7 @@ export interface FileRoutesByTo {
   '/portals/$relationshipId': typeof AppPortalsRelationshipIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/quests/$id': typeof AppQuestsIdRoute
-  '/relationships/$id': typeof AppRelationshipsIdRoute
+  '/relationships/$id': typeof AppRelationshipsIdRouteWithChildren
   '/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
@@ -589,6 +604,7 @@ export interface FileRoutesByTo {
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
   '/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
+  '/p/$slug/seed': typeof PSlugSeedRoute
   '/campaigns': typeof AppCampaignsIndexRoute
   '/components': typeof AppComponentsIndexRoute
   '/decisions': typeof AppDecisionsIndexRoute
@@ -613,6 +629,7 @@ export interface FileRoutesByTo {
   '/tenets': typeof AppTenetsIndexRoute
   '/workflows': typeof AppWorkflowsIndexRoute
   '/library/jtbd/$id': typeof AppLibraryJtbdIdRoute
+  '/relationships/$id/sparkpath': typeof AppRelationshipsIdSparkpathRoute
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -656,7 +673,7 @@ export interface FileRoutesById {
   '/_app/portals/$relationshipId': typeof AppPortalsRelationshipIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/_app/quests/$id': typeof AppQuestsIdRoute
-  '/_app/relationships/$id': typeof AppRelationshipsIdRoute
+  '/_app/relationships/$id': typeof AppRelationshipsIdRouteWithChildren
   '/_app/session-templates/$id': typeof AppSessionTemplatesIdRoute
   '/_app/sessions/$id': typeof AppSessionsIdRoute
   '/_app/settings/excellence': typeof AppSettingsExcellenceRoute
@@ -667,6 +684,7 @@ export interface FileRoutesById {
   '/_app/tasks/$id': typeof AppTasksIdRoute
   '/_app/tenets/$slug': typeof AppTenetsSlugRoute
   '/_app/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
+  '/p/$slug/seed': typeof PSlugSeedRoute
   '/_app/campaigns/': typeof AppCampaignsIndexRoute
   '/_app/components/': typeof AppComponentsIndexRoute
   '/_app/decisions/': typeof AppDecisionsIndexRoute
@@ -691,6 +709,7 @@ export interface FileRoutesById {
   '/_app/tenets/': typeof AppTenetsIndexRoute
   '/_app/workflows/': typeof AppWorkflowsIndexRoute
   '/_app/library/jtbd/$id': typeof AppLibraryJtbdIdRoute
+  '/_app/relationships/$id/sparkpath': typeof AppRelationshipsIdSparkpathRoute
   '/_app/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/_app/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -745,6 +764,7 @@ export interface FileRouteTypes {
     | '/tasks/$id'
     | '/tenets/$slug'
     | '/workflows/$id'
+    | '/p/$slug/seed'
     | '/campaigns/'
     | '/components/'
     | '/decisions/'
@@ -769,6 +789,7 @@ export interface FileRouteTypes {
     | '/tenets/'
     | '/workflows/'
     | '/library/jtbd/$id'
+    | '/relationships/$id/sparkpath'
     | '/settings/lenses/$id'
     | '/workflows/$id/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
@@ -821,6 +842,7 @@ export interface FileRouteTypes {
     | '/tasks/$id'
     | '/tenets/$slug'
     | '/workflows/$id'
+    | '/p/$slug/seed'
     | '/campaigns'
     | '/components'
     | '/decisions'
@@ -845,6 +867,7 @@ export interface FileRouteTypes {
     | '/tenets'
     | '/workflows'
     | '/library/jtbd/$id'
+    | '/relationships/$id/sparkpath'
     | '/settings/lenses/$id'
     | '/workflows/$id/runs/$runId'
   id:
@@ -898,6 +921,7 @@ export interface FileRouteTypes {
     | '/_app/tasks/$id'
     | '/_app/tenets/$slug'
     | '/_app/workflows/$id'
+    | '/p/$slug/seed'
     | '/_app/campaigns/'
     | '/_app/components/'
     | '/_app/decisions/'
@@ -922,6 +946,7 @@ export interface FileRouteTypes {
     | '/_app/tenets/'
     | '/_app/workflows/'
     | '/_app/library/jtbd/$id'
+    | '/_app/relationships/$id/sparkpath'
     | '/_app/settings/lenses/$id'
     | '/_app/workflows/$id/runs/$runId'
   fileRoutesById: FileRoutesById
@@ -930,6 +955,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PSlugSeedRoute: typeof PSlugSeedRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1228,6 +1254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampaignsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/p/$slug/seed': {
+      id: '/p/$slug/seed'
+      path: '/p/$slug/seed'
+      fullPath: '/p/$slug/seed'
+      preLoaderRoute: typeof PSlugSeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/workflows/$id': {
       id: '/_app/workflows/$id'
       path: '/workflows/$id'
@@ -1445,6 +1478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsLensesIdRouteImport
       parentRoute: typeof AppSettingsLensesRoute
     }
+    '/_app/relationships/$id/sparkpath': {
+      id: '/_app/relationships/$id/sparkpath'
+      path: '/sparkpath'
+      fullPath: '/relationships/$id/sparkpath'
+      preLoaderRoute: typeof AppRelationshipsIdSparkpathRouteImport
+      parentRoute: typeof AppRelationshipsIdRoute
+    }
     '/_app/library/jtbd/$id': {
       id: '/_app/library/jtbd/$id'
       path: '/$id'
@@ -1503,6 +1543,17 @@ const AppLibraryJtbdRouteWithChildren = AppLibraryJtbdRoute._addFileChildren(
   AppLibraryJtbdRouteChildren,
 )
 
+interface AppRelationshipsIdRouteChildren {
+  AppRelationshipsIdSparkpathRoute: typeof AppRelationshipsIdSparkpathRoute
+}
+
+const AppRelationshipsIdRouteChildren: AppRelationshipsIdRouteChildren = {
+  AppRelationshipsIdSparkpathRoute: AppRelationshipsIdSparkpathRoute,
+}
+
+const AppRelationshipsIdRouteWithChildren =
+  AppRelationshipsIdRoute._addFileChildren(AppRelationshipsIdRouteChildren)
+
 interface AppWorkflowsIdRouteChildren {
   AppWorkflowsIdRunsRunIdRoute: typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -1551,7 +1602,7 @@ interface AppRouteChildren {
   AppPortalsRelationshipIdRoute: typeof AppPortalsRelationshipIdRoute
   AppProjectsIdRoute: typeof AppProjectsIdRoute
   AppQuestsIdRoute: typeof AppQuestsIdRoute
-  AppRelationshipsIdRoute: typeof AppRelationshipsIdRoute
+  AppRelationshipsIdRoute: typeof AppRelationshipsIdRouteWithChildren
   AppSessionTemplatesIdRoute: typeof AppSessionTemplatesIdRoute
   AppSessionsIdRoute: typeof AppSessionsIdRoute
   AppSparksIdRoute: typeof AppSparksIdRoute
@@ -1619,7 +1670,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPortalsRelationshipIdRoute: AppPortalsRelationshipIdRoute,
   AppProjectsIdRoute: AppProjectsIdRoute,
   AppQuestsIdRoute: AppQuestsIdRoute,
-  AppRelationshipsIdRoute: AppRelationshipsIdRoute,
+  AppRelationshipsIdRoute: AppRelationshipsIdRouteWithChildren,
   AppSessionTemplatesIdRoute: AppSessionTemplatesIdRoute,
   AppSessionsIdRoute: AppSessionsIdRoute,
   AppSparksIdRoute: AppSparksIdRoute,
@@ -1657,6 +1708,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  PSlugSeedRoute: PSlugSeedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

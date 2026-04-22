@@ -401,6 +401,297 @@ export type Database = {
           },
         ]
       }
+      client_clarity_docs: {
+        Row: {
+          access_token: string
+          created_at: string
+          created_by: string | null
+          id: string
+          intro_md: string | null
+          last_viewed_at: string | null
+          mirror_portal_id: string | null
+          name: string
+          published_at: string | null
+          relationship_id: string
+          slug: string
+          status: Database["public"]["Enums"]["sparkpath_doc_status"]
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          access_token?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intro_md?: string | null
+          last_viewed_at?: string | null
+          mirror_portal_id?: string | null
+          name: string
+          published_at?: string | null
+          relationship_id: string
+          slug: string
+          status?: Database["public"]["Enums"]["sparkpath_doc_status"]
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intro_md?: string | null
+          last_viewed_at?: string | null
+          mirror_portal_id?: string | null
+          name?: string
+          published_at?: string | null
+          relationship_id?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["sparkpath_doc_status"]
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_clarity_docs_mirror_portal_id_fkey"
+            columns: ["mirror_portal_id"]
+            isOneToOne: false
+            referencedRelation: "client_mirror_portals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_clarity_docs_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "client_clarity_docs_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_mirror_portals: {
+        Row: {
+          access_token: string
+          client_seed_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          intro_md: string | null
+          last_viewed_at: string | null
+          name: string
+          published_at: string | null
+          relationship_id: string
+          slug: string
+          status: Database["public"]["Enums"]["sparkpath_doc_status"]
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          access_token?: string
+          client_seed_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intro_md?: string | null
+          last_viewed_at?: string | null
+          name: string
+          published_at?: string | null
+          relationship_id: string
+          slug: string
+          status?: Database["public"]["Enums"]["sparkpath_doc_status"]
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          access_token?: string
+          client_seed_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intro_md?: string | null
+          last_viewed_at?: string | null
+          name?: string
+          published_at?: string | null
+          relationship_id?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["sparkpath_doc_status"]
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_mirror_portals_client_seed_id_fkey"
+            columns: ["client_seed_id"]
+            isOneToOne: false
+            referencedRelation: "client_seeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_mirror_portals_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "client_mirror_portals_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_primers: {
+        Row: {
+          access_token: string
+          ai_draft_md: string | null
+          body_md: string | null
+          created_at: string
+          created_by: string | null
+          hook_md: string | null
+          id: string
+          last_viewed_at: string | null
+          name: string
+          published_at: string | null
+          relationship_id: string
+          slug: string
+          status: Database["public"]["Enums"]["sparkpath_doc_status"]
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          access_token?: string
+          ai_draft_md?: string | null
+          body_md?: string | null
+          created_at?: string
+          created_by?: string | null
+          hook_md?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          name: string
+          published_at?: string | null
+          relationship_id: string
+          slug: string
+          status?: Database["public"]["Enums"]["sparkpath_doc_status"]
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          access_token?: string
+          ai_draft_md?: string | null
+          body_md?: string | null
+          created_at?: string
+          created_by?: string | null
+          hook_md?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          name?: string
+          published_at?: string | null
+          relationship_id?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["sparkpath_doc_status"]
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_primers_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "client_primers_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_seeds: {
+        Row: {
+          access_token: string
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          last_viewed_at: string | null
+          name: string
+          preamble_override_md: string | null
+          published_at: string | null
+          relationship_id: string
+          slug: string
+          status: Database["public"]["Enums"]["sparkpath_doc_status"]
+          template_id: string | null
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          access_token?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          name: string
+          preamble_override_md?: string | null
+          published_at?: string | null
+          relationship_id: string
+          slug: string
+          status?: Database["public"]["Enums"]["sparkpath_doc_status"]
+          template_id?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          access_token?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          name?: string
+          preamble_override_md?: string | null
+          published_at?: string | null
+          relationship_id?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["sparkpath_doc_status"]
+          template_id?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_seeds_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "client_seeds_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_seeds_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "seed_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       component_outputs: {
         Row: {
           approved_at: string | null
@@ -3984,6 +4275,199 @@ export type Database = {
           },
         ]
       }
+      seed_responses: {
+        Row: {
+          auto_saved_at: string
+          client_seed_id: string
+          created_at: string
+          id: string
+          question_id: string
+          response_json: Json | null
+          response_text: string | null
+          submitted_at: string | null
+          updated_at: string
+          upload_storage_path: string | null
+          word_count: number
+        }
+        Insert: {
+          auto_saved_at?: string
+          client_seed_id: string
+          created_at?: string
+          id?: string
+          question_id: string
+          response_json?: Json | null
+          response_text?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+          upload_storage_path?: string | null
+          word_count?: number
+        }
+        Update: {
+          auto_saved_at?: string
+          client_seed_id?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+          response_json?: Json | null
+          response_text?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+          upload_storage_path?: string | null
+          word_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seed_responses_client_seed_id_fkey"
+            columns: ["client_seed_id"]
+            isOneToOne: false
+            referencedRelation: "client_seeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seed_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "seed_template_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seed_template_questions: {
+        Row: {
+          badge: Database["public"]["Enums"]["seed_question_badge"]
+          code: string
+          created_at: string
+          hint: string | null
+          id: string
+          options: Json | null
+          prompt: string
+          question_type: Database["public"]["Enums"]["seed_question_type"]
+          section_id: string
+          sort_order: number
+          updated_at: string
+          watch_phrases: string[]
+        }
+        Insert: {
+          badge?: Database["public"]["Enums"]["seed_question_badge"]
+          code: string
+          created_at?: string
+          hint?: string | null
+          id?: string
+          options?: Json | null
+          prompt: string
+          question_type?: Database["public"]["Enums"]["seed_question_type"]
+          section_id: string
+          sort_order?: number
+          updated_at?: string
+          watch_phrases?: string[]
+        }
+        Update: {
+          badge?: Database["public"]["Enums"]["seed_question_badge"]
+          code?: string
+          created_at?: string
+          hint?: string | null
+          id?: string
+          options?: Json | null
+          prompt?: string
+          question_type?: Database["public"]["Enums"]["seed_question_type"]
+          section_id?: string
+          sort_order?: number
+          updated_at?: string
+          watch_phrases?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seed_template_questions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "seed_template_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seed_template_sections: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          preamble_md: string | null
+          sort_order: number
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          preamble_md?: string | null
+          sort_order?: number
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          preamble_md?: string | null
+          sort_order?: number
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seed_template_sections_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "seed_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seed_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          id: string
+          is_canonical: boolean
+          kind: Database["public"]["Enums"]["seed_template_kind"]
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          is_canonical?: boolean
+          kind?: Database["public"]["Enums"]["seed_template_kind"]
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          is_canonical?: boolean
+          kind?: Database["public"]["Enums"]["seed_template_kind"]
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       session_components: {
         Row: {
           advancement_type: string | null
@@ -6034,6 +6518,18 @@ export type Database = {
       quality_status: "Draft" | "Tested" | "Proven" | "Canonical"
       relationship_temperature: "Warm" | "Cool" | "Cold" | "Paused"
       reusability_tier: "One-Time" | "Relationship" | "Org" | "System"
+      seed_question_badge: "foundational" | "optional" | "upload"
+      seed_question_type:
+        | "short_text"
+        | "long_text"
+        | "rich_text"
+        | "number"
+        | "date"
+        | "single_select"
+        | "multi_select"
+        | "upload"
+        | "checklist"
+      seed_template_kind: "mirror" | "map" | "custom"
       service_package:
         | "Mirror Only"
         | "Mirror + Machine"
@@ -6061,6 +6557,7 @@ export type Database = {
         | "Decision"
         | "Reflection"
         | "Action"
+      sparkpath_doc_status: "draft" | "published" | "closed" | "archived"
       spec_status: "Emerging" | "Draft" | "Proven" | "Refined"
       state_of_the_thing:
         | "Identified"
@@ -6346,6 +6843,19 @@ export const Constants = {
       quality_status: ["Draft", "Tested", "Proven", "Canonical"],
       relationship_temperature: ["Warm", "Cool", "Cold", "Paused"],
       reusability_tier: ["One-Time", "Relationship", "Org", "System"],
+      seed_question_badge: ["foundational", "optional", "upload"],
+      seed_question_type: [
+        "short_text",
+        "long_text",
+        "rich_text",
+        "number",
+        "date",
+        "single_select",
+        "multi_select",
+        "upload",
+        "checklist",
+      ],
+      seed_template_kind: ["mirror", "map", "custom"],
       service_package: [
         "Mirror Only",
         "Mirror + Machine",
@@ -6376,6 +6886,7 @@ export const Constants = {
         "Reflection",
         "Action",
       ],
+      sparkpath_doc_status: ["draft", "published", "closed", "archived"],
       spec_status: ["Emerging", "Draft", "Proven", "Refined"],
       state_of_the_thing: [
         "Identified",
