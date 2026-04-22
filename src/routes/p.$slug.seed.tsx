@@ -58,11 +58,20 @@ function PublicSeedPage() {
         .eq("client_seed_id", seed.id);
 
       const responseMap = new Map<string, string>();
-      (responses ?? []).forEach((r) => responseMap.set(r.question_id, r.response_text ?? ""));
+      ((responses ?? []) as Array<{ question_id: string; response_text: string | null }>).forEach((r) =>
+        responseMap.set(r.question_id, r.response_text ?? ""),
+      );
 
-      const grouped: Section[] = (sections ?? []).map((s) => ({
+      type RawSection = { id: string; code: string; name: string; preamble_md: string | null; sort_order: number };
+      type RawQuestion = { id: string; section_id: string; code: string; prompt: string; hint: string | null; question_type: string; badge: string; sort_order: number };
+      type RawResponse = { question_id: string; response_text: string | null };
+      const secList = (sections ?? []) as RawSection[];
+      const qList = (questions ?? []) as RawQuestion[];
+      const rList = (responses ?? []) as RawResponse[];
+
+      const grouped: Section[] = secList.map((s) => ({
         ...s,
-        questions: (questions ?? [])
+        questions: qList
           .filter((q) => q.section_id === s.id)
           .map((q) => ({
             id: q.id,
@@ -74,8 +83,8 @@ function PublicSeedPage() {
           })),
       }));
 
-      const totalQ = (questions ?? []).length;
-      const answered = (responses ?? []).filter((r) => (r.response_text ?? "").trim().length > 0).length;
+      const totalQ = qList.length;
+      const answered = rList.filter((r) => (r.response_text ?? "").trim().length > 0).length;
 
       return { seed, sections: grouped, responseMap, totalQ, answered };
     },

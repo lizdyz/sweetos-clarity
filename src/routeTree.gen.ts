@@ -51,6 +51,7 @@ import { Route as AppDelegationIndexRouteImport } from './routes/_app.delegation
 import { Route as AppDecisionsIndexRouteImport } from './routes/_app.decisions.index'
 import { Route as AppComponentsIndexRouteImport } from './routes/_app.components.index'
 import { Route as AppCampaignsIndexRouteImport } from './routes/_app.campaigns.index'
+import { Route as PSlugSeedRouteImport } from './routes/p.$slug.seed'
 import { Route as AppWorkflowsIdRouteImport } from './routes/_app.workflows.$id'
 import { Route as AppTenetsSlugRouteImport } from './routes/_app.tenets.$slug'
 import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
@@ -296,6 +297,11 @@ const AppCampaignsIndexRoute = AppCampaignsIndexRouteImport.update({
   path: '/campaigns/',
   getParentRoute: () => AppRoute,
 } as any)
+const PSlugSeedRoute = PSlugSeedRouteImport.update({
+  id: '/p/$slug/seed',
+  path: '/p/$slug/seed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppWorkflowsIdRoute = AppWorkflowsIdRouteImport.update({
   id: '/workflows/$id',
   path: '/workflows/$id',
@@ -513,6 +519,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
   '/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
+  '/p/$slug/seed': typeof PSlugSeedRoute
   '/campaigns/': typeof AppCampaignsIndexRoute
   '/components/': typeof AppComponentsIndexRoute
   '/decisions/': typeof AppDecisionsIndexRoute
@@ -589,6 +596,7 @@ export interface FileRoutesByTo {
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
   '/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
+  '/p/$slug/seed': typeof PSlugSeedRoute
   '/campaigns': typeof AppCampaignsIndexRoute
   '/components': typeof AppComponentsIndexRoute
   '/decisions': typeof AppDecisionsIndexRoute
@@ -667,6 +675,7 @@ export interface FileRoutesById {
   '/_app/tasks/$id': typeof AppTasksIdRoute
   '/_app/tenets/$slug': typeof AppTenetsSlugRoute
   '/_app/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
+  '/p/$slug/seed': typeof PSlugSeedRoute
   '/_app/campaigns/': typeof AppCampaignsIndexRoute
   '/_app/components/': typeof AppComponentsIndexRoute
   '/_app/decisions/': typeof AppDecisionsIndexRoute
@@ -745,6 +754,7 @@ export interface FileRouteTypes {
     | '/tasks/$id'
     | '/tenets/$slug'
     | '/workflows/$id'
+    | '/p/$slug/seed'
     | '/campaigns/'
     | '/components/'
     | '/decisions/'
@@ -821,6 +831,7 @@ export interface FileRouteTypes {
     | '/tasks/$id'
     | '/tenets/$slug'
     | '/workflows/$id'
+    | '/p/$slug/seed'
     | '/campaigns'
     | '/components'
     | '/decisions'
@@ -898,6 +909,7 @@ export interface FileRouteTypes {
     | '/_app/tasks/$id'
     | '/_app/tenets/$slug'
     | '/_app/workflows/$id'
+    | '/p/$slug/seed'
     | '/_app/campaigns/'
     | '/_app/components/'
     | '/_app/decisions/'
@@ -930,6 +942,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PSlugSeedRoute: typeof PSlugSeedRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1227,6 +1240,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/campaigns/'
       preLoaderRoute: typeof AppCampaignsIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/p/$slug/seed': {
+      id: '/p/$slug/seed'
+      path: '/p/$slug/seed'
+      fullPath: '/p/$slug/seed'
+      preLoaderRoute: typeof PSlugSeedRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/workflows/$id': {
       id: '/_app/workflows/$id'
@@ -1657,6 +1677,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  PSlugSeedRoute: PSlugSeedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
