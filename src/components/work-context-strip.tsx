@@ -59,16 +59,17 @@ export function WorkContextStrip({
   });
 
   const componentIds = data?.building_components ?? [];
+  type CompRow = { id: string; name: string; current_maturity_level: string | null };
   const { data: components } = useQuery({
     queryKey: ["context_components", componentIds.join(",")],
     queryFn: async () => {
-      if (componentIds.length === 0) return [];
+      if (componentIds.length === 0) return [] as CompRow[];
       const { data, error } = await supabase
         .from("components")
         .select("id, name, current_maturity_level")
         .in("id", componentIds);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as CompRow[];
     },
     enabled: componentIds.length > 0,
   });
