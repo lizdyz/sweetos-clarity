@@ -96,13 +96,13 @@ function TaskPanels({ taskId }: { taskId: string }) {
           .eq("task_id", taskId);
         if (e2) throw e2;
         if (!d2 || d2.length === 0) return [];
-        const ids = d2.map((r) => r.depends_on_task_id);
+        const ids = d2.map((r: any) => r.depends_on_task_id);
         const { data: tasksRows } = await supabase
           .from("tasks")
           .select("id, name, status")
           .in("id", ids);
         const m = new Map((tasksRows ?? []).map((t: any) => [t.id, t]));
-        return d2.map((r) => ({ ...r, depends_on: m.get(r.depends_on_task_id) }));
+        return d2.map((r: any) => ({ ...r, depends_on: m.get(r.depends_on_task_id) }));
       }
       return data ?? [];
     },

@@ -16,6 +16,8 @@ import { Route as AppTodayRouteImport } from './routes/_app.today'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppQueueRouteImport } from './routes/_app.queue'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
+import { Route as AppPeopleRouteImport } from './routes/_app.people'
+import { Route as AppMyTasksRouteImport } from './routes/_app.my-tasks'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
@@ -92,6 +94,16 @@ const AppQueueRoute = AppQueueRouteImport.update({
 const AppPipelineRoute = AppPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPeopleRoute = AppPeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMyTasksRoute = AppMyTasksRouteImport.update({
+  id: '/my-tasks',
+  path: '/my-tasks',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCaptureRoute = AppCaptureRouteImport.update({
@@ -315,6 +327,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
+  '/my-tasks': typeof AppMyTasksRoute
+  '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
@@ -366,6 +380,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
+  '/my-tasks': typeof AppMyTasksRoute
+  '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/queue': typeof AppQueueRoute
   '/settings': typeof AppSettingsRouteWithChildren
@@ -419,6 +435,8 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/capture': typeof AppCaptureRoute
+  '/_app/my-tasks': typeof AppMyTasksRoute
+  '/_app/people': typeof AppPeopleRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/queue': typeof AppQueueRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
@@ -472,6 +490,8 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/capture'
+    | '/my-tasks'
+    | '/people'
     | '/pipeline'
     | '/queue'
     | '/settings'
@@ -523,6 +543,8 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/capture'
+    | '/my-tasks'
+    | '/people'
     | '/pipeline'
     | '/queue'
     | '/settings'
@@ -575,6 +597,8 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/capture'
+    | '/_app/my-tasks'
+    | '/_app/people'
     | '/_app/pipeline'
     | '/_app/queue'
     | '/_app/settings'
@@ -678,6 +702,20 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof AppPipelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/people': {
+      id: '/_app/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof AppPeopleRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/my-tasks': {
+      id: '/_app/my-tasks'
+      path: '/my-tasks'
+      fullPath: '/my-tasks'
+      preLoaderRoute: typeof AppMyTasksRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/capture': {
@@ -998,6 +1036,8 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppCaptureRoute: typeof AppCaptureRoute
+  AppMyTasksRoute: typeof AppMyTasksRoute
+  AppPeopleRoute: typeof AppPeopleRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppQueueRoute: typeof AppQueueRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
@@ -1047,6 +1087,8 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCaptureRoute: AppCaptureRoute,
+  AppMyTasksRoute: AppMyTasksRoute,
+  AppPeopleRoute: AppPeopleRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppQueueRoute: AppQueueRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
