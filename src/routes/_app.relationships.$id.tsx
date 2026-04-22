@@ -240,6 +240,66 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
           </ul>
         )}
       </section>
+
+      {/* Projects */}
+      <section className="panel-raised p-5">
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Projects
+        </h2>
+        {relProjects.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No projects linked.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {relProjects.map((p: any) => (
+              <li key={p.id}>
+                <Link
+                  to="/projects/$id"
+                  params={{ id: p.id }}
+                  className="flex items-center justify-between gap-3 py-2 text-sm hover:bg-iris-soft/30"
+                >
+                  <span className="truncate font-medium">{p.name}</span>
+                  <span className="flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
+                    {p.status && <Chip tone="neutral">{p.status}</Chip>}
+                    {p.deadline && <span>{new Date(p.deadline).toLocaleDateString()}</span>}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Open tasks */}
+      <section className="panel-raised p-5">
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Open tasks
+        </h2>
+        {relTasks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No open tasks.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {relTasks.map((t: any) => (
+              <li key={t.id}>
+                <Link
+                  to="/tasks/$id"
+                  params={{ id: t.id }}
+                  className="flex items-center justify-between gap-3 py-2 text-sm hover:bg-iris-soft/30"
+                >
+                  <span className="truncate">{t.name}</span>
+                  <span className="flex shrink-0 items-center gap-2 text-[11px]">
+                    {t.blocked && <Chip tone="destructive">Blocked</Chip>}
+                    {t.due_date && (
+                      <span className="text-muted-foreground">
+                        {new Date(t.due_date).toLocaleDateString()}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
