@@ -4,6 +4,7 @@ import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
+import { CanonGuardrail } from "@/components/canon-guardrail";
 
 export const Route = createFileRoute("/_app/missions/$id")({
   component: MissionDetail,
@@ -25,6 +26,9 @@ function MissionDetail() {
   });
   return (
     <div className="space-y-5">
+      <div className="px-6 pt-5">
+        <CanonGuardrail entityKind="mission" />
+      </div>
       {data && (
         <TimeControls
           table="missions"

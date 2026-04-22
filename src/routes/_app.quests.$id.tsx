@@ -4,6 +4,8 @@ import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { StoryTrail } from "@/components/story-trail";
 import { ScopeChip } from "@/components/scope-chip";
+import { CanonGuardrail } from "@/components/canon-guardrail";
+import { QuestAnatomyCard } from "@/components/quest-anatomy-card";
 import { Workflow, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/_app/quests/$id")({
@@ -17,6 +19,14 @@ interface QuestRow {
   relationship_id: string | null;
   core_workflow_id: string | null;
   related_components: string[] | null;
+  kind: string | null;
+  is_template: boolean | null;
+  quest_number: number | null;
+  from_level: string | null;
+  to_level: string | null;
+  duration_minutes: number | null;
+  deliverable_type: string | null;
+  journey_id: string | null;
 }
 
 function QuestDetail() {
@@ -27,10 +37,10 @@ function QuestDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("quests")
-        .select("id, name, scope, relationship_id, core_workflow_id, related_components")
+        .select("id, name, scope, relationship_id, core_workflow_id, related_components, kind, is_template, quest_number, from_level, to_level, duration_minutes, deliverable_type, journey_id")
         .eq("id", id)
         .maybeSingle();
-      return data as QuestRow | null;
+      return data as unknown as QuestRow | null;
     },
   });
 
@@ -65,8 +75,24 @@ function QuestDetail() {
 
   return (
     <div className="space-y-5">
+      <div className="px-6 pt-5">
+        <CanonGuardrail entityKind="quest" />
+      </div>
       {quest && (
-        <section className="panel-raised mx-6 mt-5 p-4">
+        <div className="px-6">
+          <QuestAnatomyCard
+            questNumber={quest.quest_number}
+            fromLevel={quest.from_level}
+            toLevel={quest.to_level}
+            durationMinutes={quest.duration_minutes}
+            deliverableType={quest.deliverable_type}
+            isTemplate={quest.is_template}
+            kind={quest.kind}
+          />
+        </div>
+      )}
+      {quest && (
+        <section className="panel-raised mx-6 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <ScopeChip scope={quest.scope} relationshipId={quest.relationship_id} size="sm" />
             {workflow ? (
