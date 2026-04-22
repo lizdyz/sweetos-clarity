@@ -7,10 +7,15 @@ import { useQueryClient } from "@tanstack/react-query";
 interface Finding {
   severity: "low" | "medium" | "high";
   rule: string;
+  rule_name?: string;
   message: string;
+  description?: string;
   file: string;
   line: number;
   fix_hint: string;
+  detected_by?: "presence_check" | "ai";
+  canon_ref?: string;
+  axis?: string;
 }
 
 export interface UxAuditRun {
@@ -96,6 +101,14 @@ export function UxAuditCard({ run, onReaudit, reauditing }: Props) {
                 {label} {run.scores[key] ?? "—"}
               </span>
             ))}
+            {(() => {
+              const canonMisses = run.findings.filter((f) => f.detected_by === "presence_check").length;
+              return canonMisses > 0 ? (
+                <span className="rounded-md bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:text-rose-300">
+                  {canonMisses} canon {canonMisses === 1 ? "miss" : "misses"}
+                </span>
+              ) : null;
+            })()}
             {run.findings.length > 0 && (
               <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                 <FileWarning className="mr-1 inline h-3 w-3" />
@@ -127,35 +140,72 @@ export function UxAuditCard({ run, onReaudit, reauditing }: Props) {
             </div>
           )}
 
-          {run.findings.length === 0 ? (
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-background/60 p-3 text-xs text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              No findings — page is canon-clean.
-            </div>
-          ) : (
-            <ul className="space-y-2">
-              {run.findings.map((f, i) => (
-                <li key={i} className="rounded-xl border border-border bg-background/60 p-3">
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider", severityBadge(f.severity))}>
-                      {f.severity}
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{f.rule}</span>
-                    <span className="ml-auto truncate text-[10px] text-muted-foreground">
-                      {f.file}:{f.line}
-                    </span>
+          {(() => {
+            const presence = run.findings.filter((f) => f.detected_by === "presence_check");
+            const ai = run.findings.filter((f) => f.detected_by !== "presence_check");
+            return (
+              <>
+                {presence.length > 0 && (
+                  <div className="rounded-xl border-2 border-rose-500/40 bg-rose-500/5 p-3">
+                    <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-700 dark:text-rose-300">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Required-presence violations · {presence.length}
+                    </div>
+                    <ul className="space-y-2">
+                      {presence.map((f, i) => (
+                        <li key={i} className="rounded-lg border border-rose-500/30 bg-background/60 p-2.5">
+                          <div className="mb-1 flex items-center gap-2">
+                            <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                              HIGH
+                            </span>
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{f.rule}</span>
+                          </div>
+                          <p className="text-xs font-medium">{f.rule_name ?? f.message}</p>
+                          <p className="mt-1.5 text-[11px] text-muted-foreground">
+                            <span className="font-semibold text-foreground">Fix:</span> {f.fix_hint}
+                          </p>
+                          {f.canon_ref && (
+                            <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">{f.canon_ref}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <p className="text-xs">{f.message}</p>
-                  {f.fix_hint && (
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      <AlertTriangle className="mr-1 inline h-3 w-3" />
-                      {f.fix_hint}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+                )}
+
+                {ai.length === 0 && presence.length === 0 ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-border bg-background/60 p-3 text-xs text-muted-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    No findings — page is canon-clean.
+                  </div>
+                ) : ai.length > 0 ? (
+                  <ul className="space-y-2">
+                    {ai.map((f, i) => (
+                      <li key={i} className="rounded-xl border border-border bg-background/60 p-3">
+                        <div className="mb-1 flex items-center gap-2">
+                          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider", severityBadge(f.severity))}>
+                            {f.severity}
+                          </span>
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{f.rule}</span>
+                          <span className="ml-auto truncate text-[10px] text-muted-foreground">
+                            {f.file}:{f.line}
+                          </span>
+                        </div>
+                        <p className="text-xs">{f.message}</p>
+                        {f.fix_hint && (
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            <AlertTriangle className="mr-1 inline h-3 w-3" />
+                            {f.fix_hint}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </>
+            );
+          })()}
+
 
           <div className="flex flex-wrap gap-2">
             {onReaudit && (

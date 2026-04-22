@@ -18,5 +18,9 @@ After every ~5 feature additions, run the standing 4-pass audit:
 - **No new view ships without an entry in `supabase/VIEWS.md`** + `security_invoker = true`.
 - **No new database function ships without `SET search_path = public`**.
 
+## Headline KPI
+
+**Canon misses** (count of `detected_by: "presence_check"` violations from `/settings/ux-audit`) is the headline KPI for canon health — not the AI scores. The AI score is judgment; canon misses are mechanical truth. Target: 0 canon misses on every entity_detail / actionable_detail / measure_subject / index route.
+
 ## Why
 The system accumulates orphans, monster files, and security drift faster than features ship. A standing audit cadence keeps it cheap to fix; one big rewrite is expensive and breaks trust.
