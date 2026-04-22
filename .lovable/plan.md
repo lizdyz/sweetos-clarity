@@ -1,82 +1,54 @@
 
-# SweetBOS — Phase 1: Foundation
+# Phase 1 — Completion Pass
 
-A transformation-aware operating system for SweetBot Inc. Phase 1 stands up the data model, auth, navigation shell, core entity CRUD, and the two highest-leverage dashboards. Universal Capture + AI staging + remaining dashboards land in Phase 2 once the foundation is solid.
+The foundation is mostly built. This pass fills the remaining gaps so Phase 1 fully matches the approved plan, then we're ready for Phase 2 (Capture + AI staging).
 
-## What Phase 1 delivers
+## What's missing today
 
-### 1. Auth & team
-- Email/password auth via Lovable Cloud
-- `profiles` table (display name, avatar, role label) auto-created on signup
-- `user_roles` table with `admin` / `member` enum + `has_role()` security-definer function
-- Invite-by-email flow (admins only) so Liz can add collaborators
-- All entity tables RLS-protected; visible to any authenticated team member, mutable by owner or admin
+1. **Sidebar links exist for Components, Playbooks, Domain Assessments — but the transformation chain entities (Personas, Missions, Journeys, Quests, Sparks, Outcomes) have schemas and entity defs and no routes.** Navigating to them today would 404.
+2. **SweetCycle phase ladder** is not yet visualized on Session detail.
+3. **Per-client `workflow_states`** has a table and field defs but no UI on Workflow detail to view/edit which clients are at which state.
+4. **No team / settings page** for Liz to invite collaborators (admin-only) and edit her profile.
+5. **Index route** still relies on a redirect — fine, but the sidebar's "Today" link points to `/` instead of `/today` which is the actual route.
+6. **Polish gaps:** empty states + skeletons on entity lists; light/dark parity check on chips; keyboard nav on the command palette stub.
 
-### 2. Database — full MVP schema
-Built per `05-schema-appendix.md`, with all canonical enums as Postgres types:
-- **Operational (full CRUD in Phase 1):** Relationships, Projects, Tasks, Sessions, Workflows (+ per-client `workflow_states`), Documents/Deliverables, Decisions, Delegation, Campaigns
-- **Transformation scaffolding (tables + IDs only, viewable, light edit):** Components, Domain Assessments, Engagement Playbooks, Personas, Missions, Journeys, Quests, Sparks, Outcomes
-- **Hooks present but inert:** Captured Answer, Atomic Intelligence Unit fields distributed across Sessions/Domain Assessments per the extensibility doc
-- Linkage tables for many-to-many (deliverables_produced, components_advanced, domain_assessments per session, related_components/domains/tenets on workflows, etc.)
-- Shared enums: progression_state, source_of_advancement, sweetcycle_phase, state_of_the_thing, intelligence_confidence, pipeline_stage, mirror_status, prompt_status, etc.
+## What this pass adds
 
-### 3. Navigation shell — operator side
-Persistent left sidebar, collapsible to icon rail. Routes:
-- Home / Today · Capture (placeholder for Phase 2) · Relationships · Projects · Tasks · Sessions · Workflows · Components · Playbooks · Domain Assessments · Delegation · Decisions · Documents · Campaigns · Review Queue (placeholder) · Search
+### Routes for transformation chain entities
+Add list + detail routes for: `personas`, `missions`, `journeys`, `quests`, `sparks`, `outcomes`. All use the existing `EntityListPage` / `EntityDetailPage` components (entity defs already exist). Add them to a new sidebar group **"Transformation"** so the operator can browse the scaffolding without it cluttering the main flow.
 
-Top bar with global search (⌘K command palette stub), profile menu, theme toggle.
+### SweetCycle ladder on Session detail
+A horizontal phase ladder rendered above the session form: Seed → Synthesize → Session → Sync → Ship. Current phase is highlighted with iridescent glow; completed phases get a check; upcoming phases are muted. Each step shows its sub-status pill (seed_status, sync_status, ship_status) and days-in-phase derived from `updated_at`. Clicking a phase scrolls to its field group.
 
-### 4. Entity workspaces (built this phase)
-For each operational entity (Relationships, Projects, Tasks, Sessions, Workflows, Documents, Decisions, Delegation, Campaigns):
-- **List view** — dense table with column visibility, multi-filter (status, owner, stage, date), saved views, inline status edits
-- **Detail view** — left: structured fields grouped by purpose (identity, state, progression, intelligence, links); right rail: linked objects (related tasks, sessions, deliverables, contradictions log)
-- **Create/edit** — side-sheet forms; smart defaults per entity
-- **Cross-linking** — Tasks ↔ Projects ↔ Relationships ↔ Sessions ↔ Workflows always navigable in both directions
+### Per-client workflow state panel on Workflow detail
+A right-rail card on the Workflow detail page listing every `workflow_states` row for that workflow. Inline editor per row: client (ref to relationships), state_of_the_thing (full ladder), source_of_advancement, notes. "+ Add client state" button opens a small form. Uses the existing `WORKFLOW_STATE_FIELDS` definition.
 
-For scaffolding entities (Components, Playbooks, Personas, Domain Assessments, Missions, Journeys, Quests, Sparks, Outcomes):
-- List + detail viewer, basic edit form, linkable from operational entities
-- Quests/Sparks: read-only list — IDs and names exist, no interaction engine
+### Team & settings page
+New `/settings` route, two tabs:
+- **Profile** — display name, avatar URL, role label (everyone)
+- **Team** — list of members with role badges (visible to all, mutable by admin); admin-only "Invite member" form using `supabase.auth.admin.inviteUserByEmail` via a server function (avoids exposing service role to client). On invite, the new user signs in and gets the `member` role automatically via the existing `handle_new_user` trigger.
 
-### 5. Dashboards (Phase 1 set)
-Two of the eight ship now; the rest are placeholders with the same shell:
-- **A. Today / This Week** — sections for Due today, Due this week, Overdue, Blocked, Waiting on, Active sprints, Pending sessions, Overdue relationship next-actions. Each row jumps to the entity.
-- **B. Pipeline / Relationship Motion** — kanban by `pipeline_stage`, plus toggle to grouped table by status. Filters: service, geography, owner. Shows next action + days since last touch, mirror status pill.
+### Small fixes
+- Sidebar "Today" → `/today` (currently `/`).
+- Add `errorComponent` and `notFoundComponent` to `__root.tsx` and key routes per TanStack guidelines.
+- Loading skeletons on entity list and dashboard sections.
+- Empty-state illustrations (lightweight SVG using iris gradient) for "no data yet".
 
-Phase 2 builds C–H (Active Delivery, Delegation, Sessions Follow-Through, SweetCycle Tracker, Client Intelligence, Workflow Library) on the same dashboard shell.
+## What's still deferred to Phase 2
 
-### 6. SweetCycle phase tracking
-Sessions carry `sweetcycle_phase`, completion signals, governing playbook, persona. Session detail view shows the phase ladder (Seed → Synthesize → Session → Sync → Ship) with current position, days in phase, blockers. Per-engagement view computed from active Sessions + Workflow state per client.
+- Universal Capture input + LLM intent/object/action parsing (BYO key requested at Phase 2 start)
+- Staging cards with contradiction detection
+- Dashboards C–H (Active Delivery, Delegation, Sessions Follow-Through, SweetCycle Tracker, Client Intelligence, Workflow Library)
+- Command-palette search execution
+- Quest/Spark interactivity, evidence graph, BizzyBot logic, content pipeline, voice input
 
-### 7. State tracking primitives (live now)
-- Workflows-per-client: editable `state_of_the_thing` selector with full ladder
-- Sessions + advancement objects: `progression_state`, `source_of_advancement` selectors using full enums
-- Relationships + Sessions: `intelligence_confidence` indicator (visual chip)
+## Build order
 
-### 8. Design system — "Crystal-clear, light-first"
-- **Light:** opal/lavender-white surfaces, soft iridescent cyan→violet→pink accent gradient reserved for primary actions, focus rings, and confidence chips. Polished glass panels for elevated cards (subtle backdrop blur, inner highlight).
-- **Dark:** deep indigo-violet atmosphere, same gradient accents at higher saturation, controlled glow on active/focus, identical hierarchy.
-- Typography: large, highly legible sans for headings; clean sans body; mono for IDs and enum codes.
-- Generous spacing, rounded-2xl panels, sharp 1px borders, calm motion (150–250ms ease-out).
-- Components: confidence chip, progression-state chip, source-of-advancement badge, contradiction marker, BizzyBot orientation slot (visual placeholder, no logic yet).
-- Fully themed light + dark from day one. All colors as oklch tokens in `styles.css`.
+1. Routes for personas, missions, journeys, quests, sparks, outcomes + sidebar group
+2. SweetCycle ladder component + wire into Session detail
+3. Workflow-states panel on Workflow detail (read + write)
+4. Settings route with Profile + Team tabs; admin invite via server function
+5. Sidebar fix, error/notFound boundaries, loading skeletons, empty states
+6. Light/dark parity sweep on chips and panels
 
-## What Phase 1 does NOT include (saved for Phase 2+)
-- Universal Capture input + LLM intent/object/action parsing
-- Staging cards with contradiction detection + confirm/edit/reject flow
-- Dashboards C–H
-- Command palette search execution (shell ships, full search in Phase 2)
-- Quest/Spark interactivity, SweetSync client side, evidence graph, BizzyBot logic, intelligence scanners, content pipeline, voice input
-
-## Build order within Phase 1
-1. Auth + profiles + roles + RLS helpers
-2. Full schema migration (operational + scaffolding + enums + linkage)
-3. App shell, sidebar, theme system, design tokens, core UI primitives (chips, panels, side-sheet)
-4. Relationships → Projects → Tasks workspaces (highest-traffic loop)
-5. Sessions + Workflows + per-client workflow state + SweetCycle phase UI
-6. Documents, Decisions, Delegation, Campaigns workspaces
-7. Scaffolding entity viewers (Components, Playbooks, Personas, Domain Assessments, Missions, Journeys, Quests, Sparks, Outcomes)
-8. Dashboard A (Today/This Week) + Dashboard B (Pipeline)
-9. Polish pass: empty states, loading skeletons, light/dark parity, keyboard nav
-
-## After approval
-Once you click Implement, I'll: enable Lovable Cloud, run the schema migration, then build in the order above. The BYO LLM key for parsing comes in at the start of Phase 2 — I'll request it then so it isn't sitting unused.
+Once approved, I'll implement in this order in default mode.
