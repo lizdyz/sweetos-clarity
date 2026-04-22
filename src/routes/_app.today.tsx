@@ -6,6 +6,8 @@ import {
   Sparkles, CheckSquare, CalendarClock, Eye, GitBranch, Diamond, Zap,
   Trophy, ShieldCheck, TrendingUp, Lightbulb, Megaphone, FolderKanban,
 } from "lucide-react";
+import { FiredKtisStrip } from "@/components/fired-ktis-strip";
+import { MasterStoryTrail } from "@/components/master-story-trail";
 
 export const Route = createFileRoute("/_app/today")({
   component: TodayPage,
