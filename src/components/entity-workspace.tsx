@@ -798,7 +798,7 @@ function useRefMaps(refFields: FieldDef[]): Record<string, Record<string, string
           .select(`id, ${labelField}` as any)
           .limit(500);
         const map: Record<string, string> = {};
-        (data ?? []).forEach((r) => {
+        (data ?? []).forEach((r: Record<string, string>) => {
           const row = r as Record<string, string>;
           map[row.id] = row[labelField] ?? "";
         });
