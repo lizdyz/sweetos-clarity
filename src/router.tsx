@@ -1,6 +1,7 @@
 import { createRouter, useRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import type { AuthState } from "@/lib/auth-context";
+// bundle-cachebust: 2026-04-22-sparkpath-routes
 
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();

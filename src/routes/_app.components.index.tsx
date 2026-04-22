@@ -67,6 +67,7 @@ function ComponentsListPage() {
   const [q, setQ] = useState("");
   const [mode, setMode] = useState<Mode>("all");
   const [sort, setSort] = useState<SortMode>("moved");
+  const [kind, setKind] = useState<ComponentKind>("user");
 
   const { data: domains = [] } = useQuery<DomainRow[]>({
     queryKey: ["domains-min"],
@@ -87,7 +88,7 @@ function ComponentsListPage() {
       const { data, error } = await sb
         .from("components")
         .select(
-          "id, name, description, current_maturity_level, quality_status, related_domains, related_tenets, updated_at",
+          "id, name, description, current_maturity_level, quality_status, related_domains, related_tenets, updated_at, component_kind, journey_id",
         )
         .order("updated_at", { ascending: false });
       if (error) throw error;
@@ -116,8 +117,18 @@ function ComponentsListPage() {
     return rows.map((c) => ({ c, p: pipeMap.get(c.id) }));
   }, [rows, pipeMap]);
 
+  const kindCounts = useMemo(() => {
+    const counts: Record<ComponentKind, number> = { user: 0, platform: 0, internal: 0 };
+    enriched.forEach(({ c }) => {
+      const k = (c.component_kind ?? "user") as ComponentKind;
+      if (k in counts) counts[k] += 1;
+    });
+    return counts;
+  }, [enriched]);
+
   const filtered = useMemo(() => {
     const list = enriched.filter(({ c, p }) => {
+      if ((c.component_kind ?? "user") !== kind) return false;
       if (domain !== ALL && !(c.related_domains ?? []).includes(domain)) return false;
       if (tenet !== ALL && !(c.related_tenets ?? []).includes(tenet)) return false;
       if (q && !c.name.toLowerCase().includes(q.toLowerCase())) return false;
@@ -143,7 +154,7 @@ function ComponentsListPage() {
       return a.c.name.localeCompare(b.c.name);
     });
     return list;
-  }, [enriched, domain, tenet, q, mode, sort]);
+  }, [enriched, domain, tenet, q, mode, sort, kind]);
 
   const domainName = (slug: string) => domains.find((d) => d.slug === slug)?.name ?? slug;
   const activeCount = enriched.filter(
@@ -166,6 +177,8 @@ function ComponentsListPage() {
           <Button size="sm">+ New component</Button>
         </Link>
       </div>
+
+      <ComponentKindToggle value={kind} counts={kindCounts} onChange={setKind} />
 
       <Card className="p-3">
         <div className="flex flex-wrap items-center gap-2">
