@@ -69,7 +69,7 @@ export function OCDACockpit() {
         .select("id, name, status")
         .eq("ocda_stage", "choose")
         .limit(30);
-      return (data ?? []).map((t) => ({
+      return ((data ?? []) as Array<{ id: string; name: string; status: string | null }>).map((t) => ({
         id: `t-${t.id}`,
         kind: "task" as const,
         title: t.name,
@@ -87,7 +87,7 @@ export function OCDACockpit() {
         .select("id, decision, status, date_made")
         .order("date_made", { ascending: false, nullsFirst: false })
         .limit(20);
-      return (data ?? []).map((d) => ({
+      return ((data ?? []) as Array<{ id: string; decision: string; status: string | null }>).map((d) => ({
         id: `d-${d.id}`,
         kind: "decision" as const,
         title: d.decision,
@@ -105,7 +105,7 @@ export function OCDACockpit() {
         .select("id, name, status")
         .or("status.eq.Doing,status.eq.In Progress,ocda_stage.eq.act")
         .limit(30);
-      return (data ?? []).map((t) => ({
+      return ((data ?? []) as Array<{ id: string; name: string; status: string | null }>).map((t) => ({
         id: `t-${t.id}`,
         kind: "task" as const,
         title: t.name,

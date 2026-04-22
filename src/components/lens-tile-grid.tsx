@@ -147,13 +147,12 @@ function LensTile({
               Edit prompt →
             </Link>
             {subjectKind && subjectId && (
-              <Link
-                to="/bizzybots"
-                search={{ lens: lens.code, subjectKind, subjectId } as never}
+              <a
+                href={`/bizzybots?lens=${lens.code}&subjectKind=${subjectKind}&subjectId=${subjectId}`}
                 className="text-[11px] font-medium text-[color:var(--iris-violet)] hover:underline"
               >
                 Apply to subject →
-              </Link>
+              </a>
             )}
           </div>
         </div>
