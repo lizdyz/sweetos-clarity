@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Compass } from "lucide-react";
 import { EntityListPage } from "@/components/entity-workspace";
+import { PageHeader } from "@/components/page-header";
 
 export const Route = createFileRoute("/_app/engagement-plans/")({
   component: EngagementPlansPage,
@@ -9,18 +9,16 @@ export const Route = createFileRoute("/_app/engagement-plans/")({
 function EngagementPlansPage() {
   return (
     <div className="space-y-2">
-      <div className="flex items-start gap-3 px-6 pt-6">
-        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-iris/10 text-[color:var(--iris-violet)]">
-          <Compass className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Engagement Plans</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            A multi-month plan for one relationship. It bundles the services they bought
-            (e.g. <em>1 Mirror + 3 Maps + Sync</em>), what we expect to cover (domains/roadmap),
-            and revenue. Each plan rolls up into the SweetCycle and Flightdeck.
-          </p>
-        </div>
+      <div className="px-6 pt-6">
+        <PageHeader
+          title="Engagement Plans"
+          purpose="The contract shape for one relationship over a stretch of time (3–12 months) — bundles services purchased, the roadmap of domains/tenets to move, revenue terms, and expected sessions."
+          whatYouCanDo={[
+            "Create a plan and attach the services purchased (Mirror, Map, Sync)",
+            "Set the term dates and revenue target",
+            "Open a plan to see its full anatomy: services, roadmap, sessions, measures",
+          ]}
+        />
       </div>
       <EntityListPage entityKey="engagement_plans" />
     </div>

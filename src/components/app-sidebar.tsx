@@ -69,6 +69,7 @@ const PRIMARY: NavGroup[] = [
       { to: "/tenets", label: "Tenets", icon: Sparkles, hint: "Industry-specific best-practice anchors" },
       { to: "/workflows", label: "Workflows", icon: Workflow },
       { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "Define L1→L5 across the 5 Ps" },
+      { to: "/settings/lenses", label: "BizzyBot prompts", icon: Bot, hint: "Edit AI instructions per Lens" },
     ],
   },
 ];
