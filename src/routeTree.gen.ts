@@ -49,6 +49,7 @@ import { Route as AppSessionsIdRouteImport } from './routes/_app.sessions.$id'
 import { Route as AppRelationshipsIdRouteImport } from './routes/_app.relationships.$id'
 import { Route as AppQuestsIdRouteImport } from './routes/_app.quests.$id'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
+import { Route as AppPortalsRelationshipIdRouteImport } from './routes/_app.portals.$relationshipId'
 import { Route as AppPlaybooksIdRouteImport } from './routes/_app.playbooks.$id'
 import { Route as AppPersonasIdRouteImport } from './routes/_app.personas.$id'
 import { Route as AppOutcomesIdRouteImport } from './routes/_app.outcomes.$id'
@@ -263,6 +264,12 @@ const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   path: '/projects/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPortalsRelationshipIdRoute =
+  AppPortalsRelationshipIdRouteImport.update({
+    id: '/portals/$relationshipId',
+    path: '/portals/$relationshipId',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppPlaybooksIdRoute = AppPlaybooksIdRouteImport.update({
   id: '/playbooks/$id',
   path: '/playbooks/$id',
@@ -353,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/outcomes/$id': typeof AppOutcomesIdRoute
   '/personas/$id': typeof AppPersonasIdRoute
   '/playbooks/$id': typeof AppPlaybooksIdRoute
+  '/portals/$relationshipId': typeof AppPortalsRelationshipIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/quests/$id': typeof AppQuestsIdRoute
   '/relationships/$id': typeof AppRelationshipsIdRoute
@@ -407,6 +415,7 @@ export interface FileRoutesByTo {
   '/outcomes/$id': typeof AppOutcomesIdRoute
   '/personas/$id': typeof AppPersonasIdRoute
   '/playbooks/$id': typeof AppPlaybooksIdRoute
+  '/portals/$relationshipId': typeof AppPortalsRelationshipIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/quests/$id': typeof AppQuestsIdRoute
   '/relationships/$id': typeof AppRelationshipsIdRoute
@@ -463,6 +472,7 @@ export interface FileRoutesById {
   '/_app/outcomes/$id': typeof AppOutcomesIdRoute
   '/_app/personas/$id': typeof AppPersonasIdRoute
   '/_app/playbooks/$id': typeof AppPlaybooksIdRoute
+  '/_app/portals/$relationshipId': typeof AppPortalsRelationshipIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/_app/quests/$id': typeof AppQuestsIdRoute
   '/_app/relationships/$id': typeof AppRelationshipsIdRoute
@@ -519,6 +529,7 @@ export interface FileRouteTypes {
     | '/outcomes/$id'
     | '/personas/$id'
     | '/playbooks/$id'
+    | '/portals/$relationshipId'
     | '/projects/$id'
     | '/quests/$id'
     | '/relationships/$id'
@@ -573,6 +584,7 @@ export interface FileRouteTypes {
     | '/outcomes/$id'
     | '/personas/$id'
     | '/playbooks/$id'
+    | '/portals/$relationshipId'
     | '/projects/$id'
     | '/quests/$id'
     | '/relationships/$id'
@@ -628,6 +640,7 @@ export interface FileRouteTypes {
     | '/_app/outcomes/$id'
     | '/_app/personas/$id'
     | '/_app/playbooks/$id'
+    | '/_app/portals/$relationshipId'
     | '/_app/projects/$id'
     | '/_app/quests/$id'
     | '/_app/relationships/$id'
@@ -947,6 +960,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/portals/$relationshipId': {
+      id: '/_app/portals/$relationshipId'
+      path: '/portals/$relationshipId'
+      fullPath: '/portals/$relationshipId'
+      preLoaderRoute: typeof AppPortalsRelationshipIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/playbooks/$id': {
       id: '/_app/playbooks/$id'
       path: '/playbooks/$id'
@@ -1075,6 +1095,7 @@ interface AppRouteChildren {
   AppOutcomesIdRoute: typeof AppOutcomesIdRoute
   AppPersonasIdRoute: typeof AppPersonasIdRoute
   AppPlaybooksIdRoute: typeof AppPlaybooksIdRoute
+  AppPortalsRelationshipIdRoute: typeof AppPortalsRelationshipIdRoute
   AppProjectsIdRoute: typeof AppProjectsIdRoute
   AppQuestsIdRoute: typeof AppQuestsIdRoute
   AppRelationshipsIdRoute: typeof AppRelationshipsIdRoute
@@ -1127,6 +1148,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutcomesIdRoute: AppOutcomesIdRoute,
   AppPersonasIdRoute: AppPersonasIdRoute,
   AppPlaybooksIdRoute: AppPlaybooksIdRoute,
+  AppPortalsRelationshipIdRoute: AppPortalsRelationshipIdRoute,
   AppProjectsIdRoute: AppProjectsIdRoute,
   AppQuestsIdRoute: AppQuestsIdRoute,
   AppRelationshipsIdRoute: AppRelationshipsIdRoute,
