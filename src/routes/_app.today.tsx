@@ -135,6 +135,9 @@ function TodayPage() {
         </div>
       </div>
 
+      <FiredKtisStrip />
+      <MasterStoryTrail />
+
       <div className="mb-5 grid gap-3 lg:grid-cols-[2fr_1fr]">
         <OcdaTileStrip />
         <DecisionQueueWidget />
