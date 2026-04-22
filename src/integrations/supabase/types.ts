@@ -284,12 +284,16 @@ export type Database = {
           last_reviewed: string | null
           maturity_threshold_definition: string | null
           name: string
+          prerequisite_component_ids: string[]
           quality_status: Database["public"]["Enums"]["quality_status"] | null
+          questions_it_answers: string | null
           related_domains: string[] | null
           related_tenets: string[] | null
           related_workflows: string[] | null
           reuse_count: number | null
+          typical_session_length: string | null
           updated_at: string
+          used_in_offerings: string[]
         }
         Insert: {
           created_at?: string
@@ -304,12 +308,16 @@ export type Database = {
           last_reviewed?: string | null
           maturity_threshold_definition?: string | null
           name: string
+          prerequisite_component_ids?: string[]
           quality_status?: Database["public"]["Enums"]["quality_status"] | null
+          questions_it_answers?: string | null
           related_domains?: string[] | null
           related_tenets?: string[] | null
           related_workflows?: string[] | null
           reuse_count?: number | null
+          typical_session_length?: string | null
           updated_at?: string
+          used_in_offerings?: string[]
         }
         Update: {
           created_at?: string
@@ -324,12 +332,16 @@ export type Database = {
           last_reviewed?: string | null
           maturity_threshold_definition?: string | null
           name?: string
+          prerequisite_component_ids?: string[]
           quality_status?: Database["public"]["Enums"]["quality_status"] | null
+          questions_it_answers?: string | null
           related_domains?: string[] | null
           related_tenets?: string[] | null
           related_workflows?: string[] | null
           reuse_count?: number | null
+          typical_session_length?: string | null
           updated_at?: string
+          used_in_offerings?: string[]
         }
         Relationships: [
           {
@@ -494,6 +506,7 @@ export type Database = {
       documents: {
         Row: {
           audience_primary_concern: string | null
+          component_template_for: string | null
           created_at: string
           created_by: string
           drive_chat_link: string | null
@@ -507,6 +520,11 @@ export type Database = {
           notes: string | null
           owner: string | null
           prompt_status: string | null
+          related_session_id: string | null
+          reusability_tier:
+            | Database["public"]["Enums"]["reusability_tier"]
+            | null
+          session_phase: Database["public"]["Enums"]["session_phase"] | null
           status: string | null
           tagged_components: string[]
           tagged_domains: string[]
@@ -519,6 +537,7 @@ export type Database = {
         }
         Insert: {
           audience_primary_concern?: string | null
+          component_template_for?: string | null
           created_at?: string
           created_by?: string
           drive_chat_link?: string | null
@@ -532,6 +551,11 @@ export type Database = {
           notes?: string | null
           owner?: string | null
           prompt_status?: string | null
+          related_session_id?: string | null
+          reusability_tier?:
+            | Database["public"]["Enums"]["reusability_tier"]
+            | null
+          session_phase?: Database["public"]["Enums"]["session_phase"] | null
           status?: string | null
           tagged_components?: string[]
           tagged_domains?: string[]
@@ -544,6 +568,7 @@ export type Database = {
         }
         Update: {
           audience_primary_concern?: string | null
+          component_template_for?: string | null
           created_at?: string
           created_by?: string
           drive_chat_link?: string | null
@@ -557,6 +582,11 @@ export type Database = {
           notes?: string | null
           owner?: string | null
           prompt_status?: string | null
+          related_session_id?: string | null
+          reusability_tier?:
+            | Database["public"]["Enums"]["reusability_tier"]
+            | null
+          session_phase?: Database["public"]["Enums"]["session_phase"] | null
           status?: string | null
           tagged_components?: string[]
           tagged_domains?: string[]
@@ -569,10 +599,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "documents_component_template_fk"
+            columns: ["component_template_for"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "documents_for_client_id_fkey"
             columns: ["for_client_id"]
             isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_related_session_fk"
+            columns: ["related_session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -683,6 +727,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "domain_tenets_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_domain_maturity"
+            referencedColumns: ["domain_id"]
+          },
+          {
             foreignKeyName: "domain_tenets_tenet_id_fkey"
             columns: ["tenet_id"]
             isOneToOne: false
@@ -732,6 +783,131 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      engagement_plans: {
+        Row: {
+          created_at: string
+          created_by: string
+          end_date: string | null
+          expected_domains: string[]
+          id: string
+          machine_roadmap: string | null
+          map_roadmap: string | null
+          notes: string | null
+          plan_name: string
+          relationship_id: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["engagement_plan_status"]
+          total_revenue_usd: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          end_date?: string | null
+          expected_domains?: string[]
+          id?: string
+          machine_roadmap?: string | null
+          map_roadmap?: string | null
+          notes?: string | null
+          plan_name: string
+          relationship_id: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["engagement_plan_status"]
+          total_revenue_usd?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          end_date?: string | null
+          expected_domains?: string[]
+          id?: string
+          machine_roadmap?: string | null
+          map_roadmap?: string | null
+          notes?: string | null
+          plan_name?: string
+          relationship_id?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["engagement_plan_status"]
+          total_revenue_usd?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_plans_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engagement_services: {
+        Row: {
+          created_at: string
+          created_by: string
+          end_date: string | null
+          id: string
+          notes: string | null
+          plan_id: string | null
+          relationship_id: string
+          service_type: Database["public"]["Enums"]["engagement_service_type"]
+          sessions_purchased: number | null
+          sessions_used: number | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["engagement_service_status"]
+          total_value_usd: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          plan_id?: string | null
+          relationship_id: string
+          service_type: Database["public"]["Enums"]["engagement_service_type"]
+          sessions_purchased?: number | null
+          sessions_used?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["engagement_service_status"]
+          total_value_usd?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          plan_id?: string | null
+          relationship_id?: string
+          service_type?: Database["public"]["Enums"]["engagement_service_type"]
+          sessions_purchased?: number | null
+          sessions_used?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["engagement_service_status"]
+          total_value_usd?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_services_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_services_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       excellence_perspectives: {
         Row: {
@@ -1587,11 +1763,13 @@ export type Database = {
         Row: {
           active_services: string[] | null
           ai_sophistication: string | null
+          awareness_tier: Database["public"]["Enums"]["awareness_tier"] | null
           brief_for_next_touchpoint: string | null
           company: string | null
           confidence: number | null
           created_at: string
           created_by: string
+          drift_risk: Database["public"]["Enums"]["drift_risk"] | null
           email: string | null
           execution_prompt: string | null
           geography: string | null
@@ -1615,11 +1793,23 @@ export type Database = {
           pipeline_stage: string | null
           portal_delivered: boolean | null
           portal_link: string | null
+          primary_service:
+            | Database["public"]["Enums"]["engagement_service_type"]
+            | null
           prompt_status: string | null
+          proposal_document_id: string | null
+          proposal_expires_at: string | null
           proposal_id: string | null
+          proposal_sent_at: string | null
+          proposal_version: string | null
           referred_by: string | null
           revenue_potential_usd: number | null
           role: string | null
+          service_end_date: string | null
+          service_start_date: string | null
+          service_status:
+            | Database["public"]["Enums"]["engagement_service_status"]
+            | null
           sessions_purchased: number | null
           sessions_remaining: number | null
           sessions_used: number | null
@@ -1631,17 +1821,22 @@ export type Database = {
           tagged_components: string[]
           tagged_domains: string[]
           tagged_tenets: string[]
+          temperature:
+            | Database["public"]["Enums"]["relationship_temperature"]
+            | null
           type: string | null
           updated_at: string
         }
         Insert: {
           active_services?: string[] | null
           ai_sophistication?: string | null
+          awareness_tier?: Database["public"]["Enums"]["awareness_tier"] | null
           brief_for_next_touchpoint?: string | null
           company?: string | null
           confidence?: number | null
           created_at?: string
           created_by?: string
+          drift_risk?: Database["public"]["Enums"]["drift_risk"] | null
           email?: string | null
           execution_prompt?: string | null
           geography?: string | null
@@ -1665,11 +1860,23 @@ export type Database = {
           pipeline_stage?: string | null
           portal_delivered?: boolean | null
           portal_link?: string | null
+          primary_service?:
+            | Database["public"]["Enums"]["engagement_service_type"]
+            | null
           prompt_status?: string | null
+          proposal_document_id?: string | null
+          proposal_expires_at?: string | null
           proposal_id?: string | null
+          proposal_sent_at?: string | null
+          proposal_version?: string | null
           referred_by?: string | null
           revenue_potential_usd?: number | null
           role?: string | null
+          service_end_date?: string | null
+          service_start_date?: string | null
+          service_status?:
+            | Database["public"]["Enums"]["engagement_service_status"]
+            | null
           sessions_purchased?: number | null
           sessions_remaining?: number | null
           sessions_used?: number | null
@@ -1681,17 +1888,22 @@ export type Database = {
           tagged_components?: string[]
           tagged_domains?: string[]
           tagged_tenets?: string[]
+          temperature?:
+            | Database["public"]["Enums"]["relationship_temperature"]
+            | null
           type?: string | null
           updated_at?: string
         }
         Update: {
           active_services?: string[] | null
           ai_sophistication?: string | null
+          awareness_tier?: Database["public"]["Enums"]["awareness_tier"] | null
           brief_for_next_touchpoint?: string | null
           company?: string | null
           confidence?: number | null
           created_at?: string
           created_by?: string
+          drift_risk?: Database["public"]["Enums"]["drift_risk"] | null
           email?: string | null
           execution_prompt?: string | null
           geography?: string | null
@@ -1715,11 +1927,23 @@ export type Database = {
           pipeline_stage?: string | null
           portal_delivered?: boolean | null
           portal_link?: string | null
+          primary_service?:
+            | Database["public"]["Enums"]["engagement_service_type"]
+            | null
           prompt_status?: string | null
+          proposal_document_id?: string | null
+          proposal_expires_at?: string | null
           proposal_id?: string | null
+          proposal_sent_at?: string | null
+          proposal_version?: string | null
           referred_by?: string | null
           revenue_potential_usd?: number | null
           role?: string | null
+          service_end_date?: string | null
+          service_start_date?: string | null
+          service_status?:
+            | Database["public"]["Enums"]["engagement_service_status"]
+            | null
           sessions_purchased?: number | null
           sessions_remaining?: number | null
           sessions_used?: number | null
@@ -1731,6 +1955,9 @@ export type Database = {
           tagged_components?: string[]
           tagged_domains?: string[]
           tagged_tenets?: string[]
+          temperature?:
+            | Database["public"]["Enums"]["relationship_temperature"]
+            | null
           type?: string | null
           updated_at?: string
         }
@@ -1747,6 +1974,13 @@ export type Database = {
             columns: ["persona_id"]
             isOneToOne: false
             referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_proposal_document_fk"
+            columns: ["proposal_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id"]
           },
           {
@@ -1939,11 +2173,18 @@ export type Database = {
           created_at: string
           created_by: string
           delivery_variation: string | null
+          domain_covered: string | null
+          engagement_plan_id: string | null
           id: string
           key_findings: string | null
           linked_project_id: string | null
+          maturity_lift_from:
+            | Database["public"]["Enums"]["maturity_level"]
+            | null
+          maturity_lift_to: Database["public"]["Enums"]["maturity_level"] | null
           name: string
           next_recommended_service: string | null
+          outcome_findings: string | null
           persona_id: string | null
           playbook_id: string | null
           progression_state:
@@ -1953,6 +2194,7 @@ export type Database = {
           relationship_id: string | null
           seed_status: string | null
           seed_submitted: boolean | null
+          sequence: number | null
           service: string | null
           session_date: string | null
           session_number: number | null
@@ -1981,11 +2223,20 @@ export type Database = {
           created_at?: string
           created_by?: string
           delivery_variation?: string | null
+          domain_covered?: string | null
+          engagement_plan_id?: string | null
           id?: string
           key_findings?: string | null
           linked_project_id?: string | null
+          maturity_lift_from?:
+            | Database["public"]["Enums"]["maturity_level"]
+            | null
+          maturity_lift_to?:
+            | Database["public"]["Enums"]["maturity_level"]
+            | null
           name: string
           next_recommended_service?: string | null
+          outcome_findings?: string | null
           persona_id?: string | null
           playbook_id?: string | null
           progression_state?:
@@ -1995,6 +2246,7 @@ export type Database = {
           relationship_id?: string | null
           seed_status?: string | null
           seed_submitted?: boolean | null
+          sequence?: number | null
           service?: string | null
           session_date?: string | null
           session_number?: number | null
@@ -2023,11 +2275,20 @@ export type Database = {
           created_at?: string
           created_by?: string
           delivery_variation?: string | null
+          domain_covered?: string | null
+          engagement_plan_id?: string | null
           id?: string
           key_findings?: string | null
           linked_project_id?: string | null
+          maturity_lift_from?:
+            | Database["public"]["Enums"]["maturity_level"]
+            | null
+          maturity_lift_to?:
+            | Database["public"]["Enums"]["maturity_level"]
+            | null
           name?: string
           next_recommended_service?: string | null
+          outcome_findings?: string | null
           persona_id?: string | null
           playbook_id?: string | null
           progression_state?:
@@ -2037,6 +2298,7 @@ export type Database = {
           relationship_id?: string | null
           seed_status?: string | null
           seed_submitted?: boolean | null
+          sequence?: number | null
           service?: string | null
           session_date?: string | null
           session_number?: number | null
@@ -2057,6 +2319,13 @@ export type Database = {
           workflow_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sessions_engagement_plan_fk"
+            columns: ["engagement_plan_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_plans"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sessions_linked_project_id_fkey"
             columns: ["linked_project_id"]
@@ -2682,7 +2951,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      relationship_domain_maturity: {
+        Row: {
+          current_level: Database["public"]["Enums"]["maturity_level"] | null
+          domain_id: string | null
+          domain_name: string | null
+          domain_slug: string | null
+          last_assessed_at: string | null
+          last_score_id: string | null
+          relationship_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_scores_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
@@ -2696,6 +2984,32 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member"
+      awareness_tier:
+        | "Unaware"
+        | "Problem-aware"
+        | "Solution-aware"
+        | "Product-aware"
+        | "Most-aware"
+      drift_risk: "None" | "Low" | "Medium" | "High"
+      engagement_plan_status:
+        | "Proposed"
+        | "Accepted"
+        | "In Progress"
+        | "Completed"
+        | "Cancelled"
+      engagement_service_status:
+        | "Not Started"
+        | "Active"
+        | "Paused"
+        | "Completed"
+        | "Renewed"
+        | "Cancelled"
+      engagement_service_type:
+        | "Mirror"
+        | "Map"
+        | "Machine"
+        | "SweetSync"
+        | "SweetConnect"
       excellence_score_state: "not_assessed" | "not_met" | "partial" | "met"
       excellence_subject_kind: "domain" | "tenet" | "component"
       intelligence_confidence:
@@ -2744,6 +3058,9 @@ export type Database = {
       proposal_source: "capture" | "notion" | "external_ai" | "manual"
       proposal_status: "pending" | "approved" | "rejected" | "held" | "merged"
       quality_status: "Draft" | "Tested" | "Proven" | "Canonical"
+      relationship_temperature: "Warm" | "Cool" | "Cold" | "Paused"
+      reusability_tier: "One-Time" | "Relationship" | "Org" | "System"
+      session_phase: "Pre-Engagement" | "Deliverable" | "Follow-up"
       source_of_advancement:
         | "Seed"
         | "Mirror"
@@ -2908,6 +3225,36 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member"],
+      awareness_tier: [
+        "Unaware",
+        "Problem-aware",
+        "Solution-aware",
+        "Product-aware",
+        "Most-aware",
+      ],
+      drift_risk: ["None", "Low", "Medium", "High"],
+      engagement_plan_status: [
+        "Proposed",
+        "Accepted",
+        "In Progress",
+        "Completed",
+        "Cancelled",
+      ],
+      engagement_service_status: [
+        "Not Started",
+        "Active",
+        "Paused",
+        "Completed",
+        "Renewed",
+        "Cancelled",
+      ],
+      engagement_service_type: [
+        "Mirror",
+        "Map",
+        "Machine",
+        "SweetSync",
+        "SweetConnect",
+      ],
       excellence_score_state: ["not_assessed", "not_met", "partial", "met"],
       excellence_subject_kind: ["domain", "tenet", "component"],
       intelligence_confidence: [
@@ -2960,6 +3307,9 @@ export const Constants = {
       proposal_source: ["capture", "notion", "external_ai", "manual"],
       proposal_status: ["pending", "approved", "rejected", "held", "merged"],
       quality_status: ["Draft", "Tested", "Proven", "Canonical"],
+      relationship_temperature: ["Warm", "Cool", "Cold", "Paused"],
+      reusability_tier: ["One-Time", "Relationship", "Org", "System"],
+      session_phase: ["Pre-Engagement", "Deliverable", "Follow-up"],
       source_of_advancement: [
         "Seed",
         "Mirror",
