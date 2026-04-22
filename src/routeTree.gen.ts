@@ -18,6 +18,7 @@ import { Route as AppQueueRouteImport } from './routes/_app.queue'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppPeopleRouteImport } from './routes/_app.people'
 import { Route as AppMyTasksRouteImport } from './routes/_app.my-tasks'
+import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
@@ -104,6 +105,11 @@ const AppPeopleRoute = AppPeopleRouteImport.update({
 const AppMyTasksRoute = AppMyTasksRouteImport.update({
   id: '/my-tasks',
   path: '/my-tasks',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppJourneyRoute = AppJourneyRouteImport.update({
+  id: '/journey',
+  path: '/journey',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCaptureRoute = AppCaptureRouteImport.update({
@@ -327,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
+  '/journey': typeof AppJourneyRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
@@ -380,6 +387,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
+  '/journey': typeof AppJourneyRoute
   '/my-tasks': typeof AppMyTasksRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
@@ -435,6 +443,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/capture': typeof AppCaptureRoute
+  '/_app/journey': typeof AppJourneyRoute
   '/_app/my-tasks': typeof AppMyTasksRoute
   '/_app/people': typeof AppPeopleRoute
   '/_app/pipeline': typeof AppPipelineRoute
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/capture'
+    | '/journey'
     | '/my-tasks'
     | '/people'
     | '/pipeline'
@@ -543,6 +553,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/capture'
+    | '/journey'
     | '/my-tasks'
     | '/people'
     | '/pipeline'
@@ -597,6 +608,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/capture'
+    | '/_app/journey'
     | '/_app/my-tasks'
     | '/_app/people'
     | '/_app/pipeline'
@@ -716,6 +728,13 @@ declare module '@tanstack/react-router' {
       path: '/my-tasks'
       fullPath: '/my-tasks'
       preLoaderRoute: typeof AppMyTasksRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/journey': {
+      id: '/_app/journey'
+      path: '/journey'
+      fullPath: '/journey'
+      preLoaderRoute: typeof AppJourneyRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/capture': {
@@ -1036,6 +1055,7 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppCaptureRoute: typeof AppCaptureRoute
+  AppJourneyRoute: typeof AppJourneyRoute
   AppMyTasksRoute: typeof AppMyTasksRoute
   AppPeopleRoute: typeof AppPeopleRoute
   AppPipelineRoute: typeof AppPipelineRoute
@@ -1087,6 +1107,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCaptureRoute: AppCaptureRoute,
+  AppJourneyRoute: AppJourneyRoute,
   AppMyTasksRoute: AppMyTasksRoute,
   AppPeopleRoute: AppPeopleRoute,
   AppPipelineRoute: AppPipelineRoute,
