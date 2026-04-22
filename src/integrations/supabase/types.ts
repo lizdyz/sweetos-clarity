@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      cadence_settings: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          label: string
+          max_value: number | null
+          min_value: number | null
+          sort_order: number
+          step_value: number | null
+          updated_at: string
+          updated_by: string | null
+          value_number: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          label: string
+          max_value?: number | null
+          min_value?: number | null
+          sort_order?: number
+          step_value?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          value_number: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          label?: string
+          max_value?: number | null
+          min_value?: number | null
+          sort_order?: number
+          step_value?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          value_number?: number
+        }
+        Relationships: []
+      }
       campaign_contacts: {
         Row: {
           campaign_id: string

@@ -13,6 +13,7 @@ import { Chip } from "@/components/chips";
 import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
 import { inviteTeamMember } from "@/utils/team.functions";
+import { CadenceTab } from "@/components/cadence-tab";
 
 export const Route = createFileRoute("/_app/settings")({
   component: SettingsPage,
@@ -47,12 +48,16 @@ function SettingsPage() {
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="cadence">Cadence</TabsTrigger>
         </TabsList>
         <TabsContent value="profile" className="mt-4">
           <ProfileTab userId={user.id} />
         </TabsContent>
         <TabsContent value="team" className="mt-4">
           <TeamTab isAdmin={isAdmin} />
+        </TabsContent>
+        <TabsContent value="cadence" className="mt-4">
+          <CadenceTab isAdmin={isAdmin} />
         </TabsContent>
       </Tabs>
     </div>
