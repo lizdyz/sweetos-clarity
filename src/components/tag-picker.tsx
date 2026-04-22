@@ -76,6 +76,9 @@ export function TagPicker({ label, variant, value, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
+  // Defensive: rows can return null for tagged_* columns despite the schema default.
+  const safeValue: string[] = Array.isArray(value) ? value : [];
+
   const labelMap = useMemo(() => {
     const m: Record<string, string> = {};
     options.forEach((o) => (m[o.id] = o.label));
@@ -103,8 +106,8 @@ export function TagPicker({ label, variant, value, onChange }: Props) {
   }, [filtered, variant]);
 
   function toggle(id: string) {
-    if (value.includes(id)) onChange(value.filter((x) => x !== id));
-    else onChange([...value, id]);
+    if (safeValue.includes(id)) onChange(safeValue.filter((x) => x !== id));
+    else onChange([...safeValue, id]);
   }
 
   return (
@@ -119,12 +122,12 @@ export function TagPicker({ label, variant, value, onChange }: Props) {
             className="flex w-full items-center gap-1.5 rounded-xl border border-border bg-surface px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-iris-soft/30"
           >
             <div className="flex flex-1 flex-wrap gap-1">
-              {value.length === 0 && (
+              {safeValue.length === 0 && (
                 <span className="text-xs text-muted-foreground">
                   Tag {label.toLowerCase()}…
                 </span>
               )}
-              {value.map((id) => (
+              {safeValue.map((id) => (
                 <span
                   key={id}
                   className="inline-flex items-center gap-1 rounded-md bg-iris-soft px-1.5 py-0.5 text-[11px]"
@@ -174,7 +177,7 @@ export function TagPicker({ label, variant, value, onChange }: Props) {
                       <Row
                         key={o.id}
                         option={o}
-                        active={value.includes(o.id)}
+                        active={safeValue.includes(o.id)}
                         onClick={() => toggle(o.id)}
                       />
                     ))}
@@ -184,7 +187,7 @@ export function TagPicker({ label, variant, value, onChange }: Props) {
                   <Row
                     key={o.id}
                     option={o}
-                    active={value.includes(o.id)}
+                    active={safeValue.includes(o.id)}
                     onClick={() => toggle(o.id)}
                   />
                 ))}

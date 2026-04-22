@@ -81,10 +81,40 @@ function MeasuresIndex() {
 
   return (
     <div className="space-y-5 p-6">
-      <div className="flex items-center gap-2">
-        <Target className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-xl font-semibold">Measures</h1>
+      <header className="flex items-start gap-3">
+        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-iris/10 text-[color:var(--iris-violet)]">
+          <Target className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Measures</h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            One unified view of every <strong>Objective</strong>, <strong>Key Result</strong>,{" "}
+            <strong>KPI</strong>, and <strong>CSF</strong> across the business — attached to relationships,
+            projects, workflows, components, missions, and engagement services.
+            Use the saved views below or filter by kind, subject, or color.
+          </p>
+        </div>
         <span className="text-sm text-muted-foreground">{filtered.length} of {rows.length}</span>
+      </header>
+
+      <div className="flex flex-wrap gap-1.5">
+        {([
+          { label: "All", apply: () => { setKind("all"); setColor("all"); setSubjectType("all"); } },
+          { label: "🔴 At risk", apply: () => { setColor("red"); setKind("all"); setSubjectType("all"); } },
+          { label: "🟡 Drifting", apply: () => { setColor("amber"); setKind("all"); setSubjectType("all"); } },
+          { label: "🟢 On track", apply: () => { setColor("green"); setKind("all"); setSubjectType("all"); } },
+          { label: "Objectives only", apply: () => { setKind("Objective"); setColor("all"); setSubjectType("all"); } },
+          { label: "KPIs only", apply: () => { setKind("KPI"); setColor("all"); setSubjectType("all"); } },
+          { label: "Per-relationship", apply: () => { setSubjectType("relationship"); setKind("all"); setColor("all"); } },
+        ] as const).map((v) => (
+          <button
+            key={v.label}
+            onClick={v.apply}
+            className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-medium hover:bg-iris-soft/40"
+          >
+            {v.label}
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
