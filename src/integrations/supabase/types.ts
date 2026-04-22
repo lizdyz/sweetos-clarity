@@ -3754,19 +3754,27 @@ export type Database = {
           created_at: string
           created_by: string
           deliverable_produced_id: string | null
+          deliverable_type: string | null
           description: string | null
+          duration_minutes: number | null
           framework_lens: string | null
+          from_level: Database["public"]["Enums"]["maturity_level"] | null
           id: string
+          is_template: boolean
           journey_id: string | null
+          kind: string
           name: string
           progression_state:
             | Database["public"]["Enums"]["progression_state"]
             | null
+          quest_number: number | null
           relationship_id: string | null
           scope: string
           source_of_advancement:
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
+          template_id: string | null
+          to_level: Database["public"]["Enums"]["maturity_level"] | null
           updated_at: string
         }
         Insert: {
@@ -3776,19 +3784,27 @@ export type Database = {
           created_at?: string
           created_by?: string
           deliverable_produced_id?: string | null
+          deliverable_type?: string | null
           description?: string | null
+          duration_minutes?: number | null
           framework_lens?: string | null
+          from_level?: Database["public"]["Enums"]["maturity_level"] | null
           id?: string
+          is_template?: boolean
           journey_id?: string | null
+          kind?: string
           name: string
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
+          quest_number?: number | null
           relationship_id?: string | null
           scope?: string
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
+          template_id?: string | null
+          to_level?: Database["public"]["Enums"]["maturity_level"] | null
           updated_at?: string
         }
         Update: {
@@ -3798,19 +3814,27 @@ export type Database = {
           created_at?: string
           created_by?: string
           deliverable_produced_id?: string | null
+          deliverable_type?: string | null
           description?: string | null
+          duration_minutes?: number | null
           framework_lens?: string | null
+          from_level?: Database["public"]["Enums"]["maturity_level"] | null
           id?: string
+          is_template?: boolean
           journey_id?: string | null
+          kind?: string
           name?: string
           progression_state?:
             | Database["public"]["Enums"]["progression_state"]
             | null
+          quest_number?: number | null
           relationship_id?: string | null
           scope?: string
           source_of_advancement?:
             | Database["public"]["Enums"]["source_of_advancement"]
             | null
+          template_id?: string | null
+          to_level?: Database["public"]["Enums"]["maturity_level"] | null
           updated_at?: string
         }
         Relationships: [
@@ -3840,6 +3864,13 @@ export type Database = {
             columns: ["relationship_id"]
             isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quests_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
             referencedColumns: ["id"]
           },
         ]
