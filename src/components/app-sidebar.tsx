@@ -17,6 +17,13 @@ import {
   Inbox,
   Search,
   Compass,
+  Settings,
+  UserCircle2,
+  Target,
+  Map,
+  Flag,
+  Flame,
+  Trophy,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,7 +37,7 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { to: "/", label: "Today", icon: LayoutDashboard, group: "Overview" },
+  { to: "/today", label: "Today", icon: LayoutDashboard, group: "Overview" },
   { to: "/pipeline", label: "Pipeline", icon: Compass, group: "Overview" },
   { to: "/capture", label: "Capture", icon: Sparkles, group: "Overview", soon: true },
 
@@ -45,12 +52,21 @@ const NAV: NavItem[] = [
   { to: "/playbooks", label: "Playbooks", icon: BookOpen, group: "Build" },
   { to: "/domain-assessments", label: "Domain Assessments", icon: Gauge, group: "Build" },
 
+  { to: "/personas", label: "Personas", icon: UserCircle2, group: "Transformation" },
+  { to: "/missions", label: "Missions", icon: Target, group: "Transformation" },
+  { to: "/journeys", label: "Journeys", icon: Map, group: "Transformation" },
+  { to: "/quests", label: "Quests", icon: Flag, group: "Transformation" },
+  { to: "/sparks", label: "Sparks", icon: Flame, group: "Transformation" },
+  { to: "/outcomes", label: "Outcomes", icon: Trophy, group: "Transformation" },
+
   { to: "/delegation", label: "Delegation", icon: HandshakeIcon, group: "Knowledge" },
   { to: "/decisions", label: "Decisions", icon: GitBranch, group: "Knowledge" },
   { to: "/documents", label: "Documents", icon: FileText, group: "Knowledge" },
 
   { to: "/review", label: "Review Queue", icon: Inbox, group: "Intelligence", soon: true },
   { to: "/search", label: "Search", icon: Search, group: "Intelligence", soon: true },
+
+  { to: "/settings", label: "Settings & Team", icon: Settings, group: "System" },
 ];
 
 export function AppSidebar() {
@@ -80,10 +96,7 @@ export function AppSidebar() {
             <ul className="space-y-0.5">
               {NAV.filter((n) => n.group === group).map((item) => {
                 const Icon = item.icon;
-                const active =
-                  item.to === "/"
-                    ? location.pathname === "/"
-                    : location.pathname.startsWith(item.to);
+                const active = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
                 return (
                   <li key={item.to}>
                     <Link

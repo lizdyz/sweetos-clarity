@@ -13,14 +13,21 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTodayRouteImport } from './routes/_app.today'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
+import { Route as AppSparksIndexRouteImport } from './routes/_app.sparks.index'
 import { Route as AppSessionsIndexRouteImport } from './routes/_app.sessions.index'
 import { Route as AppRelationshipsIndexRouteImport } from './routes/_app.relationships.index'
+import { Route as AppQuestsIndexRouteImport } from './routes/_app.quests.index'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
 import { Route as AppPlaybooksIndexRouteImport } from './routes/_app.playbooks.index'
+import { Route as AppPersonasIndexRouteImport } from './routes/_app.personas.index'
+import { Route as AppOutcomesIndexRouteImport } from './routes/_app.outcomes.index'
+import { Route as AppMissionsIndexRouteImport } from './routes/_app.missions.index'
+import { Route as AppJourneysIndexRouteImport } from './routes/_app.journeys.index'
 import { Route as AppDomainAssessmentsIndexRouteImport } from './routes/_app.domain-assessments.index'
 import { Route as AppDocumentsIndexRouteImport } from './routes/_app.documents.index'
 import { Route as AppDelegationIndexRouteImport } from './routes/_app.delegation.index'
@@ -29,10 +36,16 @@ import { Route as AppComponentsIndexRouteImport } from './routes/_app.components
 import { Route as AppCampaignsIndexRouteImport } from './routes/_app.campaigns.index'
 import { Route as AppWorkflowsIdRouteImport } from './routes/_app.workflows.$id'
 import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
+import { Route as AppSparksIdRouteImport } from './routes/_app.sparks.$id'
 import { Route as AppSessionsIdRouteImport } from './routes/_app.sessions.$id'
 import { Route as AppRelationshipsIdRouteImport } from './routes/_app.relationships.$id'
+import { Route as AppQuestsIdRouteImport } from './routes/_app.quests.$id'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppPlaybooksIdRouteImport } from './routes/_app.playbooks.$id'
+import { Route as AppPersonasIdRouteImport } from './routes/_app.personas.$id'
+import { Route as AppOutcomesIdRouteImport } from './routes/_app.outcomes.$id'
+import { Route as AppMissionsIdRouteImport } from './routes/_app.missions.$id'
+import { Route as AppJourneysIdRouteImport } from './routes/_app.journeys.$id'
 import { Route as AppDomainAssessmentsIdRouteImport } from './routes/_app.domain-assessments.$id'
 import { Route as AppDocumentsIdRouteImport } from './routes/_app.documents.$id'
 import { Route as AppDelegationIdRouteImport } from './routes/_app.delegation.$id'
@@ -59,6 +72,11 @@ const AppTodayRoute = AppTodayRouteImport.update({
   path: '/today',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPipelineRoute = AppPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
@@ -79,6 +97,11 @@ const AppTasksIndexRoute = AppTasksIndexRouteImport.update({
   path: '/tasks/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSparksIndexRoute = AppSparksIndexRouteImport.update({
+  id: '/sparks/',
+  path: '/sparks/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSessionsIndexRoute = AppSessionsIndexRouteImport.update({
   id: '/sessions/',
   path: '/sessions/',
@@ -89,6 +112,11 @@ const AppRelationshipsIndexRoute = AppRelationshipsIndexRouteImport.update({
   path: '/relationships/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppQuestsIndexRoute = AppQuestsIndexRouteImport.update({
+  id: '/quests/',
+  path: '/quests/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
   id: '/projects/',
   path: '/projects/',
@@ -97,6 +125,26 @@ const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
 const AppPlaybooksIndexRoute = AppPlaybooksIndexRouteImport.update({
   id: '/playbooks/',
   path: '/playbooks/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPersonasIndexRoute = AppPersonasIndexRouteImport.update({
+  id: '/personas/',
+  path: '/personas/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOutcomesIndexRoute = AppOutcomesIndexRouteImport.update({
+  id: '/outcomes/',
+  path: '/outcomes/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMissionsIndexRoute = AppMissionsIndexRouteImport.update({
+  id: '/missions/',
+  path: '/missions/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppJourneysIndexRoute = AppJourneysIndexRouteImport.update({
+  id: '/journeys/',
+  path: '/journeys/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDomainAssessmentsIndexRoute =
@@ -140,6 +188,11 @@ const AppTasksIdRoute = AppTasksIdRouteImport.update({
   path: '/tasks/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSparksIdRoute = AppSparksIdRouteImport.update({
+  id: '/sparks/$id',
+  path: '/sparks/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSessionsIdRoute = AppSessionsIdRouteImport.update({
   id: '/sessions/$id',
   path: '/sessions/$id',
@@ -150,6 +203,11 @@ const AppRelationshipsIdRoute = AppRelationshipsIdRouteImport.update({
   path: '/relationships/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppQuestsIdRoute = AppQuestsIdRouteImport.update({
+  id: '/quests/$id',
+  path: '/quests/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   id: '/projects/$id',
   path: '/projects/$id',
@@ -158,6 +216,26 @@ const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
 const AppPlaybooksIdRoute = AppPlaybooksIdRouteImport.update({
   id: '/playbooks/$id',
   path: '/playbooks/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPersonasIdRoute = AppPersonasIdRouteImport.update({
+  id: '/personas/$id',
+  path: '/personas/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOutcomesIdRoute = AppOutcomesIdRouteImport.update({
+  id: '/outcomes/$id',
+  path: '/outcomes/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMissionsIdRoute = AppMissionsIdRouteImport.update({
+  id: '/missions/$id',
+  path: '/missions/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppJourneysIdRoute = AppJourneysIdRouteImport.update({
+  id: '/journeys/$id',
+  path: '/journeys/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDomainAssessmentsIdRoute = AppDomainAssessmentsIdRouteImport.update({
@@ -196,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
   '/pipeline': typeof AppPipelineRoute
+  '/settings': typeof AppSettingsRoute
   '/today': typeof AppTodayRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
@@ -203,10 +282,16 @@ export interface FileRoutesByFullPath {
   '/delegation/$id': typeof AppDelegationIdRoute
   '/documents/$id': typeof AppDocumentsIdRoute
   '/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
+  '/journeys/$id': typeof AppJourneysIdRoute
+  '/missions/$id': typeof AppMissionsIdRoute
+  '/outcomes/$id': typeof AppOutcomesIdRoute
+  '/personas/$id': typeof AppPersonasIdRoute
   '/playbooks/$id': typeof AppPlaybooksIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/quests/$id': typeof AppQuestsIdRoute
   '/relationships/$id': typeof AppRelationshipsIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
+  '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/workflows/$id': typeof AppWorkflowsIdRoute
   '/campaigns/': typeof AppCampaignsIndexRoute
@@ -215,10 +300,16 @@ export interface FileRoutesByFullPath {
   '/delegation/': typeof AppDelegationIndexRoute
   '/documents/': typeof AppDocumentsIndexRoute
   '/domain-assessments/': typeof AppDomainAssessmentsIndexRoute
+  '/journeys/': typeof AppJourneysIndexRoute
+  '/missions/': typeof AppMissionsIndexRoute
+  '/outcomes/': typeof AppOutcomesIndexRoute
+  '/personas/': typeof AppPersonasIndexRoute
   '/playbooks/': typeof AppPlaybooksIndexRoute
   '/projects/': typeof AppProjectsIndexRoute
+  '/quests/': typeof AppQuestsIndexRoute
   '/relationships/': typeof AppRelationshipsIndexRoute
   '/sessions/': typeof AppSessionsIndexRoute
+  '/sparks/': typeof AppSparksIndexRoute
   '/tasks/': typeof AppTasksIndexRoute
   '/workflows/': typeof AppWorkflowsIndexRoute
 }
@@ -227,6 +318,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/capture': typeof AppCaptureRoute
   '/pipeline': typeof AppPipelineRoute
+  '/settings': typeof AppSettingsRoute
   '/today': typeof AppTodayRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
@@ -234,10 +326,16 @@ export interface FileRoutesByTo {
   '/delegation/$id': typeof AppDelegationIdRoute
   '/documents/$id': typeof AppDocumentsIdRoute
   '/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
+  '/journeys/$id': typeof AppJourneysIdRoute
+  '/missions/$id': typeof AppMissionsIdRoute
+  '/outcomes/$id': typeof AppOutcomesIdRoute
+  '/personas/$id': typeof AppPersonasIdRoute
   '/playbooks/$id': typeof AppPlaybooksIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/quests/$id': typeof AppQuestsIdRoute
   '/relationships/$id': typeof AppRelationshipsIdRoute
   '/sessions/$id': typeof AppSessionsIdRoute
+  '/sparks/$id': typeof AppSparksIdRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/workflows/$id': typeof AppWorkflowsIdRoute
   '/campaigns': typeof AppCampaignsIndexRoute
@@ -246,10 +344,16 @@ export interface FileRoutesByTo {
   '/delegation': typeof AppDelegationIndexRoute
   '/documents': typeof AppDocumentsIndexRoute
   '/domain-assessments': typeof AppDomainAssessmentsIndexRoute
+  '/journeys': typeof AppJourneysIndexRoute
+  '/missions': typeof AppMissionsIndexRoute
+  '/outcomes': typeof AppOutcomesIndexRoute
+  '/personas': typeof AppPersonasIndexRoute
   '/playbooks': typeof AppPlaybooksIndexRoute
   '/projects': typeof AppProjectsIndexRoute
+  '/quests': typeof AppQuestsIndexRoute
   '/relationships': typeof AppRelationshipsIndexRoute
   '/sessions': typeof AppSessionsIndexRoute
+  '/sparks': typeof AppSparksIndexRoute
   '/tasks': typeof AppTasksIndexRoute
   '/workflows': typeof AppWorkflowsIndexRoute
 }
@@ -260,6 +364,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/capture': typeof AppCaptureRoute
   '/_app/pipeline': typeof AppPipelineRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/today': typeof AppTodayRoute
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
   '/_app/components/$id': typeof AppComponentsIdRoute
@@ -267,10 +372,16 @@ export interface FileRoutesById {
   '/_app/delegation/$id': typeof AppDelegationIdRoute
   '/_app/documents/$id': typeof AppDocumentsIdRoute
   '/_app/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
+  '/_app/journeys/$id': typeof AppJourneysIdRoute
+  '/_app/missions/$id': typeof AppMissionsIdRoute
+  '/_app/outcomes/$id': typeof AppOutcomesIdRoute
+  '/_app/personas/$id': typeof AppPersonasIdRoute
   '/_app/playbooks/$id': typeof AppPlaybooksIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
+  '/_app/quests/$id': typeof AppQuestsIdRoute
   '/_app/relationships/$id': typeof AppRelationshipsIdRoute
   '/_app/sessions/$id': typeof AppSessionsIdRoute
+  '/_app/sparks/$id': typeof AppSparksIdRoute
   '/_app/tasks/$id': typeof AppTasksIdRoute
   '/_app/workflows/$id': typeof AppWorkflowsIdRoute
   '/_app/campaigns/': typeof AppCampaignsIndexRoute
@@ -279,10 +390,16 @@ export interface FileRoutesById {
   '/_app/delegation/': typeof AppDelegationIndexRoute
   '/_app/documents/': typeof AppDocumentsIndexRoute
   '/_app/domain-assessments/': typeof AppDomainAssessmentsIndexRoute
+  '/_app/journeys/': typeof AppJourneysIndexRoute
+  '/_app/missions/': typeof AppMissionsIndexRoute
+  '/_app/outcomes/': typeof AppOutcomesIndexRoute
+  '/_app/personas/': typeof AppPersonasIndexRoute
   '/_app/playbooks/': typeof AppPlaybooksIndexRoute
   '/_app/projects/': typeof AppProjectsIndexRoute
+  '/_app/quests/': typeof AppQuestsIndexRoute
   '/_app/relationships/': typeof AppRelationshipsIndexRoute
   '/_app/sessions/': typeof AppSessionsIndexRoute
+  '/_app/sparks/': typeof AppSparksIndexRoute
   '/_app/tasks/': typeof AppTasksIndexRoute
   '/_app/workflows/': typeof AppWorkflowsIndexRoute
 }
@@ -293,6 +410,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/capture'
     | '/pipeline'
+    | '/settings'
     | '/today'
     | '/campaigns/$id'
     | '/components/$id'
@@ -300,10 +418,16 @@ export interface FileRouteTypes {
     | '/delegation/$id'
     | '/documents/$id'
     | '/domain-assessments/$id'
+    | '/journeys/$id'
+    | '/missions/$id'
+    | '/outcomes/$id'
+    | '/personas/$id'
     | '/playbooks/$id'
     | '/projects/$id'
+    | '/quests/$id'
     | '/relationships/$id'
     | '/sessions/$id'
+    | '/sparks/$id'
     | '/tasks/$id'
     | '/workflows/$id'
     | '/campaigns/'
@@ -312,10 +436,16 @@ export interface FileRouteTypes {
     | '/delegation/'
     | '/documents/'
     | '/domain-assessments/'
+    | '/journeys/'
+    | '/missions/'
+    | '/outcomes/'
+    | '/personas/'
     | '/playbooks/'
     | '/projects/'
+    | '/quests/'
     | '/relationships/'
     | '/sessions/'
+    | '/sparks/'
     | '/tasks/'
     | '/workflows/'
   fileRoutesByTo: FileRoutesByTo
@@ -324,6 +454,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/capture'
     | '/pipeline'
+    | '/settings'
     | '/today'
     | '/campaigns/$id'
     | '/components/$id'
@@ -331,10 +462,16 @@ export interface FileRouteTypes {
     | '/delegation/$id'
     | '/documents/$id'
     | '/domain-assessments/$id'
+    | '/journeys/$id'
+    | '/missions/$id'
+    | '/outcomes/$id'
+    | '/personas/$id'
     | '/playbooks/$id'
     | '/projects/$id'
+    | '/quests/$id'
     | '/relationships/$id'
     | '/sessions/$id'
+    | '/sparks/$id'
     | '/tasks/$id'
     | '/workflows/$id'
     | '/campaigns'
@@ -343,10 +480,16 @@ export interface FileRouteTypes {
     | '/delegation'
     | '/documents'
     | '/domain-assessments'
+    | '/journeys'
+    | '/missions'
+    | '/outcomes'
+    | '/personas'
     | '/playbooks'
     | '/projects'
+    | '/quests'
     | '/relationships'
     | '/sessions'
+    | '/sparks'
     | '/tasks'
     | '/workflows'
   id:
@@ -356,6 +499,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/capture'
     | '/_app/pipeline'
+    | '/_app/settings'
     | '/_app/today'
     | '/_app/campaigns/$id'
     | '/_app/components/$id'
@@ -363,10 +507,16 @@ export interface FileRouteTypes {
     | '/_app/delegation/$id'
     | '/_app/documents/$id'
     | '/_app/domain-assessments/$id'
+    | '/_app/journeys/$id'
+    | '/_app/missions/$id'
+    | '/_app/outcomes/$id'
+    | '/_app/personas/$id'
     | '/_app/playbooks/$id'
     | '/_app/projects/$id'
+    | '/_app/quests/$id'
     | '/_app/relationships/$id'
     | '/_app/sessions/$id'
+    | '/_app/sparks/$id'
     | '/_app/tasks/$id'
     | '/_app/workflows/$id'
     | '/_app/campaigns/'
@@ -375,10 +525,16 @@ export interface FileRouteTypes {
     | '/_app/delegation/'
     | '/_app/documents/'
     | '/_app/domain-assessments/'
+    | '/_app/journeys/'
+    | '/_app/missions/'
+    | '/_app/outcomes/'
+    | '/_app/personas/'
     | '/_app/playbooks/'
     | '/_app/projects/'
+    | '/_app/quests/'
     | '/_app/relationships/'
     | '/_app/sessions/'
+    | '/_app/sparks/'
     | '/_app/tasks/'
     | '/_app/workflows/'
   fileRoutesById: FileRoutesById
@@ -419,6 +575,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTodayRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/pipeline': {
       id: '/_app/pipeline'
       path: '/pipeline'
@@ -447,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/sparks/': {
+      id: '/_app/sparks/'
+      path: '/sparks'
+      fullPath: '/sparks/'
+      preLoaderRoute: typeof AppSparksIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/sessions/': {
       id: '/_app/sessions/'
       path: '/sessions'
@@ -461,6 +631,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRelationshipsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/quests/': {
+      id: '/_app/quests/'
+      path: '/quests'
+      fullPath: '/quests/'
+      preLoaderRoute: typeof AppQuestsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/projects/': {
       id: '/_app/projects/'
       path: '/projects'
@@ -473,6 +650,34 @@ declare module '@tanstack/react-router' {
       path: '/playbooks'
       fullPath: '/playbooks/'
       preLoaderRoute: typeof AppPlaybooksIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/personas/': {
+      id: '/_app/personas/'
+      path: '/personas'
+      fullPath: '/personas/'
+      preLoaderRoute: typeof AppPersonasIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outcomes/': {
+      id: '/_app/outcomes/'
+      path: '/outcomes'
+      fullPath: '/outcomes/'
+      preLoaderRoute: typeof AppOutcomesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/missions/': {
+      id: '/_app/missions/'
+      path: '/missions'
+      fullPath: '/missions/'
+      preLoaderRoute: typeof AppMissionsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/journeys/': {
+      id: '/_app/journeys/'
+      path: '/journeys'
+      fullPath: '/journeys/'
+      preLoaderRoute: typeof AppJourneysIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/domain-assessments/': {
@@ -531,6 +736,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/sparks/$id': {
+      id: '/_app/sparks/$id'
+      path: '/sparks/$id'
+      fullPath: '/sparks/$id'
+      preLoaderRoute: typeof AppSparksIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/sessions/$id': {
       id: '/_app/sessions/$id'
       path: '/sessions/$id'
@@ -545,6 +757,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRelationshipsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/quests/$id': {
+      id: '/_app/quests/$id'
+      path: '/quests/$id'
+      fullPath: '/quests/$id'
+      preLoaderRoute: typeof AppQuestsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/projects/$id': {
       id: '/_app/projects/$id'
       path: '/projects/$id'
@@ -557,6 +776,34 @@ declare module '@tanstack/react-router' {
       path: '/playbooks/$id'
       fullPath: '/playbooks/$id'
       preLoaderRoute: typeof AppPlaybooksIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/personas/$id': {
+      id: '/_app/personas/$id'
+      path: '/personas/$id'
+      fullPath: '/personas/$id'
+      preLoaderRoute: typeof AppPersonasIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outcomes/$id': {
+      id: '/_app/outcomes/$id'
+      path: '/outcomes/$id'
+      fullPath: '/outcomes/$id'
+      preLoaderRoute: typeof AppOutcomesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/missions/$id': {
+      id: '/_app/missions/$id'
+      path: '/missions/$id'
+      fullPath: '/missions/$id'
+      preLoaderRoute: typeof AppMissionsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/journeys/$id': {
+      id: '/_app/journeys/$id'
+      path: '/journeys/$id'
+      fullPath: '/journeys/$id'
+      preLoaderRoute: typeof AppJourneysIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/domain-assessments/$id': {
@@ -607,6 +854,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCaptureRoute: typeof AppCaptureRoute
   AppPipelineRoute: typeof AppPipelineRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppTodayRoute: typeof AppTodayRoute
   AppCampaignsIdRoute: typeof AppCampaignsIdRoute
   AppComponentsIdRoute: typeof AppComponentsIdRoute
@@ -614,10 +862,16 @@ interface AppRouteChildren {
   AppDelegationIdRoute: typeof AppDelegationIdRoute
   AppDocumentsIdRoute: typeof AppDocumentsIdRoute
   AppDomainAssessmentsIdRoute: typeof AppDomainAssessmentsIdRoute
+  AppJourneysIdRoute: typeof AppJourneysIdRoute
+  AppMissionsIdRoute: typeof AppMissionsIdRoute
+  AppOutcomesIdRoute: typeof AppOutcomesIdRoute
+  AppPersonasIdRoute: typeof AppPersonasIdRoute
   AppPlaybooksIdRoute: typeof AppPlaybooksIdRoute
   AppProjectsIdRoute: typeof AppProjectsIdRoute
+  AppQuestsIdRoute: typeof AppQuestsIdRoute
   AppRelationshipsIdRoute: typeof AppRelationshipsIdRoute
   AppSessionsIdRoute: typeof AppSessionsIdRoute
+  AppSparksIdRoute: typeof AppSparksIdRoute
   AppTasksIdRoute: typeof AppTasksIdRoute
   AppWorkflowsIdRoute: typeof AppWorkflowsIdRoute
   AppCampaignsIndexRoute: typeof AppCampaignsIndexRoute
@@ -626,10 +880,16 @@ interface AppRouteChildren {
   AppDelegationIndexRoute: typeof AppDelegationIndexRoute
   AppDocumentsIndexRoute: typeof AppDocumentsIndexRoute
   AppDomainAssessmentsIndexRoute: typeof AppDomainAssessmentsIndexRoute
+  AppJourneysIndexRoute: typeof AppJourneysIndexRoute
+  AppMissionsIndexRoute: typeof AppMissionsIndexRoute
+  AppOutcomesIndexRoute: typeof AppOutcomesIndexRoute
+  AppPersonasIndexRoute: typeof AppPersonasIndexRoute
   AppPlaybooksIndexRoute: typeof AppPlaybooksIndexRoute
   AppProjectsIndexRoute: typeof AppProjectsIndexRoute
+  AppQuestsIndexRoute: typeof AppQuestsIndexRoute
   AppRelationshipsIndexRoute: typeof AppRelationshipsIndexRoute
   AppSessionsIndexRoute: typeof AppSessionsIndexRoute
+  AppSparksIndexRoute: typeof AppSparksIndexRoute
   AppTasksIndexRoute: typeof AppTasksIndexRoute
   AppWorkflowsIndexRoute: typeof AppWorkflowsIndexRoute
 }
@@ -637,6 +897,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCaptureRoute: AppCaptureRoute,
   AppPipelineRoute: AppPipelineRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppTodayRoute: AppTodayRoute,
   AppCampaignsIdRoute: AppCampaignsIdRoute,
   AppComponentsIdRoute: AppComponentsIdRoute,
@@ -644,10 +905,16 @@ const AppRouteChildren: AppRouteChildren = {
   AppDelegationIdRoute: AppDelegationIdRoute,
   AppDocumentsIdRoute: AppDocumentsIdRoute,
   AppDomainAssessmentsIdRoute: AppDomainAssessmentsIdRoute,
+  AppJourneysIdRoute: AppJourneysIdRoute,
+  AppMissionsIdRoute: AppMissionsIdRoute,
+  AppOutcomesIdRoute: AppOutcomesIdRoute,
+  AppPersonasIdRoute: AppPersonasIdRoute,
   AppPlaybooksIdRoute: AppPlaybooksIdRoute,
   AppProjectsIdRoute: AppProjectsIdRoute,
+  AppQuestsIdRoute: AppQuestsIdRoute,
   AppRelationshipsIdRoute: AppRelationshipsIdRoute,
   AppSessionsIdRoute: AppSessionsIdRoute,
+  AppSparksIdRoute: AppSparksIdRoute,
   AppTasksIdRoute: AppTasksIdRoute,
   AppWorkflowsIdRoute: AppWorkflowsIdRoute,
   AppCampaignsIndexRoute: AppCampaignsIndexRoute,
@@ -656,10 +923,16 @@ const AppRouteChildren: AppRouteChildren = {
   AppDelegationIndexRoute: AppDelegationIndexRoute,
   AppDocumentsIndexRoute: AppDocumentsIndexRoute,
   AppDomainAssessmentsIndexRoute: AppDomainAssessmentsIndexRoute,
+  AppJourneysIndexRoute: AppJourneysIndexRoute,
+  AppMissionsIndexRoute: AppMissionsIndexRoute,
+  AppOutcomesIndexRoute: AppOutcomesIndexRoute,
+  AppPersonasIndexRoute: AppPersonasIndexRoute,
   AppPlaybooksIndexRoute: AppPlaybooksIndexRoute,
   AppProjectsIndexRoute: AppProjectsIndexRoute,
+  AppQuestsIndexRoute: AppQuestsIndexRoute,
   AppRelationshipsIndexRoute: AppRelationshipsIndexRoute,
   AppSessionsIndexRoute: AppSessionsIndexRoute,
+  AppSparksIndexRoute: AppSparksIndexRoute,
   AppTasksIndexRoute: AppTasksIndexRoute,
   AppWorkflowsIndexRoute: AppWorkflowsIndexRoute,
 }
