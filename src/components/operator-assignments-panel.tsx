@@ -4,7 +4,6 @@ import { Link } from "@tanstack/react-router";
 import { sb } from "@/lib/sb";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Tabs,
   TabsContent,
@@ -25,7 +24,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Plus, Sparkles, FolderKanban, ListTodo, Box, Calendar } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type EntityKind = "tasks" | "projects" | "components" | "sessions";
