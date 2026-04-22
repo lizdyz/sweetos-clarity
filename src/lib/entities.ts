@@ -61,6 +61,9 @@ export type FieldKind =
   | "select"
   | "multiselect"
   | "tags"
+  | "domain-tags"
+  | "tenet-tags"
+  | "component-tags"
   | "ref";
 
 export interface FieldDef {
