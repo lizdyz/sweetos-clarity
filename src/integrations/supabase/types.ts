@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_runs: {
+        Row: {
+          cadence: string | null
+          created_at: string
+          created_by: string | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          notes: string | null
+          operator_id: string
+          proposals_count: number
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          cadence?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          notes?: string | null
+          operator_id: string
+          proposals_count?: number
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          cadence?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          notes?: string | null
+          operator_id?: string
+          proposals_count?: number
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_runs_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "agent_runs_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cadence_settings: {
         Row: {
           category: string
@@ -154,6 +211,7 @@ export type Database = {
           next_milestone: string | null
           not_before: string | null
           notes: string | null
+          operator_id: string | null
           owner: string | null
           prompt_status: string | null
           proposal_id: string | null
@@ -188,6 +246,7 @@ export type Database = {
           next_milestone?: string | null
           not_before?: string | null
           notes?: string | null
+          operator_id?: string | null
           owner?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
@@ -222,6 +281,7 @@ export type Database = {
           next_milestone?: string | null
           not_before?: string | null
           notes?: string | null
+          operator_id?: string | null
           owner?: string | null
           prompt_status?: string | null
           proposal_id?: string | null
@@ -240,6 +300,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "campaigns_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "campaigns_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "campaigns_proposal_id_fkey"
             columns: ["proposal_id"]
@@ -811,6 +885,62 @@ export type Database = {
           },
         ]
       }
+      domain_curators: {
+        Row: {
+          created_at: string
+          created_by: string
+          domain_id: string
+          id: string
+          operator_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          domain_id: string
+          id?: string
+          operator_id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          domain_id?: string
+          id?: string
+          operator_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_curators_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_curators_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_domain_maturity"
+            referencedColumns: ["domain_id"]
+          },
+          {
+            foreignKeyName: "domain_curators_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "domain_curators_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domain_tenets: {
         Row: {
           domain_id: string
@@ -1054,6 +1184,72 @@ export type Database = {
             columns: ["relationship_id"]
             isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_audit_log: {
+        Row: {
+          agent_run_id: string | null
+          change_type: string
+          created_at: string
+          created_by: string | null
+          field: string | null
+          id: string
+          model: string | null
+          new_value: Json | null
+          notes: string | null
+          old_value: Json | null
+          operator_id: string | null
+          source: string
+          subject_id: string
+          subject_kind: string
+        }
+        Insert: {
+          agent_run_id?: string | null
+          change_type?: string
+          created_at?: string
+          created_by?: string | null
+          field?: string | null
+          id?: string
+          model?: string | null
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          operator_id?: string | null
+          source?: string
+          subject_id: string
+          subject_kind: string
+        }
+        Update: {
+          agent_run_id?: string | null
+          change_type?: string
+          created_at?: string
+          created_by?: string | null
+          field?: string | null
+          id?: string
+          model?: string | null
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          operator_id?: string | null
+          source?: string
+          subject_id?: string
+          subject_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_audit_log_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "entity_audit_log_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
             referencedColumns: ["id"]
           },
         ]
@@ -1388,6 +1584,55 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      lens_curators: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          lens_id: string
+          operator_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          lens_id: string
+          operator_id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          lens_id?: string
+          operator_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lens_curators_lens_id_fkey"
+            columns: ["lens_id"]
+            isOneToOne: false
+            referencedRelation: "lenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lens_curators_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "lens_curators_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lens_perspectives: {
         Row: {
@@ -3828,6 +4073,55 @@ export type Database = {
             columns: ["relationship_id"]
             isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenet_curators: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          operator_id: string
+          role: string
+          tenet_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          operator_id: string
+          role?: string
+          tenet_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          operator_id?: string
+          role?: string
+          tenet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenet_curators_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "tenet_curators_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenet_curators_tenet_id_fkey"
+            columns: ["tenet_id"]
+            isOneToOne: false
+            referencedRelation: "tenets"
             referencedColumns: ["id"]
           },
         ]
