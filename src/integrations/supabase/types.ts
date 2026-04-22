@@ -733,6 +733,42 @@ export type Database = {
         }
         Relationships: []
       }
+      industries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       journeys: {
         Row: {
           created_at: string
@@ -1422,6 +1458,7 @@ export type Database = {
           id: string
           ideal_next_touchpoint: string | null
           industry: string | null
+          industry_id: string | null
           intelligence_confidence:
             | Database["public"]["Enums"]["intelligence_confidence"]
             | null
@@ -1471,6 +1508,7 @@ export type Database = {
           id?: string
           ideal_next_touchpoint?: string | null
           industry?: string | null
+          industry_id?: string | null
           intelligence_confidence?:
             | Database["public"]["Enums"]["intelligence_confidence"]
             | null
@@ -1520,6 +1558,7 @@ export type Database = {
           id?: string
           ideal_next_touchpoint?: string | null
           industry?: string | null
+          industry_id?: string | null
           intelligence_confidence?:
             | Database["public"]["Enums"]["intelligence_confidence"]
             | null
@@ -1556,6 +1595,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "relationships_industry_id_fkey"
+            columns: ["industry_id"]
+            isOneToOne: false
+            referencedRelation: "industries"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "relationships_persona_fk"
             columns: ["persona_id"]
@@ -2181,6 +2227,7 @@ export type Database = {
           enabled: boolean
           excellence_definition: string | null
           id: string
+          industry_id: string | null
           name: string
           slug: string
           sort_order: number
@@ -2194,6 +2241,7 @@ export type Database = {
           enabled?: boolean
           excellence_definition?: string | null
           id?: string
+          industry_id?: string | null
           name: string
           slug: string
           sort_order?: number
@@ -2207,12 +2255,21 @@ export type Database = {
           enabled?: boolean
           excellence_definition?: string | null
           id?: string
+          industry_id?: string | null
           name?: string
           slug?: string
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenets_industry_id_fkey"
+            columns: ["industry_id"]
+            isOneToOne: false
+            referencedRelation: "industries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
