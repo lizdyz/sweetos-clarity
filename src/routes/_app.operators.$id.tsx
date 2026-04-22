@@ -105,9 +105,6 @@ function OperatorDetailPage() {
             <EditableName name={op.name} onSave={(name) => update.mutate({ name })} />
             <div className="mt-0.5 flex items-center gap-2">
               <Badge variant="secondary" className="h-5 text-[10px] capitalize">{meta.label}</Badge>
-              <span className="text-[11px] text-muted-foreground">
-                {tasks.filter((t) => !["Done", "Complete", "Completed"].includes(t.status ?? "")).length} open tasks
-              </span>
             </div>
           </div>
         </div>
