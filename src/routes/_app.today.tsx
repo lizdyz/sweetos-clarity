@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
 import { Link } from "@tanstack/react-router";
 import { format, isPast, isToday, isThisWeek } from "date-fns";
-import { Sparkles, CheckSquare, FolderKanban, Users, CalendarClock } from "lucide-react";
+import { Sparkles, CheckSquare, FolderKanban, Users, CalendarClock, Eye, GitBranch, Diamond, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/_app/today")({
   component: TodayPage,
