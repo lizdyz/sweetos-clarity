@@ -161,3 +161,17 @@ export const ENGAGEMENT_SERVICE_STATUS = [
 ] as const;
 export const SESSION_PHASE = ["Pre-Engagement","Deliverable","Follow-up"] as const;
 export const REUSABILITY_TIER = ["One-Time","Relationship","Org","System"] as const;
+
+// Phase 2.10f — Service shape
+export const SERVICE_PACKAGE = [
+  "Mirror Only","Mirror + Machine","Machine Only","Map","None",
+] as const;
+export type ServicePackage = (typeof SERVICE_PACKAGE)[number];
+
+export const SERVICE_PACKAGE_BADGE: Record<ServicePackage, string> = {
+  "Mirror Only": "Mirror",
+  "Mirror + Machine": "M+M",
+  "Machine Only": "Machine",
+  "Map": "Map",
+  "None": "—",
+};
