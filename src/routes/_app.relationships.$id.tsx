@@ -305,6 +305,7 @@ function RelationshipPanels({ relationshipId }: { relationshipId: string }) {
           </ul>
         )}
       </section>
+      </div>
     </div>
   );
 }
