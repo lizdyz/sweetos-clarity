@@ -61,7 +61,7 @@ function PlannerPage() {
   const monThis = fmt(startOfWeek(new Date()));
   const monNext = addDays(monThis, 7);
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: rows = [], isLoading } = useQuery<Item[]>({
     queryKey: ["planner", "time_grid"],
     queryFn: async () => {
       const { data, error } = await sb
@@ -69,7 +69,8 @@ function PlannerPage() {
         .select("entity_type, entity_id, name, scheduled_for, due_date, status")
         .limit(500);
       if (error) throw error;
-      return (data ?? []).map((r): Item => ({
+      type Row = { entity_type: string; entity_id: string; name: string; scheduled_for: string | null; due_date: string | null; status: string | null };
+      return ((data ?? []) as Row[]).map((r): Item => ({
         id: r.entity_id,
         kind: r.entity_type as Kind,
         name: r.name,
@@ -80,14 +81,14 @@ function PlannerPage() {
     },
   });
 
-  const all = useMemo(
-    () => rows.filter((r) => !DONE_STATUSES.has(r.status ?? "")),
+  const all = useMemo<Item[]>(
+    () => rows.filter((r: Item) => !DONE_STATUSES.has(r.status ?? "")),
     [rows],
   );
 
   const byLane = useMemo(() => {
     const g: Record<Lane, Item[]> = { this_week: [], next_week: [], backlog: [] };
-    all.forEach((it) => g[laneFor(it, monThis, monNext)].push(it));
+    all.forEach((it: Item) => g[laneFor(it, monThis, monNext)].push(it));
     return g;
   }, [all, monThis, monNext]);
 
