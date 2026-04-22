@@ -372,9 +372,9 @@ function EntityDetail({ entity, id }: { entity: EntityDef; id: string }) {
             </div>
           </section>
 
-          {entity.key === "sessions" && row.sweetcycle_phase && (
+          {entity.key === "sessions" && row.sweetcycle_phase ? (
             <SweetCycleLadder current={String(row.sweetcycle_phase)} />
-          )}
+          ) : null}
         </aside>
       </div>
 
