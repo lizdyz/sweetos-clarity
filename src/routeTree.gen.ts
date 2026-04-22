@@ -24,6 +24,7 @@ import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
+import { Route as AppTenetsIndexRouteImport } from './routes/_app.tenets.index'
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
 import { Route as AppSparksIndexRouteImport } from './routes/_app.sparks.index'
 import { Route as AppSessionsIndexRouteImport } from './routes/_app.sessions.index'
@@ -144,6 +145,11 @@ const AppCaptureRoute = AppCaptureRouteImport.update({
 const AppWorkflowsIndexRoute = AppWorkflowsIndexRouteImport.update({
   id: '/workflows/',
   path: '/workflows/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTenetsIndexRoute = AppTenetsIndexRouteImport.update({
+  id: '/tenets/',
+  path: '/tenets/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTasksIndexRoute = AppTasksIndexRouteImport.update({
@@ -445,6 +451,7 @@ export interface FileRoutesByFullPath {
   '/sessions/': typeof AppSessionsIndexRoute
   '/sparks/': typeof AppSparksIndexRoute
   '/tasks/': typeof AppTasksIndexRoute
+  '/tenets/': typeof AppTenetsIndexRoute
   '/workflows/': typeof AppWorkflowsIndexRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -508,6 +515,7 @@ export interface FileRoutesByTo {
   '/sessions': typeof AppSessionsIndexRoute
   '/sparks': typeof AppSparksIndexRoute
   '/tasks': typeof AppTasksIndexRoute
+  '/tenets': typeof AppTenetsIndexRoute
   '/workflows': typeof AppWorkflowsIndexRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -573,6 +581,7 @@ export interface FileRoutesById {
   '/_app/sessions/': typeof AppSessionsIndexRoute
   '/_app/sparks/': typeof AppSparksIndexRoute
   '/_app/tasks/': typeof AppTasksIndexRoute
+  '/_app/tenets/': typeof AppTenetsIndexRoute
   '/_app/workflows/': typeof AppWorkflowsIndexRoute
   '/_app/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -638,6 +647,7 @@ export interface FileRouteTypes {
     | '/sessions/'
     | '/sparks/'
     | '/tasks/'
+    | '/tenets/'
     | '/workflows/'
     | '/workflows/$id/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
@@ -701,6 +711,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/sparks'
     | '/tasks'
+    | '/tenets'
     | '/workflows'
     | '/workflows/$id/runs/$runId'
   id:
@@ -765,6 +776,7 @@ export interface FileRouteTypes {
     | '/_app/sessions/'
     | '/_app/sparks/'
     | '/_app/tasks/'
+    | '/_app/tenets/'
     | '/_app/workflows/'
     | '/_app/workflows/$id/runs/$runId'
   fileRoutesById: FileRoutesById
@@ -880,6 +892,13 @@ declare module '@tanstack/react-router' {
       path: '/workflows'
       fullPath: '/workflows/'
       preLoaderRoute: typeof AppWorkflowsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tenets/': {
+      id: '/_app/tenets/'
+      path: '/tenets'
+      fullPath: '/tenets/'
+      preLoaderRoute: typeof AppTenetsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/tasks/': {
@@ -1295,6 +1314,7 @@ interface AppRouteChildren {
   AppSessionsIndexRoute: typeof AppSessionsIndexRoute
   AppSparksIndexRoute: typeof AppSparksIndexRoute
   AppTasksIndexRoute: typeof AppTasksIndexRoute
+  AppTenetsIndexRoute: typeof AppTenetsIndexRoute
   AppWorkflowsIndexRoute: typeof AppWorkflowsIndexRoute
 }
 
@@ -1355,6 +1375,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSessionsIndexRoute: AppSessionsIndexRoute,
   AppSparksIndexRoute: AppSparksIndexRoute,
   AppTasksIndexRoute: AppTasksIndexRoute,
+  AppTenetsIndexRoute: AppTenetsIndexRoute,
   AppWorkflowsIndexRoute: AppWorkflowsIndexRoute,
 }
 
