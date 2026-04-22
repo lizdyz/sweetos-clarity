@@ -4,7 +4,7 @@ import { sb } from "@/lib/sb";
 import { format, isPast, isToday, isThisWeek, formatDistanceToNow } from "date-fns";
 import {
   Sparkles, CheckSquare, CalendarClock, Eye, GitBranch, Diamond, Zap,
-  Trophy, ShieldCheck, TrendingUp, Lightbulb, Megaphone, FolderKanban,
+  Trophy, ShieldCheck, TrendingUp, Lightbulb, Megaphone, FolderKanban, FlaskConical,
 } from "lucide-react";
 import { FiredKtisStrip } from "@/components/fired-ktis-strip";
 import { MasterStoryTrail } from "@/components/master-story-trail";
@@ -138,9 +138,10 @@ function TodayPage() {
       <FiredKtisStrip />
       <MasterStoryTrail />
 
-      <div className="mb-5 grid gap-3 lg:grid-cols-[2fr_1fr]">
+      <div className="mb-5 grid gap-3 lg:grid-cols-[2fr_1fr_1fr]">
         <OcdaTileStrip />
         <DecisionQueueWidget />
+        <SandboxTile />
       </div>
 
       {(approvals.length > 0 || ready.length > 0) && (
