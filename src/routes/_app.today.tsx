@@ -140,3 +140,107 @@ function Row({ to, title, meta }: { to: string; title: string; meta?: string }) 
 function Empty({ children }: { children: React.ReactNode }) {
   return <div className="px-5 py-6 text-center text-xs text-muted-foreground">{children}</div>;
 }
+
+function OcdaTileStrip() {
+  const { data: counts } = useQuery({
+    queryKey: ["today", "ocda-counts"],
+    queryFn: async () => {
+      const [obs, choose, decide, act] = await Promise.all([
+        sb.from("captures").select("id", { count: "exact", head: true }).eq("status", "Pending"),
+        sb.from("proposals").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        sb.from("decisions").select("id", { count: "exact", head: true }).eq("status", "Open"),
+        sb.from("tasks").select("id", { count: "exact", head: true }).eq("status", "Ready"),
+      ]);
+      return {
+        observe: obs.count ?? 0,
+        choose: choose.count ?? 0,
+        decide: decide.count ?? 0,
+        act: act.count ?? 0,
+      };
+    },
+  });
+
+  const tiles = [
+    { key: "observe", label: "Observe", count: counts?.observe ?? 0, icon: Eye, hint: "captures pending review" },
+    { key: "choose", label: "Choose", count: counts?.choose ?? 0, icon: GitBranch, hint: "proposals waiting" },
+    { key: "decide", label: "Decide", count: counts?.decide ?? 0, icon: Diamond, hint: "open decisions" },
+    { key: "act", label: "Act", count: counts?.act ?? 0, icon: Zap, hint: "ready tasks" },
+  ];
+
+  return (
+    <Link to="/operate/ocda" className="block">
+      <section className="panel-raised grid grid-cols-2 gap-3 p-4 transition hover:shadow-[var(--shadow-glow)] sm:grid-cols-4">
+        {tiles.map((t) => (
+          <div key={t.key} className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-iris-soft text-[color:var(--iris-violet)]">
+              <t.icon className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-semibold tabular-nums">{t.count}</span>
+                <span className="text-xs font-medium text-muted-foreground">{t.label}</span>
+              </div>
+              <p className="truncate text-[10px] text-muted-foreground">{t.hint}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+    </Link>
+  );
+}
+
+interface DecisionRow {
+  id: string;
+  decision: string;
+  status: string | null;
+  date_made: string | null;
+  context: string | null;
+}
+
+function DecisionQueueWidget() {
+  const { data: decisions = [] } = useQuery<DecisionRow[]>({
+    queryKey: ["today", "decision-queue"],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("decisions")
+        .select("id, decision, status, date_made, context")
+        .eq("status", "Open")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data ?? [];
+    },
+  });
+
+  return (
+    <section className="panel overflow-hidden">
+      <header className="flex items-center justify-between border-b border-border px-5 py-3">
+        <div className="flex items-center gap-2">
+          <Diamond className="h-4 w-4 text-[color:var(--iris-violet)]" />
+          <h2 className="text-sm font-semibold">Decision queue</h2>
+        </div>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          {decisions.length}
+        </span>
+      </header>
+      <div className="divide-y divide-border">
+        {decisions.length === 0 ? (
+          <Empty>No open decisions waiting.</Empty>
+        ) : (
+          decisions.map((d) => (
+            <Link
+              key={d.id}
+              to="/decisions/$id"
+              params={{ id: d.id }}
+              className="block px-5 py-2.5 hover:bg-iris-soft/50"
+            >
+              <div className="truncate text-sm font-medium">{d.decision}</div>
+              {d.context && (
+                <div className="truncate text-[11px] text-muted-foreground">{d.context}</div>
+              )}
+            </Link>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}

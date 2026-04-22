@@ -297,38 +297,55 @@ function MeasureLine({
     setReading("");
   }
 
+  const pct = health?.pct_to_target ?? null;
+  const showBar = m.target_value !== null && pct !== null;
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />
-      <span className="text-xs font-medium">{m.name}</span>
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{m.kind}</span>
-      <DirIcon className="h-3 w-3 text-muted-foreground" />
-      {m.target_value !== null && (
-        <span className="text-[11px] text-muted-foreground">
-          {health?.latest_value ?? m.current_value ?? "—"} / {m.target_value}
-          {m.target_unit ? ` ${m.target_unit}` : ""}
-          {health?.pct_to_target !== null && health?.pct_to_target !== undefined && (
-            <span className="ml-1">({health.pct_to_target}%)</span>
-          )}
-        </span>
-      )}
-      <span className="text-[10px] text-muted-foreground">· {m.cadence}</span>
-      <div className="ml-auto flex items-center gap-1">
-        <Input
-          type="number"
-          step="any"
-          placeholder="+ reading"
-          value={reading}
-          onChange={(e) => setReading(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commitReading();
-          }}
-          className="h-6 w-24 text-[11px]"
-        />
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRemove}>
-          <X className="h-3 w-3" />
-        </Button>
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />
+        <span className="text-xs font-medium">{m.name}</span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{m.kind}</span>
+        <DirIcon className="h-3 w-3 text-muted-foreground" />
+        {m.target_value !== null && (
+          <span className="text-[11px] text-muted-foreground">
+            {health?.latest_value ?? m.current_value ?? "—"} / {m.target_value}
+            {m.target_unit ? ` ${m.target_unit}` : ""}
+            {pct !== null && <span className="ml-1">({pct}%)</span>}
+          </span>
+        )}
+        <span className="text-[10px] text-muted-foreground">· {m.cadence}</span>
+        <div className="ml-auto flex items-center gap-1">
+          <Input
+            type="number"
+            step="any"
+            placeholder="+ reading"
+            value={reading}
+            onChange={(e) => setReading(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitReading();
+            }}
+            className="h-6 w-24 text-[11px]"
+          />
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRemove}>
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
+      {showBar && (
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              "h-full transition-all",
+              health?.status_color === "green" && "bg-emerald-500",
+              health?.status_color === "amber" && "bg-amber-500",
+              health?.status_color === "red" && "bg-rose-500",
+              (!health?.status_color || health.status_color === "gray") && "bg-muted-foreground/40",
+            )}
+            style={{ width: `${Math.min(100, Math.max(0, pct ?? 0))}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }
