@@ -63,9 +63,10 @@ const PRIMARY: NavGroup[] = [
       { to: "/sessions", label: "Sessions", icon: Calendar, hint: "Scheduled working sessions" },
       { to: "/campaigns", label: "Campaigns", icon: Megaphone },
       { to: "/measures", label: "Measures", icon: Gauge, hint: "Objectives, KRs, KPIs, CSFs" },
-      { to: "/domains", label: "Domains", icon: Gauge },
+      { to: "/domains", label: "Domains", icon: Gauge, hint: "22 universal areas of excellence" },
+      { to: "/tenets", label: "Tenets", icon: Sparkles, hint: "Industry-specific best-practice anchors" },
       { to: "/workflows", label: "Workflows", icon: Workflow },
-      { to: "/settings/excellence", label: "Excellence", icon: Sparkles },
+      { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "Define L1→L5 across the 5 Ps" },
     ],
   },
 ];
