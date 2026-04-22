@@ -1,102 +1,198 @@
 
 
-# Phase 2.10k: Operator assignments — done right (not inside the create modal)
+# Phase 2.10l: Planner, Agents on everything, Tenets fix, Calendar, Page guides, Sync wording, Excellence rubric fix
 
-## Your instinct is right. The placement is wrong.
+Five problems, five fixes — bundled because they're all "the system isn't quite explaining or doing what I expect" issues. Here's how each lands.
 
-You're seeing the gap that an Operator should be hooked into **what they do**: projects, tasks, components, workflows. That belongs on the **operator detail page**, not the "New operator" creation modal. Here's the reasoning, then the fix.
+---
 
-### Why not in the create dialog
-- A brand-new operator has no skills/availability filled in yet — assigning work *before* you know what they're good at produces bad assignments.
-- Creation should stay a 5-second action. Pile on assignments and people abandon mid-flow.
-- Real-world flow: create → describe (skills/likes/dislikes) → *then* assign work, often days later as needs come up.
-- Workflows and components don't get *assigned to* operators the same way tasks do — they need different verbs (own, contribute, run-as).
+## 1. Tenets aren't loading — broken query
 
-### What "assign work to an operator" actually means per entity
+**Cause:** `_app.tenets.index.tsx` selects `domain_id, domains (name, color)` but the `tenets` table has **no `domain_id` column**. The relationship goes through the `domain_tenets` join table. The query 400s and the page renders empty.
 
-| Entity | Verb | Already in schema? | Where it lands |
-|---|---|---|---|
-| **Tasks** | assign (`tasks.operator_id`) | ✅ yes | Operator detail → Tasks tab |
-| **Projects** | own/lead (new `projects.operator_id`) | ❌ needs column | Operator detail → Projects tab |
-| **Components** | contribute (uses existing `project_components` indirectly via project ownership; **direct** ownership = new `components.responsible_operator_id`) | ❌ needs column | Operator detail → Components tab |
-| **Workflows** | run-as (already supported: `operators.workflow_id` makes the operator BE a workflow) | ✅ yes | Already shown |
-| **Sessions** | facilitate (new `sessions.operator_id`) | ❌ needs column | Operator detail → Sessions tab |
+**Fix:** rewrite the query to fetch `tenets` plain, then fetch the `domain_tenets` join separately and stitch in-memory. Show domain dots from the *first* mapped domain (or "Multi-domain" badge if more than one). Same crystalline grid as Domains, grouped by industry.
 
-## What I'll build
+**Detail page** (`_app.tenets.$slug.tsx`): same fix — drop the bad join, look up mapped domains through `domain_tenets`, render Crib Sheet + Lens Wall as today.
 
-### 1. Schema migration — minimal, additive
-Add nullable `operator_id` columns to:
-- `projects` (lead/owner)
-- `components` (responsible_operator_id)
-- `sessions` (facilitator)
+---
 
-Each gets an index. RLS already covers via existing policies.
+## 2. Excellence rubric "doesn't load" — page exists but no anchor
 
-### 2. Operator detail page — new "Assignments" section with 4 tabs
-Replace the current single "Open tasks" card with a tabbed assignments panel directly under skills/likes/dislikes:
+**Cause:** the route renders, but it requires picking Domain → specific subject → only then shows the editor. With nothing pre-selected and no "what is this?" copy, the screen looks blank/broken.
 
+**Fix:** add a header explainer ("Define what excellent looks like at L1→L5 across the 5 Ps for Domains, Tenets, and Components. The L→R Rubric you build here is what every relationship gets scored against."), default-select the first Domain on load, and add a left-rail picker so subjects feel like a list you scan, not a dropdown you hunt. Empty-state per cell shows "Define excellence at this level…" instead of looking blank.
+
+---
+
+## 3. "Sync" wording — recap & confirm, not decide
+
+Tiny but important. Replace every user-visible mention of *"Sync (recap & decide)"* with **"Sync (recap & confirm)"**:
+- `src/components/sweetcycle-board.tsx` PHASE_SUB
+- `src/routes/_app.sweetcycle.tsx` page intro
+- `src/components/service-shape-strip.tsx` if present
+- `mem://features/sweetcycle-journey.md` updated to lock the wording.
+
+Decisions belong to the **Session** phase; Sync is where we play it back, get the head-nod, and lock scope.
+
+---
+
+## 4. Page-purpose guides — every page knows why it exists
+
+Add a tiny consistent **PageHeader** component (`src/components/page-header.tsx`) that takes `title`, `purpose` (one sentence), and optional `whatYouCanDo` (3 bullets). Drop it at the top of every list and detail route. Wired across all `_app.*.index.tsx` routes plus the major detail pages.
+
+Examples of the one-liners:
+- **Today** — "Your live working surface: due-now tasks, scheduled sessions, the proposals queue, and the day's measure readings."
+- **Capture** — "Throw any input in here — text, voice, file. AI structures it into a proposal you confirm in the Queue."
+- **Queue** — "Confirm AI-proposed entities before they become real records. Trust layer for important writes."
+- **Pipeline** — "Cross-relationship funnel: who's in awareness, pre-engagement, active, dormant."
+- **Flightdeck** — "Operator cockpit across every relationship: workload, unassigned suggestions, active workflows."
+- **SweetCycle** — "The 5-phase rhythm of every active client journey: Seed → Synthesize → Session → Sync → Ship."
+- **Domains** — "22 universal areas of business excellence. Click any to see the rubric, BizzyBot perspectives, and your relationship maturity."
+- **Tenets** — "Industry-specific best-practice anchors that sharpen the universal Domains."
+- **Measures** — "Objectives, KRs, KPIs, CSFs attached to anything. The single canon for 'how do we know it's working?'"
+- **Workflows / Sessions / Operators / Engagement Plans / Campaigns / Components / Personas / Playbooks / Documents / Decisions / Sparks / Quests / Journeys / Missions / Outcomes / Domain Assessments** — each gets a one-liner so users know exactly what they're looking at.
+
+---
+
+## 5. The Planner — "I want to actually plan what I work on"
+
+A new top-of-IA page **Planner** (`/planner`, sidebar `Today` group) that is the *write side* of Today's read view. Three vertical lanes:
+
+```text
+┌──────────────┬──────────────┬──────────────┐
+│  This week   │  Next week   │   Backlog    │
+│  ─────────   │  ─────────   │  ─────────   │
+│  📋 Tasks    │  📋 Tasks    │  📋 Tasks    │
+│  📂 Projects │  📂 Projects │  📂 Projects │
+│  📣 Campaigns│  📣 Campaigns│  📣 Campaigns│
+└──────────────┴──────────────┴──────────────┘
 ```
-┌─ Assignments ─────────────────────────────────────┐
-│ [Tasks 7] [Projects 2] [Components 3] [Sessions 1]│
-│ ─────────────────────────────────────────────────│
-│ • Task name                       Due · Status    │
-│ • ...                                              │
-│                            [+ Assign existing →]   │
-└────────────────────────────────────────────────────┘
+
+- **Drag a card** between lanes → sets `scheduled_for` to the Monday of that week.
+- **Filter chips** at top: All / Mine / By relationship / By domain / By operator.
+- **Quick-add row** at the bottom of each lane: type → enter → creates a Task in that week with you as owner.
+- Mounts the existing `<TimeControls>` on row click for finer-grained dates/recurrence.
+- Underneath: a **Capacity bar** per lane ("8 tasks · 2 projects · ~18 hrs estimated"), so you see overload before it hits Today.
+
+This is the missing "I plan, then I execute" surface — Today stays read-only; Planner is where intent lives.
+
+---
+
+## 6. Calendar — the missing visual time view
+
+A new `/calendar` page (sidebar `Today` group, after Planner). Month + week toggle. Renders any record with a `scheduled_for` or `due_date` from the time_grid view: tasks, sessions, campaigns, engagement_services, measure cadence checkpoints. Color-coded by entity type, click → opens detail in a sheet without leaving the calendar. Filter chips mirror Planner (Mine / Relationship / Operator / Domain).
+
+Built on `react-day-picker` (already installed via shadcn `Calendar`) extended into a month grid with event chips per day. Drag-to-reschedule on month view.
+
+---
+
+## 7. Agents on everything — universal Operator attachment
+
+Right now operators attach to tasks/projects/components/sessions. Extend the same pattern to **the things you said you wanted**:
+- **Domains** — `domain_curators` join table (operator_id, domain_id, role: 'curator' | 'researcher' | 'reviewer'). Operators here own keeping that domain's rubric, lenses, and best-practices fresh.
+- **Tenets** — `tenet_curators` (same shape).
+- **Lenses (BizzyBots)** — `lens_curators` (same shape). Operator becomes the "voice" generating that lens's perspectives — surfaced on `LensPerspectiveCard` footer ("Curated by {operator}").
+- **People** — add `responsible_operator_id` to `people` (account manager / relationship lead).
+- **Campaigns** — add `operator_id` to `campaigns` (campaign owner — already has a `owner` text field but not a real link).
+
+UI: same `<OperatorChip>` reused in every header. On Operator detail, the Assignments panel gains three more tabs: **Domains**, **Tenets**, **Lenses** with the same suggestion strip + assign-existing flow.
+
+### The interesting part — Curator Agents that fetch & validate
+
+Each curator-shaped operator (any operator with a `kind` of `agent` and at least one curator assignment) becomes a **continuous-improvement agent**. It runs on a cadence (default weekly) via a Supabase scheduled function:
+
+1. **Fetch** — pulls fresh material for its assigned subjects (web search via Lovable AI Gateway with browsing, plus internal cross-reference).
+2. **Propose** — writes draft perspective updates to `lens_perspectives` as a *new version* (`version = max + 1`, `is_pinned = false`).
+3. **Audit trail** — every change writes to a new `entity_audit_log` table (subject_kind, subject_id, field, old_value, new_value, source: 'agent'|'human', operator_id, model, run_id, timestamp).
+4. **Human confirm** — drafts surface in the Proposals Queue with a clear diff view ("OCDA's perspective on Strategic Vision changed: 3 added bullets, 1 removed"). User accepts → version becomes the live one.
+
+This gives you **provenance + versioning + audit trail** as a first-class citizen, exactly as you described.
+
+---
+
+## Schema changes
+
+```sql
+-- Curator joins
+CREATE TABLE domain_curators (
+  id uuid PK, domain_id uuid REFERENCES domains, operator_id uuid REFERENCES operators,
+  role text DEFAULT 'curator', created_at, created_by
+);
+CREATE TABLE tenet_curators ( ...same shape, tenet_id );
+CREATE TABLE lens_curators ( ...same shape, lens_id );
+
+-- Add owners
+ALTER TABLE people ADD COLUMN responsible_operator_id uuid REFERENCES operators;
+ALTER TABLE campaigns ADD COLUMN operator_id uuid REFERENCES operators;
+
+-- Audit trail
+CREATE TABLE entity_audit_log (
+  id uuid PK,
+  subject_kind text NOT NULL,        -- 'lens_perspective' | 'crib_sheet' | 'domain' | 'tenet' | 'measure' | ...
+  subject_id uuid NOT NULL,
+  field text,
+  old_value jsonb,
+  new_value jsonb,
+  change_type text,                  -- 'create' | 'update' | 'delete' | 'version'
+  source text,                       -- 'human' | 'agent' | 'workflow' | 'import'
+  operator_id uuid REFERENCES operators,
+  agent_run_id uuid,
+  model text,
+  notes text,
+  created_at timestamptz DEFAULT now(),
+  created_by uuid DEFAULT auth.uid()
+);
+
+-- Agent runs
+CREATE TABLE agent_runs (
+  id uuid PK, operator_id uuid REFERENCES operators,
+  cadence text, status text,         -- 'queued' | 'running' | 'success' | 'failed'
+  started_at, finished_at,
+  proposals_count int DEFAULT 0,
+  notes text, error text
+);
 ```
 
-Each tab:
-- Lists current assignments (linked rows).
-- Has a **"+ Assign existing"** button → opens a searchable picker (combobox) of unassigned-or-reassignable rows of that type, filtered to ones whose tags overlap with the operator's `skills`.
-- Has a **"+ Create new"** quick action that opens that entity's create dialog with `operator_id` pre-set to the current operator.
+RLS: read-all-team, write owner-or-admin pattern matching existing tables.
 
-### 3. Smart suggestions — small but high-value
-Above each tab list, a "Suggested for {operator name}" strip surfaces 3 unassigned items where:
-- **Tasks**: `tasks.operator_id IS NULL` and `tagged_components` overlaps with components this operator already owns, OR the task's tagged_domains/tenets overlaps the operator's `skills`.
-- **Projects**: `projects.operator_id IS NULL` and tagged_domains overlaps skills.
-- **Components**: `components.responsible_operator_id IS NULL` and `related_domains` overlaps skills.
-- **Sessions**: upcoming sessions on engagement_services where the operator has a relevant skill OR is already on the relationship.
-
-One-click "Assign" on any suggestion. No drag, no modal.
-
-### 4. Reverse direction — show on the entity side too
-On Project detail, Task detail, Component detail, Session detail: a small "Operator" pill near the header showing who owns/leads/facilitates. Click → opens an inline picker to reassign. (This uses the existing `OperatorChip` pattern from tasks.)
-
-### 5. Keep create dialog clean
-The "New operator" modal stays as-is — name, kind, profile/workflow/model/prompt only. After create, redirect to `/operators/{id}` so you immediately land on the page where assignments live. That's the natural next step.
-
-## What this connects to that already exists
-
-- **Flightdeck workload panel** already aggregates per-operator open task counts → it'll automatically pick up the new project/component/session counts via the same `operator_id` columns once we add them to the `operator_workload` view.
-- **MeasuresPanel** at the bottom of the operator page stays — you can attach KPIs like "weekly tasks shipped" or "session NPS" to an individual operator.
-- **Skills array** becomes the matching key for suggestions — already populated on the operator page, no new field needed.
+---
 
 ## Files touched
 
-- **Migration** `<ts>_operator_assignments.sql`:
-  - `ALTER TABLE projects ADD COLUMN operator_id uuid REFERENCES operators(id) ON DELETE SET NULL;`
-  - `ALTER TABLE components ADD COLUMN responsible_operator_id uuid REFERENCES operators(id) ON DELETE SET NULL;`
-  - `ALTER TABLE sessions ADD COLUMN operator_id uuid REFERENCES operators(id) ON DELETE SET NULL;`
-  - Indexes on each.
-  - Update `operator_workload` view to include open projects + sessions counts.
-- **New component**: `src/components/operator-assignments-panel.tsx` — tabbed panel + assign/create actions + suggestion strip.
-- **New component**: `src/components/operator-chip.tsx` — small inline picker reused on project/task/component/session detail headers.
-- **Edited**: `src/routes/_app.operators.$id.tsx` — replace single tasks card with `<OperatorAssignmentsPanel operatorId={id} />`. Keep MeasuresPanel.
-- **Edited**: `src/routes/_app.operators.index.tsx` — after create, navigate to `/operators/{id}`.
-- **Edited**: `src/routes/_app.projects.$id.tsx`, `_app.tasks.$id.tsx`, `_app.components.$id.tsx`, `_app.sessions.$id.tsx` — add `<OperatorChip>` to header row.
-- **Memory append**: `mem://features/operators.md` — add: "Operators are assigned via `operator_id` on tasks/projects/sessions and `responsible_operator_id` on components. Assignment UI lives on the operator detail page (not the create modal). Suggestion engine matches `operators.skills` against entity tags."
+**New:**
+- `src/components/page-header.tsx` — reusable purpose banner
+- `src/routes/_app.planner.tsx` — three-lane planner
+- `src/routes/_app.calendar.tsx` — month/week visual calendar
+- `src/components/calendar-month.tsx` — event-grid month view
+- `src/components/curator-panel.tsx` — operator assignment for domains/tenets/lenses
+- `src/components/audit-trail-panel.tsx` — drop-in history panel for any entity
+- `src/components/version-diff-card.tsx` — diff view for perspective versions
+- `supabase/functions/run-curator-agents/index.ts` — scheduled fetch+propose worker
+- Migration `<ts>_curators_audit_planner.sql`
+
+**Edited (purpose headers + targeted fixes):**
+- `src/routes/_app.tenets.index.tsx` and `_app.tenets.$slug.tsx` — fix the broken `domain_id` query
+- `src/routes/_app.settings.excellence.tsx` — header explainer + default selection + left rail
+- `src/components/sweetcycle-board.tsx` and `_app.sweetcycle.tsx` — Sync wording
+- `src/components/app-sidebar.tsx` — add Planner + Calendar to the top group
+- `src/routes/_app.operators.$id.tsx` — add Domains/Tenets/Lenses tabs to Assignments
+- `src/routes/_app.domains.$slug.tsx`, `_app.tenets.$slug.tsx`, `_app.lenses.*` — `<CuratorPanel>` + `<AuditTrailPanel>`
+- All `_app.*.index.tsx` and primary detail routes — drop in `<PageHeader>` with the one-liner
+- `mem://features/sweetcycle-journey.md` — Sync = recap & confirm
+- `mem://features/operators.md` — append curator-agent pattern + audit trail rule
+- `mem://index.md` — add Core line: "Every entity carries an audit trail in `entity_audit_log`. Agents propose; humans confirm; both leave provenance."
 
 ## What I'm NOT doing this pass
 
-- Drag-and-drop "drop a task on an operator card" from the operators index — nice-to-have, not essential. The picker + suggestions cover the same use case faster.
-- Auto-assignment by AI ("which operator should own this?") — surfaces as suggestions only this pass; auto-route comes later.
-- Workload-based load balancing (prefer the least-busy operator) — can add as a sort key on the picker once we see it being used.
-- Per-operator capacity limits ("max 5 concurrent projects") — config later if needed.
+- Live agent chat with the BizzyBots — still a future phase.
+- Auto-running web search on every domain on day one — agents are scaffolded with a manual "Run now" button; cron schedule wired but disabled by default until you bless a curator.
+- Branching workflows / DAG editor — still queued.
+- Mobile gestures on the calendar — desktop drag only this pass.
 
-## Suggested order after this
+## Suggested order after
 
-1. **2.10k (this plan)** — operator assignments panel + reverse chips.
-2. **AI auto-suggest assignee** on capture/queue confirmation, using the same skill-matching logic.
-3. **Workload balancing** — sort suggestion picker by `open_tasks ASC` so least-busy wins ties.
-4. **Operator availability calendar** — block-out windows that hide them from suggestions.
+1. **2.10l (this plan)** — fixes + Planner + Calendar + Curators + Audit trail.
+2. **First curator agent live** — pick one Domain, attach a Gemini-Flash curator, watch it propose for a week.
+3. **Branching workflows** + visual DAG.
+4. **Library consolidation review** — do we really need 6 outcome-shaped objects?
 
