@@ -6,6 +6,7 @@ import { sb } from "@/lib/sb";
 import { ExcellenceMatrix } from "@/components/excellence-matrix";
 import { CribSheetCard } from "@/components/crib-sheet-card";
 import { LensWall } from "@/components/lens-wall";
+import { KtiPanel } from "@/components/kti-panel";
 
 export const Route = createFileRoute("/_app/domains/$slug")({
   component: DomainDetail,
@@ -87,6 +88,8 @@ function DomainDetail() {
         </Card>
 
         <LensWall subjectKind="domain" subjectId={domain.id} subjectLabel={domain.name} />
+
+        <KtiPanel domainId={domain.id} />
       </div>
     </div>
   );
