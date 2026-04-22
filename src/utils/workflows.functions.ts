@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getSupabaseServerClient } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ActivateInput = z.object({
   workflowId: z.string().uuid(),
@@ -17,15 +17,10 @@ const ActivateInput = z.object({
  * in the production tables).
  */
 export const activateWorkflow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ActivateInput.parse(input))
-  .handler(async ({ data }) => {
-    const sb = await getSupabaseServerClient();
-
-    const { data: userRes } = await sb.auth.getUser();
-    const user = userRes?.user;
-    if (!user) {
-      return { ok: false as const, error: "Not authenticated" };
-    }
+  .handler(async ({ data, context }) => {
+    const { supabase: sb, userId } = context;
 
     // Look up workflow for naming
     const { data: workflow, error: wfErr } = await sb
