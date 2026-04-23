@@ -438,3 +438,18 @@ function SignalInboxTab() {
     </div>
   );
 }
+
+/**
+ * One row in the SweetScan inbox. Wraps the inbound signal as a Triageable
+ * so the same TriageCard gesture works here as in /sandbox, /sparks, /decisions.
+ */
+function SignalTriageItem({ signal }: { signal: InboundSignal }) {
+  const triageable = inboundSignalToTriageable(signal);
+  const promote = useTriagePromote();
+  return (
+    <TriageCard
+      item={triageable}
+      onPromote={(item, kind) => promote.mutate({ item, kind })}
+    />
+  );
+}
