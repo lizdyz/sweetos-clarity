@@ -40,7 +40,7 @@ function dateFromRange(range?: string | null): string | null {
 }
 
 export const listAuditEvents = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([sendSupabaseAuth, requireSupabaseAuth])
   .inputValidator((input: unknown) => FiltersSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -87,7 +87,7 @@ export const listAuditEvents = createServerFn({ method: "POST" })
   });
 
 export const listAuditSavedViews = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([sendSupabaseAuth, requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
     const { data, error } = await supabase
@@ -100,7 +100,7 @@ export const listAuditSavedViews = createServerFn({ method: "GET" })
   });
 
 export const saveAuditView = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([sendSupabaseAuth, requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -127,7 +127,7 @@ export const saveAuditView = createServerFn({ method: "POST" })
   });
 
 export const deleteAuditView = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([sendSupabaseAuth, requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
@@ -137,7 +137,7 @@ export const deleteAuditView = createServerFn({ method: "POST" })
   });
 
 export const listAuditActors = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([sendSupabaseAuth, requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
     const { data, error } = await supabase
