@@ -1,0 +1,1 @@
+ALTER VIEW public.capabilities_derived SET (security_invoker = true);
