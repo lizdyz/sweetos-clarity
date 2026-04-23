@@ -96,6 +96,18 @@ function SweetCyclePage() {
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-5 p-6">
+      <Card className="flex items-start gap-3 border-iris/20 bg-iris-soft/40 p-3 text-xs">
+        <Compass className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--iris-violet)]" />
+        <p className="text-muted-foreground">
+          <span className="font-medium text-foreground">SweetCycle is the rhythm of active engagements.</span>{" "}
+          To work on one client's cycle, open their plan from{" "}
+          <Link to="/engagement-plans" className="font-medium text-[color:var(--iris-violet)] hover:underline">
+            Engagement Plans →
+          </Link>{" "}
+          and pick the SweetCycle tab. This page shows every relationship at once.
+        </p>
+      </Card>
+
       <PageHeader
         icon={<Compass className="h-5 w-5" />}
         title="SweetCycle"
