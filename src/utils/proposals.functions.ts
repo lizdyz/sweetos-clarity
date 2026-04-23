@@ -479,9 +479,9 @@ export const captureProposal = createServerFn({ method: "POST" })
     const isRelationshipCtx = subjectKind === "relationship" && !!subjectId;
 
     // Fetch canon + libraries for pollination in parallel
-    const personaQ = isRelationshipCtx
-      ? sb.from("personas").select("id, name, sector").eq("relationship_id", subjectId).limit(40)
-      : sb.from("personas").select("id, name, sector").limit(40);
+    // Fetch canon + libraries for pollination in parallel.
+    // Personas are global (no per-relationship scope); quests + KTIs scope when ctx is a relationship.
+    const personaQ = sb.from("personas").select("id, name, sector").limit(40);
     const questQ = isRelationshipCtx
       ? sb.from("quests").select("id, name").eq("relationship_id", subjectId).neq("progression_state", "Confirmed Complete").order("updated_at", { ascending: false }).limit(30)
       : sb.from("quests").select("id, name").neq("progression_state", "Confirmed Complete").order("updated_at", { ascending: false }).limit(30);
