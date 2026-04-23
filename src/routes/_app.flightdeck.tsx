@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, ArrowRight, ExternalLink, Plane, ShieldCheck, Target, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StageSwimlanes } from "@/components/stage-swimlanes";
+import { FlightdeckStageHealthBar, type PipelineStage } from "@/components/flightdeck-stage-health-bar";
 import { useDragToStatus } from "@/hooks/use-drag-to-status";
 import { DueDateChip } from "@/components/due-date-chip";
 import { SERVICE_PACKAGE, SERVICE_PACKAGE_BADGE, type ServicePackage } from "@/lib/enums";

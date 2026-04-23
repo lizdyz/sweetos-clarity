@@ -34,6 +34,9 @@ function RelationshipDetail() {
   return (
     <div className="space-y-5">
       <ServiceShapeStrip relationshipId={id} />
+      <div className="px-6">
+        <RelationshipStageHeader relationshipId={id} />
+      </div>
       <RelationshipPanels relationshipId={id} />
       <EntityDetailPage entityKey="relationships" />
       <RelationshipSweetSyncTabs relationshipId={id} />
@@ -53,6 +56,31 @@ function RelationshipDetail() {
         <StoryTrail subjectKind="relationship" subjectId={id} />
       </div>
     </div>
+  );
+}
+
+function RelationshipStageHeader({ relationshipId }: { relationshipId: string }) {
+  const { data } = useQuery({
+    queryKey: ["relationships", "stage-header", relationshipId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("relationships")
+        .select("pipeline_stage, stage_changed_at")
+        .eq("id", relationshipId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { pipeline_stage: string | null; stage_changed_at: string | null } | null;
+    },
+  });
+  const days = data?.stage_changed_at
+    ? Math.floor((Date.now() - new Date(data.stage_changed_at).getTime()) / 86400000)
+    : null;
+  return (
+    <PipelineStageStepper
+      relationshipId={relationshipId}
+      currentStage={data?.pipeline_stage ?? null}
+      daysInStage={days}
+    />
   );
 }
 
