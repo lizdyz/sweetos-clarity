@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Clock, Bot, User } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Clock, Bot, User, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { sb } from "@/lib/sb";
@@ -39,11 +40,21 @@ export function AuditTrailPanel({ subjectKind, subjectId, limit = 20 }: Props) {
 
   return (
     <Card className="panel-raised p-3">
-      <div className="mb-2 flex items-center gap-2">
-        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-        <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          Audit trail
-        </h3>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Audit trail
+          </h3>
+        </div>
+        <Link
+          to="/audit"
+          search={{ subject_kind: subjectKind, subject_id: subjectId }}
+          className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+        >
+          <ExternalLink className="h-2.5 w-2.5" />
+          Full audit
+        </Link>
       </div>
       {rows.length === 0 ? (
         <p className="text-[11px] text-muted-foreground">No changes recorded yet.</p>

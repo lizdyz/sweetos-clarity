@@ -4,7 +4,8 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, History, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ChevronDown, ChevronUp, ExternalLink, History, Sparkles } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { sb as supabase } from "@/lib/sb";
 import { cn } from "@/lib/utils";
@@ -69,11 +70,22 @@ export function EvidenceFooter({
             Evidence · audit · revisions
           </span>
         </div>
-        {open ? (
-          <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-        )}
+        <div className="flex items-center gap-2">
+          <Link
+            to="/audit"
+            search={{ subject_kind: subjectKind, subject_id: subjectId }}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+          >
+            <ExternalLink className="h-2.5 w-2.5" />
+            View in audit
+          </Link>
+          {open ? (
+            <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          )}
+        </div>
       </button>
 
       {open && (
