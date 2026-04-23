@@ -105,43 +105,53 @@ function SparkDetail() {
   }, [data?.done_at]);
 
   return (
-    <div className="space-y-5">
-      <div className="px-6 pt-5">
-        <CanonGuardrail entityKind="spark" />
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-6 lg:pt-5">
+      <div className="space-y-5 min-w-0">
+        <div className="px-6 pt-5 lg:px-0 lg:pt-0">
+          <CanonGuardrail entityKind="spark" />
+        </div>
+        {data && (
+          <div className="flex flex-wrap items-center gap-2 px-6 lg:px-0">
+            <SparkProvenanceChip
+              kind={data.generated_by_kind}
+              generatorName={operator?.name}
+              originEvent={data.origin_event}
+            />
+            <ScopeChip scope={data.scope} relationshipId={data.relationship_id} size="sm" />
+          </div>
+        )}
+        {data && (quest || components.length > 0) && (
+          <div className="px-6 lg:px-0">
+            <ImpactPreview
+              sparkType={data.spark_type}
+              isDone={!!data.done_at}
+              quest={quest ?? null}
+              components={components}
+            />
+          </div>
+        )}
+        {data && (
+          <TimeControls
+            table="sparks"
+            rowId={id}
+            createdAt={data.created_at}
+            scheduledFor={data.scheduled_for}
+            notBefore={data.not_before}
+            dueAt={data.due_date}
+            doneAt={data.done_at}
+            recurrenceRule={data.recurrence_rule}
+          />
+        )}
+        <EntityDetailPage entityKey="sparks" />
       </div>
       {data && (
-        <div className="flex flex-wrap items-center gap-2 px-6">
-          <SparkProvenanceChip
-            kind={data.generated_by_kind}
-            generatorName={operator?.name}
-            originEvent={data.origin_event}
-          />
-          <ScopeChip scope={data.scope} relationshipId={data.relationship_id} size="sm" />
-        </div>
-      )}
-      {data && (quest || components.length > 0) && (
-        <div className="px-6">
-          <ImpactPreview
-            sparkType={data.spark_type}
-            isDone={!!data.done_at}
-            quest={quest ?? null}
-            components={components}
-          />
-        </div>
-      )}
-      {data && (
-        <TimeControls
-          table="sparks"
-          rowId={id}
-          createdAt={data.created_at}
-          scheduledFor={data.scheduled_for}
-          notBefore={data.not_before}
-          dueAt={data.due_date}
-          doneAt={data.done_at}
-          recurrenceRule={data.recurrence_rule}
+        <EntityFrameworksRail
+          entityKind="spark"
+          entityId={id}
+          title={data.name}
+          className="self-start lg:sticky lg:top-4"
         />
       )}
-      <EntityDetailPage entityKey="sparks" />
     </div>
   );
 }
