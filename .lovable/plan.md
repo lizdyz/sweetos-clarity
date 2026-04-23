@@ -1,95 +1,88 @@
 
 
-# Open Work Handoff — Everything Not Yet Done
+# Refine the Think view — make it feel like a room you actually want to think in
 
-A complete inventory of what's been planned/started but not closed, ranked by leverage. Take this anywhere to keep building.
+The Think view exists and works (canvas + notes + questions + candidates + linked), but right now it's a vertical stack that feels like a form. For a thinking surface it needs **focus, breathing room, and clear modes** — the canvas should dominate when you're writing, side-rails should be there when you need them but not shout.
 
----
+## What changes
 
-## TIER 1 — Half-finished, will pay off immediately
+### 1. Layout: a proper 3-pane workbench
+```text
+┌────────┬──────────────────────────┬──────────┐
+│ Topics │ CANVAS (dominant)        │ Side     │
+│ rail   │ — prompts collapsed top  │ rail     │
+│ 240px  │ — large prose surface    │ 300px    │
+│        │ — word count + saved     │ tabs:    │
+│        │                          │ Notes ·  │
+│        │                          │ Questions│
+│        │                          │ Candidates│
+│        │                          │ Linked   │
+└────────┴──────────────────────────┴──────────┘
+```
+- Canvas grows to fill height (`min-h-[60vh]`), feels like the room.
+- Side rail uses a tabs control so Notes / Questions / Candidates / Linked don't all fight for vertical space — pick one at a time.
+- Topics rail unchanged in shape, slightly tightened.
 
-### 1. Wave 21 — Lens System final wiring (highest leverage, mostly done)
-Architecture and DB are live. SweetLens panel is mounted on 12 detail routes. **Still open:**
+### 2. Topic header upgrades
+- Inline-editable **title** + **description** (click to edit, blur to save).
+- **Pin** + **delete** stay top-right but become icon-only with tooltips.
+- Add **journey link picker** (optional select of an existing Journey) — finally wires the `journey_id` column we already migrated for.
+- Tiny **last-saved** timestamp under the title.
 
-- **OCDA cockpit drop targets** — convert the 4 lanes (Observe / Decide / Act / Refine) into drag targets using the existing `useDragToStatus` hook. Union the Observe lane sources: `proposals + sparks + inbound_signals + kti_scans` (last 24h). Add an inline "Log decision" composer in Decide. Union running workflow runs into Act.
-- **`<OCDAStageChip>` on more headers** — currently only on Task and Decision. Mount on Project, Spark, Quest detail headers.
-- **FlowStrip** — top of `/capture`, `/sandbox`, `/queue` showing `Capture → Sandbox → Queue → Routed` with current step highlighted. Component file `src/components/flow-strip.tsx` may already exist; needs mounting.
-- **Library "used by" chips** — on rows of `/library/jtbd`, `/library/ktis`, `/personas`, `/outcomes`, `/components`, `/playbooks`. New component `src/components/library/used-by-chip.tsx`.
-- **Audit allow-list** — confirm `lens_outputs`, `open_decisions`, `decisions` are in the audit-log allow-list trigger.
-- **Memory writes** — new `mem://design/lens-system.md` (3-layer model: Lens · Interrogation · Object Companion). Update `mem://design/lenses-bizzybots.md` to clarify BizzyBot = persona attribute, Framework = structure attribute.
-- **Lens Wall structured-outputs footer** — append `<LensOutputsList>` to `lens-wall.tsx` and `lens-perspective-card.tsx` so Domain/Tenet pages get parity with the rail.
+### 3. Canvas focus mode
+- "Focus" toggle button → hides the side rail and topics rail, canvas centers at `max-w-3xl`. Press again or `Esc` to exit.
+- Live **word count** + saved indicator in the corner.
+- Bigger, more comfortable typography (leading-relaxed, slightly larger text).
 
-### 2. Wave 20 — Product Clarity leftovers
-PageHeader contract (`purpose · whatYouCanDo · connectsTo · nextSteps`) still missing on these routes:
-`/today`, `/operate/ocda`, `/flightdeck`, `/sweetscan`, `/calendar`, `/capture`, `/import`, `/sessions` index, `/operators/$id`, `/engagement-plans` index + detail.
+### 4. Prompts move into a single collapsible strip
+Right now seeded starter prompts render as 3 stacked cards above the canvas — heavy. Combine into one collapsible "Prompts" strip that shows count (`Prompts · 3`) and expands inline. Cleaner first impression.
 
-### 3. Planning Workspace follow-ons
-- **Quest Board** — `/planning/board` (or merge into `/sweetcycle`): rows = Quests, columns = `Discovery → Building → Shipping → Done`, drag to move state.
-- **Flightdeck operator filter** — add a "you vs. dev" filter chip so each operator sees their own lane.
-- **Thinking Room v2** — "Suggest candidates from this canvas" button (AI scan of Topic prose → proposed `?Quest` `?Decision` `?KPI` candidates). Deferred from the Thinking Room build.
+### 5. Side-rail tabs (the key UX shift)
+Replace the current "two-column grid + stacked sections" with a **Tabs** control:
+- **Notes** (default) — quick bullets, same component
+- **Questions** — open questions with promote-to-Decision
+- **Candidates** — proto-objects with promote dropdown
+- **Linked** — attached canonical objects
 
----
+Each tab shows a count badge (e.g. "Notes 4"). Vertical scroll inside the rail, never the whole page.
 
-## TIER 2 — Planned and approved, never finished
+### 6. Empty state for new topics
+When a topic has zero items: show a soft inline hint inside the canvas placeholder ("Start anywhere — paste a draft, jot a sentence, list constraints"). Today the canvas just shows a generic placeholder.
 
-### 4. Pass 3 — Monster-file refactor + type-safety sweep (on hold by your call)
-- Split 4 oversized files (>600 lines) into focused sub-modules with re-export shims.
-- Eliminate remaining 14 `as any` casts.
-- Generate a Developer Briefing Pack to `/mnt/documents/developer-briefing.md`.
+### 7. Topics rail polish
+- Group **Pinned** at the top with a tiny "Pinned" subheader, then **Recent**.
+- Show a tiny dot if a topic has unpromoted candidates (signals "something to action here").
+- Hover row reveals quick pin/unpin toggle.
 
-### 5. Sparks → Components → Outcomes loop (still disconnected per audit #206)
-- Wire spark dismissal/promotion to update Component evidence.
-- Outcome auto-creation when a Quest containing promoted Sparks completes.
-- "Angela" demo dataset never seeded — add `seed_demo_data.sql` so empty-state pages have realistic content for showing the dev.
+## What we'll build
 
-### 6. UX Auditor — bulk execution + auto-fix loop
-Built but underused. Still open:
-- Scheduled run (cron edge function) auditing all routes nightly.
-- Auto-PR-style proposal: for each finding, generate a suggested code patch as a Spark.
+**New**
+- `src/components/planning/topic-side-rail.tsx` — tabs wrapper around Notes / Questions / Candidates / Linked with count badges.
+- `src/components/planning/topic-header.tsx` — inline-editable title/description + journey picker + pin/delete + saved timestamp.
+- `src/components/planning/topic-prompts-strip.tsx` — single collapsible replacing the stack of prompt cards.
+- `src/components/planning/topic-focus-shell.tsx` — focus-mode container with `Esc` handler and centered canvas.
 
----
+**Edited**
+- `src/routes/_app.planning.think.tsx` — adopt 3-pane layout, group Pinned/Recent, mount new components, wire focus toggle.
+- `src/components/planning/topic-canvas.tsx` — add word count, larger leading, smarter empty placeholder, expose `onWordCountChange` for the header.
+- `src/lib/use-thinking.ts` — add a tiny `useThinkingItemCounts(topicId)` helper for the tab badges (single query, grouped client-side).
 
-## TIER 3 — Mentioned but never planned in detail
+**No DB changes.** Everything reads/writes existing `thinking_topics` + `thinking_items` (including the already-present `journey_id` column).
 
-### 7. Cash flow / monetization plumbing (you raised this — never built)
-- A "Money" entity or measure pattern to track revenue, expenses, runway.
-- Pricing / package definitions tied to `service_shape` (Mirror / M+M / Machine / Map).
-- Proposal → Invoice → Payment lifecycle (no payment provider connected yet — Stripe or Paddle).
+## What we're explicitly not doing
 
-### 8. Service offering language (you raised this — never built)
-- Canonical "Service Definition" object with: name, who-it's-for, outcome, deliverables, price, package shape.
-- Public-facing service page generator (`/p/$slug`).
+- No AI "suggest candidates from canvas" yet — that stays in the Tier-3 backlog.
+- No rich-text / markdown rendering — plain textarea remains v1 (focus is on UX, not editor tech).
+- No drag-reorder of topics — pinned vs recent grouping is enough for now.
+- No realtime collaboration.
 
-### 9. What-to-track KPI dashboard (you raised this — never built)
-- A KPI cockpit reading from `measures` + `measure_health` view.
-- Leading vs lagging indicator distinction on the measure record.
-- Alerting when a KPI crosses threshold (likely tied to KTI scans).
+## Sequencing
 
-### 10. Realtime collaboration
-- Supabase Realtime is available but not wired anywhere. Adding it to `tasks`, `decisions`, and `thinking_items` would let you and your dev work in the same Topic simultaneously.
+1. New components scaffolded (header, prompts strip, side rail, focus shell) (~30%)
+2. Route refactored to 3-pane + focus toggle + Pinned/Recent grouping (~35%)
+3. Canvas upgrades (word count, typography, smarter empty state) (~15%)
+4. Journey picker + last-saved timestamp + tab count badges (~15%)
+5. Polish pass: tooltips, hover states, keyboard `Esc` for focus exit (~5%)
 
-### 11. Mobile / responsive pass
-Never audited. Most surfaces assume desktop. Capture and Today are the priority for phone use.
-
----
-
-## TIER 4 — Strategic / design-thinking, no implementation yet
-
-- **Onboarding flow** for new users (or your dev) — guided "your first Quest" walkthrough.
-- **Permissions / multi-tenancy** — currently single-workspace; if you bring on clients, each needs isolated data.
-- **Public client portal** (`/p/$slug`) is scaffolded but minimal. Needs auth, threaded comments, deliverable approval.
-- **Email digest** — daily "what changed" summary using the `entity_audit_log`.
-- **AI agent autonomy levels** — operators table supports agents but no agent actually runs autonomously yet.
-
----
-
-## How to use this list elsewhere
-
-1. **Copy this whole plan** into a Notion / doc as your roadmap.
-2. **Tier 1 first** — each item is < 1 day for a competent dev and unlocks visible product value.
-3. **Tier 2** is technical health — schedule a "cleanup week" before scaling.
-4. **Tier 3** is your real business questions (cash flow, services, KPIs). Use the Thinking Room to draft them, then promote to Quests when ready.
-5. **Tier 4** is post-MVP — don't touch until you have 3+ paying users.
-
-Each item references the file paths and component names already in the codebase, so any developer (or a future Lovable session) can pick it up cold.
+After this the Think view feels like a deliberate thinking room — canvas-first, side tools tucked away, focus mode for deep work — not a stacked form.
 
