@@ -49,13 +49,18 @@ function LensStudio() {
   return (
     <div className="space-y-6 p-6">
       <PageHeader
-        icon={Wand2}
+        icon={<Wand2 className="h-5 w-5" />}
         title="Lens Studio"
-        subtitle="Control panel for every BizzyBot, framework, mapping and output route"
-        what="Define lenses (BizzyBots + frameworks), what objects they fit, and what outputs they produce."
-        why="One control surface — replaces the BizzyBots gallery, the lens prompts page, and the lens canon matrix."
-        actions="Browse lenses · edit definitions, personas & prompts · map to object types · curate canon · review outputs"
-        connectsTo="lenses · lens_object_fit · lens_canon · lens_outputs · Object Companion (SweetLens)"
+        purpose="Define lenses (BizzyBots + frameworks), what objects they fit, and what outputs they produce. One control surface — replaces the BizzyBots gallery, the lens prompts page, and the lens canon matrix."
+        whatYouCanDo={[
+          "Browse lenses, edit definitions, personas & prompts",
+          "Map lenses to object types (suggested / optional / low-value)",
+          "Curate canon and review routed outputs",
+        ]}
+        connectsTo={[
+          { label: "Object Companion (SweetLens)" },
+          { label: "Prompt Console", to: "/settings/prompts" },
+        ]}
         nextSteps={[
           "Pick a lens in Library → edit Purpose & Persona",
           "Open Object fit → mark which lenses surface for which entities",
@@ -353,7 +358,7 @@ function PersonaTab({ lens }: { lens: Lens }) {
         <Field label="Kind">
           <select
             value={draft.kind}
-            onChange={(e) => setDraft({ ...draft, kind: e.target.value as Lens["kind"] })}
+            onChange={(e) => setDraft({ ...draft, kind: e.target.value as NonNullable<Lens["kind"]> })}
             className="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
           >
             <option value="framework">Framework</option>
