@@ -134,13 +134,13 @@ export function OCDACockpit() {
 
   const byStage = useMemo(
     () => ({
-      observe: observeQ.data ?? [],
       choose: chooseQ.data ?? [],
       decide: decideQ.data ?? [],
       act: actQ.data ?? [],
     }),
-    [observeQ.data, chooseQ.data, decideQ.data, actQ.data],
+    [chooseQ.data, decideQ.data, actQ.data],
   );
+  const observeItems = observeQ.data ?? [];
 
   const loading = observeQ.isLoading || chooseQ.isLoading || decideQ.isLoading || actQ.isLoading;
 
@@ -153,7 +153,8 @@ export function OCDACockpit() {
       )}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
         {STAGE.map(({ key, label, icon: Icon, tone, caption }) => {
-          const items = byStage[key];
+          const isObserve = key === "observe";
+          const items = isObserve ? observeItems : byStage[key as "choose" | "decide" | "act"];
           return (
             <Card
               key={key}
@@ -177,8 +178,16 @@ export function OCDACockpit() {
                   <div className="rounded-lg border border-dashed border-border/60 bg-background/50 p-4 text-center text-[11px] text-muted-foreground">
                     Nothing here yet.
                   </div>
+                ) : isObserve ? (
+                  (items as Triageable[]).map((t) => (
+                    <TriageCard
+                      key={t.id}
+                      item={t}
+                      onPromote={(item, kind) => promote.mutate({ item, kind })}
+                    />
+                  ))
                 ) : (
-                  items.map((it) => (
+                  (items as CardItem[]).map((it) => (
                     <a
                       key={it.id}
                       href={it.href}
