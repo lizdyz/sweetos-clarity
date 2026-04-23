@@ -27,6 +27,7 @@ import {
   Target as TargetIcon,
   BookOpen,
   FlaskConical,
+  Inbox,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,7 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
       { to: "/today", label: "Today", icon: LayoutDashboard, hint: "Live working surface · my tasks · planner" },
       { to: "/calendar", label: "Calendar", icon: Calendar, hint: "Visual time view" },
       { to: "/capture", label: "Capture", icon: Sparkles, hint: "In — drop multi-node thoughts; auto-pollinates entities, save ideas to Sandbox" },
+      { to: "/import", label: "Import", icon: Inbox, hint: "Bulk ingestion — drop a folder of files, we group, classify, and propose where each one belongs" },
     ],
   },
   {
