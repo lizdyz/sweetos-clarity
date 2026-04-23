@@ -38,7 +38,7 @@ export function RelationshipCreateSheet({ open, onOpenChange }: Props) {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
-  const [organization, setOrganization] = useState("");
+  const [company, setCompany] = useState("");
   const [type, setType] = useState<string>("Prospect");
   const [stage, setStage] = useState<string>("1. Awareness");
   const [notes, setNotes] = useState("");
@@ -46,7 +46,7 @@ export function RelationshipCreateSheet({ open, onOpenChange }: Props) {
 
   const reset = () => {
     setName("");
-    setOrganization("");
+    setCompany("");
     setType("Prospect");
     setStage("1. Awareness");
     setNotes("");
@@ -58,8 +58,8 @@ export function RelationshipCreateSheet({ open, onOpenChange }: Props) {
         .from("relationships")
         .insert({
           name: name.trim(),
-          organization: organization.trim() || null,
-          relationship_type: type,
+          company: company.trim() || null,
+          type,
           pipeline_stage: stage,
           notes: notes.trim() || null,
           created_by: user?.id,
