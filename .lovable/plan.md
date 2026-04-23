@@ -1,166 +1,157 @@
-# Wave 15 — Page-by-page audit to 10/10, run by the system itself
 
-You already have the auditor. It's at `/settings/ux-audit`, it scores routes against canon, and it's the headline KPI surface. The problem isn't capability — it's **coverage, criteria, and follow-through.** This wave turns the auditor from a tool you remember to use into a campaign that walks every page to 10/10.
 
-## The core idea
+# Wave 16 — Workflow execution adapters: native, n8n, and make.com under one roof
 
-Every route gets a **canonical purpose**, a **clarity score**, and a **next action** — stored, not implied. The auditor already produces findings; we make those findings *the actual to-do list* with assignees, due dates, and a visible cockpit that ranks every page from worst to best until the whole app sits at 10/10.
+You're asking the right architectural question early. The answer is: **you don't embed n8n or Make. You wrap them.** Workflows in this system are already a first-class entity (`workflows` + `workflow_steps` + `workflow_runs`). External tools become *execution adapters* behind that same surface — the user never sees "this is n8n" unless they want to.
 
-## Part 1 — Give every page a canonical purpose (`route_canon`)
+## The model
 
-New table — one row per route, the canon for what that page is *for*:
+A `workflow` has an `execution_kind`:
+
+| kind | What runs the steps | Where it lives |
+|---|---|---|
+| `native` | Your own `workflow_step_runs` engine (today's default) | In-app |
+| `n8n` | An n8n workflow, triggered via webhook | External n8n instance |
+| `make` | A Make.com scenario, triggered via webhook | External Make scenario |
+| `zapier` | A Zap, triggered via webhook | External Zapier |
+
+All four feel identical to the user: same `<WorkflowRunTracker>`, same step cards, same approval gates, same Sparks on regression. The difference is *who executes* — and that's a config detail on the workflow, not a different page.
+
+## Part 1 — `workflow_execution_bindings` (the port layer)
+
+One new table — the "port" you mentioned:
 
 ```sql
-create table public.route_canon (
-  route_path text primary key,            -- '/tasks', '/relationships/$id'
-  display_name text not null,             -- 'My Tasks'
-  classifier text not null,               -- entity_detail | actionable_detail | index | operate | library | settings | other
-  one_liner text not null,                -- "Triage and execute work assigned to me"
-  primary_job text not null,              -- "Move a task from inbox to done in <60s"
-  what_good_looks_like text[] default '{}',
-  must_have_components text[] default '{}', -- ['CanonGuardrail','TimeControls','MeasuresPanel']
-  must_not_have text[] default '{}',
-  related_canon_kinds text[] default '{}',
-  status text default 'draft'             -- draft | defined | needs_review
+create table public.workflow_execution_bindings (
+  workflow_id uuid primary key references workflows(id) on delete cascade,
+  execution_kind text not null default 'native',  -- native | n8n | make | zapier
+  trigger_url text,                                -- webhook URL we POST to start a run
+  callback_secret text,                            -- HMAC secret they POST back with
+  external_id text,                                -- n8n workflow id / Make scenario id (display only)
+  field_map jsonb default '{}',                    -- map our fields → their input shape
+  status_map jsonb default '{}',                   -- map their states → ours (planned/running/done/failed)
+  last_synced_at timestamptz,
+  notes text
 );
 ```
 
-The existing `ROUTE_CLASSIFIER` and `PRESENCE_RULES` constants in the ux-audit edge function get **migrated into this table** so they're editable from the admin UI, not buried in code. Every new route requires a `route_canon` row before it can ship — the auditor refuses to score a route without one (forces intentionality).
+Plus a tiny extension to existing tables:
+- `workflows.execution_kind text default 'native'` (denormalized for fast filtering)
+- `workflow_runs.external_run_id text` (so callbacks can find the run)
+- `workflow_step_runs.external_step_id text` (so per-step callbacks land correctly)
 
-## Part 2 — Auditor v2: clarity, ease, purpose-fit (3 new axes)
+## Part 2 — Outbound: starting an external run
 
-Current axes: hierarchy · density · states · a11y · canon. We add three:
+When a user clicks "Run workflow" and `execution_kind != 'native'`:
 
+1. `activateWorkflow` server function (already exists in `src/utils/workflows.functions.ts`) checks the binding
+2. Builds a payload from `field_map` (relationship name, project context, etc.)
+3. POSTs to `trigger_url` with HMAC-signed body
+4. Stores returned `external_run_id` on `workflow_runs`
+5. Marks run as `running`, polls UI shows "Executing in n8n…" with the external link visible
 
-| Axis          | What it measures                                                        | How                                                      |
-| ------------- | ----------------------------------------------------------------------- | -------------------------------------------------------- |
-| `purpose_fit` | Does the page deliver its `primary_job` in <3 clicks from landing?      | AI judges against `route_canon.primary_job`              |
-| `clarity`     | Can a new user explain what this page is for in one sentence after 10s? | AI scores headline + sub-copy + first-screen affordances |
-| `ease`        | Number of clicks/fields to complete the primary job                     | AI counts; deterministic floor                           |
+No SDK. No embed. Just signed webhooks — works with n8n, Make, Zapier, anything that accepts HTTP.
 
+## Part 3 — Inbound: callbacks update the run
 
-The 10/10 target = **all 8 axes at 5/5 + 0 canon misses**. Stored as `total_score = sum(axes) + (5 if canon_misses=0 else -10)`. Easy ranking.
+New public route — one endpoint, all providers:
 
-## Part 3 — Findings become tasks (the follow-through loop)
+`src/routes/api/public/hooks/workflow-callback.ts`
 
-Right now `ux_audit_runs.findings[]` is a JSON blob you read once and forget. Change:
-
-- New table `ux_audit_findings` — one row per finding, with `status` (open · acknowledged · in_progress · fixed · wont_fix), `assignee_operator_id`, `due_date`, `fixed_by_run_id`.
-- When a run inserts findings, dedupe against open findings on the same route — same `rule_name` + `axis` + similar `description` collapses to existing row, bumps `last_seen_at`.
-- A finding fixed in a later run auto-closes (by absence). Resurfaces if it comes back.
-- Each finding can be promoted to a real `task` with one click — `task_provenance` records `audit_finding_id`.
-
-Now the auditor isn't a report — it's a backlog that closes itself when fixes ship.
-
-## Part 4 — `/settings/ux-audit` becomes the "Path to 10/10" cockpit
-
-Redesigned cockpit, three sections:
-
-```text
-┌─ PATH TO 10/10 ────────────────────────────────────────┐
-│ App score: 6.4 / 10   ▲ +0.3 vs last week              │
-│ Routes at 10/10: 4 / 47                                │
-│ Open findings: 138 (24 high · 71 med · 43 low)         │
-│ Canon misses: 19  ← headline KPI                       │
-└─────────────────────────────────────────────────────────┘
-
-┌─ WORST FIRST (sortable) ────────────────────────────────┐
-│ /flightdeck       3.2  18 findings  ▶ Run audit · Open │
-│ /sweetcycle       3.8  14 findings                     │
-│ /library/jtbd/$id 4.1  11 findings                     │
-│ ...                                                    │
-└─────────────────────────────────────────────────────────┘
-
-┌─ BULK RUNNER ──────────────────────────────────────────┐
-│ [ Run all stale (>7d) ]   [ Run all <8.0 ]   [ Run all ]│
-│ Concurrency: 3  ETA: ~4 min                            │
-└─────────────────────────────────────────────────────────┘
+Accepts POSTs with HMAC signature. Body shape:
+```json
+{
+  "external_run_id": "...",
+  "step": "Send intro email",
+  "status": "succeeded",
+  "output": { "any": "json" }
+}
 ```
 
-Click any route → existing per-route detail card, now with the finding list as an **interactive backlog** (assign, due-date, promote-to-task).
+Looks up the binding, verifies signature, updates `workflow_step_runs`, fires Sparks if a step fails. The same endpoint serves all three providers — the binding tells us which secret to verify against.
 
-## Part 5 — Auditor runs itself (Gap-Closer for pages)
+## Part 4 — UI: one workflow detail page, three execution badges
 
-The Gap-Closer cron from Wave 14 already runs every 6h. Hook into it:
+On `src/routes/_app.workflows.$id.tsx`:
 
-- Each pass picks the **5 stalest routes** (no audit in >7d OR score <8.0) and queues them.
-- New server route `api/public/hooks/ux-audit-batch.ts` — accepts an array of route paths, runs the existing edge function in parallel (concurrency 3, AI-rate-limit-aware).
-- Results flow into `ux_audit_runs` + `ux_audit_findings` like any manual run.
-- A new `agent` Spark fires when a route regresses (score drops by >0.5 between runs) — surfaces in your existing triage gesture.
+- Header gets an **Execution chip**: `Native · runs in-app` / `n8n · {external_id} ↗` / `Make · {scenario_name} ↗`
+- New tab "Execution" on the workflow detail — edits the binding (URL, secret, field map, status map)
+- Step cards show external state alongside ours: "succeeded in n8n at 14:02"
+- `<WorkflowRunTracker>` is unchanged — it just renders whatever `workflow_step_runs` says
 
-So the audit doesn't depend on remembering to click "Run."
+The user experience: they author intent here, they see results here, they audit here. Where it ran is metadata.
 
-## Part 6 — Per-page Canon Guardrail upgrade
+## Part 5 — Authoring helpers
 
-`<CanonGuardrail>` already shows the entity canon checklist on detail pages. Extend it to also show the **route canon**:
+For each external kind, a one-time setup helper on the Execution tab:
 
-- Tiny chip on every page header: `Page score: 7.2/10 · 4 open findings ·  ▶ Audit`
-- Click → opens a slide-over with the page's `route_canon`, the latest audit, and the open findings.
-- For admins only — invisible to end users.
+- **n8n**: "Paste your n8n webhook URL. We'll generate a callback URL + secret to drop into your final n8n node." Copy buttons for both.
+- **Make**: Same flow — paste scenario webhook, copy callback URL into a Make HTTP module at the end.
+- **Zapier**: Same — paste webhook, copy callback into a final Webhooks-by-Zapier step.
 
-Now the cockpit isn't a destination; the score follows you onto the page being scored.
+A "Test connection" button POSTs a ping payload and waits for the callback. Green check or red error inline. No leaving the app.
+
+## Part 6 — Field map editor (the only mildly hard UI)
+
+Small JSON-driven form that lets the user say "when this workflow fires, send these fields":
+
+```text
+Our field            →  Their input key
+─────────────────────────────────────
+relationship.name    →  customer_name
+relationship.email   →  to
+project.name         →  project
+trigger.notes        →  context
+```
+
+Stored as `field_map` JSON. Rendered in a chip-pair editor (no raw JSON shown to user). Defaults are sensible per provider.
 
 ## Files
 
-**Migration (one):**
-
-- `route_canon` table + seed all ~95 routes from `src/routes/` (script reads the file tree, classifies each, assigns sensible defaults; admin curates from there).
-- `ux_audit_findings` table + backfill from existing `ux_audit_runs.findings` JSON.
-- `total_score` generated column on `ux_audit_runs`.
-- Three new prompt rows in `system_prompts`: `ux.audit.purpose_fit`, `ux.audit.clarity`, `ux.audit.ease`.
-
-**Edge function:**
-
-- `supabase/functions/ux-audit/index.ts` — read `route_canon` for the target route, score new axes, write findings to `ux_audit_findings` with dedup.
+**Migration:**
+- `workflow_execution_bindings` table
+- `workflows.execution_kind`, `workflow_runs.external_run_id`, `workflow_step_runs.external_step_id` columns
+- Backfill: every existing workflow gets `execution_kind='native'`
 
 **New server route:**
-
-- `src/routes/api/public/hooks/ux-audit-batch.ts` — HMAC-protected, runs N audits in parallel, called by gap-scanner.
+- `src/routes/api/public/hooks/workflow-callback.ts` — HMAC-verified callback receiver
 
 **New components:**
-
-- `src/components/audit-cockpit.tsx` — Path-to-10/10 overview (replaces top of `/settings/ux-audit`).
-- `src/components/audit-finding-row.tsx` — interactive finding (status, assign, promote-to-task).
-- `src/components/route-score-chip.tsx` — page-header chip showing live score + drawer.
+- `src/components/workflow-execution-chip.tsx` — header badge + popover with external link
+- `src/components/workflow-execution-tab.tsx` — binding editor (URL, secret reveal, field map, status map, test button)
+- `src/components/workflow-field-map-editor.tsx` — chip-pair mapping UI
 
 **Edited:**
-
-- `src/routes/_app.settings.ux-audit.tsx` — new cockpit layout, finding backlog UI, bulk runner.
-- `src/components/canon-guardrail.tsx` — mount `<RouteScoreChip>` for admins.
-- `src/routes/api/public/hooks/gap-scan.ts` — call `ux-audit-batch` for stale routes.
-- `src/routes/_app.settings.canon.tsx` — add a "Routes" tab editing `route_canon` rows.
+- `src/utils/workflows.functions.ts` — `activateWorkflow` branches on `execution_kind`; new `triggerExternalWorkflow` helper
+- `src/routes/_app.workflows.$id.tsx` — mount execution chip + new tab
+- `src/components/workflow-run-tracker.tsx` — show external state next to native state
+- `src/routes/_app.settings.canon.tsx` — add note about execution kinds in workflow canon
 
 **Memory:**
-
-- `mem://design/route-canon.md` — every route has a row in `route_canon` before it ships. The auditor refuses to score routes without canon.
-- `mem://features/path-to-10.md` — the 8-axis scoring model + finding lifecycle + auto-run cadence.
+- `mem://design/workflow-execution-adapters.md` — the rule: external tools are adapters behind one workflow surface, never embedded UIs
 
 ## Sequencing
 
-1. Migration: `route_canon` + seed all routes + `ux_audit_findings` + 3 new prompts (~20%)
-2. Edge function v2: read route_canon, score 3 new axes, dedup findings (~20%)
-3. Cockpit redesign: Path-to-10/10 overview + worst-first table + bulk runner (~20%)
-4. Finding backlog UI: status, assign, due, promote-to-task (~15%)
-5. `<RouteScoreChip>` in CanonGuardrail + Routes tab in `/settings/canon` (~10%)
-6. `ux-audit-batch` server route + Gap-Closer hookup + regression Spark (~15%)
+1. Migration + binding table + execution_kind columns (~15%)
+2. Outbound trigger: HMAC-signed POST from `activateWorkflow` (~20%)
+3. Inbound callback route + signature verification + step-state updates (~20%)
+4. Execution tab UI: URL/secret/test button (~15%)
+5. Field map editor + status map editor (~15%)
+6. Execution chip on header + external state on step cards (~15%)
 
 ## Not in this wave
 
-- No new top-level routes
-- No sidebar changes
-- No automatic *fixes* — auditor proposes, humans/agents execute (existing task pipeline)
-- No A/B testing or analytics integration (separate wave)
-- No edits to auto-generated files
+- No embedded n8n/Make iframes — explicitly rejected
+- No outbound SDK installs (n8n-client, etc.) — webhooks only, keeps Worker bundle clean
+- No automatic conversion of existing native workflows to external (manual opt-in per workflow)
+- No new sidebar entry — execution is a workflow property, not a destination
 
-## After Wave 15
+## After Wave 16
 
-- Every route has a stated purpose, primary job, and 10/10 criteria — visible to admins on the page itself.
-- The auditor scores 8 axes including clarity, ease, and purpose-fit — not just canon presence.
-- Every finding is a tracked, assignable, closable backlog item with task-promotion.
-- Stale and low-scoring routes get re-audited every 6h automatically. Regressions fire Sparks.
-- One screen — `/settings/ux-audit` — tells you exactly which page to fix next and ranks the whole app from worst to best until everything sits at 10/10.
+- Any workflow can be marked `native`, `n8n`, `make`, or `zapier` — the rest of the app doesn't care
+- Users paste a webhook URL once, copy a callback URL once, and the external tool is "in" the system
+- Run history, step status, approvals, Sparks, and audit trail all flow through your existing surfaces regardless of where execution happens
+- Adding a new provider later (Inngest, Temporal, custom) = one new entry in the `execution_kind` enum + a setup helper, nothing else
 
-Reply **"Run Wave 15"** to ship in this order, or **"Just route_canon + the new cockpit first"** to land the foundation before the auto-run loop.  
-  
-  
-can you create the ability to have the control panel do this without me wasting tokens to talk to you to do it - i am very confused with the new additions at the top of the page i wanted that which page you were on you over index to help that page collect info more as its likely relevant to that page
+Reply **"Run Wave 16"** to ship in this order, or **"Just n8n adapter first"** to land one provider end-to-end before generalizing.
+
