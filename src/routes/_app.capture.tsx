@@ -1,14 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Sparkles, Mic, MicOff, Send, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { captureProposal } from "@/utils/proposals.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/lib/sb";
 import { FileDrop, type PendingFile } from "@/components/file-drop";
 import { CaptureQueueStrip } from "@/components/capture-queue-strip";
 import { UniversalDropZone } from "@/components/universal-drop-zone";
+import { TriageCard } from "@/components/triage-card";
+import { useTriagePromote } from "@/lib/use-triage-promote";
+import { DEFAULT_PROMOTE_OPTIONS, type Triageable } from "@/lib/triageable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/capture")({
@@ -314,6 +319,76 @@ function CapturePage() {
       </div>
 
       <CaptureQueueStrip />
+
+      <CaptureProposalsTriageRail />
     </div>
   );
+}
+
+function CaptureProposalsTriageRail() {
+  const promote = useTriagePromote();
+  const { data: proposals = [] } = useQuery({
+    queryKey: ["capture", "proposals", "triage"],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("proposals")
+        .select("id, entity_type, payload, confidence, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(8);
+      return (data ?? []) as Array<{
+        id: string;
+        entity_type: string;
+        payload: Record<string, unknown> | null;
+        confidence: number | null;
+        created_at: string;
+      }>;
+    },
+  });
+
+  if (proposals.length === 0) return null;
+
+  const items: Triageable[] = proposals.map((p) => ({
+    id: p.id,
+    kind: "sandbox_item",
+    title: readPropTitle(p.payload) ?? `(${p.entity_type})`,
+    body: typeof p.payload?.description === "string" ? p.payload.description : null,
+    source: { kind: "proposal", id: p.id, label: p.entity_type },
+    state: "raw",
+    frames: [],
+    promote_options: DEFAULT_PROMOTE_OPTIONS,
+    provenance: { upstream: [], downstream: [] },
+    created_at: p.created_at,
+    confidence: p.confidence ?? undefined,
+    relationship_id: null,
+  }));
+
+  return (
+    <section className="mt-6 rounded-2xl border border-border bg-surface/40 p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Triage — pending proposals
+        </h2>
+        <span className="text-[11px] text-muted-foreground">
+          Frame and promote with the universal gesture
+        </span>
+      </div>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {items.map((it) => (
+          <li key={it.id}>
+            <TriageCard item={it} onPromote={(item, kind) => promote.mutate({ item, kind })} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function readPropTitle(payload: Record<string, unknown> | null): string | undefined {
+  if (!payload) return undefined;
+  for (const k of ["name", "title", "campaign_name", "task", "decision"]) {
+    const v = payload[k];
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return undefined;
 }
