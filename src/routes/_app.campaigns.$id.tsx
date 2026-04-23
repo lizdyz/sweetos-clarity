@@ -4,6 +4,7 @@ import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
+import { JTBDChips } from "@/components/jtbd-chips";
 
 export const Route = createFileRoute("/_app/campaigns/$id")({
   component: CampaignDetail,
@@ -39,6 +40,9 @@ function CampaignDetail() {
         />
       )}
       <EntityDetailPage entityKey="campaigns" />
+      <div className="px-6">
+        <JTBDChips subject="campaign" subjectId={id} />
+      </div>
       <div className="px-6 pb-8">
         <MeasuresPanel subjectType="campaign" subjectId={id} />
       </div>

@@ -12,6 +12,7 @@ import { OperatorChip } from "@/components/operator-chip";
 import { CreatedByChip } from "@/components/created-by-chip";
 import { WalkMenu } from "@/components/walk-menu";
 import { EntityFrameworksRail } from "@/components/entity-frameworks-rail";
+import { JTBDChips } from "@/components/jtbd-chips";
 
 export const Route = createFileRoute("/_app/tasks/$id")({
   component: TaskDetail,
@@ -44,6 +45,9 @@ function TaskDetail() {
         <TaskTimeBlock taskId={id} />
         <TaskPanels taskId={id} />
         <EntityDetailPage entityKey="tasks" />
+        <div className="px-6">
+          <JTBDChips subject="task" subjectId={id} />
+        </div>
         <div className="px-6 pb-8">
           <MeasuresPanel subjectType="task" subjectId={id} />
         </div>

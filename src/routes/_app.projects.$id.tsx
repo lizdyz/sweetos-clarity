@@ -11,6 +11,7 @@ import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
 import { OperatorChip } from "@/components/operator-chip";
 import { WalkMenu } from "@/components/walk-menu";
+import { JTBDChips } from "@/components/jtbd-chips";
 
 export const Route = createFileRoute("/_app/projects/$id")({
   component: ProjectDetail,
@@ -31,6 +32,9 @@ function ProjectDetail() {
       <ComponentLinkPanel projectId={id} />
       <ProjectPanels projectId={id} />
       <EntityDetailPage entityKey="projects" />
+      <div className="px-6">
+        <JTBDChips subject="project" subjectId={id} />
+      </div>
       <div className="px-6 pb-8">
         <MeasuresPanel subjectType="project" subjectId={id} />
       </div>
