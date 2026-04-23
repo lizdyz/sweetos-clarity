@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
         proposed: parsed,
         rationale,
         status: "pending",
-        generated_by_model: model,
+        generated_by_model: prompt.model,
       })
       .select("id")
       .single();
