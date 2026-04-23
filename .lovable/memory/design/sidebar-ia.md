@@ -9,7 +9,7 @@ type: design
 ## The IA — order, exact labels, rationale
 
 1. **TODAY** *(always open)* — Today · Calendar · Capture
-2. **WORK** *(always open)* — Sandbox · OCDA Cockpit · Flightdeck · SweetCycle · Sessions Bank · SweetScan · Engagement Plans · Pipeline · Campaigns · Decisions · Delegation Register · Measures
+2. **WORK** *(always open)* — Sandbox · OCDA Cockpit · Flightdeck · Sessions Bank · SweetScan · Engagement Plans · Campaigns · Decisions · Delegation Register · Measures
 3. **PEOPLE** *(always open)* — **Operators (first)** · Relationships · People · Projects · Tasks · Missions · Journeys · Quests · Sparks
 4. **LIBRARY** *(collapsed)* — BizzyBots · Workflows · Session Templates · Playbooks · Components · Personas · Outcomes · JTBD · KTIs · Documents · Domain Assessments · Vault · Domains · Tenets
 5. **SETTINGS** *(collapsed)* — Entity Canon · Lens Canon · Prompt Console · Spark Library · Excellence rubric · BizzyBot prompts · Open decisions · UX Audit · Team & profile
@@ -23,10 +23,27 @@ type: design
 - **Sandbox** is the triage table — lives in **Work** (top), not Think, not Library.
 - **OCDA Cockpit** stays as its own page (renamed "Decision Factory" framing inside the page itself).
 
+## Captions (shown under each group label)
+
+- **TODAY** = "Live working surface"
+- **WORK** = "Run the work · triage · decide"
+- **PEOPLE** = "Operators, relationships, projects"
+
+Per-item captions clarify the easily-confused ones:
+
+- **Capture** = "In — drop multi-node thoughts; auto-pollinates entities, save ideas to Sandbox"
+- **Sandbox** = "Frame & route — triage raw ideas, run framework lenses, promote to work"
+- **Operators** = "Who does the work — humans · workflows · AI agents"
+- **Relationships** = "Clients & key relationships (the orgs you work with)"
+- **People** = "Contacts within those relationships"
+
 ## What is NOT in the sidebar
 
 - **No mode switcher.** Skipped intentionally — overkill at <3 operators. Re-evaluate when team grows.
-- **No 5 Ps as a shelf.** The 5 Ps (Purpose · People · Process · Product · Profit) are a *diagnostic lens*, not a navigation taxonomy. They appear as: (a) overlay in the Sandbox Frameworks Rail, (b) health view on Relationships, (c) tags on Components/Domains/Decisions. Never as sidebar groups.
+- **No 5 Ps as a shelf.** The 5 Ps (Purpose · People · Process · Product · Profit) are a *diagnostic lens*, not a navigation taxonomy.
+- **SweetCycle is a *view*, not a destination.** It only makes sense for an active Engagement Plan, so it lives as a tab on `/engagement-plans/$id`. The cross-relationship `/sweetcycle` page is reachable via the "View all SweetCycles →" link on the Engagement Plans index — kept out of the sidebar to avoid implying it's a peer destination.
+- **`/pipeline` is not in the sidebar.** It's a Wave-2A redirect to `/flightdeck`; the route file stays alive for old bookmarks but the nav entry was removed. (`pipeline_stage` as a column on relationships is unrelated and stays.)
+- **Redirect-only stubs (`/my-tasks`, `/queue`, `/planner`) never appear** in the sidebar.
 
 ## Topbar
 
