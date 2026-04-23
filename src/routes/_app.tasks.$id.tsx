@@ -13,6 +13,7 @@ import { CreatedByChip } from "@/components/created-by-chip";
 import { WalkMenu } from "@/components/walk-menu";
 import { EntityFrameworksRail } from "@/components/entity-frameworks-rail";
 import { JTBDChips } from "@/components/jtbd-chips";
+import { OCDAStageChip } from "@/components/ocda-stage-chip";
 
 export const Route = createFileRoute("/_app/tasks/$id")({
   component: TaskDetail,
@@ -27,16 +28,22 @@ function TaskDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("tasks")
-        .select("name, description")
+        .select("name, description, ocda_stage")
         .eq("id", id)
         .maybeSingle();
-      return data as { name: string; description: string | null } | null;
+      return data as { name: string; description: string | null; ocda_stage: string | null } | null;
     },
   });
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div className="space-y-5 min-w-0">
         <div className="flex items-center justify-end gap-2 px-6 pt-4">
+          <OCDAStageChip
+            subjectTable="tasks"
+            subjectId={id}
+            stage={task?.ocda_stage ?? null}
+            invalidate={[["tasks", "title", id]]}
+          />
           <TaskCreatedByChip taskId={id} />
           <TaskOperatorChip taskId={id} />
           <WalkMenu kind="task" id={id} />

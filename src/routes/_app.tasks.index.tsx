@@ -12,6 +12,7 @@ import { Chip } from "@/components/chips";
 import { TasksPipelineRibbon } from "@/components/tasks-pipeline-ribbon";
 import { TaskProvenanceChip, type SpawnedByKind } from "@/components/task-provenance-chip";
 import { UniversalFilterBar } from "@/components/universal-filter-bar";
+import { PageHeader } from "@/components/page-header";
 import { universalFilterSchema } from "@/lib/use-universal-filters";
 import {
   Search,
@@ -261,19 +262,28 @@ function TasksIndexPage() {
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 p-6">
-      <header className="flex items-center gap-3">
-        <div className="grid h-10 w-10 place-items-center rounded-xl bg-iris/10 text-[color:var(--iris-violet)]">
-          <ListChecks className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Tasks</h1>
-          <p className="text-sm text-muted-foreground">
-            {tasks.length} total · <span className="text-destructive">{overdueCount} overdue</span> ·{" "}
-            <span className="text-[color:var(--warning-foreground)]">{blockedCount} blocked</span>
-          </p>
-        </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>+ New task</Button>
-      </header>
+      <PageHeader
+        icon={<ListChecks className="h-5 w-5" />}
+        title="Tasks"
+        purpose="Every task in the system across every relationship and project. Use My Tasks for what's assigned to you, Today for live working surface."
+        whatYouCanDo={[
+          "Filter by Mine, Blocked, Overdue, or Unscheduled",
+          "Group by status, due, relationship, or operator",
+          "Open a task to set OCDA stage, time, dependencies",
+        ]}
+        connectsTo={[
+          { to: "/today", label: "Today" },
+          { to: "/my-tasks", label: "My Tasks" },
+          { to: "/projects", label: "Projects" },
+          { to: "/operate/ocda", label: "OCDA Cockpit" },
+        ]}
+        nextSteps={[
+          `${overdueCount} overdue`,
+          `${blockedCount} blocked`,
+          `${tasks.length} total`,
+        ]}
+        actions={<Button size="sm" onClick={() => setCreateOpen(true)}>+ New task</Button>}
+      />
 
       {/* Pipeline ribbon */}
       <TasksPipelineRibbon />

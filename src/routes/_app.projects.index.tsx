@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { RollupStatChip } from "@/components/rollup-stat-chip";
 import { HeatRing, heatFromRollup } from "@/components/heat-ring";
 import { Chip } from "@/components/chips";
+import { PageHeader } from "@/components/page-header";
 import {
   Search,
   Filter,
@@ -143,18 +144,27 @@ function ProjectsIndexPage() {
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 p-6">
-      <header className="flex items-center gap-3">
-        <div className="grid h-10 w-10 place-items-center rounded-xl bg-iris/10 text-[color:var(--iris-violet)]">
-          <Folders className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground">
-            {projects.length} total · <span className="font-medium text-destructive">{stuckCount} stuck</span> (overdue or blocked)
-          </p>
-        </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>+ New project</Button>
-      </header>
+      <PageHeader
+        icon={<Folders className="h-5 w-5" />}
+        title="Projects"
+        purpose="Multi-task initiatives that build Components and move Domain maturity. Projects own a stream of work; tasks live inside them."
+        whatYouCanDo={[
+          "Filter by All / Stuck / Mine and sort by overdue, due, or recency",
+          "Open a project to see its task graph and component contributions",
+          "Tag with a Relationship to make it client-facing",
+        ]}
+        connectsTo={[
+          { to: "/tasks", label: "Tasks" },
+          { to: "/components", label: "Components" },
+          { to: "/relationships", label: "Relationships" },
+          { to: "/operate/ocda", label: "OCDA Cockpit" },
+        ]}
+        nextSteps={[
+          `${stuckCount} stuck`,
+          `${projects.length} total`,
+        ]}
+        actions={<Button size="sm" onClick={() => setCreateOpen(true)}>+ New project</Button>}
+      />
 
       <Card className="p-3">
         <div className="flex flex-wrap items-center gap-2">

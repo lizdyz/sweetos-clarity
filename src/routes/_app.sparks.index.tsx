@@ -76,9 +76,15 @@ function SparksIndex() {
         purpose="The atomic unit of self-paced advancement. Sessions move things forward in a guided cadence; Sparks let progress happen between sessions. Both advance the same Components."
         whatYouCanDo={[
           "Filter by Internal (your own work) vs Client SweetSync",
-          "Confirm, edit, or skip each one",
+          "Confirm, edit, or skip each one in the triage rail",
           "Trace provenance back to the Curator or Workflow that spawned it",
         ]}
+        connectsTo={[
+          { to: "/quests", label: "Quests" },
+          { to: "/components", label: "Components" },
+          { to: "/sweetsync", label: "SweetSync" },
+        ]}
+        nextSteps={[`${recent.length} recent`, "Triage raw", "Promote to Quest"]}
       />
 
       <ScopeTabs value={filter} onChange={setFilter} />

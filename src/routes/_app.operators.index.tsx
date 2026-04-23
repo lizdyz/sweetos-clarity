@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Bot, User, Workflow as WorkflowIcon, Plus, Sparkles } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -105,22 +106,30 @@ function OperatorsListPage() {
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-5 p-6">
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-iris/10 text-[color:var(--iris-violet)]">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Operators</h1>
-            <p className="text-sm text-muted-foreground">
-              Anyone — or anything — that does work. Humans, workflows, and AI agents.
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => setOpen(true)} size="sm">
-          <Plus className="mr-1.5 h-4 w-4" /> New operator
-        </Button>
-      </header>
+      <PageHeader
+        icon={<Sparkles className="h-5 w-5" />}
+        title="Operators"
+        purpose="Anyone — or anything — that does work. Humans, workflows, and AI agents all share one table with skills, availability, and workload."
+        whatYouCanDo={[
+          "Filter by kind (Human / Workflow / Agent)",
+          "Open an operator to see assignments, skills, likes, dislikes",
+          "Spawn an Agent run from the operator detail view",
+        ]}
+        connectsTo={[
+          { to: "/flightdeck", label: "Flightdeck" },
+          { to: "/tasks", label: "Tasks" },
+          { to: "/workflows", label: "Workflows" },
+        ]}
+        nextSteps={[
+          `${operators.length} total`,
+          `${operators.filter((o) => o.kind === "agent").length} agents`,
+        ]}
+        actions={
+          <Button onClick={() => setOpen(true)} size="sm">
+            <Plus className="mr-1.5 h-4 w-4" /> New operator
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap gap-1.5">
         {(["all", "human", "workflow", "agent"] as const).map((k) => (

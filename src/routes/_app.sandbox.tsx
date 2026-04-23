@@ -24,6 +24,13 @@ function SandboxPage() {
           "Run framework overlays (5Ps, BizzyBot lens, KTI candidate, Domain fit) on any idea",
           "Promote a framed idea into a Task, Project, Spark, Decision input, or Component canon",
         ]}
+        connectsTo={[
+          { to: "/capture", label: "Capture" },
+          { to: "/queue", label: "Queue" },
+          { to: "/operate/ocda", label: "OCDA Cockpit" },
+          { to: "/decisions", label: "Decisions" },
+        ]}
+        nextSteps={["Frame raw", "Promote framed", "Archive noise"]}
       />
       <UniversalDropZone />
       <UniversalFilterBar
