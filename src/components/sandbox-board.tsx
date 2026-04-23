@@ -4,14 +4,13 @@ import { Inbox, Sparkles, CheckCircle2, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { sb } from "@/lib/sb";
 import { TriageCard } from "@/components/triage-card";
-import { FrameworksRail } from "@/components/frameworks-rail";
+import { ObjectCompanion } from "@/components/object-companion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   type Triageable,
   type Frame,
-  type OverlayKind,
   type PromoteActionKind,
   DEFAULT_PROMOTE_OPTIONS,
 } from "@/lib/triageable";
