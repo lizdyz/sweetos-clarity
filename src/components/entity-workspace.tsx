@@ -36,6 +36,28 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { KanbanBoard } from "@/components/kanban-board";
 import { TagPicker } from "@/components/tag-picker";
+import { PageCaptureButton } from "@/components/page-capture-button";
+
+/** Map plural entity keys to entity_canon.entity_kind (singular). */
+const ENTITY_KEY_TO_CANON_KIND: Record<string, string> = {
+  relationships: "relationship",
+  projects: "project",
+  tasks: "task",
+  campaigns: "campaign",
+  documents: "document",
+  quests: "quest",
+  sparks: "spark",
+  sessions: "session",
+  components: "component",
+  personas: "persona",
+  playbooks: "playbook",
+  decisions: "decision",
+  outcomes: "outcome",
+  workflows: "workflow",
+  operators: "operator",
+  missions: "mission",
+  journeys: "journey",
+};
 
 type Row = Record<string, unknown> & { id: string; updated_at?: string; created_at?: string };
 
@@ -555,6 +577,13 @@ function EntityDetail({ entity, id }: { entity: EntityDef; id: string }) {
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">{id}</p>
         </div>
         <div className="flex items-center gap-2">
+          {ENTITY_KEY_TO_CANON_KIND[entity.key] && (
+            <PageCaptureButton
+              subjectKind={ENTITY_KEY_TO_CANON_KIND[entity.key]}
+              subjectId={id}
+              subjectLabel={headline}
+            />
+          )}
           <Button variant="outline" onClick={() => setEditing(true)}>
             Edit
           </Button>

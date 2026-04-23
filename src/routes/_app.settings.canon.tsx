@@ -19,6 +19,13 @@ export const Route = createFileRoute("/_app/settings/canon")({
   component: CanonEditor,
 });
 
+interface CoverageRules {
+  stale_capture_days?: number;
+  require_jtbd_link?: boolean;
+  require_active_kti?: boolean;
+  min_sparks_per_quarter?: number;
+}
+
 interface CanonRow {
   id: string;
   entity_kind: string;
@@ -34,6 +41,8 @@ interface CanonRow {
   child_kinds: string[] | null;
   peer_kinds: string[] | null;
   composition_notes: string | null;
+  capture_prompts: string[];
+  coverage_rules: CoverageRules;
   status: string;
   updated_at: string;
 }
@@ -299,7 +308,38 @@ function CanonView({
           <p className="text-sm leading-relaxed text-muted-foreground">{canon.reinforcement_loop}</p>
         </Section>
       )}
+
+      {(canon.capture_prompts?.length ?? 0) > 0 && (
+        <Section title="Capture prompts (shown in the PageHeader capture popover)">
+          <ul className="space-y-1 text-sm">
+            {canon.capture_prompts.map((p, i) => (
+              <li key={i} className="flex gap-1.5">
+                <span className="text-muted-foreground">›</span>
+                <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      <Section title="Coverage rules (used by Gap-Closer)">
+        <dl className="grid grid-cols-2 gap-2 text-xs">
+          <Pair k="Stale capture (days)" v={canon.coverage_rules?.stale_capture_days ?? "—"} />
+          <Pair k="Require JTBD link" v={canon.coverage_rules?.require_jtbd_link ? "Yes" : "No"} />
+          <Pair k="Require active KTI" v={canon.coverage_rules?.require_active_kti ? "Yes" : "No"} />
+          <Pair k="Min Sparks / quarter" v={canon.coverage_rules?.min_sparks_per_quarter ?? "—"} />
+        </dl>
+      </Section>
     </article>
+  );
+}
+
+function Pair({ k, v }: { k: string; v: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border bg-background px-2.5 py-1.5">
+      <span className="text-muted-foreground">{k}</span>
+      <span className="font-medium">{v}</span>
+    </div>
   );
 }
 
@@ -328,6 +368,12 @@ function CanonForm({ canon, userId, onCancel, onSaved }: { canon: CanonRow; user
   const [peers, setPeers] = useState((canon.peer_kinds ?? []).join(", "));
   const [compNotes, setCompNotes] = useState(canon.composition_notes ?? "");
   const [status, setStatus] = useState(canon.status);
+  const [capturePrompts, setCapturePrompts] = useState((canon.capture_prompts ?? []).join("\n"));
+  const cr = canon.coverage_rules ?? {};
+  const [staleDays, setStaleDays] = useState(String(cr.stale_capture_days ?? 21));
+  const [requireJtbd, setRequireJtbd] = useState(!!cr.require_jtbd_link);
+  const [requireKti, setRequireKti] = useState(!!cr.require_active_kti);
+  const [minSparks, setMinSparks] = useState(String(cr.min_sparks_per_quarter ?? 1));
   const [busy, setBusy] = useState(false);
 
   const toLines = (s: string) => s.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -349,6 +395,13 @@ function CanonForm({ canon, userId, onCancel, onSaved }: { canon: CanonRow; user
         child_kinds: toCsv(children),
         peer_kinds: toCsv(peers),
         composition_notes: compNotes || null,
+        capture_prompts: toLines(capturePrompts),
+        coverage_rules: {
+          stale_capture_days: Number(staleDays) || 21,
+          require_jtbd_link: requireJtbd,
+          require_active_kti: requireKti,
+          min_sparks_per_quarter: Number(minSparks) || 1,
+        },
         status,
         updated_by: userId,
       })
@@ -392,6 +445,42 @@ function CanonForm({ canon, userId, onCancel, onSaved }: { canon: CanonRow; user
           <Field label="Peer kinds"><Input value={peers} onChange={(e) => setPeers(e.target.value)} placeholder="e.g. jtbd" /></Field>
         </div>
         <Field label="Composition notes"><Input value={compNotes} onChange={(e) => setCompNotes(e.target.value)} placeholder="Nuance about how it composes" /></Field>
+      </div>
+
+      <div className="rounded-xl border border-dashed border-border p-3 space-y-3">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Capture prompts (one per line — shown when operator clicks "Capture for {canon.display_name}")
+        </div>
+        <Textarea
+          rows={6}
+          value={capturePrompts}
+          onChange={(e) => setCapturePrompts(e.target.value)}
+          placeholder="e.g. Current pain or wedge moment&#10;Decision they're stuck on"
+        />
+      </div>
+
+      <div className="rounded-xl border border-dashed border-border p-3 space-y-3">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Coverage rules (Gap-Closer)
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Stale capture (days)">
+            <Input type="number" value={staleDays} onChange={(e) => setStaleDays(e.target.value)} />
+          </Field>
+          <Field label="Min Sparks per quarter">
+            <Input type="number" value={minSparks} onChange={(e) => setMinSparks(e.target.value)} />
+          </Field>
+        </div>
+        <div className="flex flex-wrap gap-4 pt-1">
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={requireJtbd} onChange={(e) => setRequireJtbd(e.target.checked)} />
+            Require JTBD link
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={requireKti} onChange={(e) => setRequireKti(e.target.checked)} />
+            Require active KTI
+          </label>
+        </div>
       </div>
 
       <div className="flex justify-end gap-2">
