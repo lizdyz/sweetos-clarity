@@ -1,0 +1,1 @@
+alter view public.operator_handoff_inbox set (security_invoker = true);
