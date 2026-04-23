@@ -12,7 +12,7 @@ import { TimeControls } from "@/components/time-controls";
 import { OperatorChip } from "@/components/operator-chip";
 import { WalkMenu } from "@/components/walk-menu";
 import { JTBDChips } from "@/components/jtbd-chips";
-import { ObjectCompanion, SweetLensButton } from "@/components/object-companion";
+import { SweetLensLayout } from "@/components/sweet-lens-layout";
 
 export const Route = createFileRoute("/_app/projects/$id")({
   component: ProjectDetail,
@@ -22,7 +22,6 @@ const DONE_STATUSES = ["Done", "Complete", "Completed", "Cancelled", "Canceled",
 
 function ProjectDetail() {
   const { id } = Route.useParams();
-  const [lensOpen, setLensOpen] = useState(false);
   const { data: projectMeta } = useQuery({
     queryKey: ["projects", "lens-meta", id],
     queryFn: async () => {
@@ -31,36 +30,25 @@ function ProjectDetail() {
     },
   });
   return (
-    <div className={lensOpen ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]" : ""}>
-      <div className="min-w-0 space-y-5">
-        <div className="flex items-center justify-end gap-2 px-6 pt-4">
-          <ProjectOperatorChip projectId={id} />
-          <WalkMenu kind="project" id={id} />
-          <SweetLensButton active={lensOpen} onClick={() => setLensOpen((o) => !o)} />
-        </div>
-        <WorkContextStrip entityType="project" entityId={id} />
-        <ProjectTimeBlock projectId={id} />
-        <ComponentLinkPanel projectId={id} />
-        <ProjectPanels projectId={id} />
-        <EntityDetailPage entityKey="projects" />
-        <div className="px-6">
-          <JTBDChips subject="project" subjectId={id} />
-        </div>
-        <div className="px-6 pb-8">
-          <MeasuresPanel subjectType="project" subjectId={id} />
-        </div>
+    <SweetLensLayout
+      objectKind="project"
+      objectId={id}
+      objectTitle={projectMeta?.name ?? "Project"}
+      headerLeft={<ProjectOperatorChip projectId={id} />}
+      headerRight={<WalkMenu kind="project" id={id} />}
+    >
+      <WorkContextStrip entityType="project" entityId={id} />
+      <ProjectTimeBlock projectId={id} />
+      <ComponentLinkPanel projectId={id} />
+      <ProjectPanels projectId={id} />
+      <EntityDetailPage entityKey="projects" />
+      <div className="px-6">
+        <JTBDChips subject="project" subjectId={id} />
       </div>
-      {lensOpen && (
-        <div className="px-6 pt-4 lg:pr-6">
-          <ObjectCompanion
-            objectKind="project"
-            objectId={id}
-            objectTitle={projectMeta?.name ?? "Project"}
-            className="self-start lg:sticky lg:top-4"
-          />
-        </div>
-      )}
-    </div>
+      <div className="px-6 pb-8">
+        <MeasuresPanel subjectType="project" subjectId={id} />
+      </div>
+    </SweetLensLayout>
   );
 }
 
