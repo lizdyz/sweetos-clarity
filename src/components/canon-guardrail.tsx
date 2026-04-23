@@ -130,3 +130,20 @@ export function CanonGuardrail({ entityKind, className, defaultOpen = false }: P
     </section>
   );
 }
+
+function GraphLine({ label, kinds }: { label: string; kinds: string[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+      <span className="text-muted-foreground">{label}:</span>
+      {kinds.map((k) => (
+        <Link
+          key={k}
+          to="/settings/canon"
+          className="rounded-full border border-border bg-background px-1.5 py-0.5 hover:bg-iris-soft/40"
+        >
+          {k}
+        </Link>
+      ))}
+    </div>
+  );
+}
