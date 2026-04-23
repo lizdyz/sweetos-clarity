@@ -1,197 +1,132 @@
 
 
-# The Idea Sandbox: triage surface + universal "Triageable" interface across entities
+# Reconciling v1 (UX restructure) and v2 (operator platform) — one forward path
 
-You corrected two things at once:
+## What you handed me
 
-1. **Decision Factory has a precise meaning** (from your Apr 18 notebook, confirmed by the image you uploaded): it's the *thing OCDA makes systematic* — a four-component machine: **Data Pipeline → Algorithms → Experimentation Platform → Infrastructure**. It's **not** a 5-lane Kanban I invented. OCDA Cockpit is already where it lives. I should restore that meaning, not replace OCDA.
+Two architectural briefs that **don't conflict**. v2 explicitly says v1 is "incomplete, not wrong" and stacks on top of it.
 
-2. **What you actually want me to build** is upstream of OCDA: an **Idea Sandbox** where raw inputs (signals, fires, captures, sparks, half-baked thoughts) land in one place, can be **poked at with framework overlays** (BizzyBots / Lenses / 5Ps / KTI logic), and then **promoted** into the right kind of work — task, project, decision input, spark, or simply archived. With **shared mechanics** so every triageable thing behaves the same way.
+- **v1** optimizes for *Liz's day*: signal-first Today, walkable graph, mode anchoring, 4-group rail, 6 surfaces that carry 80% of the load.
+- **v2** reframes the same app as *SweetBot Inc.'s operator platform*: clients are managed entities, operators (human + workflow + agent) are first-class, and four new capabilities (Operator Dashboard · Handoff · Canon · Onboarding Quest) are what's actually missing.
 
-This plan does three things, in order.
+The right move is **not to pick one**. It's to **merge them with v2's priority order** and ship in the sequence v2 already laid out, while applying v1's universal patterns (walk-menu, connection rail, universal detail shell) to every new surface as we build it.
 
 ---
 
-## Part 1 — Restore Decision Factory to its real meaning (small, important fix)
+## The reconciled plan — five waves
 
-Per the notebook: **Decision Factory = the four-component decisioning machine that OCDA operationalizes.** The four components live as canon:
+### Wave 1 · Sidebar IA + topbar shell (foundation for everything below)
 
-| # | Component | What it does |
+Without this, every later wave fights the rail. Small, pure UI, no schema.
+
+- Collapse 8 groups → **TODAY · WORK · PEOPLE** + collapsed **Canon · Library · Settings**
+- Promote **Operators** to first item in PEOPLE (v2 rule)
+- Move Sandbox out of Think into WORK; absorb OCDA Cockpit as a Flightdeck view toggle; move BizzyBots, Documents, Domain Assessments behind Library; move Missions/Journeys/Quests/Sparks onto the Relationship detail page (still reachable via Library index)
+- Add **Mode switcher** (Operate · Engage · Build) sticky above TODAY
+- Topbar gets: Search (⌘K), Quick Capture, mode indicator, **entity crumb trail (5 deep)**, bot alerts bell, profile
+- Update `mem://design/sidebar-ia.md` to the new IA so it's canon
+
+**Risk:** zero — route paths don't move, only sidebar grouping changes.
+
+### Wave 2 · Operator Dashboard (v2 priority #1)
+
+The single highest-leverage build in v2. `/operators/$id` exists but renders like a profile.
+
+- Rebuild with: header → **Capacity strip** (reads `operator_workload`) → **six-tab queue** (Now · Queue · Blocked · Awaiting · Handoffs · History) → measures panel → agent-canon block (agents only)
+- Rebuild `/operators` index as **capacity-visible grid** (one tile per operator with live counts)
+- Every row in every tab uses v1's universal **walk-menu** (Up · Down · Produces · Consumes · Advances · About) — built as a reusable component now so all later waves get it
+- Handoffs tab renders empty placeholder until Wave 3
+
+### Wave 3 · Handoff mechanism (v2 priority #2)
+
+What makes the EA hire actually work.
+
+- New `handoff_events` table (additive, no breaking change): `work_item_kind`, `work_item_id`, `from_operator_id`, `to_operator_id`, `brief`, `attached_context jsonb`, `status` (sent/accepted/bounced/completed), `gate_type`, `bounce_reason`
+- **Handoff sheet** — slide-in from right on any work item (task, project, session, workflow run). Auto-attaches relationship + component + execution_prompt + success_criteria from the item; lets sender pick optional sessions/decisions to include
+- Writes a `handoff` event to `entity_audit_log` on send
+- Handoffs tab in Operator Dashboard surfaces inbound with **Accept / Bounce-back** actions
+- Bounce-back returns to sender's Handoffs tab with reason — surfaces canon gaps as data
+
+### Wave 4 · Today as a decision surface (v1 priority — now ready, since Operator Dashboard handles "my plate")
+
+Today stops trying to *be* the operator dashboard and becomes the **signal + decision surface**.
+
+- **Decision bar** (top): four chips — Awaiting you · Ready to advance · Fired in last 24h · Stuck > 3 days
+- **Next best actions column** — computed top-5, each with inline Do / Schedule / **Hand off** action (uses Wave 3 sheet)
+- **Live signal strip** — SweetScan forward radar preview (KTI fires + classified inbound signals)
+- Today's scheduled work (existing) + Story trail (existing) below
+- SweetScan moves from rail item to Today tab (per v1 §3.1, v2 keeps SweetScan as page — recommend Today tab; flagging for your call)
+
+### Wave 5 · Platform Canon room (v2 priority #3)
+
+Wisdom's home. Evaluator's home.
+
+- New `/canon` route, seven tabs: Overview · Vocabulary · Entities · ERD · Decisions · Ship status · Evidence · Forks
+- ERD tab: auto-rendered from live schema (mermaid from `pg_catalog`), click table → columns + which routes read it (cross-reference already computed in your audit doc)
+- Vocabulary + Entities: read views over `entity_canon` / `lens_canon`; edit stays in Settings
+- Decisions: combined `decisions` + `open_decisions` with supersedes chain
+- Ship status: hand-maintained table v1, machine-checkable v2 later
+
+### Wave 6 (deferred, content not code) · Onboarding Quest (v2 priority #4)
+
+Pure content work on existing Quest/Spark primitives. One enum addition (`quest.kind = 'onboarding'`), then write the 10 EA Sparks. Defer until Waves 1–5 land — they're what makes the Quest's Sparks resolvable.
+
+---
+
+## The cross-cutting features (apply to every wave as it ships)
+
+These are v1's load-bearing patterns. We don't build them as a wave — we build them once, then mount them into every surface above.
+
+| Feature | First built in | Reused in |
 |---|---|---|
-| 01 | **Data pipeline** | Semi-automated process that gathers, cleans, integrates, and safeguards data in a systematic, sustainable, scalable way |
-| 02 | **Algorithms** | Generates predictions of future states and actions of a business — not reports, predictions |
-| 03 | **Experimentation platform** | Hypotheses on new approaches are tested. Confirms whether suggestions are having their intended effect |
-| 04 | **Infrastructure** | Embeds this process into software. Connects internal and external users. What makes it compound rather than reset. |
-
-**What I'll do:**
-- Rename the OCDA route header from "OCDA Cockpit" to **"OCDA — your Decision Factory"** with a one-line explainer ("Observe · Choose · Decide · Act — the loop that makes your Decision Factory compound")
-- Add a small **Factory Health strip** at the top of `/operate/ocda` showing the four components as status tiles (Data pipeline / Algorithms / Experimentation / Infrastructure) — each links to where that component is built (Data pipeline → SweetScan + Capture; Algorithms → KTIs + BizzyBots; Experimentation → Workflows; Infrastructure → the OS itself)
-- Save canon: `mem://design/decision-factory.md` with the verbatim 4-component definition + "OCDA is the Decision Factory made personal" + the anti-EBITDA argument
-- I'm **not** ripping out the existing 4-column OCDA cockpit (Observe/Choose/Decide/Act) — that's correct. I'm just re-framing it and adding the health strip
-
-That closes the misunderstanding cleanly without overbuilding.
+| **Walk-menu** (Up/Down/Produces/Consumes/Advances/About) | Wave 2 (Operator Dashboard cards) | Today, Flightdeck, Relationship detail, Work, Sandbox |
+| **Universal detail shell** (canonical header → work-context strip → connection rail + content → evidence footer) | Wave 2 (`/operators/$id` is the proof) | Every detail page; extend `entity-workspace`, don't fork |
+| **Topbar entity crumb trail (5-deep)** | Wave 1 | Persists across all navigation |
+| **Connection rail** on detail pages | Wave 2 | Component, Workflow, Session, Task, Project detail |
+| **Maturity overlay** (L-dot on every Component card, ring on Relationship card) | Wave 4 | Anywhere a Component or Relationship renders |
 
 ---
 
-## Part 2 — The Idea Sandbox (the real ask)
+## Open questions I need you to call before I start Wave 1
 
-A new triage surface that answers: *"Stuff is coming at me — signals, fires, podcasts, half-thoughts, sparks. What is it? What overlay should I run on it? What should it become?"*
+These are v1's §9 plus one new from v2:
 
-### 2A. Where it lives
+1. **Mode switcher — ship in Wave 1, or defer until 3+ operators are live?** v2 implies it's overkill at 2 operators (you + Wisdom). Recommend: **build it, default to Operate, hide the picker until a 3rd operator joins**.
+2. **SweetScan — Today tab (v1) or keep as standalone page (v2 implies)?** Recommend: **Today tab** for the radar preview, keep `/sweetscan` page for the deeper inbox/world-watch view. Both surfaces, same data.
+3. **Sandbox count badge in rail** — show always or only when > 0? Recommend: only when > 0, color amber if any item is `framed > 3 days`.
+4. **Canon as its own collapsed top-level group, or under Library?** v2 says its own (so Wisdom doesn't feel he's in admin). Recommend: **own collapsed group** above Library.
+5. **Fork 1 (Work Item merge) — close it before Wave 4?** Wave 4 spec works either way but is cleaner if decided. No need to block; flagging.
 
-**New route: `/sandbox`** in the **Think** sidebar group (sits between Capture and SweetScan). Capture remains the *input port*; Sandbox is the *triage table*.
+If you don't call them, I'll go with my recommended defaults above.
+
+---
+
+## What I am NOT doing
+
+- Not breaking the database canon — all changes additive
+- Not touching `routeTree.gen.ts` or any auto-generated file
+- Not building Onboarding Quest content in code (Wave 6 is content authoring, separate from build)
+- Not changing route paths — only sidebar grouping moves in Wave 1
+- Not building visual design polish — IA + behavior first, visual second
+
+---
+
+## Sequencing summary
 
 ```text
-Capture (port) → Sandbox (triage) → {Task | Project | Spark | Decision input | Component canon | Archive}
-                  ↑
-                  also pulls in: KTI fires · inbound_signals · open sparks ·
-                                 capture proposals · session "open questions"
+Wave 1  Sidebar + topbar + mode switcher        (UI only, ~1 day)
+Wave 2  Operator Dashboard + walk-menu + shell  (UI + 1 reusable lib)
+Wave 3  Handoff sheet + handoff_events table    (1 migration + UI)
+Wave 4  Today as decision surface               (UI; depends on Wave 2-3)
+Wave 5  /canon route                            (UI + auto-ERD generation)
+Wave 6  Onboarding Quest (content authoring)    (deferred)
 ```
 
-### 2B. What you see on `/sandbox`
+After Wave 5: SweetBOS reads as the operator platform v2 describes, with v1's signal-first Today and walkable graph baked into every surface.
 
-A single board with **three lanes**, plus a **frameworks rail** on the right:
-
-1. **Raw** — anything that hasn't been classified yet (new captures, fresh KTI fires, untriaged inbound signals)
-2. **Framed** — items where you (or AI) added a question, a lens, or a tag — but no decision yet about what they become
-3. **Routed** — items that have been promoted (with a link chip showing what they became + when)
-
-Each card shows: title · source chip (where it came from) · age · confidence · current frame (if any) · "Promote to…" button.
-
-### 2C. The frameworks rail (the "ask overlays" you described)
-
-Right side of `/sandbox`. Pick one or more overlays and **drop a card on it** (or click the overlay while a card is selected) to run that lens:
-
-| Overlay | What it does to the selected idea |
-|---|---|
-| **5Ps** | Tags which Ps it touches (Purpose/People/Process/Product/Profit), surfaces gaps |
-| **BizzyBot lens (F1–F8)** | Generates a perspective using the chosen lens — pros, cons, what to ask next |
-| **KTI candidate** | Asks "could this become a forward-looking indicator?" → drafts a KTI definition |
-| **Domain/Tenet fit** | Maps the idea to the 22 domains + your active tenets; shows nearest matches |
-| **Decision-readiness** | Asks the four "ready to decide?" gates: framed question? options weighed? evidence attached? confidence level set? |
-| **Operational alpha test** | Asks "if we did this, where does it compound? where does it leak?" (per your Op Alpha definition) |
-
-Output of any overlay attaches to the card as a **frame** — visible on the card, searchable, and carried through if/when the card is promoted.
-
-### 2D. Promote actions (the "spawn off" part)
-
-From any card, one click:
-
-- **→ Task** — creates a task with `spawned_by_kind='sandbox'`, `spawned_by_id=<sandbox_item_id>`, prefilled name + linked source
-- **→ Project** — creates a project with the idea as the brief; carries forward all attached frames
-- **→ Spark** — converts to a spark (system-attributed) under the matched component
-- **→ Decision input** — adds it to the OCDA "Observe" column with its frames as evidence
-- **→ Component canon** — appends to a component's brand canon / playbook (with diff preview)
-- **→ Archive** — soft-delete with reason ("not now", "duplicate", "out of scope")
-
-Every promote writes provenance both ways (sandbox item → spawned thing, AND spawned thing → originating sandbox item).
-
-### 2E. Schema
-
-One new table (mostly a typed view over what already flows in):
-
-```sql
-sandbox_items (
-  id uuid pk,
-  source_kind enum: capture · kti_fire · inbound_signal · spark · session_question · manual,
-  source_id uuid,                 -- FK to original record (nullable for manual)
-  title text,
-  body text,
-  state enum: raw · framed · routed · archived,
-  frames jsonb,                   -- array of {overlay_kind, output, ran_at}
-  routed_to_kind enum: task · project · spark · decision_input · component_canon · archive,
-  routed_to_id uuid,
-  routed_at timestamptz,
-  created_by, created_at, updated_at
-)
-```
-
-Plus a SQL view `sandbox_inbox` that **auto-unions** new captures + fresh KTI fires + un-routed inbound_signals so the Raw lane is always live without manual inserts.
-
-### 2F. Capture stays the input port
-
-Capture page gets a small footer: **"All captures land in your Sandbox"** with a link. We don't change Capture's UI. We just stop pretending Capture is the triage surface — it isn't, and it shouldn't be.
-
----
-
-## Part 3 — Commonality across entities (the "manipulate them in similar but different ways" part)
-
-This is the deep part of your message and the most leveraged. Today, every entity has its own ad-hoc way of being acted on. You want a **shared interface**.
-
-### 3A. The `Triageable` shape
-
-A common TypeScript interface + a common UI pattern for any entity that can be poked at:
-
-```typescript
-interface Triageable {
-  id: string;
-  kind: "sandbox_item" | "spark" | "kti" | "task" | "decision_input" | "inbound_signal";
-  title: string;
-  source: { kind: string; id: string; label: string };
-  state: "raw" | "framed" | "routed" | "archived" | "active";
-  frames: Frame[];                  // overlay outputs attached
-  promote_options: PromoteAction[]; // what you can convert it into
-  provenance: { upstream: Ref[]; downstream: Ref[] };
-}
-```
-
-### 3B. Two reusable components built once, mounted everywhere
-
-- **`<TriageCard item={triageable} />`** — the universal card UI: title, source chip, frame chips, age, primary "Promote" button. Used in `/sandbox`, the Sparks page, the Tasks "Next up" lane, the SweetScan inbox, OCDA Observe lane.
-- **`<FrameworksRail target={triageable} overlays={[...]} />`** — the right-side rail with overlay buttons. Mountable on any detail page (Task, Spark, KTI, Decision draft, Sandbox card). Same overlay set, same behavior, same output shape.
-
-**Result:** the gesture "select item → run overlay → see frame → promote" feels identical across the OS, even though the underlying entity differs. That's the commonality you asked for.
-
-### 3C. Sandbox surfaces show up wherever they're useful
-
-- **Today page** — small "Sandbox: 6 raw, 2 framed" tile linking in
-- **Relationship detail** — Sandbox tab filtered to that client's items
-- **Domain detail** — Sandbox tab filtered to that domain
-- **OCDA "Observe" column** — already shows captures + sparks; now also shows un-routed Sandbox items tagged for decision
-
----
-
-## Files this plan touches
-
-**Decision Factory restoration (Part 1) — 2 files**
-- `src/routes/_app.operate.ocda.tsx` — rename header, add 4-tile Factory Health strip
-- `mem://design/decision-factory.md` (new) — verbatim 4-component canon from notebook
-
-**Idea Sandbox (Part 2) — 5 files + 1 migration**
-- `supabase/migrations/<ts>_sandbox_items.sql` — `sandbox_items` table, `sandbox_inbox` view, RLS, `set_updated_at` trigger
-- `src/routes/_app.sandbox.tsx` (new) — three-lane board + frameworks rail
-- `src/components/sandbox-board.tsx` (new) — Raw/Framed/Routed lanes with `<TriageCard>`
-- `src/components/sidebar-nav.tsx` — add "Sandbox" entry under Think
-- `src/routes/_app.capture.tsx` — add "→ All captures land in your Sandbox" footer link
-
-**Commonality / shared interface (Part 3) — 4 files**
-- `src/lib/triageable.ts` (new) — `Triageable` interface, overlay registry, promote action types
-- `src/components/triage-card.tsx` (new) — universal card UI
-- `src/components/frameworks-rail.tsx` (new) — overlay rail (5Ps · F1–F8 · KTI candidate · Domain/Tenet fit · Decision-readiness · Op Alpha)
-- `src/routes/_app.today.tsx` — add Sandbox status tile
-
-**Memory (3 files)**
-- `mem://design/decision-factory.md` (new — Part 1)
-- `mem://design/idea-sandbox.md` (new) — Sandbox is the triage layer; lives in Think; promotes to {task, project, spark, decision input, component canon, archive}; provenance always preserved
-- `mem://design/triageable-interface.md` (new) — shared `Triageable` shape; `<TriageCard>` + `<FrameworksRail>` mount on any qualifying entity; same gesture across the OS
-
----
-
-## What this plan is NOT
-
-- **Not** replacing OCDA Cockpit — restoring its meaning, adding a 4-tile health strip, that's it
-- **Not** building auto-promotion — every promote is a human click; AI only suggests
-- **Not** changing Capture's UI — Capture stays the input port; Sandbox is the triage surface
-- **Not** building all 6 overlays in one go — ships with **5Ps · BizzyBot lens · KTI candidate · Domain/Tenet fit** in v1; Decision-readiness + Op Alpha in v2
-- **Not** retrofitting `<TriageCard>` everywhere at once — built once, mounted in `/sandbox` first, then on the Sparks index and the SweetScan inbox in v1.5
-
----
-
-## After this lands
-
-1. OCDA Cockpit correctly explains itself as "your Decision Factory made personal" with the four canon components visible and linked to where they're built
-2. `/sandbox` becomes the triage table — every fire, capture, spark, and inbound signal lands there in the **Raw** lane; you run an overlay (5Ps, a BizzyBot lens, KTI candidate, domain fit) which moves it to **Framed**; one click promotes it to a Task / Project / Spark / Decision input / Component canon update / Archive — and the **Routed** lane shows what became of it with full provenance
-3. The same `<TriageCard>` + `<FrameworksRail>` gesture works across Sandbox, Sparks, the SweetScan inbox, and the OCDA Observe lane — different entities, identical mechanics
-
-Reply **"Run all three"** to ship Parts 1, 2, and 3. Or split: **"Just Part 1"** to fix the Decision Factory framing first, then approve Sandbox separately. Or push back if Sandbox isn't quite the shape you meant — happy to re-plan.
+**Reply with one of:**
+- **"Run Wave 1"** — ship the IA shift first, see it land, then approve Wave 2 separately
+- **"Run Waves 1 + 2"** — ship the foundation and the highest-leverage v2 build together
+- **"Run all five (1–5), defer Wave 6"** — full reconciliation in one push
+- Or push back / answer the 5 open questions and I'll re-sequence
 
