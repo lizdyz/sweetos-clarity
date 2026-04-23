@@ -27,6 +27,8 @@ import { activateWorkflow } from "@/utils/workflows.functions";
 import { format } from "date-fns";
 import { WorkflowStepCanvas } from "@/components/workflow-step-canvas";
 import { MeasuresPanel } from "@/components/measures-panel";
+import { WorkflowExecutionChip } from "@/components/workflow-execution-chip";
+import { WorkflowExecutionTab } from "@/components/workflow-execution-tab";
 
 export const Route = createFileRoute("/_app/workflows/$id")({
   component: WorkflowDetail,
@@ -117,6 +119,9 @@ function WorkflowDetail() {
     <div className="relative">
       <EntityDetailPage entityKey="workflows" />
       <div className="space-y-5 px-6 pb-8">
+        <div className="flex justify-end">
+          <WorkflowExecutionChip workflowId={id} />
+        </div>
         {rollup &&
           (rollup.totalMinutes > 0 ||
             rollup.components.length > 0 ||
@@ -247,6 +252,7 @@ function WorkflowDetail() {
 
         <WorkflowStepCanvas workflowId={id} />
         <WorkflowStatesPanel workflowId={id} />
+        <WorkflowExecutionTab workflowId={id} />
         <MeasuresPanel subjectType="workflow" subjectId={id} />
       </div>
 

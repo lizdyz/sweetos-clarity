@@ -91,6 +91,7 @@ import { Route as AppDelegationIdRouteImport } from './routes/_app.delegation.$i
 import { Route as AppDecisionsIdRouteImport } from './routes/_app.decisions.$id'
 import { Route as AppComponentsIdRouteImport } from './routes/_app.components.$id'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
+import { Route as ApiPublicHooksWorkflowCallbackRouteImport } from './routes/api/public/hooks/workflow-callback'
 import { Route as ApiPublicHooksScanKtisRouteImport } from './routes/api/public/hooks/scan-ktis'
 import { Route as ApiPublicHooksGapScanRouteImport } from './routes/api/public/hooks/gap-scan'
 import { Route as AppSettingsLensesIdRouteImport } from './routes/_app.settings.lenses.$id'
@@ -513,6 +514,12 @@ const AppCampaignsIdRoute = AppCampaignsIdRouteImport.update({
   path: '/campaigns/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicHooksWorkflowCallbackRoute =
+  ApiPublicHooksWorkflowCallbackRouteImport.update({
+    id: '/api/public/hooks/workflow-callback',
+    path: '/api/public/hooks/workflow-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksScanKtisRoute = ApiPublicHooksScanKtisRouteImport.update({
   id: '/api/public/hooks/scan-ktis',
   path: '/api/public/hooks/scan-ktis',
@@ -638,6 +645,7 @@ export interface FileRoutesByFullPath {
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/api/public/hooks/gap-scan': typeof ApiPublicHooksGapScanRoute
   '/api/public/hooks/scan-ktis': typeof ApiPublicHooksScanKtisRoute
+  '/api/public/hooks/workflow-callback': typeof ApiPublicHooksWorkflowCallbackRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRoutesByTo {
@@ -727,6 +735,7 @@ export interface FileRoutesByTo {
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/api/public/hooks/gap-scan': typeof ApiPublicHooksGapScanRoute
   '/api/public/hooks/scan-ktis': typeof ApiPublicHooksScanKtisRoute
+  '/api/public/hooks/workflow-callback': typeof ApiPublicHooksWorkflowCallbackRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRoutesById {
@@ -819,6 +828,7 @@ export interface FileRoutesById {
   '/_app/settings/lenses/$id': typeof AppSettingsLensesIdRoute
   '/api/public/hooks/gap-scan': typeof ApiPublicHooksGapScanRoute
   '/api/public/hooks/scan-ktis': typeof ApiPublicHooksScanKtisRoute
+  '/api/public/hooks/workflow-callback': typeof ApiPublicHooksWorkflowCallbackRoute
   '/_app/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
 export interface FileRouteTypes {
@@ -911,6 +921,7 @@ export interface FileRouteTypes {
     | '/settings/lenses/$id'
     | '/api/public/hooks/gap-scan'
     | '/api/public/hooks/scan-ktis'
+    | '/api/public/hooks/workflow-callback'
     | '/workflows/$id/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1000,6 +1011,7 @@ export interface FileRouteTypes {
     | '/settings/lenses/$id'
     | '/api/public/hooks/gap-scan'
     | '/api/public/hooks/scan-ktis'
+    | '/api/public/hooks/workflow-callback'
     | '/workflows/$id/runs/$runId'
   id:
     | '__root__'
@@ -1091,6 +1103,7 @@ export interface FileRouteTypes {
     | '/_app/settings/lenses/$id'
     | '/api/public/hooks/gap-scan'
     | '/api/public/hooks/scan-ktis'
+    | '/api/public/hooks/workflow-callback'
     | '/_app/workflows/$id/runs/$runId'
   fileRoutesById: FileRoutesById
 }
@@ -1101,6 +1114,7 @@ export interface RootRouteChildren {
   PSlugSeedRoute: typeof PSlugSeedRoute
   ApiPublicHooksGapScanRoute: typeof ApiPublicHooksGapScanRoute
   ApiPublicHooksScanKtisRoute: typeof ApiPublicHooksScanKtisRoute
+  ApiPublicHooksWorkflowCallbackRoute: typeof ApiPublicHooksWorkflowCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1679,6 +1693,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampaignsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/hooks/workflow-callback': {
+      id: '/api/public/hooks/workflow-callback'
+      path: '/api/public/hooks/workflow-callback'
+      fullPath: '/api/public/hooks/workflow-callback'
+      preLoaderRoute: typeof ApiPublicHooksWorkflowCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/scan-ktis': {
       id: '/api/public/hooks/scan-ktis'
       path: '/api/public/hooks/scan-ktis'
@@ -1980,6 +2001,7 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugSeedRoute: PSlugSeedRoute,
   ApiPublicHooksGapScanRoute: ApiPublicHooksGapScanRoute,
   ApiPublicHooksScanKtisRoute: ApiPublicHooksScanKtisRoute,
+  ApiPublicHooksWorkflowCallbackRoute: ApiPublicHooksWorkflowCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

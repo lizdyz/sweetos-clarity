@@ -6829,6 +6829,59 @@ export type Database = {
           },
         ]
       }
+      workflow_execution_bindings: {
+        Row: {
+          callback_secret: string | null
+          created_at: string
+          created_by: string | null
+          execution_kind: string
+          external_id: string | null
+          field_map: Json
+          last_synced_at: string | null
+          notes: string | null
+          status_map: Json
+          trigger_url: string | null
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          callback_secret?: string | null
+          created_at?: string
+          created_by?: string | null
+          execution_kind?: string
+          external_id?: string | null
+          field_map?: Json
+          last_synced_at?: string | null
+          notes?: string | null
+          status_map?: Json
+          trigger_url?: string | null
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          callback_secret?: string | null
+          created_at?: string
+          created_by?: string | null
+          execution_kind?: string
+          external_id?: string | null
+          field_map?: Json
+          last_synced_at?: string | null
+          notes?: string | null
+          status_map?: Json
+          trigger_url?: string | null
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_execution_bindings_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: true
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_outcomes: {
         Row: {
           created_at: string
@@ -6924,6 +6977,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           current_step_id: string | null
+          external_run_id: string | null
           id: string
           notes: string | null
           progress_pct: number
@@ -6941,6 +6995,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_step_id?: string | null
+          external_run_id?: string | null
           id?: string
           notes?: string | null
           progress_pct?: number
@@ -6958,6 +7013,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_step_id?: string | null
+          external_run_id?: string | null
           id?: string
           notes?: string | null
           progress_pct?: number
@@ -7218,6 +7274,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           created_by: string
+          external_step_id: string | null
           id: string
           notes: string | null
           operator_id: string | null
@@ -7235,6 +7292,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string
+          external_step_id?: string | null
           id?: string
           notes?: string | null
           operator_id?: string | null
@@ -7252,6 +7310,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string
+          external_step_id?: string | null
           id?: string
           notes?: string | null
           operator_id?: string | null
@@ -7344,6 +7403,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          execution_kind: string
           id: string
           machine_available: boolean | null
           map_available: boolean | null
@@ -7363,6 +7423,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          execution_kind?: string
           id?: string
           machine_available?: boolean | null
           map_available?: boolean | null
@@ -7382,6 +7443,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          execution_kind?: string
           id?: string
           machine_available?: boolean | null
           map_available?: boolean | null
