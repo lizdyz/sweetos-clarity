@@ -11,13 +11,15 @@ import {
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Bot, User, Workflow as WorkflowIcon, ChevronDown } from "lucide-react";
+import { Bot, User, Workflow as WorkflowIcon, ChevronDown, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { DetailShell } from "@/components/detail-shell";
 import { OperatorCapacityStrip } from "@/components/operator-capacity-strip";
 import { OperatorQueueTabs } from "@/components/operator-queue-tabs";
 import { OperatorEditDrawer } from "@/components/operator-edit-drawer";
+import { HandoffSheet } from "@/components/handoff-sheet";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { StoryTrail } from "@/components/story-trail";
 
@@ -107,6 +109,17 @@ function OperatorDetailPage() {
                 </SelectContent>
               </Select>
             </div>
+            <HandoffSheet
+              subjectKind="task"
+              subjectId={id}
+              subjectLabel={op.name}
+              fromOperatorId={id}
+              trigger={
+                <Button variant="outline" size="sm" className="h-8 gap-1">
+                  <Send className="h-3 w-3" /> Hand off
+                </Button>
+              }
+            />
             <OperatorEditDrawer operator={op} />
           </div>
         </div>
