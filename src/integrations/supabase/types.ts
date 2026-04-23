@@ -71,6 +71,96 @@ export type Database = {
           },
         ]
       }
+      audit_field_blacklist: {
+        Row: {
+          created_at: string
+          field_name: string
+          id: string
+          reason: string | null
+          table_name: string
+        }
+        Insert: {
+          created_at?: string
+          field_name: string
+          id?: string
+          reason?: string | null
+          table_name: string
+        }
+        Update: {
+          created_at?: string
+          field_name?: string
+          id?: string
+          reason?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
+      audit_saved_views: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          filters: Json
+          id: string
+          is_workspace_pinned: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          filters?: Json
+          id?: string
+          is_workspace_pinned?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          filters?: Json
+          id?: string
+          is_workspace_pinned?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_write_failures: {
+        Row: {
+          attempted_at: string
+          error_message: string
+          event_category: string | null
+          id: string
+          payload: Json | null
+          resolved_at: string | null
+          subject_id: string | null
+          subject_kind: string | null
+        }
+        Insert: {
+          attempted_at?: string
+          error_message: string
+          event_category?: string | null
+          id?: string
+          payload?: Json | null
+          resolved_at?: string | null
+          subject_id?: string | null
+          subject_kind?: string | null
+        }
+        Update: {
+          attempted_at?: string
+          error_message?: string
+          event_category?: string | null
+          id?: string
+          payload?: Json | null
+          resolved_at?: string | null
+          subject_id?: string | null
+          subject_kind?: string | null
+        }
+        Relationships: []
+      }
       bot_alerts: {
         Row: {
           body: string | null
@@ -1855,48 +1945,75 @@ export type Database = {
           change_type: string
           created_at: string
           created_by: string | null
+          diff: Json | null
+          event_category: string
           field: string | null
           id: string
+          ip_address: unknown
           model: string | null
           new_value: Json | null
           notes: string | null
           old_value: Json | null
           operator_id: string | null
+          request_id: string | null
+          severity: string
           source: string
+          source_run_id: string | null
+          source_run_kind: string | null
           subject_id: string
           subject_kind: string
+          tags: string[]
+          user_agent: string | null
         }
         Insert: {
           agent_run_id?: string | null
           change_type?: string
           created_at?: string
           created_by?: string | null
+          diff?: Json | null
+          event_category?: string
           field?: string | null
           id?: string
+          ip_address?: unknown
           model?: string | null
           new_value?: Json | null
           notes?: string | null
           old_value?: Json | null
           operator_id?: string | null
+          request_id?: string | null
+          severity?: string
           source?: string
+          source_run_id?: string | null
+          source_run_kind?: string | null
           subject_id: string
           subject_kind: string
+          tags?: string[]
+          user_agent?: string | null
         }
         Update: {
           agent_run_id?: string | null
           change_type?: string
           created_at?: string
           created_by?: string | null
+          diff?: Json | null
+          event_category?: string
           field?: string | null
           id?: string
+          ip_address?: unknown
           model?: string | null
           new_value?: Json | null
           notes?: string | null
           old_value?: Json | null
           operator_id?: string | null
+          request_id?: string | null
+          severity?: string
           source?: string
+          source_run_id?: string | null
+          source_run_kind?: string | null
           subject_id?: string
           subject_kind?: string
+          tags?: string[]
+          user_agent?: string | null
         }
         Relationships: [
           {
@@ -1914,6 +2031,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      entity_audit_log_archive: {
+        Row: {
+          agent_run_id: string | null
+          change_type: string
+          created_at: string
+          created_by: string | null
+          diff: Json | null
+          event_category: string
+          field: string | null
+          id: string
+          ip_address: unknown
+          model: string | null
+          new_value: Json | null
+          notes: string | null
+          old_value: Json | null
+          operator_id: string | null
+          request_id: string | null
+          severity: string
+          source: string
+          source_run_id: string | null
+          source_run_kind: string | null
+          subject_id: string
+          subject_kind: string
+          tags: string[]
+          user_agent: string | null
+        }
+        Insert: {
+          agent_run_id?: string | null
+          change_type?: string
+          created_at?: string
+          created_by?: string | null
+          diff?: Json | null
+          event_category?: string
+          field?: string | null
+          id?: string
+          ip_address?: unknown
+          model?: string | null
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          operator_id?: string | null
+          request_id?: string | null
+          severity?: string
+          source?: string
+          source_run_id?: string | null
+          source_run_kind?: string | null
+          subject_id: string
+          subject_kind: string
+          tags?: string[]
+          user_agent?: string | null
+        }
+        Update: {
+          agent_run_id?: string | null
+          change_type?: string
+          created_at?: string
+          created_by?: string | null
+          diff?: Json | null
+          event_category?: string
+          field?: string | null
+          id?: string
+          ip_address?: unknown
+          model?: string | null
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          operator_id?: string | null
+          request_id?: string | null
+          severity?: string
+          source?: string
+          source_run_id?: string | null
+          source_run_kind?: string | null
+          subject_id?: string
+          subject_kind?: string
+          tags?: string[]
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       entity_canon: {
         Row: {
@@ -8144,6 +8339,52 @@ export type Database = {
       }
     }
     Views: {
+      audit_events_enriched: {
+        Row: {
+          actor_display_name: string | null
+          agent_run_id: string | null
+          change_type: string | null
+          created_at: string | null
+          created_by: string | null
+          diff: Json | null
+          event_category: string | null
+          field: string | null
+          id: string | null
+          ip_address: unknown
+          model: string | null
+          new_value: Json | null
+          notes: string | null
+          old_value: Json | null
+          operator_id: string | null
+          operator_name: string | null
+          request_id: string | null
+          severity: string | null
+          source: string | null
+          source_run_id: string | null
+          source_run_kind: string | null
+          subject_id: string | null
+          subject_kind: string | null
+          subject_label: string | null
+          tags: string[] | null
+          user_agent: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_audit_log_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "entity_audit_log_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capabilities_derived: {
         Row: {
           capability_state: string | null
