@@ -618,6 +618,9 @@ export const captureProposal = createServerFn({ method: "POST" })
         matched_sparks: matchedSparks,
         matched_ktis: matchedKtis,
         suggested_kti_payload: ktiSuggestion ?? null,
+        subject_kind: subjectKind,
+        subject_id: subjectId,
+        source_page: data.sourcePage ?? null,
         created_by: userId,
       } as never)
       .select("*")
