@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Send, ChevronDown, ChevronRight, Compass, ScrollText, Maximize2, Minimize2 } from "lucide-react";
+import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { EngagementPlanAnatomy } from "@/components/engagement-plan-anatomy";
 import { EngagementPlanSweetCycleTab } from "@/components/engagement-plan-sweetcycle-tab";
 import { AuditTrailPanel } from "@/components/audit-trail-panel";
+import { ObjectCompanion, SweetLensButton } from "@/components/object-companion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,9 +21,21 @@ function PlanDetail() {
   const [sweetcycleOpen, setSweetcycleOpen] = useState(true);
   const [sweetcycleExpanded, setSweetcycleExpanded] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
+  const [lensOpen, setLensOpen] = useState(false);
+  const { data: plan } = useQuery({
+    queryKey: ["engagement_plans", "lens-meta", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("engagement_plans").select("plan_name").eq("id", id).maybeSingle();
+      return data as { plan_name: string | null } | null;
+    },
+  });
 
   return (
-    <div className="space-y-5">
+    <div className={lensOpen ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]" : ""}>
+      <div className="min-w-0 space-y-5">
+        <div className="flex items-center justify-end gap-2 px-6 pt-4">
+          <SweetLensButton active={lensOpen} onClick={() => setLensOpen((o) => !o)} />
+        </div>
       <div className="px-6 pt-4">
         <Card className="flex items-start gap-3 border-iris/20 bg-iris-soft/40 p-3 text-xs">
           <Send className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--iris-violet)]" />
