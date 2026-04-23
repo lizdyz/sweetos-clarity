@@ -1,103 +1,96 @@
 
 
-# Planning your real work inside SweetOS Clarity
+# Planning that lets you think — not just fill forms
 
-You want to take SweetOS from "the system we're building" to "the system we're using to run the build." Good news: the canon is already there — Missions, Journeys, Quests, Projects, Tasks, JTBDs, Components, Decisions. You don't need new entities. You need a **seeding pass** plus one small **planning surface** that makes the hierarchy obvious so you and your dev can sit down and actually use it.
+You're right. The 6-step stepper at `/planning` is good for **seeding the canon** (Mission → Journey → Quest → …) but it forces a top-down march. What you actually want right now is a **thinking surface** — a place to wrestle with cash flow, service language, what to track, what to decide — *before* it has to fit into a Quest or Project.
 
-## The canonical hierarchy (use this, don't invent)
+We already have most of the raw material in the system. We just haven't given you a room to think in.
 
-```text
-Mission         — the long-term why (e.g. "SweetOS Clarity is the operating system for service businesses")
-  └─ Journey    — a multi-quarter arc (e.g. "Ship v1 of Clarity to first 10 paying users")
-       └─ Quest — a themed body of work (e.g. "Lens System", "Operator Dashboard", "Capture-to-Routed pipeline")
-            ├─ JTBD       — what a user is hiring this for ("When I open a Decision, I want the right lens…")
-            ├─ Component  — the piece of product being built ("SweetLens panel", "Lens Studio")
-            ├─ Project    — a time-boxed effort that builds Components ("Wave 21 — Lens Studio")
-            │    └─ Task  — the unit of work, assigned to an Operator (you, your dev, a workflow)
-            └─ Decision   — open questions blocking the Quest
-```
+## The shift
 
-Sparks are system-suggested; ignore them while seeding — they'll appear once the pipeline runs against real objects.
-
-## What we'll do — three phases
-
-### Phase 1 — Seed the hierarchy (one working session, ~60 min)
-
-A guided **Planning Workspace** at `/planning` that walks you and your dev through populating the canon top-down:
+Keep `/planning` (the stepper) as it is — it's the right tool when you know the shape. Add a second mode beside it: a **Thinking Room** that's free-form, durable, and converts into canonical objects only when *you* decide it's ready.
 
 ```text
-Step 1  Mission       — confirm the one-liner
-Step 2  Journeys      — 2-4 arcs for the next 6 months
-Step 3  Quests        — 3-6 per Journey (this is where most thinking happens)
-Step 4  For each Quest:
-          • JTBDs      (1-3 — who's hiring this and for what)
-          • Components (the deliverables)
-          • Projects   (the waves/sprints that build them)
-          • Decisions  (anything still open)
-Step 5  Tasks         — break down the active Project into operator-assignable tasks
-Step 6  Operators     — confirm you + dev as operators with skills
+/planning
+   ├─ Seed       ← the existing 6-step stepper (top-down, structured)
+   └─ Think      ← NEW — free-form workbench (bottom-up, exploratory)
 ```
 
-Each step is a single-screen form with an inline list of what's already there, "Add" inline, and a "Next" button. No modals. Skipping is allowed; nothing's destructive.
+## What the Thinking Room is
 
-### Phase 2 — Wire the views you'll actually look at daily
+A single page (`/planning/think`) organized as **Topics**. A Topic is just a named thinking space — e.g. "Cash flow", "Service offering language", "What to track", "Pricing model". Each Topic holds:
 
-Three existing surfaces become the daily drivers — light edits only:
+- **A canvas** — long-form prose. Write, paste, draft. No structure imposed.
+- **Loose notes** — quick bullets you jot as ideas land (each note is one row, draggable, taggable).
+- **Open questions** — things you haven't decided. One-liner each.
+- **Candidates** — proto-objects you *might* turn into Quests, Projects, JTBDs, Decisions, Components, KPIs. Each candidate has a kind chip (`?Quest` `?Project` `?Decision` `?KPI`) and a "Promote" button that opens the right create-sheet pre-filled.
+- **Linked objects** — anything already in the system that's relevant (existing Quests, Decisions, Components). Searchable, attachable.
 
-- **`/today`** — already exists. Add a top strip: *"Today's Quest" · "Today's Project" · "Blocked decisions"*.
-- **`/flightdeck`** — operator dashboard across Quests. Filter by operator (you vs dev) so you each see your lane.
-- **`/sweetcycle`** (or new **`/planning/board`**) — Quest board: rows = Quests, columns = `Discovery → Building → Shipping → Done`. Drag Quests across as state changes.
+Topics can be **pinned to a Journey** (optional) so later you can see "all my thinking that fed Journey X." Unpinned topics float.
 
-### Phase 3 — Distinction guardrails (so the canon doesn't drift)
+## Three starter Topics we'll seed for you
 
-A small **`<EntityKindHelper>`** chip mounted on the create dialogs for Mission/Journey/Quest/Project/Task that explains in one sentence what belongs at this level + 2 examples + 1 anti-example. Stops you and your dev from creating "a Project" when you mean "a Quest."
+So the room isn't empty on first open:
 
-Plus a memory write: `mem://design/planning-hierarchy.md` codifying the 6-level rule so future AI work doesn't blur it.
+1. **Cash flow** — prompts: "What revenue do we need by when? What can we sell now? What are the constraints?"
+2. **Service offering language** — prompts: "What do we call each service? Who's it for? What outcome?"
+3. **What to track** — prompts: "What KPIs would tell us we're winning? What leading indicators?"
+
+Each starter Topic comes with a few **prompt cards** (collapsed questions you can answer or ignore) so the page guides without boxing.
+
+## The promotion flow (this is the key bit)
+
+Thinking → canon, on your terms:
+
+```text
+You write a candidate:        "Define 'Mirror Sprint' as the entry service"
+You tag it:                   ?Component  +  ?Decision (price?)
+You hit "Promote":            opens Component create-sheet pre-filled
+                              + opens Decision create-sheet for the open question
+The candidate stays linked    so the Topic shows "→ promoted to Component #123"
+```
+
+Nothing is auto-promoted. The Thinking Room is durable scratch; promotion is deliberate. That's how you avoid the "everything is a Project" canon-drift problem and still get to think freely.
 
 ## What we'll build
 
 **New**
-- `src/routes/_app.planning.tsx` — the 6-step Planning Workspace (stepper + inline lists + add forms, all reading/writing the existing tables).
-- `src/components/planning/step-mission.tsx`, `step-journeys.tsx`, `step-quests.tsx`, `step-quest-detail.tsx` (JTBD/Component/Project/Decision tabs), `step-tasks.tsx`, `step-operators.tsx`.
-- `src/components/entity-kind-helper.tsx` — the in-dialog explainer chip.
-- `src/components/today/todays-focus-strip.tsx` — Quest + Project + blocked Decisions header for `/today`.
-- `mem://design/planning-hierarchy.md`.
+- `src/routes/_app.planning.think.tsx` — the Thinking Room (Topics list on the left, active Topic on the right).
+- `src/components/planning/topic-canvas.tsx` — long-form editor (textarea-with-autosave, no fancy WYSIWYG for v1).
+- `src/components/planning/topic-notes.tsx` — quick-bullet list with inline add, drag-reorder, optional tag chips.
+- `src/components/planning/topic-questions.tsx` — open-question list; each row has "→ Decision" promote button.
+- `src/components/planning/topic-candidates.tsx` — candidate proto-objects with kind chip + Promote dropdown (Quest / Project / JTBD / Decision / Component / KPI).
+- `src/components/planning/topic-linked.tsx` — search + attach existing canonical objects.
+- `src/components/planning/topic-prompt-card.tsx` — collapsible prompt cards used by the seeded starter Topics.
 
 **Edited (light)**
-- `src/routes/_app.today.tsx` — mount the focus strip.
-- `src/routes/_app.flightdeck.tsx` — add operator filter (if not present).
-- `src/components/sidebar-nav.tsx` — add **Planning** entry under Today (top of sidebar) with hint *"Set Missions · Journeys · Quests · Projects"*.
-- The 5 create-sheets (`mission-create-sheet`, etc. — or wherever Mission/Journey/Quest/Project/Task creation happens) — mount `<EntityKindHelper>`.
+- `src/routes/_app.planning.tsx` — add a top toggle: **Seed | Think** so both modes live under one route.
+- `src/components/sidebar-nav.tsx` — keep the Planning entry; update hint to *"Think · Seed · Decide"*.
+- The existing create-sheets (Quest, Project, Decision, Component, JTBD) — accept an optional `prefill` prop so promotion lands clean.
 
-**No DB changes.** Everything writes to `missions`, `journeys`, `quests`, `projects`, `tasks`, `jobs_to_be_done`, `components`, `decisions`, `operators` — all already exist with the right shape.
+**Database (one small migration, additive only)**
+Two new tables, nothing existing changes:
 
-## A worked example (so you see the shape)
+- `thinking_topics` — `id, title, description, journey_id (nullable), pinned, created_at, updated_at`
+- `thinking_items` — `id, topic_id, kind ('canvas' | 'note' | 'question' | 'candidate' | 'linked'), body, candidate_kind (nullable: 'quest'|'project'|'decision'|'component'|'jtbd'|'kpi'), promoted_to_kind (nullable), promoted_to_id (nullable), position, created_at, updated_at`
 
-```text
-Mission   "SweetOS Clarity — the OS for service businesses"
-└─ Journey "Ship v1 to 10 paying users by Q3"
-    ├─ Quest "Lens System"            ← Wave 21 lives here
-    │   ├─ JTBD       "When I open any object, I want the right lens"
-    │   ├─ Component  "SweetLens panel", "Lens Studio"
-    │   ├─ Project    "Wave 21 — final wiring"
-    │   │   └─ Tasks  "Mount SweetLens on /quests", "OCDA drop targets" …
-    │   └─ Decision   "Should F12 Op-alpha auto-run on Sandbox items?"
-    ├─ Quest "Capture → Routed pipeline"
-    └─ Quest "Operator Dashboard (Flightdeck)"
-```
+RLS: standard owner pattern matching the rest of the workspace. No view changes. No touching existing tables.
 
-By the end of the seeding session you'll have your real Missions/Journeys/Quests/Projects in the system, daily views that show *your* work, and create-flows that prevent canon drift.
+## What this does NOT do
+
+- Doesn't replace the stepper — that stays for when you know the shape.
+- Doesn't auto-create Quests/Projects from your notes. Promotion is always explicit.
+- Doesn't try to be Notion or Roam. One canvas + lists, that's it. The value is the **promotion bridge to canon**, not the editor.
+- No AI generation in v1 — pure thinking surface. (We can add a "Suggest candidates from this canvas" button in a later wave once you've used it.)
 
 ## Sequencing
 
-1. EntityKindHelper + 5 create-sheet edits + planning-hierarchy memory (~15%)
-2. Planning Workspace route + 6 step components (~55%)
-3. Today focus strip + Flightdeck operator filter (~15%)
-4. Sidebar entry + smoke test of full hierarchy create flow (~15%)
+1. Migration for `thinking_topics` + `thinking_items` + RLS (~10%)
+2. Thinking Room route + Topic list/detail shell (~25%)
+3. Canvas + Notes + Questions components (~25%)
+4. Candidates + Promote bridges to existing create-sheets (~25%)
+5. Linked-objects search/attach + 3 seeded starter Topics (~10%)
+6. Seed/Think toggle on `/planning` + sidebar hint update (~5%)
 
-## Not in this plan
-
-- No new entities, no schema changes.
-- No automation of Spark generation against your seeded Quests — that's separate.
-- No external project-management import (Linear/Jira) — manual seeding for v1.
+After this you can sit down with your dev, open **Cash flow**, write freely, jot questions, mark candidates, and only push to canonical Quests/Decisions when you're actually ready.
 
