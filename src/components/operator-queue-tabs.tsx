@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { WalkMenu } from "@/components/walk-menu";
+import { HandoffInbox } from "@/components/handoff-inbox";
 import { cn } from "@/lib/utils";
 
 const DONE_STATUSES = ["Done", "Complete", "Completed", "Cancelled", "Canceled", "Archived"];
@@ -50,9 +51,7 @@ export function OperatorQueueTabs({ operatorId }: { operatorId: string }) {
         <TabsContent value="blocked" className="mt-3"><TaskList operatorId={operatorId} mode="blocked" /></TabsContent>
         <TabsContent value="awaiting" className="mt-3"><AwaitingList operatorId={operatorId} /></TabsContent>
         <TabsContent value="handoffs" className="mt-3">
-          <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-8 text-center text-xs text-muted-foreground">
-            Handoff inbox lands in Wave 3.
-          </div>
+          <HandoffInbox operatorId={operatorId} />
         </TabsContent>
         <TabsContent value="history" className="mt-3"><TaskList operatorId={operatorId} mode="history" /></TabsContent>
       </Tabs>
