@@ -357,7 +357,7 @@ function SignalInboxTab() {
           <ul className="space-y-2">
             {inbound.map((s) => (
               <li key={s.id}>
-                <InboundSignalCard signal={s} />
+                <SignalTriageItem signal={s} />
               </li>
             ))}
           </ul>
