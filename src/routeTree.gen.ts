@@ -79,6 +79,7 @@ import { Route as AppQuestsIdRouteImport } from './routes/_app.quests.$id'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppPortalsRelationshipIdRouteImport } from './routes/_app.portals.$relationshipId'
 import { Route as AppPlaybooksIdRouteImport } from './routes/_app.playbooks.$id'
+import { Route as AppPlanningThinkRouteImport } from './routes/_app.planning.think'
 import { Route as AppPersonasIdRouteImport } from './routes/_app.personas.$id'
 import { Route as AppOutcomesIdRouteImport } from './routes/_app.outcomes.$id'
 import { Route as AppOperatorsIdRouteImport } from './routes/_app.operators.$id'
@@ -459,6 +460,11 @@ const AppPlaybooksIdRoute = AppPlaybooksIdRouteImport.update({
   path: '/playbooks/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPlanningThinkRoute = AppPlanningThinkRouteImport.update({
+  id: '/think',
+  path: '/think',
+  getParentRoute: () => AppPlanningRoute,
+} as any)
 const AppPersonasIdRoute = AppPersonasIdRouteImport.update({
   id: '/personas/$id',
   path: '/personas/$id',
@@ -601,7 +607,7 @@ export interface FileRoutesByFullPath {
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/planner': typeof AppPlannerRoute
-  '/planning': typeof AppPlanningRoute
+  '/planning': typeof AppPlanningRouteWithChildren
   '/queue': typeof AppQueueRoute
   '/sandbox': typeof AppSandboxRoute
   '/settings': typeof AppSettingsRouteWithChildren
@@ -628,6 +634,7 @@ export interface FileRoutesByFullPath {
   '/operators/$id': typeof AppOperatorsIdRoute
   '/outcomes/$id': typeof AppOutcomesIdRoute
   '/personas/$id': typeof AppPersonasIdRoute
+  '/planning/think': typeof AppPlanningThinkRoute
   '/playbooks/$id': typeof AppPlaybooksIdRoute
   '/portals/$relationshipId': typeof AppPortalsRelationshipIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
@@ -697,7 +704,7 @@ export interface FileRoutesByTo {
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/planner': typeof AppPlannerRoute
-  '/planning': typeof AppPlanningRoute
+  '/planning': typeof AppPlanningRouteWithChildren
   '/queue': typeof AppQueueRoute
   '/sandbox': typeof AppSandboxRoute
   '/start': typeof AppStartRouteWithChildren
@@ -723,6 +730,7 @@ export interface FileRoutesByTo {
   '/operators/$id': typeof AppOperatorsIdRoute
   '/outcomes/$id': typeof AppOutcomesIdRoute
   '/personas/$id': typeof AppPersonasIdRoute
+  '/planning/think': typeof AppPlanningThinkRoute
   '/playbooks/$id': typeof AppPlaybooksIdRoute
   '/portals/$relationshipId': typeof AppPortalsRelationshipIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
@@ -794,7 +802,7 @@ export interface FileRoutesById {
   '/_app/people': typeof AppPeopleRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/planner': typeof AppPlannerRoute
-  '/_app/planning': typeof AppPlanningRoute
+  '/_app/planning': typeof AppPlanningRouteWithChildren
   '/_app/queue': typeof AppQueueRoute
   '/_app/sandbox': typeof AppSandboxRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
@@ -821,6 +829,7 @@ export interface FileRoutesById {
   '/_app/operators/$id': typeof AppOperatorsIdRoute
   '/_app/outcomes/$id': typeof AppOutcomesIdRoute
   '/_app/personas/$id': typeof AppPersonasIdRoute
+  '/_app/planning/think': typeof AppPlanningThinkRoute
   '/_app/playbooks/$id': typeof AppPlaybooksIdRoute
   '/_app/portals/$relationshipId': typeof AppPortalsRelationshipIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
@@ -919,6 +928,7 @@ export interface FileRouteTypes {
     | '/operators/$id'
     | '/outcomes/$id'
     | '/personas/$id'
+    | '/planning/think'
     | '/playbooks/$id'
     | '/portals/$relationshipId'
     | '/projects/$id'
@@ -1014,6 +1024,7 @@ export interface FileRouteTypes {
     | '/operators/$id'
     | '/outcomes/$id'
     | '/personas/$id'
+    | '/planning/think'
     | '/playbooks/$id'
     | '/portals/$relationshipId'
     | '/projects/$id'
@@ -1111,6 +1122,7 @@ export interface FileRouteTypes {
     | '/_app/operators/$id'
     | '/_app/outcomes/$id'
     | '/_app/personas/$id'
+    | '/_app/planning/think'
     | '/_app/playbooks/$id'
     | '/_app/portals/$relationshipId'
     | '/_app/projects/$id'
@@ -1669,6 +1681,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlaybooksIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/planning/think': {
+      id: '/_app/planning/think'
+      path: '/think'
+      fullPath: '/planning/think'
+      preLoaderRoute: typeof AppPlanningThinkRouteImport
+      parentRoute: typeof AppPlanningRoute
+    }
     '/_app/personas/$id': {
       id: '/_app/personas/$id'
       path: '/personas/$id'
@@ -1847,6 +1866,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppPlanningRouteChildren {
+  AppPlanningThinkRoute: typeof AppPlanningThinkRoute
+}
+
+const AppPlanningRouteChildren: AppPlanningRouteChildren = {
+  AppPlanningThinkRoute: AppPlanningThinkRoute,
+}
+
+const AppPlanningRouteWithChildren = AppPlanningRoute._addFileChildren(
+  AppPlanningRouteChildren,
+)
+
 interface AppSettingsLensesRouteChildren {
   AppSettingsLensesIdRoute: typeof AppSettingsLensesIdRoute
 }
@@ -1959,7 +1990,7 @@ interface AppRouteChildren {
   AppPeopleRoute: typeof AppPeopleRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppPlannerRoute: typeof AppPlannerRoute
-  AppPlanningRoute: typeof AppPlanningRoute
+  AppPlanningRoute: typeof AppPlanningRouteWithChildren
   AppQueueRoute: typeof AppQueueRoute
   AppSandboxRoute: typeof AppSandboxRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
@@ -2034,7 +2065,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPeopleRoute: AppPeopleRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppPlannerRoute: AppPlannerRoute,
-  AppPlanningRoute: AppPlanningRoute,
+  AppPlanningRoute: AppPlanningRouteWithChildren,
   AppQueueRoute: AppQueueRoute,
   AppSandboxRoute: AppSandboxRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
