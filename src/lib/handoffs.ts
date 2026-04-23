@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type HandoffSubjectKind = "task" | "workflow_step_run" | "session" | "project" | "campaign";
@@ -24,8 +26,10 @@ const RespondInput = z.object({
   action: z.enum(["accept", "decline", "cancel"]),
 });
 
+type SB = SupabaseClient<Database>;
+
 async function reassignSubject(
-  supabase: Awaited<ReturnType<typeof requireSupabaseAuth.server.fn>>["context"]["supabase"],
+  supabase: SB,
   kind: HandoffSubjectKind,
   id: string,
   toOperatorId: string | null,
@@ -33,17 +37,17 @@ async function reassignSubject(
   reason?: HandoffReason,
 ) {
   if (kind === "task") {
-    const patch: Record<string, unknown> = { assignee_id: toOperatorId };
+    const patch: Record<string, unknown> = { operator_id: toOperatorId, assignee_id: toOperatorId };
     if (reason === "blocked" && receiverName) patch.waiting_on = receiverName;
     await supabase.from("tasks").update(patch).eq("id", id);
   } else if (kind === "workflow_step_run") {
-    await supabase.from("workflow_step_runs").update({ assignee_id: toOperatorId }).eq("id", id);
+    await supabase.from("workflow_step_runs").update({ operator_id: toOperatorId }).eq("id", id);
   } else if (kind === "project") {
-    await supabase.from("projects").update({ assignee_id: toOperatorId }).eq("id", id);
+    await supabase.from("projects").update({ operator_id: toOperatorId }).eq("id", id);
   } else if (kind === "campaign") {
     await supabase.from("campaigns").update({ operator_id: toOperatorId }).eq("id", id);
   } else if (kind === "session") {
-    await supabase.from("sessions").update({ assignee_id: toOperatorId }).eq("id", id);
+    await supabase.from("sessions").update({ operator_id: toOperatorId }).eq("id", id);
   }
 }
 
@@ -51,17 +55,14 @@ export const createHandoff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => CreateInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { supabase, userId } = context as { supabase: SB; userId: string };
 
     const { data: receiver } = await supabase
       .from("operators")
-      .select("display_name, name")
+      .select("name")
       .eq("id", data.toOperatorId)
       .maybeSingle();
-    const receiverName =
-      (receiver as { display_name?: string; name?: string } | null)?.display_name ??
-      (receiver as { name?: string } | null)?.name ??
-      null;
+    const receiverName = (receiver as { name?: string } | null)?.name ?? null;
 
     const { data: inserted, error } = await supabase
       .from("handoff_events")
@@ -96,7 +97,7 @@ export const respondToHandoff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => RespondInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase } = context as { supabase: SB };
 
     const { data: existing, error: fetchErr } = await supabase
       .from("handoff_events")
@@ -104,8 +105,8 @@ export const respondToHandoff = createServerFn({ method: "POST" })
       .eq("id", data.handoffId)
       .maybeSingle();
     if (fetchErr) throw new Error(fetchErr.message);
-    if (!existing) return { ok: false, reason: "not_found" as const };
-    if (existing.status !== "pending") return { ok: false, reason: "already_handled" as const };
+    if (!existing) return { ok: false as const, reason: "not_found" as const };
+    if (existing.status !== "pending") return { ok: false as const, reason: "already_handled" as const };
 
     const newStatus: HandoffStatus =
       data.action === "accept" ? "accepted" : data.action === "decline" ? "declined" : "cancelled";
@@ -118,7 +119,7 @@ export const respondToHandoff = createServerFn({ method: "POST" })
       .select("*")
       .maybeSingle();
     if (updErr) throw new Error(updErr.message);
-    if (!updated) return { ok: false, reason: "race" as const };
+    if (!updated) return { ok: false as const, reason: "race" as const };
 
     if (data.action === "decline" || data.action === "cancel") {
       await reassignSubject(
