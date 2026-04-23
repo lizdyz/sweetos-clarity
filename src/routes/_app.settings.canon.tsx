@@ -308,7 +308,38 @@ function CanonView({
           <p className="text-sm leading-relaxed text-muted-foreground">{canon.reinforcement_loop}</p>
         </Section>
       )}
+
+      {(canon.capture_prompts?.length ?? 0) > 0 && (
+        <Section title="Capture prompts (shown in the PageHeader capture popover)">
+          <ul className="space-y-1 text-sm">
+            {canon.capture_prompts.map((p, i) => (
+              <li key={i} className="flex gap-1.5">
+                <span className="text-muted-foreground">›</span>
+                <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      <Section title="Coverage rules (used by Gap-Closer)">
+        <dl className="grid grid-cols-2 gap-2 text-xs">
+          <Pair k="Stale capture (days)" v={canon.coverage_rules?.stale_capture_days ?? "—"} />
+          <Pair k="Require JTBD link" v={canon.coverage_rules?.require_jtbd_link ? "Yes" : "No"} />
+          <Pair k="Require active KTI" v={canon.coverage_rules?.require_active_kti ? "Yes" : "No"} />
+          <Pair k="Min Sparks / quarter" v={canon.coverage_rules?.min_sparks_per_quarter ?? "—"} />
+        </dl>
+      </Section>
     </article>
+  );
+}
+
+function Pair({ k, v }: { k: string; v: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border bg-background px-2.5 py-1.5">
+      <span className="text-muted-foreground">{k}</span>
+      <span className="font-medium">{v}</span>
+    </div>
   );
 }
 
