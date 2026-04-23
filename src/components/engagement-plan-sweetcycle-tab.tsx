@@ -1,13 +1,19 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Compass } from "lucide-react";
+import { Compass, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { sb } from "@/lib/sb";
 import { SweetCycleBoard, type SweetSession, type SweetPhase } from "@/components/sweetcycle-board";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface Props {
   planId: string;
+  /** "compact" = 5-phase counts + dots only. "full" = full board. Default full. */
+  mode?: "compact" | "full";
 }
+
+const PHASES: SweetPhase[] = ["Seed", "Synthesize", "Session", "Sync", "Ship"];
 
 interface PlanLite {
   id: string;
