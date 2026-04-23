@@ -1150,6 +1150,8 @@ export type Database = {
           implications: string | null
           made_by: string | null
           ocda_stage: string | null
+          raised_from_id: string | null
+          raised_from_kind: string | null
           related_project_id: string | null
           status: string | null
           supersedes: string | null
@@ -1169,6 +1171,8 @@ export type Database = {
           implications?: string | null
           made_by?: string | null
           ocda_stage?: string | null
+          raised_from_id?: string | null
+          raised_from_kind?: string | null
           related_project_id?: string | null
           status?: string | null
           supersedes?: string | null
@@ -1188,6 +1192,8 @@ export type Database = {
           implications?: string | null
           made_by?: string | null
           ocda_stage?: string | null
+          raised_from_id?: string | null
+          raised_from_kind?: string | null
           related_project_id?: string | null
           status?: string | null
           supersedes?: string | null
@@ -4527,6 +4533,7 @@ export type Database = {
           current_position: string | null
           id: string
           notes: string | null
+          settled_decision_id: string | null
           sort_order: number
           status: string
           title: string
@@ -4539,6 +4546,7 @@ export type Database = {
           current_position?: string | null
           id?: string
           notes?: string | null
+          settled_decision_id?: string | null
           sort_order?: number
           status?: string
           title: string
@@ -4551,12 +4559,21 @@ export type Database = {
           current_position?: string | null
           id?: string
           notes?: string | null
+          settled_decision_id?: string | null
           sort_order?: number
           status?: string
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "open_decisions_settled_decision_id_fkey"
+            columns: ["settled_decision_id"]
+            isOneToOne: false
+            referencedRelation: "decisions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       operators: {
         Row: {

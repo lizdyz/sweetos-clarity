@@ -14,12 +14,19 @@ function OCDAPage() {
       <PageHeader
         icon={<Brain className="h-5 w-5" />}
         title="OCDA — your Decision Factory"
-        purpose="Observe · Choose · Decide · Act — the loop that makes your Decision Factory compound rather than reset."
+        purpose="Observe · Choose · Decide · Act — the loop that makes your Decision Factory compound rather than reset. Each lane is a working surface; advance items by clicking their stage chip."
         whatYouCanDo={[
-          "See the four canonical Factory components and where each lives",
-          "Triage observations from Capture, Sparks, and Signal Scanners",
-          "Track which options you're weighing, then log decisions with rationale",
+          "Triage observations from Capture, Sparks, KTI fires, and Inbound signals",
+          "Click any card's OCDA chip to advance it through stages",
+          "Log a formal Decision inline from the Decide lane",
         ]}
+        connectsTo={[
+          { to: "/decisions", label: "Decisions" },
+          { to: "/decisions/open", label: "Open Decisions" },
+          { to: "/sandbox", label: "Sandbox" },
+          { to: "/sweetscan", label: "SweetScan" },
+        ]}
+        nextSteps={["Frame observations", "Weigh choices", "Log decisions", "Move work"]}
       />
       <FactoryHealthStrip />
       <OCDACockpit />

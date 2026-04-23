@@ -31,6 +31,7 @@ export type PromoteActionKind =
   | "task"
   | "project"
   | "spark"
+  | "decision"
   | "decision_input"
   | "component_canon"
   | "archive";
@@ -75,7 +76,8 @@ export const DEFAULT_PROMOTE_OPTIONS: PromoteAction[] = [
   { kind: "task", label: "→ Task", hint: "Create an executable task with provenance back here" },
   { kind: "project", label: "→ Project", hint: "Spawn a project with this idea as the brief" },
   { kind: "spark", label: "→ Spark", hint: "Convert to a system-attributed Spark" },
-  { kind: "decision_input", label: "→ Decision input", hint: "Add to the OCDA Observe column" },
+  { kind: "decision", label: "→ Decision", hint: "Log a formal Decision (status=decided) with provenance" },
+  { kind: "decision_input", label: "→ Decision input", hint: "Add to the OCDA Observe column for weighing" },
   { kind: "component_canon", label: "→ Component canon", hint: "Append to a component's brand canon / playbook" },
   { kind: "archive", label: "→ Archive", hint: "Soft-delete with reason" },
 ];
