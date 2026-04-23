@@ -61,7 +61,7 @@ export function AuditRowDetail({ row, onApplyFilter }: Props) {
         </div>
       ) : null}
 
-      {!row.field && (row.old_value || row.new_value) && (
+      {!row.field && (row.old_value != null || row.new_value != null) ? (
         <div>
           <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Snapshot
