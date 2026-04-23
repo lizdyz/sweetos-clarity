@@ -65,6 +65,8 @@ type Operator = {
 type Workload = {
   operator_id: string;
   open_tasks: number;
+  blocked_tasks: number;
+  overdue_tasks: number;
   next_due: string | null;
 };
 
@@ -90,14 +92,16 @@ function OperatorsListPage() {
     queryFn: async () => {
       const { data, error } = await sb
         .from("operator_workload")
-        .select("operator_id, open_tasks, next_due");
+        .select("operator_id, open_tasks, blocked_tasks, overdue_tasks, next_due");
       if (error) throw error;
       return (data ?? []) as Workload[];
     },
   });
 
   const wlMap = new Map(workload.map((w) => [w.operator_id, w]));
-  const filtered = operators.filter((o) => filter === "all" || o.kind === filter);
+  const filtered = operators
+    .filter((o) => filter === "all" || o.kind === filter)
+    .sort((a, b) => (wlMap.get(b.id)?.open_tasks ?? 0) - (wlMap.get(a.id)?.open_tasks ?? 0));
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-5 p-6">
@@ -179,9 +183,11 @@ function OperatorsListPage() {
                   </div>
                 )}
 
-                <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-2 text-[11px] text-muted-foreground">
-                  <span>{wl?.open_tasks ?? 0} open</span>
-                  <span>{wl?.next_due ? `Next: ${wl.next_due}` : "—"}</span>
+                <div className="mt-3 grid grid-cols-4 gap-1 border-t border-border/50 pt-2 text-center">
+                  <Stat n={wl?.open_tasks ?? 0} label="open" />
+                  <Stat n={wl?.blocked_tasks ?? 0} label="blocked" tone={wl && wl.blocked_tasks > 0 ? "danger" : "muted"} />
+                  <Stat n={wl?.overdue_tasks ?? 0} label="overdue" tone={wl && wl.overdue_tasks > 0 ? "warn" : "muted"} />
+                  <Stat n={wl?.next_due ? fmtNextDue(wl.next_due) : "—"} label="next" />
                 </div>
               </Card>
             </Link>
@@ -197,6 +203,28 @@ function OperatorsListPage() {
       <NewOperatorDialog open={open} onOpenChange={setOpen} />
     </div>
   );
+}
+
+function Stat({ n, label, tone = "muted" }: { n: number | string; label: string; tone?: "muted" | "warn" | "danger" }) {
+  return (
+    <div>
+      <div className={cn(
+        "text-sm font-semibold tabular-nums",
+        tone === "danger" && "text-rose-700 dark:text-rose-400",
+        tone === "warn" && "text-amber-700 dark:text-amber-400",
+        tone === "muted" && "text-foreground/80",
+      )}>{n}</div>
+      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function fmtNextDue(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  } catch {
+    return iso;
+  }
 }
 
 function NewOperatorDialog({
