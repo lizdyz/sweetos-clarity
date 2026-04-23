@@ -146,7 +146,18 @@ function SessionDetail() {
         )}
 
         <MeasuresPanel subjectType="session" subjectId={id} title="Session measures" />
+        </div>
       </div>
+      {lensOpen && (
+        <div className="px-6 pt-4 lg:pr-6">
+          <ObjectCompanion
+            objectKind="session"
+            objectId={id}
+            objectTitle={session?.name ?? "Session"}
+            className="self-start lg:sticky lg:top-4"
+          />
+        </div>
+      )}
     </div>
   );
 }
