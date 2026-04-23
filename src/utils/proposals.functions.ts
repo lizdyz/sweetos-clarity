@@ -402,21 +402,25 @@ async function callTagSuggester(opts: {
     ...components.map((c) => `  ${c.id} — ${c.name}`),
   ].join("\n");
 
-  const json = await callAI({
+  const tagPrompt = await getPrompt("queue.tag", {
+    systemPrompt:
+      "You assign taxonomy tags to a proposal. Pick ONLY from the supplied canon. Be precise — fewer, accurate tags beat many loose ones. Prefer 1–3 domains, 1–3 tenets, 0–2 components. Return slugs/uuids exactly as given.",
+    userTemplate:
+      "Proposal entity_type: {{entity_type}}\nProposed fields: {{fields_json}}\n\nUser text:\n{{text}}\n\n--- CANON ---\n{{canon}}",
     model,
+  });
+  const json = await callAI({
+    model: tagPrompt.model,
     messages: [
-      {
-        role: "system",
-        content:
-          "You assign taxonomy tags to a proposal. Pick ONLY from the supplied canon. Be precise — fewer, accurate tags beat many loose ones. Prefer 1–3 domains, 1–3 tenets, 0–2 components. Return slugs/uuids exactly as given.",
-      },
+      { role: "system", content: tagPrompt.systemPrompt },
       {
         role: "user",
-        content:
-          `Proposal entity_type: ${entityType}\n` +
-          `Proposed fields: ${JSON.stringify(proposedFields)}\n\n` +
-          `User text:\n${text.slice(0, 4000)}\n\n` +
-          `--- CANON ---\n${canonText}`,
+        content: renderTemplate(tagPrompt.userTemplate, {
+          entity_type: entityType,
+          fields_json: JSON.stringify(proposedFields),
+          text: text.slice(0, 4000),
+          canon: canonText,
+        }),
       },
     ],
     tools: [{ type: "function", function: TAG_SUGGESTER_SCHEMA }],
