@@ -28,7 +28,7 @@ export async function logAuditEvent(input: AuditEventInput): Promise<void> {
       ip_address: input.ipAddress ?? null,
       user_agent: input.userAgent ?? null,
     };
-    const { error } = await supabaseAdmin.from("entity_audit_log").insert(row);
+    const { error } = await supabaseAdmin.from("entity_audit_log").insert(row as never);
     if (error) {
       // eslint-disable-next-line no-console
       console.error("[audit] write failed:", error.message, row);

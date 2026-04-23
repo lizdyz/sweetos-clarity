@@ -76,9 +76,13 @@ export const listAuditEvents = createServerFn({ method: "POST" })
     if (error) {
       // eslint-disable-next-line no-console
       console.error("[audit.list] failed", error);
-      return { rows: [], total: 0, error: error.message };
+      return { rows: [] as unknown[], total: 0, error: error.message as string | null };
     }
-    return { rows: rows ?? [], total: count ?? 0, error: null };
+    return {
+      rows: (rows ?? []) as unknown[],
+      total: count ?? 0,
+      error: null as string | null,
+    };
   });
 
 export const listAuditSavedViews = createServerFn({ method: "GET" })
