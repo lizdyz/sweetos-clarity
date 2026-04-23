@@ -5,6 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { sb } from "@/lib/sb";
 import { cn } from "@/lib/utils";
+import { TriageCard } from "@/components/triage-card";
+import { sparkToTriageable } from "@/lib/triage-adapters";
+import { useTriagePromote } from "@/lib/use-triage-promote";
+import type { Triageable } from "@/lib/triageable";
+import { DEFAULT_PROMOTE_OPTIONS } from "@/lib/triageable";
 
 type Stage = "observe" | "choose" | "decide" | "act";
 
