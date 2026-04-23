@@ -1,74 +1,103 @@
 
 
-# Wave 8 (continued) — Finish the rollout + form-control canon
+# Wave 9 — Wire the dead buttons + finish the Wave-8 mounts
 
-Picking up where the last batch stopped. Two things to land: (1) the unfinished Wave-7/8 mounts, (2) a written rule for when to use dropdown vs multi-select vs chips vs toggle so the UI stops drifting.
+You're right — I left a trail of half-finished work. Here's the honest audit and what to ship to make every page feel real.
 
-## Part 1 — Finish the mounts
+## The 4 dead "+ New" buttons (the ones you're clicking)
 
-| Surface | Mount | Replaces |
+| Page | Dead button | Why it does nothing |
 |---|---|---|
-| `/sweetscan` | `<TriageCard>` for inbound signals via `inboundSignalToTriageable` | `<InboundSignalCard>` |
-| `/sparks` index | `<TriageCard>` via `sparkToTriageable` | bespoke spark cards |
-| `/decisions` index | `<TriageCard>` via `decisionToTriageable` (state='proposed' only) | bespoke decision rows |
-| `/operate/ocda` Observe lane | `<TriageCard>` rows | bespoke observe cards |
-| `/decisions/$id` · `/sparks/$id` | `<EntityFrameworksRail>` in right rail | (additive) |
-| ~12 detail routes | wrap content in `<EntityShell>` — tasks, projects, components, sessions, workflows, quests, sparks, decisions, relationships, missions, journeys, playbooks | (one-line wraps) |
-| `/start/ship-status` | new route + `<ShipStatusBoard>` (live route/table/view tally) | new |
-| `/relationships/$id` | additive SweetSync tabs (Missions · Journeys · Quests · Sparks · Mirror) | (additive) |
+| `/components` | **+ New component** | Renders, no `onClick` |
+| `/projects` | **+ New project** | Renders, no `onClick` |
+| `/relationships` | **+ Add relationship** | Renders, no `onClick` |
+| `/tasks` | **+ New task** | Renders, no `onClick` |
 
-## Part 2 — Form-control canon (`mem://design/form-controls.md`)
+These are the most visible "nothing happens" moments. Every other button I scanned has a real handler.
 
-The drift you're feeling is that we pick controls ad-hoc. Lock the rule:
+## What from Wave 8 actually shipped vs what's still pending
 
-| Cardinality | Use | Component | Example |
-|---|---|---|---|
-| 1 of 2–4 mutually exclusive | **Toggle group / Segmented** | `<ToggleGroup type="single">` | View density · Component kind |
-| 1 of 5–20 | **Dropdown (Select)** | `<Select>` | Owner · Status · Lens (F1–F8) |
-| 1 of 20+ searchable | **Combobox** | `<Command>` in `<Popover>` | Relationship · Operator · Persona |
-| Many of 5–20 | **Multi-select dropdown** | `<Popover>` + checkbox list | Domains on a Spark · Tenets on a Tenet picker |
-| Many of 20+ searchable | **Tag picker / Combobox-multi** | `<TagPicker>` (already exists) | Tags · Components on a Task |
-| Many of small fixed set, always visible | **Chip group / Toggle multi** | `<ToggleGroup type="multiple">` | 5P filter · Lens filter |
-| Boolean | **Switch** (settings) or **Checkbox** (forms) | `<Switch>` / `<Checkbox>` | Auto-confirm · Include archived |
-| Free text constrained | **Combobox with allow-create** | `<Command>` + create item | New tag · New skill |
-| Date | `<Calendar>` in popover | `<Popover>` | Due · Scheduled |
-| Range | `<Slider>` | `<Slider>` | Confidence threshold |
+**Shipped ✅**
+- `<EntityShell>` component built
+- `<EntityCanonTab>`, `<ConnectionRail>`, `<EvidenceFooter>`, `<EntityFrameworksRail>` built
+- `<UniversalDropZone>` mounted on `/today`, `/capture`, and as global `+` in topbar
+- `<TriageCard>` rolled out to `/sweetscan`, `/sparks` index, `/decisions` index
+- `<UniversalFilterBar>` refactored to honor form-control canon
+- Stub routes `/pipeline`, `/planner`, `/queue`, `/my-tasks` redirect cleanly
 
-**Filter bars specifically** (this is where it matters most for you right now): always **multi-select chips** for small enums (5P, Lens, State) and **searchable dropdown** for large sets (Domain, Tenet, Owner). `<UniversalFilterBar>` will be refactored to follow this rule so every list filters identically.
+**NOT shipped (you're right to call it out) ❌**
+- `<EntityShell>` is built but **mounted on zero detail routes** (it lives in the file but no page imports it)
+- `<EntityFrameworksRail>` not mounted on `/tasks/$id`, `/decisions/$id`, `/sparks/$id`
+- TriageCard not in `/operate/ocda` Observe lane (still bespoke)
+- TriageCard not in `/capture` (still bespoke triage rows)
+- `/start/ship-status` page never created
+- Relationship SweetSync tabs never created
+- `mem://design/canon-tab-rule.md` never written
 
-**Promote actions** (the six verbs on TriageCard): always **dropdown menu** triggered by one button, never six buttons in a row. Keeps card height predictable.
+## Wave 9 — three crisp moves
+
+### 1. Wire every "+ New" button (highest visibility)
+
+Each opens a slide-in `<Sheet>` with a real create form. Same pattern, four entities:
+- `+ New component` → `<ComponentCreateSheet>` (name · kind · maturity L1)
+- `+ New project` → `<ProjectCreateSheet>` (name · relationship · status)
+- `+ Add relationship` → `<RelationshipCreateSheet>` (name · org · industry · stage)
+- `+ New task` → `<TaskCreateSheet>` (title · operator · due · scope)
+
+All four follow the form-control canon (Wave 8): Select for owner/status, Combobox for relationship, Calendar popover for due, Switch for "create another after save". On save → invalidate query → toast → navigate to detail page.
+
+### 2. Finish the Wave-8 mounts I promised
+
+| Mount | Where | What it gives you |
+|---|---|---|
+| `<EntityFrameworksRail>` in right rail | `/tasks/$id` · `/decisions/$id` · `/sparks/$id` | Run any of F1–F8 on the open item |
+| `<TriageCard>` rows | `/operate/ocda` Observe lane | One gesture from Capture → Choose |
+| `<TriageCard>` rows | `/capture` proposal queue | Replace bespoke triage row |
+| `<EntityShell>` wrap | 8 detail routes (tasks, projects, components, sessions, workflows, quests, sparks, decisions) | Zone 1–5 layout consistent everywhere |
+
+### 3. Two missing surfaces
+
+- **`/start/ship-status`** — the "what's real vs aspirational" board pulled from a live route count + entity_canon coverage. Reachable from `/start` via a "Ship status →" link.
+- **Relationship SweetSync tabs** on `/relationships/$id` — additive Missions / Journeys / Quests / Sparks / Mirror tabs filtered by `relationship_id`.
 
 ## Files
 
 **New:**
+- `src/components/component-create-sheet.tsx`
+- `src/components/project-create-sheet.tsx`
+- `src/components/relationship-create-sheet.tsx`
+- `src/components/task-create-sheet.tsx`
 - `src/components/start/ship-status-board.tsx`
-- `src/routes/_app.start.ship-status.tsx`
 - `src/components/relationship-sweetsync-tabs.tsx`
-- `mem://design/form-controls.md`
-- `mem://design/universal-entity-shell.md`
+- `src/routes/_app.start.ship-status.tsx`
+- `mem://design/canon-tab-rule.md`
 
-**Edited (mounts only):**
-- `src/routes/_app.sweetscan.tsx` · `_app.sparks.index.tsx` · `_app.decisions.index.tsx` · `_app.operate.ocda.tsx` — TriageCard rollout
-- `src/routes/_app.decisions.$id.tsx` · `_app.sparks.$id.tsx` — FrameworksRail
-- ~12 detail routes — wrap in `<EntityShell>`
-- `src/routes/_app.relationships.$id.tsx` — sweetsync tabs
-- `src/components/universal-filter-bar.tsx` — refactor to honor the form-control canon (chips for small enums, combobox for large)
+**Edited (mounts/wires only):**
+- `src/routes/_app.components.index.tsx` · `_app.projects.index.tsx` · `_app.relationships.index.tsx` · `_app.tasks.index.tsx` — wire the four "+ New" buttons
+- `src/routes/_app.tasks.$id.tsx` · `_app.decisions.$id.tsx` · `_app.sparks.$id.tsx` — mount FrameworksRail
+- `src/components/ocda-cockpit.tsx` — TriageCard rows in Observe lane
+- `src/routes/_app.capture.tsx` — TriageCard rows replacing bespoke triage
+- 8 detail routes — wrap content in `<EntityShell>` (one-line wraps, no rewrites)
+- `src/routes/_app.relationships.$id.tsx` — add SweetSync tabs
+- `src/routes/_app.start.tsx` — link to `/start/ship-status`
+
+## What this wave is NOT
+
+- No new entities, no migrations
+- No sidebar regroup (still locked)
+- No edits to auto-generated files
+- No deletions (the four redirect stubs stay — they protect old bookmarks)
 
 ## Sequencing
 
-1. Form-control canon memory + UniversalFilterBar refactor (~15%)
-2. TriageCard rollout to 4 surfaces (~25%)
-3. EntityShell wraps on 12 routes (~30%)
-4. FrameworksRail on Decision/Spark detail (~10%)
-5. `/start/ship-status` page (~10%)
-6. Relationship SweetSync tabs (~10%)
+1. Four "+ New" create sheets (~30%) — kills the "nothing happens" feeling immediately
+2. EntityShell wraps on 8 detail routes (~25%)
+3. FrameworksRail + TriageCard mounts (~20%)
+4. `/start/ship-status` page (~12%)
+5. Relationship SweetSync tabs (~10%)
+6. Memory canon update (~3%)
 
-## Not in this wave
+After Wave 9: every button visible in your sidebar leads somewhere, every "+ New" actually creates, every detail page has the same shell, and every triage surface uses the same card. No more dead clicks.
 
-- No sidebar regroup (locked)
-- No route deletions (Wave 9)
-- No new entities or migrations
-- No edits to auto-generated files
-
-Reply **"Run Wave 8 finish"** to ship in this order, or name a subset (e.g. *"Form-control canon + filter bar refactor first"*).
+Reply **"Run Wave 9"** to ship in this order, or **"Just the four + New buttons first"** to land the most painful fix alone.
 
