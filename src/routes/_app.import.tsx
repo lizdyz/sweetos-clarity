@@ -138,8 +138,8 @@ function ImportPage() {
   }, []);
 
   const filenameOf = useMemo(() => {
-    const map = new Map((data?.files ?? []).map((f: any) => [f.id as string, f.filename as string]));
-    return (id: string) => map.get(id) ?? "—";
+    const map = new Map<string, string>((data?.files ?? []).map((f: any) => [f.id as string, f.filename as string]));
+    return (id: string): string => map.get(id) ?? "—";
   }, [data?.files]);
 
   return (
