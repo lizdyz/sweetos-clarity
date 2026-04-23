@@ -490,6 +490,8 @@ function TasksIndexPage() {
           ))}
         </div>
       )}
+
+      <TaskCreateSheet open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }
