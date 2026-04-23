@@ -2,6 +2,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { sendSupabaseAuth } from "@/integrations/supabase/client-auth-middleware";
 import { z } from "zod";
 
 const FiltersSchema = z.object({
