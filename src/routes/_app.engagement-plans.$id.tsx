@@ -125,6 +125,7 @@ function PlanDetail() {
             </div>
           )}
         </Card>
+        </div>
       </div>
       {lensOpen && (
         <div className="px-6 pt-4 lg:pr-6">
