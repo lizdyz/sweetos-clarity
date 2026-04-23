@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Wand2, Pencil } from "lucide-react";
+import { Wand2, Pencil, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ const SCOPE_LABEL: Record<string, string> = {
   queue: "Capture & Queue",
   ocda: "OCDA Cockpit",
   scanner: "Signal Scanners",
-  lens: "BizzyBot Lenses",
   curator: "Curator Agents",
 };
 
@@ -29,11 +28,12 @@ function PromptConsole() {
   const [open, setOpen] = useState(false);
 
   const { data: prompts = [] } = useQuery({
-    queryKey: ["system_prompts"],
+    queryKey: ["system_prompts", "non-lens"],
     queryFn: async () => {
       const { data, error } = await sb
         .from("system_prompts")
         .select("*")
+        .neq("scope", "lens")
         .order("scope", { ascending: true })
         .order("name", { ascending: true });
       if (error) throw error;
@@ -68,13 +68,20 @@ function PromptConsole() {
       <PageHeader
         icon={<Wand2 className="h-5 w-5" />}
         title="Prompt Console"
-        purpose="Every editable AI instruction in one place — capture parser, OCDA copilot, signal scanners, BizzyBot lenses, and curator agents."
+        purpose="Editable AI instructions for capture, OCDA, signal scanners, and curator agents. Lens prompts live in Lens Studio."
         whatYouCanDo={[
-          "Edit any prompt without redeploying",
+          "Edit any non-lens prompt without redeploying",
           "Switch the model per prompt",
           "Track when each was last updated",
         ]}
       />
+      <Link
+        to="/settings/lens-studio"
+        className="mb-3 inline-flex items-center gap-2 rounded-lg border border-iris/30 bg-iris-soft/30 px-3 py-2 text-xs text-foreground hover:bg-iris-soft/50"
+      >
+        <Sparkles className="h-3.5 w-3.5 text-iris" />
+        Lens prompts now live in <span className="font-semibold">Lens Studio</span> →
+      </Link>
       <div className="mb-3">
         <Input
           placeholder="Search prompts…"

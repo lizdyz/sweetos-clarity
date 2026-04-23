@@ -9,7 +9,8 @@ import { TimeControls } from "@/components/time-controls";
 import { SparkProvenanceChip } from "@/components/spark-provenance-chip";
 import { ScopeChip } from "@/components/scope-chip";
 import { CanonGuardrail } from "@/components/canon-guardrail";
-import { EntityFrameworksRail } from "@/components/entity-frameworks-rail";
+import { ObjectCompanion, SweetLensButton } from "@/components/object-companion";
+import { useState } from "react";
 import { Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/sparks/$id")({
@@ -36,6 +37,7 @@ interface SparkRow {
 
 function SparkDetail() {
   const { id } = Route.useParams();
+  const [lensOpen, setLensOpen] = useState(false);
   const { data } = useQuery({
     queryKey: ["sparks", "detail", id],
     queryFn: async () => {
@@ -105,19 +107,28 @@ function SparkDetail() {
   }, [data?.done_at]);
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-6 lg:pt-5">
+    <div
+      className={
+        lensOpen
+          ? "grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-6 lg:pt-5"
+          : "grid gap-5 lg:px-6 lg:pt-5"
+      }
+    >
       <div className="space-y-5 min-w-0">
         <div className="px-6 pt-5 lg:px-0 lg:pt-0">
           <CanonGuardrail entityKind="spark" />
         </div>
         {data && (
-          <div className="flex flex-wrap items-center gap-2 px-6 lg:px-0">
-            <SparkProvenanceChip
-              kind={data.generated_by_kind}
-              generatorName={operator?.name}
-              originEvent={data.origin_event}
-            />
-            <ScopeChip scope={data.scope} relationshipId={data.relationship_id} size="sm" />
+          <div className="flex flex-wrap items-center justify-between gap-2 px-6 lg:px-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <SparkProvenanceChip
+                kind={data.generated_by_kind}
+                generatorName={operator?.name}
+                originEvent={data.origin_event}
+              />
+              <ScopeChip scope={data.scope} relationshipId={data.relationship_id} size="sm" />
+            </div>
+            <SweetLensButton active={lensOpen} onClick={() => setLensOpen((o) => !o)} />
           </div>
         )}
         {data && (quest || components.length > 0) && (
@@ -144,11 +155,11 @@ function SparkDetail() {
         )}
         <EntityDetailPage entityKey="sparks" />
       </div>
-      {data && (
-        <EntityFrameworksRail
-          entityKind="spark"
-          entityId={id}
-          title={data.name}
+      {lensOpen && data && (
+        <ObjectCompanion
+          objectKind="spark"
+          objectId={id}
+          objectTitle={data.name}
           className="self-start lg:sticky lg:top-4"
         />
       )}
