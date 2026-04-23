@@ -197,6 +197,56 @@ function UxAuditCockpit() {
         </div>
       </section>
 
+      {/* Bulk runner — fire many audits with one click. */}
+      <section className="rounded-2xl border border-border bg-gradient-to-br from-iris-soft/40 to-surface/60 p-4">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-[color:var(--iris-violet)]" />
+              <h2 className="text-sm font-semibold">Bulk runner</h2>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Audit many routes in one click. Runs sequentially (~2s each) to stay inside the AI rate limit.
+            </p>
+          </div>
+          {bulkProgress && (
+            <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-mono">
+              <Loader2 className="h-3 w-3 animate-spin text-[color:var(--iris-violet)]" />
+              {bulkProgress.done} / {bulkProgress.total}
+            </div>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => runBulk(unauditedTargets, "Audit unaudited routes")}
+            disabled={bulkRunning || unauditedTargets.length === 0}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:border-foreground/30 disabled:opacity-40"
+          >
+            <Wand2 className="h-3.5 w-3.5" />
+            Audit unaudited ({unauditedTargets.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => runBulk(staleTargets, `Refresh stale (>${STALE_DAYS}d)`)}
+            disabled={bulkRunning || staleTargets.length === 0}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:border-foreground/30 disabled:opacity-40"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh stale &gt; {STALE_DAYS}d ({staleTargets.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => runBulk(AUDIT_TARGETS, "Re-audit all")}
+            disabled={bulkRunning}
+            className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--iris-violet)] px-3 py-2 text-xs font-medium text-white shadow-[var(--shadow-glass)] hover:opacity-90 disabled:opacity-50"
+          >
+            <Zap className="h-3.5 w-3.5" />
+            Re-audit all ({AUDIT_TARGETS.length})
+          </button>
+        </div>
+      </section>
+
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">Latest audit per route</h2>
@@ -247,11 +297,11 @@ function UxAuditCockpit() {
                   <UxAuditCard
                     key={run.id}
                     run={run}
-                    reauditing={running}
+                    reauditing={running || bulkRunning}
                     onReaudit={
                       target
                         ? () =>
-                            runAudit(
+                            runOne(
                               run.route_path,
                               target.source,
                               run.ux_issues_user_reported,
