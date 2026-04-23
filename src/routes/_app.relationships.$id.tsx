@@ -21,6 +21,7 @@ import { TwoPathsStrip } from "@/components/two-paths-strip";
 import { BrandCanonEditor } from "@/components/brand-canon-editor";
 import { KtiPanel } from "@/components/kti-panel";
 import { WorldWatchPanel } from "@/components/world-watch-panel";
+import { RelationshipSweetSyncTabs } from "@/components/relationship-sweetsync-tabs";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
@@ -34,6 +35,7 @@ function RelationshipDetail() {
       <ServiceShapeStrip relationshipId={id} />
       <RelationshipPanels relationshipId={id} />
       <EntityDetailPage entityKey="relationships" />
+      <RelationshipSweetSyncTabs relationshipId={id} />
       <div className="px-6">
         <TwoPathsStrip relationshipId={id} />
       </div>

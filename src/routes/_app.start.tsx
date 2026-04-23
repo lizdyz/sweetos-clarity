@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { Compass } from "lucide-react";
+import { Compass, Gauge, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { DecisionFactoryHealth } from "@/components/start/decision-factory-health";
 import { OcdaPosition } from "@/components/start/ocda-position";
@@ -25,6 +25,24 @@ function StartPage() {
           "Pick Session path or SweetSync path",
         ]}
       />
+
+      <Link
+        to="/start/ship-status"
+        className="panel-raised flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 transition hover:border-iris/40"
+      >
+        <div className="flex items-center gap-3">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-iris-soft text-[color:var(--iris-violet)]">
+            <Gauge className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold tracking-tight">Ship status →</div>
+            <div className="text-xs text-muted-foreground">
+              What's real vs aspirational — live tally of routes, components, canon coverage.
+            </div>
+          </div>
+        </div>
+        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
 
       <DecisionFactoryHealth />
       <OcdaPosition />
