@@ -7709,6 +7709,113 @@ export type Database = {
           },
         ]
       }
+      thinking_items: {
+        Row: {
+          body: string | null
+          candidate_kind: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          linked_id: string | null
+          linked_kind: string | null
+          metadata: Json
+          position: number
+          promoted_to_id: string | null
+          promoted_to_kind: string | null
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          candidate_kind?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          linked_id?: string | null
+          linked_kind?: string | null
+          metadata?: Json
+          position?: number
+          promoted_to_id?: string | null
+          promoted_to_kind?: string | null
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          candidate_kind?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          linked_id?: string | null
+          linked_kind?: string | null
+          metadata?: Json
+          position?: number
+          promoted_to_id?: string | null
+          promoted_to_kind?: string | null
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thinking_items_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "thinking_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      thinking_topics: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          journey_id: string | null
+          pinned: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          journey_id?: string | null
+          pinned?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          journey_id?: string | null
+          pinned?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thinking_topics_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "capabilities_derived"
+            referencedColumns: ["journey_id"]
+          },
+          {
+            foreignKeyName: "thinking_topics_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

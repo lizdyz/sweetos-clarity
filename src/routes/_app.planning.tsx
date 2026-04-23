@@ -2,7 +2,7 @@
 // Walks Mission → Journey → Quest → Quest detail → Tasks → Operators.
 // All steps read/write existing tables. No DB changes.
 import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Compass } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -68,6 +68,18 @@ function PlanningPage() {
         ]}
         nextSteps={["Open Today to see what's next"]}
       />
+
+      <div className="flex items-center gap-2 text-xs">
+        <span className="rounded-full border border-primary bg-primary/10 px-3 py-1 font-medium text-primary">
+          Seed
+        </span>
+        <Link
+          to="/planning/think"
+          className="rounded-full border border-border/60 px-3 py-1 hover:border-border hover:bg-muted/40"
+        >
+          Think
+        </Link>
+      </div>
 
       <PlanningStepper
         steps={STEPS}

@@ -60,7 +60,7 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
     caption: "Live working surface",
     items: [
       { to: "/start", label: "Start", icon: Compass, hint: "Where do I start? · Decision Factory · OCDA · Two Paths" },
-      { to: "/planning", label: "Planning", icon: Target, hint: "Set Missions · Journeys · Quests · Projects · Tasks" },
+      { to: "/planning", label: "Planning", icon: Target, hint: "Think · Seed · Decide — Topics, then Missions · Journeys · Quests" },
       { to: "/today", label: "Today", icon: LayoutDashboard, hint: "Live working surface · my tasks · planner" },
       { to: "/calendar", label: "Calendar", icon: Calendar, hint: "Visual time view" },
       { to: "/capture", label: "Capture", icon: Sparkles, hint: "In — drop multi-node thoughts; auto-pollinates entities, save ideas to Sandbox" },
