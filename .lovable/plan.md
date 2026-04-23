@@ -1,96 +1,95 @@
 
 
-# Planning that lets you think — not just fill forms
+# Open Work Handoff — Everything Not Yet Done
 
-You're right. The 6-step stepper at `/planning` is good for **seeding the canon** (Mission → Journey → Quest → …) but it forces a top-down march. What you actually want right now is a **thinking surface** — a place to wrestle with cash flow, service language, what to track, what to decide — *before* it has to fit into a Quest or Project.
+A complete inventory of what's been planned/started but not closed, ranked by leverage. Take this anywhere to keep building.
 
-We already have most of the raw material in the system. We just haven't given you a room to think in.
+---
 
-## The shift
+## TIER 1 — Half-finished, will pay off immediately
 
-Keep `/planning` (the stepper) as it is — it's the right tool when you know the shape. Add a second mode beside it: a **Thinking Room** that's free-form, durable, and converts into canonical objects only when *you* decide it's ready.
+### 1. Wave 21 — Lens System final wiring (highest leverage, mostly done)
+Architecture and DB are live. SweetLens panel is mounted on 12 detail routes. **Still open:**
 
-```text
-/planning
-   ├─ Seed       ← the existing 6-step stepper (top-down, structured)
-   └─ Think      ← NEW — free-form workbench (bottom-up, exploratory)
-```
+- **OCDA cockpit drop targets** — convert the 4 lanes (Observe / Decide / Act / Refine) into drag targets using the existing `useDragToStatus` hook. Union the Observe lane sources: `proposals + sparks + inbound_signals + kti_scans` (last 24h). Add an inline "Log decision" composer in Decide. Union running workflow runs into Act.
+- **`<OCDAStageChip>` on more headers** — currently only on Task and Decision. Mount on Project, Spark, Quest detail headers.
+- **FlowStrip** — top of `/capture`, `/sandbox`, `/queue` showing `Capture → Sandbox → Queue → Routed` with current step highlighted. Component file `src/components/flow-strip.tsx` may already exist; needs mounting.
+- **Library "used by" chips** — on rows of `/library/jtbd`, `/library/ktis`, `/personas`, `/outcomes`, `/components`, `/playbooks`. New component `src/components/library/used-by-chip.tsx`.
+- **Audit allow-list** — confirm `lens_outputs`, `open_decisions`, `decisions` are in the audit-log allow-list trigger.
+- **Memory writes** — new `mem://design/lens-system.md` (3-layer model: Lens · Interrogation · Object Companion). Update `mem://design/lenses-bizzybots.md` to clarify BizzyBot = persona attribute, Framework = structure attribute.
+- **Lens Wall structured-outputs footer** — append `<LensOutputsList>` to `lens-wall.tsx` and `lens-perspective-card.tsx` so Domain/Tenet pages get parity with the rail.
 
-## What the Thinking Room is
+### 2. Wave 20 — Product Clarity leftovers
+PageHeader contract (`purpose · whatYouCanDo · connectsTo · nextSteps`) still missing on these routes:
+`/today`, `/operate/ocda`, `/flightdeck`, `/sweetscan`, `/calendar`, `/capture`, `/import`, `/sessions` index, `/operators/$id`, `/engagement-plans` index + detail.
 
-A single page (`/planning/think`) organized as **Topics**. A Topic is just a named thinking space — e.g. "Cash flow", "Service offering language", "What to track", "Pricing model". Each Topic holds:
+### 3. Planning Workspace follow-ons
+- **Quest Board** — `/planning/board` (or merge into `/sweetcycle`): rows = Quests, columns = `Discovery → Building → Shipping → Done`, drag to move state.
+- **Flightdeck operator filter** — add a "you vs. dev" filter chip so each operator sees their own lane.
+- **Thinking Room v2** — "Suggest candidates from this canvas" button (AI scan of Topic prose → proposed `?Quest` `?Decision` `?KPI` candidates). Deferred from the Thinking Room build.
 
-- **A canvas** — long-form prose. Write, paste, draft. No structure imposed.
-- **Loose notes** — quick bullets you jot as ideas land (each note is one row, draggable, taggable).
-- **Open questions** — things you haven't decided. One-liner each.
-- **Candidates** — proto-objects you *might* turn into Quests, Projects, JTBDs, Decisions, Components, KPIs. Each candidate has a kind chip (`?Quest` `?Project` `?Decision` `?KPI`) and a "Promote" button that opens the right create-sheet pre-filled.
-- **Linked objects** — anything already in the system that's relevant (existing Quests, Decisions, Components). Searchable, attachable.
+---
 
-Topics can be **pinned to a Journey** (optional) so later you can see "all my thinking that fed Journey X." Unpinned topics float.
+## TIER 2 — Planned and approved, never finished
 
-## Three starter Topics we'll seed for you
+### 4. Pass 3 — Monster-file refactor + type-safety sweep (on hold by your call)
+- Split 4 oversized files (>600 lines) into focused sub-modules with re-export shims.
+- Eliminate remaining 14 `as any` casts.
+- Generate a Developer Briefing Pack to `/mnt/documents/developer-briefing.md`.
 
-So the room isn't empty on first open:
+### 5. Sparks → Components → Outcomes loop (still disconnected per audit #206)
+- Wire spark dismissal/promotion to update Component evidence.
+- Outcome auto-creation when a Quest containing promoted Sparks completes.
+- "Angela" demo dataset never seeded — add `seed_demo_data.sql` so empty-state pages have realistic content for showing the dev.
 
-1. **Cash flow** — prompts: "What revenue do we need by when? What can we sell now? What are the constraints?"
-2. **Service offering language** — prompts: "What do we call each service? Who's it for? What outcome?"
-3. **What to track** — prompts: "What KPIs would tell us we're winning? What leading indicators?"
+### 6. UX Auditor — bulk execution + auto-fix loop
+Built but underused. Still open:
+- Scheduled run (cron edge function) auditing all routes nightly.
+- Auto-PR-style proposal: for each finding, generate a suggested code patch as a Spark.
 
-Each starter Topic comes with a few **prompt cards** (collapsed questions you can answer or ignore) so the page guides without boxing.
+---
 
-## The promotion flow (this is the key bit)
+## TIER 3 — Mentioned but never planned in detail
 
-Thinking → canon, on your terms:
+### 7. Cash flow / monetization plumbing (you raised this — never built)
+- A "Money" entity or measure pattern to track revenue, expenses, runway.
+- Pricing / package definitions tied to `service_shape` (Mirror / M+M / Machine / Map).
+- Proposal → Invoice → Payment lifecycle (no payment provider connected yet — Stripe or Paddle).
 
-```text
-You write a candidate:        "Define 'Mirror Sprint' as the entry service"
-You tag it:                   ?Component  +  ?Decision (price?)
-You hit "Promote":            opens Component create-sheet pre-filled
-                              + opens Decision create-sheet for the open question
-The candidate stays linked    so the Topic shows "→ promoted to Component #123"
-```
+### 8. Service offering language (you raised this — never built)
+- Canonical "Service Definition" object with: name, who-it's-for, outcome, deliverables, price, package shape.
+- Public-facing service page generator (`/p/$slug`).
 
-Nothing is auto-promoted. The Thinking Room is durable scratch; promotion is deliberate. That's how you avoid the "everything is a Project" canon-drift problem and still get to think freely.
+### 9. What-to-track KPI dashboard (you raised this — never built)
+- A KPI cockpit reading from `measures` + `measure_health` view.
+- Leading vs lagging indicator distinction on the measure record.
+- Alerting when a KPI crosses threshold (likely tied to KTI scans).
 
-## What we'll build
+### 10. Realtime collaboration
+- Supabase Realtime is available but not wired anywhere. Adding it to `tasks`, `decisions`, and `thinking_items` would let you and your dev work in the same Topic simultaneously.
 
-**New**
-- `src/routes/_app.planning.think.tsx` — the Thinking Room (Topics list on the left, active Topic on the right).
-- `src/components/planning/topic-canvas.tsx` — long-form editor (textarea-with-autosave, no fancy WYSIWYG for v1).
-- `src/components/planning/topic-notes.tsx` — quick-bullet list with inline add, drag-reorder, optional tag chips.
-- `src/components/planning/topic-questions.tsx` — open-question list; each row has "→ Decision" promote button.
-- `src/components/planning/topic-candidates.tsx` — candidate proto-objects with kind chip + Promote dropdown (Quest / Project / JTBD / Decision / Component / KPI).
-- `src/components/planning/topic-linked.tsx` — search + attach existing canonical objects.
-- `src/components/planning/topic-prompt-card.tsx` — collapsible prompt cards used by the seeded starter Topics.
+### 11. Mobile / responsive pass
+Never audited. Most surfaces assume desktop. Capture and Today are the priority for phone use.
 
-**Edited (light)**
-- `src/routes/_app.planning.tsx` — add a top toggle: **Seed | Think** so both modes live under one route.
-- `src/components/sidebar-nav.tsx` — keep the Planning entry; update hint to *"Think · Seed · Decide"*.
-- The existing create-sheets (Quest, Project, Decision, Component, JTBD) — accept an optional `prefill` prop so promotion lands clean.
+---
 
-**Database (one small migration, additive only)**
-Two new tables, nothing existing changes:
+## TIER 4 — Strategic / design-thinking, no implementation yet
 
-- `thinking_topics` — `id, title, description, journey_id (nullable), pinned, created_at, updated_at`
-- `thinking_items` — `id, topic_id, kind ('canvas' | 'note' | 'question' | 'candidate' | 'linked'), body, candidate_kind (nullable: 'quest'|'project'|'decision'|'component'|'jtbd'|'kpi'), promoted_to_kind (nullable), promoted_to_id (nullable), position, created_at, updated_at`
+- **Onboarding flow** for new users (or your dev) — guided "your first Quest" walkthrough.
+- **Permissions / multi-tenancy** — currently single-workspace; if you bring on clients, each needs isolated data.
+- **Public client portal** (`/p/$slug`) is scaffolded but minimal. Needs auth, threaded comments, deliverable approval.
+- **Email digest** — daily "what changed" summary using the `entity_audit_log`.
+- **AI agent autonomy levels** — operators table supports agents but no agent actually runs autonomously yet.
 
-RLS: standard owner pattern matching the rest of the workspace. No view changes. No touching existing tables.
+---
 
-## What this does NOT do
+## How to use this list elsewhere
 
-- Doesn't replace the stepper — that stays for when you know the shape.
-- Doesn't auto-create Quests/Projects from your notes. Promotion is always explicit.
-- Doesn't try to be Notion or Roam. One canvas + lists, that's it. The value is the **promotion bridge to canon**, not the editor.
-- No AI generation in v1 — pure thinking surface. (We can add a "Suggest candidates from this canvas" button in a later wave once you've used it.)
+1. **Copy this whole plan** into a Notion / doc as your roadmap.
+2. **Tier 1 first** — each item is < 1 day for a competent dev and unlocks visible product value.
+3. **Tier 2** is technical health — schedule a "cleanup week" before scaling.
+4. **Tier 3** is your real business questions (cash flow, services, KPIs). Use the Thinking Room to draft them, then promote to Quests when ready.
+5. **Tier 4** is post-MVP — don't touch until you have 3+ paying users.
 
-## Sequencing
-
-1. Migration for `thinking_topics` + `thinking_items` + RLS (~10%)
-2. Thinking Room route + Topic list/detail shell (~25%)
-3. Canvas + Notes + Questions components (~25%)
-4. Candidates + Promote bridges to existing create-sheets (~25%)
-5. Linked-objects search/attach + 3 seeded starter Topics (~10%)
-6. Seed/Think toggle on `/planning` + sidebar hint update (~5%)
-
-After this you can sit down with your dev, open **Cash flow**, write freely, jot questions, mark candidates, and only push to canonical Quests/Decisions when you're actually ready.
+Each item references the file paths and component names already in the codebase, so any developer (or a future Lovable session) can pick it up cold.
 
