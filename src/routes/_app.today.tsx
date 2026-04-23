@@ -1,13 +1,23 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
 import { format, isPast, isToday, isThisWeek, formatDistanceToNow } from "date-fns";
 import {
-  Sparkles, CheckSquare, CalendarClock, Eye, GitBranch, Diamond, Zap,
+  CheckSquare, CalendarClock, Eye, GitBranch, Diamond, Zap,
   Trophy, ShieldCheck, TrendingUp, Lightbulb, Megaphone, FolderKanban, FlaskConical,
+  ChevronDown, ChevronRight,
 } from "lucide-react";
-import { FiredKtisStrip } from "@/components/fired-ktis-strip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { MasterStoryTrail } from "@/components/master-story-trail";
+import { LiveSignalStrip } from "@/components/live-signal-strip";
+import { TodayDecisionBar } from "@/components/today-decision-bar";
+import { TodayNextActions } from "@/components/today-next-actions";
+import { useMeOperator } from "@/lib/use-me-operator";
+import {
+  rankNextActions,
+  type HandoffInput, type ApprovalInput, type OverdueInput, type KtiFireInput, type ScheduledInput,
+} from "@/lib/today-ranker";
 
 export const Route = createFileRoute("/_app/today")({
   component: TodayPage,
@@ -52,11 +62,34 @@ interface ReadyRow {
   current_level: string;
 }
 
+interface HandoffInboxRow {
+  id: string;
+  subject_kind: "task" | "project" | "campaign" | "session" | "workflow_step_run";
+  subject_id: string;
+  subject_label: string | null;
+  reason: string;
+  created_at: string;
+  from_operator_id: string | null;
+}
+
+interface KtiScanRow {
+  id: string;
+  kti_id: string;
+  scanned_at: string;
+  observed_value: string | null;
+  kti: { name: string; relationship_id: string | null } | null;
+}
+
 const DONE_STATUSES = new Set([
   "Done", "Complete", "Completed", "Shipped", "Cancelled", "Canceled", "Archived",
 ]);
 
 function TodayPage() {
+  const me = useMeOperator();
+  const meId = me.data?.id ?? null;
+  const [showMore, setShowMore] = useState(false);
+  const [browseOpen, setBrowseOpen] = useState(false);
+
   const { data: grid = [] } = useQuery<TimeGridRow[]>({
     queryKey: ["today", "time_grid"],
     queryFn: async () => {
@@ -105,9 +138,53 @@ function TodayPage() {
     },
   });
 
+  const { data: inboundHandoffs = [] } = useQuery<HandoffInboxRow[]>({
+    queryKey: ["today", "handoffs", meId],
+    queryFn: async () => {
+      if (!meId) return [];
+      const { data, error } = await sb
+        .from("operator_handoff_inbox")
+        .select("id, subject_kind, subject_id, subject_label, reason, created_at, from_operator_id")
+        .eq("to_operator_id", meId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as HandoffInboxRow[];
+    },
+    enabled: !!meId,
+  });
+
+  const fromIds = Array.from(new Set(inboundHandoffs.map((h) => h.from_operator_id).filter((x): x is string => !!x)));
+  const { data: senders = [] } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["today", "handoff-senders", fromIds.sort().join(",")],
+    queryFn: async () => {
+      if (fromIds.length === 0) return [];
+      const { data } = await sb.from("operators").select("id, name").in("id", fromIds);
+      return data ?? [];
+    },
+    enabled: fromIds.length > 0,
+  });
+  const senderName = useMemo(() => new Map(senders.map((s) => [s.id, s.name])), [senders]);
+
+  const { data: ktiFires = [] } = useQuery<KtiScanRow[]>({
+    queryKey: ["today", "kti-fires-24h"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await sb
+        .from("kti_scans")
+        .select("id, kti_id, scanned_at, observed_value, kti:key_trend_indicators(name, relationship_id)")
+        .eq("fired", true)
+        .gte("scanned_at", since)
+        .order("scanned_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as unknown as KtiScanRow[];
+    },
+  });
+
   const open = grid.filter((r) => !r.done_at && !DONE_STATUSES.has(r.status ?? ""));
   const dateOf = (r: TimeGridRow) => r.due_date ?? r.scheduled_for;
-
   const overdue = open.filter((r) => {
     const d = dateOf(r);
     return d && isPast(new Date(d)) && !isToday(new Date(d));
@@ -123,26 +200,86 @@ function TodayPage() {
   const blocked = open.filter((r) => r.status === "Blocked" || r.status === "Waiting");
   const sessionsPending = open.filter((r) => r.entity_type === "session");
 
+  // Build ranker inputs (Sparks excluded by canon)
+  const handoffInputs: HandoffInput[] = inboundHandoffs.map((h) => ({
+    id: h.id,
+    subject_kind: h.subject_kind,
+    subject_id: h.subject_id,
+    subject_label: h.subject_label,
+    reason: h.reason,
+    from_name: h.from_operator_id ? senderName.get(h.from_operator_id) ?? null : null,
+    created_at: h.created_at,
+  }));
+  const approvalInputs: ApprovalInput[] = approvals.map((a) => ({
+    step_run_id: a.step_run_id,
+    step_name: a.step_name,
+    workflow_id: a.workflow_id,
+    run_id: a.run_id,
+    started_at: a.started_at,
+  }));
+  const overdueInputs: OverdueInput[] = overdue
+    .filter((o): o is TimeGridRow & { entity_type: "task" | "project" | "session" | "campaign" } =>
+      o.entity_type !== "spark" && o.entity_type !== "decision",
+    )
+    .map((o) => ({
+      entity_type: o.entity_type,
+      entity_id: o.entity_id,
+      name: o.name,
+      due_date: o.due_date,
+      scheduled_for: o.scheduled_for,
+      status: o.status,
+      relationship_id: o.relationship_id,
+    }));
+  const ktiInputs: KtiFireInput[] = ktiFires.map((k) => ({
+    scan_id: k.id,
+    kti_id: k.kti_id,
+    kti_name: k.kti?.name ?? "KTI",
+    observed_value: k.observed_value,
+    scanned_at: k.scanned_at,
+    relationship_id: k.kti?.relationship_id ?? null,
+  }));
+  const scheduledInputs: ScheduledInput[] = dueToday
+    .filter((o): o is TimeGridRow & { entity_type: "task" | "project" | "session" | "campaign"; scheduled_for: string } =>
+      o.entity_type !== "spark" && o.entity_type !== "decision" && !!o.scheduled_for,
+    )
+    .map((o) => ({
+      entity_type: o.entity_type,
+      entity_id: o.entity_id,
+      name: o.name,
+      scheduled_for: o.scheduled_for ?? o.due_date ?? new Date().toISOString(),
+      relationship_id: o.relationship_id,
+    }));
+
+  const ranked = useMemo(
+    () => rankNextActions({
+      handoffs: handoffInputs,
+      approvals: approvalInputs,
+      overdue: overdueInputs,
+      ktiFires: ktiInputs,
+      scheduled: scheduledInputs,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [inboundHandoffs, approvals, overdue, ktiFires, dueToday, senderName],
+  );
+
   return (
     <div className="px-6 py-5">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-iris text-white shadow-[var(--shadow-glow)]">
-          <Sparkles className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Today</h1>
-          <p className="text-sm text-muted-foreground">{format(new Date(), "EEEE, MMMM d")}</p>
-        </div>
-      </div>
+      <TodayDecisionBar
+        ranked={ranked}
+        counts={{
+          handoffs: inboundHandoffs.length,
+          overdue: overdue.length,
+          ktiFires: ktiFires.length,
+          approvals: approvals.length,
+        }}
+        onShowMore={() => setShowMore((v) => !v)}
+      />
 
-      <FiredKtisStrip />
+      <LiveSignalStrip meOperatorId={meId} />
+
       <MasterStoryTrail />
 
-      <div className="mb-5 grid gap-3 lg:grid-cols-[2fr_1fr_1fr]">
-        <OcdaTileStrip />
-        <DecisionQueueWidget />
-        <SandboxTile />
-      </div>
+      <TodayNextActions actions={ranked} meOperatorId={meId} expanded={showMore} />
 
       {(approvals.length > 0 || ready.length > 0) && (
         <div className="mb-5 grid gap-3 lg:grid-cols-2">
@@ -183,47 +320,66 @@ function TodayPage() {
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Section title="Overdue" icon={CheckSquare} tone="warning" count={overdue.length}>
-          {overdue.length === 0 ? <Empty>Nothing overdue. Beautiful.</Empty> : overdue.map((r) => (
-            <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={dateOf(r) ? `Due ${format(new Date(dateOf(r)!), "MMM d")}` : ""} />
-          ))}
-        </Section>
-
-        <Section title="Due today" icon={CheckSquare} count={dueToday.length}>
-          {dueToday.length === 0 ? <Empty>Nothing due today.</Empty> : dueToday.map((r) => (
-            <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={r.status ?? ""} />
-          ))}
-        </Section>
-
-        <Section title="This week" icon={CheckSquare} count={dueWeek.length}>
-          {dueWeek.length === 0 ? <Empty>No items queued for this week.</Empty> : dueWeek.map((r) => (
-            <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={dateOf(r) ? format(new Date(dateOf(r)!), "EEE") : ""} />
-          ))}
-        </Section>
-
-        <Section title="Blocked / waiting" icon={CheckSquare} count={blocked.length}>
-          {blocked.length === 0 ? <Empty>Nothing blocked.</Empty> : blocked.map((r) => (
-            <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={r.status ?? ""} />
-          ))}
-        </Section>
-
-        <Section title="Pending sessions" icon={CalendarClock} count={sessionsPending.length}>
-          {sessionsPending.length === 0 ? <Empty>No sessions awaiting.</Empty> : sessionsPending.map((r) => (
-            <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={r.status ?? ""} />
-          ))}
-        </Section>
-
-        <Section title="Wins this week" icon={Trophy} tone="success" count={wins.length}>
-          {wins.length === 0 ? <Empty>Nothing shipped in the last 14 days yet.</Empty> : wins.slice(0, 8).map((w) => (
-            <ItemRow
-              key={`${w.entity_type}-${w.entity_id}`}
-              item={{ ...w, due_date: null, scheduled_for: null, not_before: null, recurrence_rule: null, status: null } as TimeGridRow}
-              meta={formatDistanceToNow(new Date(w.done_at), { addSuffix: true })}
-            />
-          ))}
-        </Section>
+      <div className="mb-5 grid gap-3 lg:grid-cols-[2fr_1fr_1fr]">
+        <OcdaTileStrip />
+        <DecisionQueueWidget />
+        <SandboxTile />
       </div>
+
+      <Collapsible open={browseOpen} onOpenChange={setBrowseOpen}>
+        <CollapsibleTrigger asChild>
+          <button className="mb-3 flex w-full items-center gap-2 rounded-xl border border-border/60 bg-card px-4 py-2.5 text-left text-sm font-medium transition hover:bg-iris-soft/40">
+            {browseOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+            Browse all open work
+            <span className="ml-auto text-[11px] text-muted-foreground">
+              {overdue.length + dueToday.length + dueWeek.length + blocked.length + sessionsPending.length} items · {wins.length} wins
+            </span>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Section title="Overdue" icon={CheckSquare} tone="warning" count={overdue.length}>
+              {overdue.length === 0 ? <Empty>Nothing overdue. Beautiful.</Empty> : overdue.map((r) => (
+                <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={dateOf(r) ? `Due ${format(new Date(dateOf(r)!), "MMM d")}` : ""} />
+              ))}
+            </Section>
+
+            <Section title="Due today" icon={CheckSquare} count={dueToday.length}>
+              {dueToday.length === 0 ? <Empty>Nothing due today.</Empty> : dueToday.map((r) => (
+                <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={r.status ?? ""} />
+              ))}
+            </Section>
+
+            <Section title="This week" icon={CheckSquare} count={dueWeek.length}>
+              {dueWeek.length === 0 ? <Empty>No items queued for this week.</Empty> : dueWeek.map((r) => (
+                <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={dateOf(r) ? format(new Date(dateOf(r)!), "EEE") : ""} />
+              ))}
+            </Section>
+
+            <Section title="Blocked / waiting" icon={CheckSquare} count={blocked.length}>
+              {blocked.length === 0 ? <Empty>Nothing blocked.</Empty> : blocked.map((r) => (
+                <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={r.status ?? ""} />
+              ))}
+            </Section>
+
+            <Section title="Pending sessions" icon={CalendarClock} count={sessionsPending.length}>
+              {sessionsPending.length === 0 ? <Empty>No sessions awaiting.</Empty> : sessionsPending.map((r) => (
+                <ItemRow key={`${r.entity_type}-${r.entity_id}`} item={r} meta={r.status ?? ""} />
+              ))}
+            </Section>
+
+            <Section title="Wins this week" icon={Trophy} tone="success" count={wins.length}>
+              {wins.length === 0 ? <Empty>Nothing shipped in the last 14 days yet.</Empty> : wins.slice(0, 8).map((w) => (
+                <ItemRow
+                  key={`${w.entity_type}-${w.entity_id}`}
+                  item={{ ...w, due_date: null, scheduled_for: null, not_before: null, recurrence_rule: null, status: null } as TimeGridRow}
+                  meta={formatDistanceToNow(new Date(w.done_at), { addSuffix: true })}
+                />
+              ))}
+            </Section>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
