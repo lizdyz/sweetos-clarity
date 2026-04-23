@@ -3857,6 +3857,116 @@ export type Database = {
           },
         ]
       }
+      lens_object_fit: {
+        Row: {
+          created_at: string
+          fit: string
+          id: string
+          lens_id: string
+          note: string | null
+          object_kind: string
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fit?: string
+          id?: string
+          lens_id: string
+          note?: string | null
+          object_kind: string
+          priority?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fit?: string
+          id?: string
+          lens_id?: string
+          note?: string | null
+          object_kind?: string
+          priority?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lens_object_fit_lens_id_fkey"
+            columns: ["lens_id"]
+            isOneToOne: false
+            referencedRelation: "lenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lens_outputs: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          lens_id: string
+          perspective_id: string | null
+          priority: number
+          source_id: string
+          source_kind: string
+          status: string
+          target_id: string | null
+          target_kind: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          lens_id: string
+          perspective_id?: string | null
+          priority?: number
+          source_id: string
+          source_kind: string
+          status?: string
+          target_id?: string | null
+          target_kind?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          lens_id?: string
+          perspective_id?: string | null
+          priority?: number
+          source_id?: string
+          source_kind?: string
+          status?: string
+          target_id?: string | null
+          target_kind?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lens_outputs_lens_id_fkey"
+            columns: ["lens_id"]
+            isOneToOne: false
+            referencedRelation: "lenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lens_outputs_perspective_id_fkey"
+            columns: ["perspective_id"]
+            isOneToOne: false
+            referencedRelation: "lens_perspectives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lens_perspectives: {
         Row: {
           confidence: number | null
@@ -3934,15 +4044,21 @@ export type Database = {
       lenses: {
         Row: {
           accent_color: string
+          active: boolean
           best_use: string | null
           bizzybot_emoji: string | null
           code: string
+          core_intention: string | null
           created_at: string
+          display_priority: number
           enabled: boolean
           icon_key: string | null
           id: string
+          kind: string
           model: string
           name: string
+          output_kinds: string[]
+          purpose: string | null
           sort_order: number
           stages: string[]
           system_prompt: string | null
@@ -3950,18 +4066,26 @@ export type Database = {
           updated_at: string
           user_prompt_template: string | null
           what_it_asks: string | null
+          when_not_to_use: string | null
+          when_to_use: string | null
         }
         Insert: {
           accent_color?: string
+          active?: boolean
           best_use?: string | null
           bizzybot_emoji?: string | null
           code: string
+          core_intention?: string | null
           created_at?: string
+          display_priority?: number
           enabled?: boolean
           icon_key?: string | null
           id?: string
+          kind?: string
           model?: string
           name: string
+          output_kinds?: string[]
+          purpose?: string | null
           sort_order?: number
           stages?: string[]
           system_prompt?: string | null
@@ -3969,18 +4093,26 @@ export type Database = {
           updated_at?: string
           user_prompt_template?: string | null
           what_it_asks?: string | null
+          when_not_to_use?: string | null
+          when_to_use?: string | null
         }
         Update: {
           accent_color?: string
+          active?: boolean
           best_use?: string | null
           bizzybot_emoji?: string | null
           code?: string
+          core_intention?: string | null
           created_at?: string
+          display_priority?: number
           enabled?: boolean
           icon_key?: string | null
           id?: string
+          kind?: string
           model?: string
           name?: string
+          output_kinds?: string[]
+          purpose?: string | null
           sort_order?: number
           stages?: string[]
           system_prompt?: string | null
@@ -3988,6 +4120,8 @@ export type Database = {
           updated_at?: string
           user_prompt_template?: string | null
           what_it_asks?: string | null
+          when_not_to_use?: string | null
+          when_to_use?: string | null
         }
         Relationships: []
       }
