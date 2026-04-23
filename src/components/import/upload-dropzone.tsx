@@ -73,10 +73,23 @@ export function UploadDropzone({
         <p className="mt-1 text-sm text-muted-foreground">
           Markdown, CSV, JSON, plain text. We'll parse, group, and propose where each one belongs.
         </p>
-        <div className="mt-5 flex items-center justify-center gap-2">
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           <Button onClick={() => inputRef.current?.click()} variant="default">Choose files</Button>
           <span className="text-xs text-muted-foreground">or drag from Finder / Explorer</span>
         </div>
+        {items.length === 0 && (
+          <div className="mt-4 flex items-center justify-center">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void handleFiles(sampleBatchAsFiles())}
+              className="text-xs"
+            >
+              <Sparkles className="mr-1.5 h-3 w-3 text-[color:var(--iris-violet)]" />
+              Test with sample batch (8 files)
+            </Button>
+          </div>
+        )}
         <input
           ref={inputRef}
           type="file"
