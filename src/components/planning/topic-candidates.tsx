@@ -164,20 +164,8 @@ export function TopicCandidates({ topicId }: { topicId: string }) {
           break;
         }
         case "kpi": {
-          const { data, error } = await supabase
-            .from("measures")
-            .insert({
-              name: body,
-              kind: "kpi",
-              subject_kind: "thinking_topic",
-              subject_id: topicId,
-              created_by: userId,
-            })
-            .select()
-            .single();
-          if (error) throw error;
-          resultId = data.id;
-          break;
+          toast.info("KPI promotion lands in /measures next wave — keep as candidate for now.");
+          return;
         }
       }
     } catch (err) {

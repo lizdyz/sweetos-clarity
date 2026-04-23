@@ -141,8 +141,11 @@ export function useCreateItem() {
       metadata?: Record<string, unknown>;
     }) => {
       const { data: u } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from("thinking_items")
+      const { data, error } = await (supabase.from("thinking_items") as never as {
+        insert: (row: Record<string, unknown>) => {
+          select: () => { single: () => Promise<{ data: ThinkingItem | null; error: { message: string } | null }> };
+        };
+      })
         .insert({
           topic_id: input.topic_id,
           kind: input.kind,
@@ -166,9 +169,14 @@ export function useUpdateItem() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, topic_id, ...patch }: Partial<ThinkingItem> & { id: string; topic_id: string }) => {
-      const { data, error } = await supabase
-        .from("thinking_items")
-        .update(patch)
+      const { data, error } = await (supabase.from("thinking_items") as never as {
+        update: (row: Record<string, unknown>) => {
+          eq: (col: string, val: string) => {
+            select: () => { single: () => Promise<{ data: ThinkingItem | null; error: { message: string } | null }> };
+          };
+        };
+      })
+        .update(patch as Record<string, unknown>)
         .eq("id", id)
         .select()
         .single();

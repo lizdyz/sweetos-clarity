@@ -40,8 +40,15 @@ export function TopicLinked({ topicId }: { topicId: string }) {
 
   const search = async () => {
     const cfg = LINK_TABLES[kind];
-    const { data, error } = await (supabase
-      .from(cfg.table as never) as never)
+    type Searchable = {
+      select: (cols: string) => {
+        ilike: (col: string, pattern: string) => {
+          limit: (n: number) => Promise<{ data: Array<Record<string, string>> | null; error: unknown }>;
+        };
+      };
+    };
+    const client = supabase.from(cfg.table as never) as unknown as Searchable;
+    const { data, error } = await client
       .select(`id, ${cfg.nameCol}`)
       .ilike(cfg.nameCol, `%${q}%`)
       .limit(8);
@@ -82,13 +89,12 @@ export function TopicLinked({ topicId }: { topicId: string }) {
               </Badge>
               <span className="flex-1 truncate">{l.body}</span>
               {l.linked_id && (
-                <Link
-                  to={`${cfg.route}/$id`}
-                  params={{ id: l.linked_id }}
+                <a
+                  href={`${cfg.route}/${l.linked_id}`}
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                </Link>
+                </a>
               )}
               <button
                 className="opacity-0 transition group-hover:opacity-60 hover:opacity-100"
