@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ComponentCreateSheet } from "@/components/component-create-sheet";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -73,6 +74,7 @@ function ComponentsListPage() {
   const [mode, setMode] = useState<Mode>("all");
   const [sort, setSort] = useState<SortMode>("moved");
   const [kind, setKind] = useState<ComponentKind>("user");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data: domains = [] } = useQuery<DomainRow[]>({
     queryKey: ["domains-min"],
@@ -178,9 +180,7 @@ function ComponentsListPage() {
             {rows.length} total · <span className="font-medium text-[color:var(--success-foreground)]">{activeCount} actively being built</span>
           </p>
         </div>
-        <Link to="/components/$id" params={{ id: "new" }}>
-          <Button size="sm">+ New component</Button>
-        </Link>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>+ New component</Button>
       </div>
 
       <ComponentKindToggle value={kind} counts={kindCounts} onChange={setKind} />
@@ -366,6 +366,8 @@ function ComponentsListPage() {
       </Card>
 
       <CapabilitiesDerivedPanel />
+
+      <ComponentCreateSheet open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }

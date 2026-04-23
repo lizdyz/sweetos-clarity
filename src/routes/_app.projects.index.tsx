@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ProjectCreateSheet } from "@/components/project-create-sheet";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
@@ -60,6 +61,7 @@ function ProjectsIndexPage() {
   const [mode, setMode] = useState<FilterMode>("all");
   const [sort, setSort] = useState<SortMode>("overdue");
   const [relFilter, setRelFilter] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data: projects = [] } = useQuery<ProjectRow[]>({
     queryKey: ["projects-index"],
@@ -151,9 +153,7 @@ function ProjectsIndexPage() {
             {projects.length} total · <span className="font-medium text-destructive">{stuckCount} stuck</span> (overdue or blocked)
           </p>
         </div>
-        <Link to="/projects/$id" params={{ id: "new" }}>
-          <Button size="sm">+ New project</Button>
-        </Link>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>+ New project</Button>
       </header>
 
       <Card className="p-3">
@@ -319,6 +319,8 @@ function ProjectsIndexPage() {
           })}
         </div>
       )}
+
+      <ProjectCreateSheet open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }
