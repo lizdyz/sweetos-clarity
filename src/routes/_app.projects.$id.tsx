@@ -10,6 +10,7 @@ import { WorkContextStrip } from "@/components/work-context-strip";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
 import { OperatorChip } from "@/components/operator-chip";
+import { WalkMenu } from "@/components/walk-menu";
 
 export const Route = createFileRoute("/_app/projects/$id")({
   component: ProjectDetail,
@@ -21,8 +22,9 @@ function ProjectDetail() {
   const { id } = Route.useParams();
   return (
     <div className="space-y-5">
-      <div className="flex justify-end px-6 pt-4">
+      <div className="flex items-center justify-end gap-2 px-6 pt-4">
         <ProjectOperatorChip projectId={id} />
+        <WalkMenu kind="project" id={id} />
       </div>
       <WorkContextStrip entityType="project" entityId={id} />
       <ProjectTimeBlock projectId={id} />

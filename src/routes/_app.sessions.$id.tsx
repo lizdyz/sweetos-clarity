@@ -5,6 +5,7 @@ import { EntityDetailPage } from "@/components/entity-workspace";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { Calendar, ExternalLink, Layers } from "lucide-react";
 import { OperatorChip } from "@/components/operator-chip";
+import { WalkMenu } from "@/components/walk-menu";
 
 export const Route = createFileRoute("/_app/sessions/$id")({
   component: SessionDetail,
@@ -73,7 +74,7 @@ function SessionDetail() {
 
   return (
     <div className="space-y-5">
-      <div className="flex justify-end px-6 pt-4">
+      <div className="flex items-center justify-end gap-2 px-6 pt-4">
         <OperatorChip
           table="sessions"
           column="operator_id"
@@ -82,6 +83,7 @@ function SessionDetail() {
           label="Facilitator"
           invalidateKeys={[["session-meta", id]]}
         />
+        <WalkMenu kind="session" id={id} />
       </div>
       <EntityDetailPage entityKey="sessions" />
       <div className="space-y-5 px-6 pb-8">
