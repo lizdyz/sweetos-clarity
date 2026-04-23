@@ -20,6 +20,7 @@ import { Filter, Search, Blocks, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RollupStatChip } from "@/components/rollup-stat-chip";
 import { ComponentKindToggle, type ComponentKind } from "@/components/component-kind-toggle";
+import { CapabilitiesDerivedPanel } from "@/components/capabilities-derived-panel";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 export const Route = createFileRoute("/_app/components/")({
