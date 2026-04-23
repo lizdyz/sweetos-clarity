@@ -108,6 +108,14 @@ export function CanonGuardrail({ entityKind, className, defaultOpen = false }: P
               </ul>
             </div>
           )}
+          {(parents.length > 0 || childs.length > 0 || peers.length > 0) && (
+            <div className="md:col-span-2 rounded-md border border-border/60 bg-background/60 p-2 space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Knowledge graph</div>
+              {parents.length > 0 && <GraphLine label="▲ Parent" kinds={parents} />}
+              {childs.length > 0 && <GraphLine label="▼ Child" kinds={childs} />}
+              {peers.length > 0 && <GraphLine label="↔ Peer" kinds={peers} />}
+            </div>
+          )}
           <div className="md:col-span-2 flex justify-end">
             <Link
               to="/settings/canon"
