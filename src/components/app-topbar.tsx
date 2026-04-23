@@ -3,11 +3,11 @@ import { useLocation } from "@tanstack/react-router";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Moon, Search, Sun, Sparkles, LogOut, Menu } from "lucide-react";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { BotAlertsBell } from "@/components/bot-alerts-bell";
+import { CommandPalette } from "@/components/command-palette";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,12 +21,25 @@ export function AppTopBar() {
   const { theme, toggle } = useTheme();
   const { user, isAdmin, signOut } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const location = useLocation();
 
   // Auto-close mobile drawer on route change.
   useEffect(() => {
     setMobileNavOpen(false);
   }, [location.pathname]);
+
+  // ⌘K / Ctrl-K opens the command palette anywhere.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/70 px-5 backdrop-blur-xl">
@@ -52,29 +65,22 @@ export function AppTopBar() {
         </SheetContent>
       </Sheet>
 
-      <div className="relative flex max-w-md flex-1 items-center">
-        <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" />
-        <Input
-          readOnly
-          onClick={(e) => e.preventDefault()}
-          placeholder="Search anything…   ⌘K"
-          className="h-9 cursor-pointer rounded-xl border-border bg-surface pl-9 pr-3 text-sm shadow-none"
-        />
-      </div>
+      <button
+        type="button"
+        onClick={() => setPaletteOpen(true)}
+        className="group relative flex h-9 max-w-md flex-1 items-center rounded-xl border border-border bg-surface px-3 text-left text-sm text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+        aria-label="Open search"
+      >
+        <Search className="mr-2 h-4 w-4 shrink-0" />
+        <span className="flex-1 truncate">Search anything…</span>
+        <kbd className="ml-2 hidden rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:inline-block">
+          ⌘K
+        </kbd>
+      </button>
+
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
 
       <div className="ml-auto flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hidden rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground sm:inline-flex"
-        >
-          <Sparkles className="mr-1.5 h-3.5 w-3.5 text-[color:var(--iris-violet)]" />
-          Quick capture
-          <span className="ml-2 rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-            soon
-          </span>
-        </Button>
-
         <BotAlertsBell />
 
         <Button
