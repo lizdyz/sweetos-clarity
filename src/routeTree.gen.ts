@@ -21,6 +21,7 @@ import { Route as AppStartRouteImport } from './routes/_app.start'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSandboxRouteImport } from './routes/_app.sandbox'
 import { Route as AppQueueRouteImport } from './routes/_app.queue'
+import { Route as AppPlanningRouteImport } from './routes/_app.planning'
 import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppPeopleRouteImport } from './routes/_app.people'
@@ -161,6 +162,11 @@ const AppSandboxRoute = AppSandboxRouteImport.update({
 const AppQueueRoute = AppQueueRouteImport.update({
   id: '/queue',
   path: '/queue',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlanningRoute = AppPlanningRouteImport.update({
+  id: '/planning',
+  path: '/planning',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlannerRoute = AppPlannerRouteImport.update({
@@ -595,6 +601,7 @@ export interface FileRoutesByFullPath {
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/planner': typeof AppPlannerRoute
+  '/planning': typeof AppPlanningRoute
   '/queue': typeof AppQueueRoute
   '/sandbox': typeof AppSandboxRoute
   '/settings': typeof AppSettingsRouteWithChildren
@@ -690,6 +697,7 @@ export interface FileRoutesByTo {
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/planner': typeof AppPlannerRoute
+  '/planning': typeof AppPlanningRoute
   '/queue': typeof AppQueueRoute
   '/sandbox': typeof AppSandboxRoute
   '/start': typeof AppStartRouteWithChildren
@@ -786,6 +794,7 @@ export interface FileRoutesById {
   '/_app/people': typeof AppPeopleRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/planner': typeof AppPlannerRoute
+  '/_app/planning': typeof AppPlanningRoute
   '/_app/queue': typeof AppQueueRoute
   '/_app/sandbox': typeof AppSandboxRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
@@ -883,6 +892,7 @@ export interface FileRouteTypes {
     | '/people'
     | '/pipeline'
     | '/planner'
+    | '/planning'
     | '/queue'
     | '/sandbox'
     | '/settings'
@@ -978,6 +988,7 @@ export interface FileRouteTypes {
     | '/people'
     | '/pipeline'
     | '/planner'
+    | '/planning'
     | '/queue'
     | '/sandbox'
     | '/start'
@@ -1073,6 +1084,7 @@ export interface FileRouteTypes {
     | '/_app/people'
     | '/_app/pipeline'
     | '/_app/planner'
+    | '/_app/planning'
     | '/_app/queue'
     | '/_app/sandbox'
     | '/_app/settings'
@@ -1249,6 +1261,13 @@ declare module '@tanstack/react-router' {
       path: '/queue'
       fullPath: '/queue'
       preLoaderRoute: typeof AppQueueRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/planning': {
+      id: '/_app/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof AppPlanningRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/planner': {
@@ -1940,6 +1959,7 @@ interface AppRouteChildren {
   AppPeopleRoute: typeof AppPeopleRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppPlannerRoute: typeof AppPlannerRoute
+  AppPlanningRoute: typeof AppPlanningRoute
   AppQueueRoute: typeof AppQueueRoute
   AppSandboxRoute: typeof AppSandboxRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
@@ -2014,6 +2034,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPeopleRoute: AppPeopleRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppPlannerRoute: AppPlannerRoute,
+  AppPlanningRoute: AppPlanningRoute,
   AppQueueRoute: AppQueueRoute,
   AppSandboxRoute: AppSandboxRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,

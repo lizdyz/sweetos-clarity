@@ -41,6 +41,7 @@ import {
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PROJECT_STATUS, PROJECT_PRIORITY } from "@/lib/enums";
+import { EntityKindHelper } from "@/components/entity-kind-helper";
 
 interface Props {
   open: boolean;
@@ -121,7 +122,9 @@ export function ProjectCreateSheet({ open, onOpenChange }: Props) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>New project</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            New project <EntityKindHelper kind="project" />
+          </SheetTitle>
           <SheetDescription>
             Group related work. Tasks, decisions, and components attach here.
           </SheetDescription>
