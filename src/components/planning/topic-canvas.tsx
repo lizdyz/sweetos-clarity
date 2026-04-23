@@ -11,9 +11,17 @@ import {
 
 interface Props {
   topicId: string;
+  onWordCountChange?: (n: number) => void;
+  large?: boolean;
 }
 
-export function TopicCanvas({ topicId }: Props) {
+function countWords(s: string): number {
+  const t = s.trim();
+  if (!t) return 0;
+  return t.split(/\s+/).length;
+}
+
+export function TopicCanvas({ topicId, onWordCountChange, large }: Props) {
   const { data: items = [] } = useThinkingItems(topicId);
   const createItem = useCreateItem();
   const updateItem = useUpdateItem();

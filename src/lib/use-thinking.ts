@@ -187,6 +187,19 @@ export function useUpdateItem() {
   });
 }
 
+export function useThinkingItemCounts(topicId: string | null) {
+  const { data: items = [] } = useThinkingItems(topicId);
+  return {
+    notes: items.filter((i) => i.kind === "note").length,
+    questions: items.filter((i) => i.kind === "question").length,
+    candidates: items.filter((i) => i.kind === "candidate").length,
+    linked: items.filter((i) => i.kind === "linked").length,
+    unpromotedCandidates: items.filter(
+      (i) => i.kind === "candidate" && !i.promoted_to_id,
+    ).length,
+  };
+}
+
 export function useDeleteItem() {
   const qc = useQueryClient();
   return useMutation({
