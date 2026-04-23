@@ -106,11 +106,11 @@ export function RelationshipCreateSheet({ open, onOpenChange }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="org">Organization (optional)</Label>
+            <Label htmlFor="org">Company (optional)</Label>
             <Input
               id="org"
-              value={organization}
-              onChange={(e) => setOrganization(e.target.value)}
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
               placeholder="e.g. Acme Wealth Partners"
             />
           </div>
