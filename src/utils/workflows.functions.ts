@@ -167,11 +167,11 @@ export const activateWorkflow = createServerFn({ method: "POST" })
         .maybeSingle();
 
       if (!binding?.trigger_url) {
-        // Mark run as needing config; still return ok=true so kickoff quest is created.
+        // Mark run as paused; still return early so caller knows config is missing.
         await sb
           .from("workflow_runs")
           .update({
-            status: "blocked",
+            status: "paused",
             notes: `${data.notes ?? ""}\n[execution] No trigger URL configured for ${executionKind}.`.trim(),
           })
           .eq("id", run.id);
@@ -220,7 +220,7 @@ export const activateWorkflow = createServerFn({ method: "POST" })
           await sb
             .from("workflow_runs")
             .update({
-              status: "failed",
+              status: "cancelled",
               notes: `${data.notes ?? ""}\n[execution] Trigger failed (${res.status}): ${text.slice(0, 500)}`.trim(),
             })
             .eq("id", run.id);
@@ -239,7 +239,7 @@ export const activateWorkflow = createServerFn({ method: "POST" })
         await sb
           .from("workflow_runs")
           .update({
-            status: "failed",
+            status: "cancelled",
             notes: `${data.notes ?? ""}\n[execution] Trigger error: ${msg}`.trim(),
           })
           .eq("id", run.id);
