@@ -22,6 +22,7 @@ import { BrandCanonEditor } from "@/components/brand-canon-editor";
 import { KtiPanel } from "@/components/kti-panel";
 import { WorldWatchPanel } from "@/components/world-watch-panel";
 import { RelationshipSweetSyncTabs } from "@/components/relationship-sweetsync-tabs";
+import { PipelineStageStepper } from "@/components/pipeline-stage-stepper";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({

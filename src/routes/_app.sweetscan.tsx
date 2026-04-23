@@ -15,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Radar, Loader2, Play, Inbox, Flame, Eye, Globe } from "lucide-react";
+import { Radar, Loader2, Play, Inbox, Flame, Eye, Globe, ListChecks } from "lucide-react";
+import { WatchlistDashboard } from "@/components/sweetscan/watchlist-dashboard";
 import { KtiPanel } from "@/components/kti-panel";
 import { type InboundSignal } from "@/components/inbound-signal-card";
 import { TriageCard } from "@/components/triage-card";
@@ -48,8 +49,11 @@ function SweetScanPage() {
         </div>
       </header>
 
-      <Tabs defaultValue="radar">
-        <TabsList className="grid w-full max-w-3xl grid-cols-4">
+      <Tabs defaultValue="watchlist">
+        <TabsList className="grid w-full max-w-3xl grid-cols-5">
+          <TabsTrigger value="watchlist" className="gap-1.5">
+            <ListChecks className="h-3.5 w-3.5" /> Watchlist
+          </TabsTrigger>
           <TabsTrigger value="radar" className="gap-1.5">
             <Radar className="h-3.5 w-3.5" /> Forward radar
           </TabsTrigger>
@@ -64,6 +68,9 @@ function SweetScanPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="watchlist" className="pt-4">
+          <WatchlistDashboard />
+        </TabsContent>
         <TabsContent value="radar" className="pt-4">
           <ForwardRadarTab />
         </TabsContent>
