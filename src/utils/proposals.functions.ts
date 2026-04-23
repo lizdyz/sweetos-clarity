@@ -173,16 +173,18 @@ async function callAI(body: Record<string, unknown>) {
   return res.json();
 }
 
-async function callNormalizer(text: string, model: string) {
+async function callNormalizer(text: string, defaultModel: string) {
+  const prompt = await getPrompt("capture.parse", {
+    systemPrompt:
+      "You are the SweetBOS intake normalizer. Read messy human input and return ONE structured proposal. Pick the single best entity_type. Extract concrete fields (name, description, status, owner, etc.) when present. Never invent data — leave fields out if unclear. Keep 'name' short and human. If the content clearly implies an industry niche, set inferred_industry_slug.",
+    userTemplate: "{{text}}",
+    model: defaultModel,
+  });
   const json = await callAI({
-    model,
+    model: prompt.model,
     messages: [
-      {
-        role: "system",
-        content:
-          "You are the SweetBOS intake normalizer. Read messy human input and return ONE structured proposal. Pick the single best entity_type. Extract concrete fields (name, description, status, owner, etc.) when present. Never invent data — leave fields out if unclear. Keep 'name' short and human. If the content clearly implies an industry niche, set inferred_industry_slug.",
-      },
-      { role: "user", content: text },
+      { role: "system", content: prompt.systemPrompt },
+      { role: "user", content: renderTemplate(prompt.userTemplate, { text }) },
     ],
     tools: [{ type: "function", function: NORMALIZER_SCHEMA }],
     tool_choice: { type: "function", function: { name: "stage_proposal" } },
@@ -197,6 +199,182 @@ async function callNormalizer(text: string, model: string) {
     conflicts?: string[];
     inferred_industry_slug?: string;
   };
+}
+
+// ---------- Pollination passes (Wave 12) ----------
+// Each returns a small JSON object. They share a common "JSON-only response" call.
+
+async function callJsonAI(opts: {
+  model: string;
+  systemPrompt: string;
+  userPrompt: string;
+}): Promise<Record<string, unknown> | null> {
+  try {
+    const json = await callAI({
+      model: opts.model,
+      messages: [
+        { role: "system", content: opts.systemPrompt },
+        { role: "user", content: opts.userPrompt },
+      ],
+      response_format: { type: "json_object" },
+    });
+    const text = json?.choices?.[0]?.message?.content;
+    if (!text) return null;
+    const cleaned = String(text).trim().replace(/^```json\s*|\s*```$/g, "");
+    return JSON.parse(cleaned);
+  } catch (e) {
+    console.warn("callJsonAI failed:", e);
+    return null;
+  }
+}
+
+async function classifyIntent(text: string, defaultModel: string): Promise<string | null> {
+  const prompt = await getPrompt("capture.intent", {
+    systemPrompt:
+      'You classify raw user captures into one canonical intent. Reply with JSON: {"intent":"observation|jtbd|task|question|trend_signal|client_update|idea","confidence":0..1,"reason":"..."}.',
+    userTemplate: "Input:\n{{text}}\n\nReturn JSON only.",
+    model: defaultModel,
+  });
+  const out = await callJsonAI({
+    model: prompt.model,
+    systemPrompt: prompt.systemPrompt,
+    userPrompt: renderTemplate(prompt.userTemplate, { text }),
+  });
+  const intent = typeof out?.intent === "string" ? out.intent : null;
+  return intent;
+}
+
+async function matchPersonas(
+  text: string,
+  personas: Array<{ id: string; name: string; sector: string | null }>,
+  defaultModel: string,
+): Promise<string[]> {
+  if (!personas.length) return [];
+  const prompt = await getPrompt("capture.match.persona", {
+    systemPrompt:
+      'You match capture text against a persona library. Reply with JSON: {"matches":[{"persona_id":"uuid","why":"...","confidence":0..1}]}. Only include genuine matches (confidence >= 0.5).',
+    userTemplate:
+      "Input:\n{{text}}\n\nPersona library (JSON):\n{{personas_json}}\n\nReturn JSON only.",
+    model: defaultModel,
+  });
+  const out = await callJsonAI({
+    model: prompt.model,
+    systemPrompt: prompt.systemPrompt,
+    userPrompt: renderTemplate(prompt.userTemplate, {
+      text,
+      personas_json: JSON.stringify(personas),
+    }),
+  });
+  const matches = Array.isArray(out?.matches) ? (out.matches as Array<{ persona_id?: string }>) : [];
+  const valid = new Set(personas.map((p) => p.id));
+  return matches.map((m) => m.persona_id ?? "").filter((id) => valid.has(id));
+}
+
+async function matchJTBDs(
+  text: string,
+  jtbds: Array<{ id: string; statement: string; persona_id: string | null }>,
+  defaultModel: string,
+): Promise<string[]> {
+  if (!jtbds.length) return [];
+  const prompt = await getPrompt("capture.match.jtbd", {
+    systemPrompt:
+      'You match a capture against a JTBD library scoped to the matched personas. Reply with JSON: {"matches":[{"jtbd_id":"uuid","why":"...","confidence":0..1}]}. Only include genuine matches.',
+    userTemplate:
+      "Input:\n{{text}}\n\nJTBD library (JSON, already scoped to relevant personas):\n{{jtbds_json}}\n\nReturn JSON only.",
+    model: defaultModel,
+  });
+  const out = await callJsonAI({
+    model: prompt.model,
+    systemPrompt: prompt.systemPrompt,
+    userPrompt: renderTemplate(prompt.userTemplate, {
+      text,
+      jtbds_json: JSON.stringify(jtbds),
+    }),
+  });
+  const matches = Array.isArray(out?.matches) ? (out.matches as Array<{ jtbd_id?: string }>) : [];
+  const valid = new Set(jtbds.map((j) => j.id));
+  return matches.map((m) => m.jtbd_id ?? "").filter((id) => valid.has(id));
+}
+
+async function matchQuestsAndSparks(
+  text: string,
+  quests: Array<{ id: string; name: string }>,
+  sparks: Array<{ id: string; name: string }>,
+  defaultModel: string,
+): Promise<{ quests: string[]; sparks: string[] }> {
+  if (!quests.length && !sparks.length) return { quests: [], sparks: [] };
+  const prompt = await getPrompt("capture.match.quest_spark", {
+    systemPrompt:
+      'You match a capture against open Quests and Sparks. Reply with JSON: {"quests":[{"id":"uuid","why":"..."}],"sparks":[{"id":"uuid","why":"..."}]}.',
+    userTemplate:
+      "Input:\n{{text}}\n\nOpen quests (JSON):\n{{quests_json}}\n\nOpen sparks (JSON):\n{{sparks_json}}\n\nReturn JSON only.",
+    model: defaultModel,
+  });
+  const out = await callJsonAI({
+    model: prompt.model,
+    systemPrompt: prompt.systemPrompt,
+    userPrompt: renderTemplate(prompt.userTemplate, {
+      text,
+      quests_json: JSON.stringify(quests),
+      sparks_json: JSON.stringify(sparks),
+    }),
+  });
+  const qOut = Array.isArray(out?.quests) ? (out.quests as Array<{ id?: string }>) : [];
+  const sOut = Array.isArray(out?.sparks) ? (out.sparks as Array<{ id?: string }>) : [];
+  const validQ = new Set(quests.map((q) => q.id));
+  const validS = new Set(sparks.map((s) => s.id));
+  return {
+    quests: qOut.map((m) => m.id ?? "").filter((id) => validQ.has(id)),
+    sparks: sOut.map((m) => m.id ?? "").filter((id) => validS.has(id)),
+  };
+}
+
+async function matchKTIs(
+  text: string,
+  ktis: Array<{ id: string; name: string; threshold_definition: string }>,
+  defaultModel: string,
+): Promise<string[]> {
+  if (!ktis.length) return [];
+  const prompt = await getPrompt("capture.match.kti", {
+    systemPrompt:
+      'You flag active KTIs whose watching patterns this capture provides evidence for. Reply with JSON: {"matches":[{"kti_id":"uuid","evidence":"...","fires":true|false}]}.',
+    userTemplate:
+      "Input:\n{{text}}\n\nActive KTIs (JSON):\n{{ktis_json}}\n\nReturn JSON only.",
+    model: defaultModel,
+  });
+  const out = await callJsonAI({
+    model: prompt.model,
+    systemPrompt: prompt.systemPrompt,
+    userPrompt: renderTemplate(prompt.userTemplate, {
+      text,
+      ktis_json: JSON.stringify(ktis),
+    }),
+  });
+  const matches = Array.isArray(out?.matches) ? (out.matches as Array<{ kti_id?: string }>) : [];
+  const valid = new Set(ktis.map((k) => k.id));
+  return matches.map((m) => m.kti_id ?? "").filter((id) => valid.has(id));
+}
+
+async function suggestKTI(
+  text: string,
+  intent: string | null,
+  defaultModel: string,
+): Promise<Record<string, unknown> | null> {
+  // Only run for trend-signal-shaped intents
+  if (intent !== "trend_signal" && intent !== "observation") return null;
+  const prompt = await getPrompt("capture.suggest.kti", {
+    systemPrompt:
+      'When the capture looks like a recurring outside-in trend signal, propose a new KTI to add to the Watchlist. Reply with JSON: {"suggested":true|false,"name":"...","what_to_watch":"...","threshold":"...","trigger_action":"task|bot_alert|all","reason":"..."}. Set suggested=false if it is a one-off.',
+    userTemplate: "Input:\n{{text}}\n\nIntent: {{intent}}\n\nReturn JSON only.",
+    model: defaultModel,
+  });
+  const out = await callJsonAI({
+    model: prompt.model,
+    systemPrompt: prompt.systemPrompt,
+    userPrompt: renderTemplate(prompt.userTemplate, { text, intent: intent ?? "unknown" }),
+  });
+  if (!out || out.suggested !== true) return null;
+  return out;
 }
 
 interface DomainCanon { slug: string; name: string; description: string | null }
