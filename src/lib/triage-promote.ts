@@ -93,14 +93,36 @@ export async function promoteTriageable(
         .insert({
           decision: item.title,
           context: item.body ?? note,
-          ocda_stage: "Observe",
+          ocda_stage: "observe",
           status: "proposed",
+          raised_from_kind: item.source.kind,
+          raised_from_id: item.source.id,
         })
         .select("id")
         .single();
       if (error) return { ok: false, message: error.message };
       if (isSandboxRow) await markRouted(item.id, "decision", data.id, note);
       return { ok: true, routed_to_kind: "decision", routed_to_id: data.id, message: "Sent to OCDA Observe" };
+    }
+
+    case "decision": {
+      // Log a formal, decided Decision with provenance back to the source.
+      const { data, error } = await sb
+        .from("decisions")
+        .insert({
+          decision: item.title,
+          context: item.body ?? note,
+          ocda_stage: "decide",
+          status: "decided",
+          date_made: new Date().toISOString().slice(0, 10),
+          raised_from_kind: item.source.kind,
+          raised_from_id: item.source.id,
+        })
+        .select("id")
+        .single();
+      if (error) return { ok: false, message: error.message };
+      if (isSandboxRow) await markRouted(item.id, "decision", data.id, note);
+      return { ok: true, routed_to_kind: "decision", routed_to_id: data.id, message: "Logged Decision" };
     }
 
     case "component_canon": {

@@ -90,6 +90,7 @@ import { Route as AppDomainsSlugRouteImport } from './routes/_app.domains.$slug'
 import { Route as AppDomainAssessmentsIdRouteImport } from './routes/_app.domain-assessments.$id'
 import { Route as AppDocumentsIdRouteImport } from './routes/_app.documents.$id'
 import { Route as AppDelegationIdRouteImport } from './routes/_app.delegation.$id'
+import { Route as AppDecisionsOpenRouteImport } from './routes/_app.decisions.open'
 import { Route as AppDecisionsIdRouteImport } from './routes/_app.decisions.$id'
 import { Route as AppComponentsIdRouteImport } from './routes/_app.components.$id'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
@@ -511,6 +512,11 @@ const AppDelegationIdRoute = AppDelegationIdRouteImport.update({
   path: '/delegation/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDecisionsOpenRoute = AppDecisionsOpenRouteImport.update({
+  id: '/decisions/open',
+  path: '/decisions/open',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDecisionsIdRoute = AppDecisionsIdRouteImport.update({
   id: '/decisions/$id',
   path: '/decisions/$id',
@@ -595,6 +601,7 @@ export interface FileRoutesByFullPath {
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
   '/decisions/$id': typeof AppDecisionsIdRoute
+  '/decisions/open': typeof AppDecisionsOpenRoute
   '/delegation/$id': typeof AppDelegationIdRoute
   '/documents/$id': typeof AppDocumentsIdRoute
   '/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
@@ -687,6 +694,7 @@ export interface FileRoutesByTo {
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/components/$id': typeof AppComponentsIdRoute
   '/decisions/$id': typeof AppDecisionsIdRoute
+  '/decisions/open': typeof AppDecisionsOpenRoute
   '/delegation/$id': typeof AppDelegationIdRoute
   '/documents/$id': typeof AppDocumentsIdRoute
   '/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
@@ -782,6 +790,7 @@ export interface FileRoutesById {
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
   '/_app/components/$id': typeof AppComponentsIdRoute
   '/_app/decisions/$id': typeof AppDecisionsIdRoute
+  '/_app/decisions/open': typeof AppDecisionsOpenRoute
   '/_app/delegation/$id': typeof AppDelegationIdRoute
   '/_app/documents/$id': typeof AppDocumentsIdRoute
   '/_app/domain-assessments/$id': typeof AppDomainAssessmentsIdRoute
@@ -877,6 +886,7 @@ export interface FileRouteTypes {
     | '/campaigns/$id'
     | '/components/$id'
     | '/decisions/$id'
+    | '/decisions/open'
     | '/delegation/$id'
     | '/documents/$id'
     | '/domain-assessments/$id'
@@ -969,6 +979,7 @@ export interface FileRouteTypes {
     | '/campaigns/$id'
     | '/components/$id'
     | '/decisions/$id'
+    | '/decisions/open'
     | '/delegation/$id'
     | '/documents/$id'
     | '/domain-assessments/$id'
@@ -1063,6 +1074,7 @@ export interface FileRouteTypes {
     | '/_app/campaigns/$id'
     | '/_app/components/$id'
     | '/_app/decisions/$id'
+    | '/_app/decisions/open'
     | '/_app/delegation/$id'
     | '/_app/documents/$id'
     | '/_app/domain-assessments/$id'
@@ -1710,6 +1722,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDelegationIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/decisions/open': {
+      id: '/_app/decisions/open'
+      path: '/decisions/open'
+      fullPath: '/decisions/open'
+      preLoaderRoute: typeof AppDecisionsOpenRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/decisions/$id': {
       id: '/_app/decisions/$id'
       path: '/decisions/$id'
@@ -1912,6 +1931,7 @@ interface AppRouteChildren {
   AppCampaignsIdRoute: typeof AppCampaignsIdRoute
   AppComponentsIdRoute: typeof AppComponentsIdRoute
   AppDecisionsIdRoute: typeof AppDecisionsIdRoute
+  AppDecisionsOpenRoute: typeof AppDecisionsOpenRoute
   AppDelegationIdRoute: typeof AppDelegationIdRoute
   AppDocumentsIdRoute: typeof AppDocumentsIdRoute
   AppDomainAssessmentsIdRoute: typeof AppDomainAssessmentsIdRoute
@@ -1985,6 +2005,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCampaignsIdRoute: AppCampaignsIdRoute,
   AppComponentsIdRoute: AppComponentsIdRoute,
   AppDecisionsIdRoute: AppDecisionsIdRoute,
+  AppDecisionsOpenRoute: AppDecisionsOpenRoute,
   AppDelegationIdRoute: AppDelegationIdRoute,
   AppDocumentsIdRoute: AppDocumentsIdRoute,
   AppDomainAssessmentsIdRoute: AppDomainAssessmentsIdRoute,

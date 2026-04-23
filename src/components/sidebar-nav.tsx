@@ -29,6 +29,7 @@ import {
   FlaskConical,
   Inbox,
   ShieldCheck,
+  Scale,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -77,6 +78,7 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
       { to: "/engagement-plans", label: "Engagement Plans", icon: Send, hint: "Contract shape per relationship — contains the SweetCycle for each active engagement" },
       { to: "/campaigns", label: "Campaigns", icon: Megaphone },
       { to: "/decisions", label: "Decisions", icon: FileText, hint: "Logged choices & rationale" },
+      { to: "/decisions/open", label: "Open Decisions", icon: Scale, hint: "Calibration queue — unsettled architecture rules" },
       { to: "/delegation", label: "Delegation Register", icon: GitBranch, hint: "Work to hand off — the systematize list" },
       { to: "/measures", label: "Measures", icon: Gauge, hint: "Objectives, KRs, KPIs, CSFs" },
     ],
@@ -128,7 +130,6 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
       { to: "/settings/spark-templates", label: "Spark Library", icon: BookOpen, hint: "Curated, reusable Spark templates" },
       { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "L1→L5 across the 5 Ps" },
       { to: "/settings/lenses", label: "BizzyBot prompts", icon: Bot, hint: "Edit AI instructions per Lens" },
-      { to: "/settings/open-decisions", label: "Open decisions", icon: FileText, hint: "Architecture decisions we have not yet settled" },
       { to: "/settings/ux-audit", label: "UX Audit", icon: Sparkles, hint: "Design system audit" },
       { to: "/audit", label: "Audit Trail", icon: ShieldCheck, hint: "System-of-record · every meaningful change, who, when, what" },
       { to: "/settings", label: "Team & profile", icon: Settings },
