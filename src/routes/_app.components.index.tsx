@@ -359,6 +359,8 @@ function ComponentsListPage() {
           </div>
         )}
       </Card>
+
+      <CapabilitiesDerivedPanel />
     </div>
   );
 }
