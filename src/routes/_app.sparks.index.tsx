@@ -79,6 +79,7 @@ function SparksIndex() {
       />
 
       <ScopeTabs value={filter} onChange={setFilter} />
+      <UniversalFilterBar />
 
       {recent.length > 0 && (
         <section className="rounded-2xl border border-border bg-surface/60 p-4">
