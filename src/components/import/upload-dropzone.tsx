@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from "react";
-import { CloudUpload, File as FileIcon, Loader2, Check, AlertCircle } from "lucide-react";
+import { CloudUpload, File as FileIcon, Loader2, Check, AlertCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { sampleBatchAsFiles } from "@/fixtures/ingestion-sample";
 
 type Item = {
   id: string;
