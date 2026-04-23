@@ -1,140 +1,74 @@
 
 
-# Wave 8 — Universal entity shell + finish Wave 7 (in YOUR canon)
+# Wave 8 (continued) — Finish the rollout + form-control canon
 
-Your collaborator's mockups are sharp. Two of their three big ideas are pure wins and we should ship them. The third (renaming sidebar groups, adding a "Canon" group) **conflicts with your locked sidebar IA canon** (`mem://design/sidebar-ia.md`), so I'll achieve their *intent* (Wisdom can find canon without admin vibes) without renaming groups.
+Picking up where the last batch stopped. Two things to land: (1) the unfinished Wave-7/8 mounts, (2) a written rule for when to use dropdown vs multi-select vs chips vs toggle so the UI stops drifting.
 
-I'll also finish the four Wave-7 leftovers you listed.
+## Part 1 — Finish the mounts
 
-## What from the mockups we adopt vs reject
-
-| Mockup proposal | Verdict | Why |
+| Surface | Mount | Replaces |
 |---|---|---|
-| **Universal entity shell** (Zones 1–5: header · work-context strip · connection rail · tabbed content · evidence footer) | ✅ **Adopt** — this is the answer to "I want to use every page to its max" | Already half-built (`<DetailShell>`, `<WorkContextStrip>`, `<WalkMenu>`); Wave 8 finishes it |
-| **Canon tab on every detail page** | ✅ **Adopt** | One read-only tab pulled from `entity_canon` so canon is visible without going to Settings |
-| **Three-layer Excellence model surfaced** (Canon / Maturity / Sparks+Guardrails) | ✅ **Adopt as visual treatment, not new entities** — all three already exist in DB | Maturity dot + canon-guardrail chip in Zone 1 of every shell |
-| **"Ship status" page in a new "Canon" sidebar group** | 🟡 **Adopt the page, not the regroup** | Build `/start/ship-status` as a sub-route of `/start` (canon-locked sidebar stays untouched) |
-| **6-group sidebar rename** (Today/Work/People/Library/Canon/Settings) | ❌ **Reject** | `mem://design/sidebar-ia.md` is locked at your 7-group verb-first IA. Renaming would break Wave 5 canon. |
-| **Move SweetSync entities (Missions/Journeys/Quests/Sparks/Domain Assessments) onto Relationship detail tabs** | 🟡 **Half-adopt** — keep the global routes (you use them), ALSO surface them as tabs on `/relationships/$id` | No deletion, additive only |
-| **Delete stub routes (`/pipeline`, `/planner`, `/queue`, `/my-tasks`)** | 🟡 **Defer to Wave 9** | They're 9-line stubs but deleting routes deserves its own confirmation pass |
-| **Flightdeck absorbs OCDA Cockpit** | ❌ **Reject** | Wave 5 just made `/operate/ocda` a first-class page — flipping it now would erase recent canon |
+| `/sweetscan` | `<TriageCard>` for inbound signals via `inboundSignalToTriageable` | `<InboundSignalCard>` |
+| `/sparks` index | `<TriageCard>` via `sparkToTriageable` | bespoke spark cards |
+| `/decisions` index | `<TriageCard>` via `decisionToTriageable` (state='proposed' only) | bespoke decision rows |
+| `/operate/ocda` Observe lane | `<TriageCard>` rows | bespoke observe cards |
+| `/decisions/$id` · `/sparks/$id` | `<EntityFrameworksRail>` in right rail | (additive) |
+| ~12 detail routes | wrap content in `<EntityShell>` — tasks, projects, components, sessions, workflows, quests, sparks, decisions, relationships, missions, journeys, playbooks | (one-line wraps) |
+| `/start/ship-status` | new route + `<ShipStatusBoard>` (live route/table/view tally) | new |
+| `/relationships/$id` | additive SweetSync tabs (Missions · Journeys · Quests · Sparks · Mirror) | (additive) |
 
-## Part A — Universal Entity Shell (the big move)
+## Part 2 — Form-control canon (`mem://design/form-controls.md`)
 
-One component, one shape, every detail page. The mockup names it perfectly — Zone 1 → Zone 5. You already have most of the parts; Wave 8 wires them into one shell.
+The drift you're feeling is that we pick controls ad-hoc. Lock the rule:
 
-```text
-┌──────────────────────────────────────────────────────────────────────┐
-│ Z1  [Icon] Entity name · kind chip · state pill · scope · 🛡 canon · ⋯walk │  ← canonical header
-├──────────────────────────────────────────────────────────────────────┤
-│ Z2  Relationship › Plan › Service › Session › this entity              │  ← work context strip
-├──────────┬───────────────────────────────────────────────────────────┤
-│ Z3       │ Z4  [Overview] [Build] [Story trail] [Measures] [Canon]    │
-│ ↑ Up     │                                                            │
-│ ↓ Down   │     Tab body (entity-specific)                             │
-│ → Produc │                                                            │
-│ ← Consum │                                                            │
-│ ⤴ Advances│                                                           │
-│ # Tagged │                                                            │
-├──────────┴───────────────────────────────────────────────────────────┤
-│ Z5  ▾ Evidence footer · audit log · generation metadata · revisions  │  ← collapsible
-└──────────────────────────────────────────────────────────────────────┘
-```
+| Cardinality | Use | Component | Example |
+|---|---|---|---|
+| 1 of 2–4 mutually exclusive | **Toggle group / Segmented** | `<ToggleGroup type="single">` | View density · Component kind |
+| 1 of 5–20 | **Dropdown (Select)** | `<Select>` | Owner · Status · Lens (F1–F8) |
+| 1 of 20+ searchable | **Combobox** | `<Command>` in `<Popover>` | Relationship · Operator · Persona |
+| Many of 5–20 | **Multi-select dropdown** | `<Popover>` + checkbox list | Domains on a Spark · Tenets on a Tenet picker |
+| Many of 20+ searchable | **Tag picker / Combobox-multi** | `<TagPicker>` (already exists) | Tags · Components on a Task |
+| Many of small fixed set, always visible | **Chip group / Toggle multi** | `<ToggleGroup type="multiple">` | 5P filter · Lens filter |
+| Boolean | **Switch** (settings) or **Checkbox** (forms) | `<Switch>` / `<Checkbox>` | Auto-confirm · Include archived |
+| Free text constrained | **Combobox with allow-create** | `<Command>` + create item | New tag · New skill |
+| Date | `<Calendar>` in popover | `<Popover>` | Due · Scheduled |
+| Range | `<Slider>` | `<Slider>` | Confidence threshold |
 
-**New component:** `src/components/entity-shell.tsx` — composes header + work-context strip + connection rail + tabs + evidence footer. Takes `{kind, id, primaryTabs, evidenceQuery}`.
+**Filter bars specifically** (this is where it matters most for you right now): always **multi-select chips** for small enums (5P, Lens, State) and **searchable dropdown** for large sets (Domain, Tenet, Owner). `<UniversalFilterBar>` will be refactored to follow this rule so every list filters identically.
 
-**New tabs added everywhere:**
-- **Canon tab** — read-only view of `entity_canon` row for this entity_kind (what it is · what good looks like · inputs · outputs · loop). Pulled from existing `entity_canon` table. Edit-link goes to `/settings/canon` (Wisdom can read everywhere, edit in one place — answers the mockup's "Wisdom can access canon without admin vibes" intent).
-- **Story trail tab** — already exists as `<MasterStoryTrail>`, just standardize the mount.
+**Promote actions** (the six verbs on TriageCard): always **dropdown menu** triggered by one button, never six buttons in a row. Keeps card height predictable.
 
-**Canon guardrail chip in Zone 1** — `<CanonGuardrail>` already exists. Mount on every shell so red/amber/green is visible at a glance.
+## Files
 
-## Part B — Finish Wave 7 (the four you listed)
-
-| Surface | Mount | Note |
-|---|---|---|
-| `/capture` | `<TriageCard>` rows + `<UniversalDropZone />` | Replace bespoke triage row with shared card |
-| `/sweetscan` | `<TriageCard>` for `inbound_signals` | Replace `<InboundSignalCard>` |
-| `/sparks` index | `<TriageCard>` for raw sparks | Adds the overlay rail to every spark |
-| `/decisions` index | `<TriageCard>` for `state='proposed'` | Promotes to Decided / Archived |
-| `/operate/ocda` Observe lane | `<TriageCard>` rows | Same gesture: select → frame → route to Choose |
-| `/today` | `<UniversalDropZone />` collapsed at top | Drop from your morning surface |
-| Task / Decision / Spark detail pages | `<FrameworksRail>` in right rail | Run any of F1–F8 on any open work item |
-
-## Part C — `/start/ship-status` (Wisdom's page)
-
-The collaborator nailed this one. New child route under `/start` — no sidebar regroup needed.
-
-```text
-SHIP STATUS — what is real vs aspirational
-─────────────────────────────────────────────
-LIVE (90%+ wired)              35 routes
-  Components · Workflows · Sessions · Tasks · …
-
-PARTIAL (built, not fully wired)  18 routes
-  Flightdeck (5 views in 1) · Sweetcycle multi-rel board · …
-
-STUB (under 50 lines)              4 routes
-  /pipeline /planner /queue /my-tasks → Wave 9
-
-ROUTE COUNT: 86 · TABLE COUNT: 111 · VIEW COUNT: 14
-```
-
-Reads live from filesystem walk + the `entity_canon` table. Updates every time you ship.
-
-## Part D — Relationship detail gets SweetSync tabs (additive)
-
-Add tabs to `/relationships/$id` that surface this client's slice:
-- **Missions** tab — filtered list of `missions` where `relationship_id = $id`
-- **Journeys** tab — same filter pattern
-- **Quests** tab — same
-- **Sparks** tab — same
-- **Mirror** tab — Domain Assessment (already exists, just promote it to a tab)
-
-Global routes (`/missions`, `/journeys`, etc.) **stay**. You can still see all clients' missions from the global rail. The Relationship tabs are an additional view, not a replacement.
-
-## Files I'll touch
-
-**New components:**
-- `src/components/entity-shell.tsx` — the universal Zone 1–5 shell
-- `src/components/entity-canon-tab.tsx` — read-only Canon tab body
-- `src/components/connection-rail.tsx` — Zone 3 (Up · Down · Produces · Consumes · Advances · Tagged)
-- `src/components/evidence-footer.tsx` — Zone 5 collapsible
-- `src/components/start/ship-status-board.tsx` — live route/table/view tally
-- `src/components/relationship/relationship-sweetsync-tabs.tsx` — Missions/Journeys/Quests/Sparks/Mirror tabs
-
-**New routes:**
+**New:**
+- `src/components/start/ship-status-board.tsx`
 - `src/routes/_app.start.ship-status.tsx`
+- `src/components/relationship-sweetsync-tabs.tsx`
+- `mem://design/form-controls.md`
+- `mem://design/universal-entity-shell.md`
 
 **Edited (mounts only):**
-- ~12 detail routes — wrap content in `<EntityShell kind=… id=…>` (tasks, projects, components, sessions, workflows, quests, sparks, decisions, relationships, missions, journeys, playbooks)
-- `src/routes/_app.capture.tsx` · `_app.sweetscan.tsx` · `_app.sparks.index.tsx` · `_app.decisions.index.tsx` · `_app.operate.ocda.tsx` · `_app.today.tsx` — Wave 7 mounts
-- `src/routes/_app.tasks.$id.tsx` · `_app.decisions.$id.tsx` · `_app.sparks.$id.tsx` — `<FrameworksRail>` in right rail
-- `src/routes/_app.relationships.$id.tsx` — mount sweetsync tabs
-
-**Memory:**
-- `mem://design/universal-entity-shell.md` — Zone 1–5 spec, what mounts where, the rule "every detail page uses EntityShell"
-- `mem://design/canon-tab-rule.md` — Canon tab is read-only on every detail; edit only at `/settings/canon`
-- update `mem://design/sidebar-ia.md` reaffirming the locked 7-group IA (so the next session doesn't try to regroup)
-
-## What this wave is NOT
-
-- Not renaming sidebar groups (canon-locked)
-- Not deleting any route (stubs deferred to Wave 9)
-- Not absorbing OCDA into Flightdeck (Wave 5 canon)
-- Not new entities (every part reads existing tables)
-- Not editing any auto-generated file
+- `src/routes/_app.sweetscan.tsx` · `_app.sparks.index.tsx` · `_app.decisions.index.tsx` · `_app.operate.ocda.tsx` — TriageCard rollout
+- `src/routes/_app.decisions.$id.tsx` · `_app.sparks.$id.tsx` — FrameworksRail
+- ~12 detail routes — wrap in `<EntityShell>`
+- `src/routes/_app.relationships.$id.tsx` — sweetsync tabs
+- `src/components/universal-filter-bar.tsx` — refactor to honor the form-control canon (chips for small enums, combobox for large)
 
 ## Sequencing
 
-1. **Wave 7 finish** (~20%) — TriageCard rollout to 5 surfaces + FrameworksRail on 3 detail pages + drop zone on /today
-2. **`<EntityShell>` component + Canon tab + connection rail** (~35%) — the centerpiece
-3. **Mount EntityShell on 12 detail routes** (~25%) — one-line wraps, no rewrites
-4. **`/start/ship-status` page** (~10%)
-5. **Relationship SweetSync tabs** (~7%)
-6. **Memory canon updates** (~3%)
+1. Form-control canon memory + UniversalFilterBar refactor (~15%)
+2. TriageCard rollout to 4 surfaces (~25%)
+3. EntityShell wraps on 12 routes (~30%)
+4. FrameworksRail on Decision/Spark detail (~10%)
+5. `/start/ship-status` page (~10%)
+6. Relationship SweetSync tabs (~10%)
 
-After Wave 8: every detail page in the app has the same shell — same header, same connection rail, same Canon tab visible in one click, same evidence footer. Walking the graph feels identical from any starting point. Triage feels identical from any starting point. The collaborator's two best ideas land. Your locked sidebar canon stays intact.
+## Not in this wave
 
-Reply **"Run Wave 8"** to ship in this order, or **"Just EntityShell + Canon tab first"** to land the centerpiece before the Wave-7 mounts.
+- No sidebar regroup (locked)
+- No route deletions (Wave 9)
+- No new entities or migrations
+- No edits to auto-generated files
+
+Reply **"Run Wave 8 finish"** to ship in this order, or name a subset (e.g. *"Form-control canon + filter bar refactor first"*).
 
