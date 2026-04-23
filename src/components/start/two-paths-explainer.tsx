@@ -52,9 +52,9 @@ export function TwoPathsExplainer({ className }: { className?: string }) {
 
       <div className="grid gap-3 md:grid-cols-2">
         {/* Session path */}
-        <div className="rounded-xl border bg-gradient-to-br from-emerald-500/10 to-background p-3">
+        <div className="rounded-xl border bg-gradient-to-br from-muted/40 to-background p-3">
           <div className="mb-2 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-emerald-600" />
+            <Calendar className="h-4 w-4 text-foreground" />
             <h3 className="text-sm font-semibold">Session path</h3>
           </div>
           <p className="text-[11px] leading-snug text-muted-foreground">

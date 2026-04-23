@@ -17,6 +17,7 @@ import { Route as AppTodayRouteImport } from './routes/_app.today'
 import { Route as AppSweetsyncRouteImport } from './routes/_app.sweetsync'
 import { Route as AppSweetscanRouteImport } from './routes/_app.sweetscan'
 import { Route as AppSweetcycleRouteImport } from './routes/_app.sweetcycle'
+import { Route as AppStartRouteImport } from './routes/_app.start'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSandboxRouteImport } from './routes/_app.sandbox'
 import { Route as AppQueueRouteImport } from './routes/_app.queue'
@@ -133,6 +134,11 @@ const AppSweetscanRoute = AppSweetscanRouteImport.update({
 const AppSweetcycleRoute = AppSweetcycleRouteImport.update({
   id: '/sweetcycle',
   path: '/sweetcycle',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStartRoute = AppStartRouteImport.update({
+  id: '/start',
+  path: '/start',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
@@ -547,6 +553,7 @@ export interface FileRoutesByFullPath {
   '/queue': typeof AppQueueRoute
   '/sandbox': typeof AppSandboxRoute
   '/settings': typeof AppSettingsRouteWithChildren
+  '/start': typeof AppStartRoute
   '/sweetcycle': typeof AppSweetcycleRoute
   '/sweetscan': typeof AppSweetscanRoute
   '/sweetsync': typeof AppSweetsyncRoute
@@ -633,6 +640,7 @@ export interface FileRoutesByTo {
   '/planner': typeof AppPlannerRoute
   '/queue': typeof AppQueueRoute
   '/sandbox': typeof AppSandboxRoute
+  '/start': typeof AppStartRoute
   '/sweetcycle': typeof AppSweetcycleRoute
   '/sweetscan': typeof AppSweetscanRoute
   '/sweetsync': typeof AppSweetsyncRoute
@@ -722,6 +730,7 @@ export interface FileRoutesById {
   '/_app/queue': typeof AppQueueRoute
   '/_app/sandbox': typeof AppSandboxRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
+  '/_app/start': typeof AppStartRoute
   '/_app/sweetcycle': typeof AppSweetcycleRoute
   '/_app/sweetscan': typeof AppSweetscanRoute
   '/_app/sweetsync': typeof AppSweetsyncRoute
@@ -811,6 +820,7 @@ export interface FileRouteTypes {
     | '/queue'
     | '/sandbox'
     | '/settings'
+    | '/start'
     | '/sweetcycle'
     | '/sweetscan'
     | '/sweetsync'
@@ -897,6 +907,7 @@ export interface FileRouteTypes {
     | '/planner'
     | '/queue'
     | '/sandbox'
+    | '/start'
     | '/sweetcycle'
     | '/sweetscan'
     | '/sweetsync'
@@ -985,6 +996,7 @@ export interface FileRouteTypes {
     | '/_app/queue'
     | '/_app/sandbox'
     | '/_app/settings'
+    | '/_app/start'
     | '/_app/sweetcycle'
     | '/_app/sweetscan'
     | '/_app/sweetsync'
@@ -1122,6 +1134,13 @@ declare module '@tanstack/react-router' {
       path: '/sweetcycle'
       fullPath: '/sweetcycle'
       preLoaderRoute: typeof AppSweetcycleRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/start': {
+      id: '/_app/start'
+      path: '/start'
+      fullPath: '/start'
+      preLoaderRoute: typeof AppStartRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings': {
@@ -1772,6 +1791,7 @@ interface AppRouteChildren {
   AppQueueRoute: typeof AppQueueRoute
   AppSandboxRoute: typeof AppSandboxRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
+  AppStartRoute: typeof AppStartRoute
   AppSweetcycleRoute: typeof AppSweetcycleRoute
   AppSweetscanRoute: typeof AppSweetscanRoute
   AppSweetsyncRoute: typeof AppSweetsyncRoute
@@ -1842,6 +1862,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppQueueRoute: AppQueueRoute,
   AppSandboxRoute: AppSandboxRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
+  AppStartRoute: AppStartRoute,
   AppSweetcycleRoute: AppSweetcycleRoute,
   AppSweetscanRoute: AppSweetscanRoute,
   AppSweetsyncRoute: AppSweetsyncRoute,
