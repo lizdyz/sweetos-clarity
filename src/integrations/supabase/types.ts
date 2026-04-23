@@ -210,6 +210,46 @@ export type Database = {
           },
         ]
       }
+      campaign_jtbds: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          jtbd_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          jtbd_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          jtbd_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_jtbds_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_jtbds_jtbd_id_fkey"
+            columns: ["jtbd_id"]
+            isOneToOne: false
+            referencedRelation: "jobs_to_be_done"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_jtbds_jtbd_id_fkey"
+            columns: ["jtbd_id"]
+            isOneToOne: false
+            referencedRelation: "jtbd_work_pipeline"
+            referencedColumns: ["jtbd_id"]
+          },
+        ]
+      }
       campaign_projects: {
         Row: {
           campaign_id: string
@@ -4099,6 +4139,53 @@ export type Database = {
           },
         ]
       }
+      project_jtbds: {
+        Row: {
+          created_at: string
+          jtbd_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          jtbd_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          jtbd_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_jtbds_jtbd_id_fkey"
+            columns: ["jtbd_id"]
+            isOneToOne: false
+            referencedRelation: "jobs_to_be_done"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_jtbds_jtbd_id_fkey"
+            columns: ["jtbd_id"]
+            isOneToOne: false
+            referencedRelation: "jtbd_work_pipeline"
+            referencedColumns: ["jtbd_id"]
+          },
+          {
+            foreignKeyName: "project_jtbds_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_rollup"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_jtbds_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client_id: string | null
@@ -4292,8 +4379,14 @@ export type Database = {
           created_by: string
           entity_type: Database["public"]["Enums"]["proposal_entity_type"]
           id: string
+          intent: string | null
+          matched_jtbds: string[] | null
+          matched_ktis: string[] | null
+          matched_personas: string[] | null
+          matched_quests: string[] | null
           matched_record_id: string | null
           matched_record_table: string | null
+          matched_sparks: string[] | null
           proposed_fields: Json
           raw_input: string | null
           rejected_reason: string | null
@@ -4301,6 +4394,7 @@ export type Database = {
           source_label: string | null
           source_ref: string | null
           status: Database["public"]["Enums"]["proposal_status"]
+          suggested_kti_payload: Json | null
           tag_suggestions: Json
           tagged_components: string[]
           tagged_domains: string[]
@@ -4320,8 +4414,14 @@ export type Database = {
           created_by?: string
           entity_type: Database["public"]["Enums"]["proposal_entity_type"]
           id?: string
+          intent?: string | null
+          matched_jtbds?: string[] | null
+          matched_ktis?: string[] | null
+          matched_personas?: string[] | null
+          matched_quests?: string[] | null
           matched_record_id?: string | null
           matched_record_table?: string | null
+          matched_sparks?: string[] | null
           proposed_fields?: Json
           raw_input?: string | null
           rejected_reason?: string | null
@@ -4329,6 +4429,7 @@ export type Database = {
           source_label?: string | null
           source_ref?: string | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          suggested_kti_payload?: Json | null
           tag_suggestions?: Json
           tagged_components?: string[]
           tagged_domains?: string[]
@@ -4348,8 +4449,14 @@ export type Database = {
           created_by?: string
           entity_type?: Database["public"]["Enums"]["proposal_entity_type"]
           id?: string
+          intent?: string | null
+          matched_jtbds?: string[] | null
+          matched_ktis?: string[] | null
+          matched_personas?: string[] | null
+          matched_quests?: string[] | null
           matched_record_id?: string | null
           matched_record_table?: string | null
+          matched_sparks?: string[] | null
           proposed_fields?: Json
           raw_input?: string | null
           rejected_reason?: string | null
@@ -4357,6 +4464,7 @@ export type Database = {
           source_label?: string | null
           source_ref?: string | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          suggested_kti_payload?: Json | null
           tag_suggestions?: Json
           tagged_components?: string[]
           tagged_domains?: string[]
@@ -6155,6 +6263,46 @@ export type Database = {
         }
         Relationships: []
       }
+      task_jtbds: {
+        Row: {
+          created_at: string
+          jtbd_id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          jtbd_id: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          jtbd_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_jtbds_jtbd_id_fkey"
+            columns: ["jtbd_id"]
+            isOneToOne: false
+            referencedRelation: "jobs_to_be_done"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_jtbds_jtbd_id_fkey"
+            columns: ["jtbd_id"]
+            isOneToOne: false
+            referencedRelation: "jtbd_work_pipeline"
+            referencedColumns: ["jtbd_id"]
+          },
+          {
+            foreignKeyName: "task_jtbds_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee_id: string | null
@@ -7247,6 +7395,41 @@ export type Database = {
             columns: ["relationship_id"]
             isOneToOne: false
             referencedRelation: "relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jtbd_work_pipeline: {
+        Row: {
+          campaign_count: number | null
+          jtbd_id: string | null
+          persona_id: string | null
+          project_count: number | null
+          statement: string | null
+          task_count: number | null
+        }
+        Insert: {
+          campaign_count?: never
+          jtbd_id?: string | null
+          persona_id?: string | null
+          project_count?: never
+          statement?: string | null
+          task_count?: never
+        }
+        Update: {
+          campaign_count?: never
+          jtbd_id?: string | null
+          persona_id?: string | null
+          project_count?: never
+          statement?: string | null
+          task_count?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_to_be_done_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
             referencedColumns: ["id"]
           },
         ]
