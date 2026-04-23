@@ -19,6 +19,13 @@ export const Route = createFileRoute("/_app/settings/canon")({
   component: CanonEditor,
 });
 
+interface CoverageRules {
+  stale_capture_days?: number;
+  require_jtbd_link?: boolean;
+  require_active_kti?: boolean;
+  min_sparks_per_quarter?: number;
+}
+
 interface CanonRow {
   id: string;
   entity_kind: string;
@@ -34,6 +41,8 @@ interface CanonRow {
   child_kinds: string[] | null;
   peer_kinds: string[] | null;
   composition_notes: string | null;
+  capture_prompts: string[];
+  coverage_rules: CoverageRules;
   status: string;
   updated_at: string;
 }
