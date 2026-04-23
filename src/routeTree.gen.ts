@@ -92,6 +92,7 @@ import { Route as AppDecisionsIdRouteImport } from './routes/_app.decisions.$id'
 import { Route as AppComponentsIdRouteImport } from './routes/_app.components.$id'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
 import { Route as ApiPublicHooksScanKtisRouteImport } from './routes/api/public/hooks/scan-ktis'
+import { Route as ApiPublicHooksGapScanRouteImport } from './routes/api/public/hooks/gap-scan'
 import { Route as AppSettingsLensesIdRouteImport } from './routes/_app.settings.lenses.$id'
 import { Route as AppRelationshipsIdSparkpathRouteImport } from './routes/_app.relationships.$id.sparkpath'
 import { Route as AppLibraryKtisIdRouteImport } from './routes/_app.library.ktis.$id'
@@ -517,6 +518,11 @@ const ApiPublicHooksScanKtisRoute = ApiPublicHooksScanKtisRouteImport.update({
   path: '/api/public/hooks/scan-ktis',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksGapScanRoute = ApiPublicHooksGapScanRouteImport.update({
+  id: '/api/public/hooks/gap-scan',
+  path: '/api/public/hooks/gap-scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSettingsLensesIdRoute = AppSettingsLensesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -630,6 +636,7 @@ export interface FileRoutesByFullPath {
   '/library/ktis/$id': typeof AppLibraryKtisIdRoute
   '/relationships/$id/sparkpath': typeof AppRelationshipsIdSparkpathRoute
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
+  '/api/public/hooks/gap-scan': typeof ApiPublicHooksGapScanRoute
   '/api/public/hooks/scan-ktis': typeof ApiPublicHooksScanKtisRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -718,6 +725,7 @@ export interface FileRoutesByTo {
   '/library/ktis/$id': typeof AppLibraryKtisIdRoute
   '/relationships/$id/sparkpath': typeof AppRelationshipsIdSparkpathRoute
   '/settings/lenses/$id': typeof AppSettingsLensesIdRoute
+  '/api/public/hooks/gap-scan': typeof ApiPublicHooksGapScanRoute
   '/api/public/hooks/scan-ktis': typeof ApiPublicHooksScanKtisRoute
   '/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -809,6 +817,7 @@ export interface FileRoutesById {
   '/_app/library/ktis/$id': typeof AppLibraryKtisIdRoute
   '/_app/relationships/$id/sparkpath': typeof AppRelationshipsIdSparkpathRoute
   '/_app/settings/lenses/$id': typeof AppSettingsLensesIdRoute
+  '/api/public/hooks/gap-scan': typeof ApiPublicHooksGapScanRoute
   '/api/public/hooks/scan-ktis': typeof ApiPublicHooksScanKtisRoute
   '/_app/workflows/$id/runs/$runId': typeof AppWorkflowsIdRunsRunIdRoute
 }
@@ -900,6 +909,7 @@ export interface FileRouteTypes {
     | '/library/ktis/$id'
     | '/relationships/$id/sparkpath'
     | '/settings/lenses/$id'
+    | '/api/public/hooks/gap-scan'
     | '/api/public/hooks/scan-ktis'
     | '/workflows/$id/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
@@ -988,6 +998,7 @@ export interface FileRouteTypes {
     | '/library/ktis/$id'
     | '/relationships/$id/sparkpath'
     | '/settings/lenses/$id'
+    | '/api/public/hooks/gap-scan'
     | '/api/public/hooks/scan-ktis'
     | '/workflows/$id/runs/$runId'
   id:
@@ -1078,6 +1089,7 @@ export interface FileRouteTypes {
     | '/_app/library/ktis/$id'
     | '/_app/relationships/$id/sparkpath'
     | '/_app/settings/lenses/$id'
+    | '/api/public/hooks/gap-scan'
     | '/api/public/hooks/scan-ktis'
     | '/_app/workflows/$id/runs/$runId'
   fileRoutesById: FileRoutesById
@@ -1087,6 +1099,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   PSlugSeedRoute: typeof PSlugSeedRoute
+  ApiPublicHooksGapScanRoute: typeof ApiPublicHooksGapScanRoute
   ApiPublicHooksScanKtisRoute: typeof ApiPublicHooksScanKtisRoute
 }
 
@@ -1673,6 +1686,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksScanKtisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/gap-scan': {
+      id: '/api/public/hooks/gap-scan'
+      path: '/api/public/hooks/gap-scan'
+      fullPath: '/api/public/hooks/gap-scan'
+      preLoaderRoute: typeof ApiPublicHooksGapScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/settings/lenses/$id': {
       id: '/_app/settings/lenses/$id'
       path: '/$id'
@@ -1958,6 +1978,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   PSlugSeedRoute: PSlugSeedRoute,
+  ApiPublicHooksGapScanRoute: ApiPublicHooksGapScanRoute,
   ApiPublicHooksScanKtisRoute: ApiPublicHooksScanKtisRoute,
 }
 export const routeTree = rootRouteImport
