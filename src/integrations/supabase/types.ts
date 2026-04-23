@@ -2218,6 +2218,80 @@ export type Database = {
           },
         ]
       }
+      handoff_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          from_operator_id: string | null
+          id: string
+          note: string | null
+          reason: Database["public"]["Enums"]["handoff_reason"]
+          responded_at: string | null
+          status: Database["public"]["Enums"]["handoff_status"]
+          subject_id: string
+          subject_kind: string
+          to_operator_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          from_operator_id?: string | null
+          id?: string
+          note?: string | null
+          reason?: Database["public"]["Enums"]["handoff_reason"]
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["handoff_status"]
+          subject_id: string
+          subject_kind: string
+          to_operator_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          from_operator_id?: string | null
+          id?: string
+          note?: string | null
+          reason?: Database["public"]["Enums"]["handoff_reason"]
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["handoff_status"]
+          subject_id?: string
+          subject_kind?: string
+          to_operator_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handoff_events_from_operator_id_fkey"
+            columns: ["from_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "handoff_events_from_operator_id_fkey"
+            columns: ["from_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handoff_events_to_operator_id_fkey"
+            columns: ["to_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "handoff_events_to_operator_id_fkey"
+            columns: ["to_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inbound_signals: {
         Row: {
           capture_attachment_id: string | null
@@ -7025,6 +7099,83 @@ export type Database = {
         }
         Relationships: []
       }
+      operator_handoff_inbox: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          due_date: string | null
+          from_operator_id: string | null
+          id: string | null
+          note: string | null
+          reason: Database["public"]["Enums"]["handoff_reason"] | null
+          responded_at: string | null
+          status: Database["public"]["Enums"]["handoff_status"] | null
+          subject_id: string | null
+          subject_kind: string | null
+          subject_label: string | null
+          to_operator_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string | null
+          from_operator_id?: string | null
+          id?: string | null
+          note?: string | null
+          reason?: Database["public"]["Enums"]["handoff_reason"] | null
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["handoff_status"] | null
+          subject_id?: string | null
+          subject_kind?: string | null
+          subject_label?: never
+          to_operator_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string | null
+          from_operator_id?: string | null
+          id?: string | null
+          note?: string | null
+          reason?: Database["public"]["Enums"]["handoff_reason"] | null
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["handoff_status"] | null
+          subject_id?: string | null
+          subject_kind?: string | null
+          subject_label?: never
+          to_operator_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handoff_events_from_operator_id_fkey"
+            columns: ["from_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "handoff_events_from_operator_id_fkey"
+            columns: ["from_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handoff_events_to_operator_id_fkey"
+            columns: ["to_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operator_workload"
+            referencedColumns: ["operator_id"]
+          },
+          {
+            foreignKeyName: "handoff_events_to_operator_id_fkey"
+            columns: ["to_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operator_workload: {
         Row: {
           availability: string | null
@@ -7290,6 +7441,18 @@ export type Database = {
         | "SweetConnect"
       excellence_score_state: "not_assessed" | "not_met" | "partial" | "met"
       excellence_subject_kind: "domain" | "tenet" | "component"
+      handoff_reason:
+        | "ready_for_review"
+        | "blocked"
+        | "escalation"
+        | "fyi"
+        | "reassign"
+      handoff_status:
+        | "pending"
+        | "accepted"
+        | "declined"
+        | "cancelled"
+        | "auto_completed"
       inbound_signal_source:
         | "url"
         | "podcast"
@@ -7649,6 +7812,20 @@ export const Constants = {
       ],
       excellence_score_state: ["not_assessed", "not_met", "partial", "met"],
       excellence_subject_kind: ["domain", "tenet", "component"],
+      handoff_reason: [
+        "ready_for_review",
+        "blocked",
+        "escalation",
+        "fyi",
+        "reassign",
+      ],
+      handoff_status: [
+        "pending",
+        "accepted",
+        "declined",
+        "cancelled",
+        "auto_completed",
+      ],
       inbound_signal_source: [
         "url",
         "podcast",
