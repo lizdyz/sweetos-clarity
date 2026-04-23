@@ -13,6 +13,7 @@ import { MasterStoryTrail } from "@/components/master-story-trail";
 import { LiveSignalStrip } from "@/components/live-signal-strip";
 import { TodayDecisionBar } from "@/components/today-decision-bar";
 import { TodayNextActions } from "@/components/today-next-actions";
+import { UniversalDropZone } from "@/components/universal-drop-zone";
 import { useMeOperator } from "@/lib/use-me-operator";
 import {
   rankNextActions,
@@ -276,6 +277,15 @@ function TodayPage() {
       />
 
       <LiveSignalStrip meOperatorId={meId} />
+
+      <details className="mb-4 rounded-2xl border border-border/60 bg-card/40">
+        <summary className="cursor-pointer list-none px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground hover:text-foreground">
+          + Drop a thought, link, or file into Sandbox
+        </summary>
+        <div className="border-t border-border/40 p-3">
+          <UniversalDropZone compact />
+        </div>
+      </details>
 
       <MasterStoryTrail />
 
