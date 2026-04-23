@@ -1,15 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { sb as supabase } from "@/lib/sb";
 import { EntityListPage } from "@/components/entity-workspace";
 import { SparkProvenanceChip } from "@/components/spark-provenance-chip";
 import { ScopeChip } from "@/components/scope-chip";
 import { PageHeader } from "@/components/page-header";
+import { UniversalFilterBar } from "@/components/universal-filter-bar";
+import { universalFilterSchema } from "@/lib/use-universal-filters";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/sparks/")({
+  validateSearch: zodValidator(universalFilterSchema),
   component: SparksIndex,
 });
 

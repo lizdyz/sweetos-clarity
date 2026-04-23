@@ -1,17 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { FileText, Brain } from "lucide-react";
 import { EntityListPage } from "@/components/entity-workspace";
 import { PageHeader } from "@/components/page-header";
+import { UniversalFilterBar } from "@/components/universal-filter-bar";
+import { universalFilterSchema } from "@/lib/use-universal-filters";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/decisions/")({
+  validateSearch: zodValidator(universalFilterSchema),
   component: DecisionsPage,
 });
 
 function DecisionsPage() {
   return (
     <div className="space-y-2">
-      <div className="px-6 pt-6">
+      <div className="space-y-3 px-6 pt-6">
         <PageHeader
           icon={<FileText className="h-5 w-5" />}
           title="Decisions"
@@ -28,6 +32,9 @@ function DecisionsPage() {
               </Link>
             </Button>
           }
+        />
+        <UniversalFilterBar
+          stateOptions={["proposed", "decided", "superseded", "rolled_back"]}
         />
       </div>
       <EntityListPage entityKey="decisions" />
