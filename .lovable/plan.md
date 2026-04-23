@@ -1,165 +1,134 @@
 
 
-# Wave 17 — Smart Ingestion: bulk import that thinks
+# Wave 18 (revised) — Harden ingestion first, then make it smart
 
-A dedicated ingestion area that turns "drop a folder of Notion exports" into a guided conversation: detect → group → propose → clarify only where it matters → map → flag missing schema → import → learn. Lives alongside Capture (single-thought) and Vault (final files). This is the new front door for migrating Notion (or anything else) into SweetOS.
+You're right — I over-indexed on zip. Drop it from this wave. The real ask: prove the existing 6-step flow actually works end-to-end with `.md`, `.csv`, `.json`, `.txt`, then layer on the five intelligence features (conflicts, recipes, lineage, chunked analysis, JSON schema inference). Zip can come later once the foundation is trustworthy.
 
-## Where it lives
+## Stage 1 — Validate and harden what Wave 17 shipped
 
-New sidebar entry under **Today**: `Capture` (existing) gets a sibling **Import** (`/import`).
+Before adding anything, prove the current flow works on real files. This is a test pass with surgical fixes, not new features.
 
-```text
-Today
-  ├─ Start
-  ├─ Today
-  ├─ Calendar
-  ├─ Capture          ← single thoughts (existing)
-  └─ Import           ← bulk file ingestion (new)
-```
+- **End-to-end smoke test** with a small mixed batch (3 md, 3 csv, 1 json, 1 txt) — walk all 6 steps, confirm: upload → analyze → mapping → schema → import → results all reach the next step without errors.
+- **Fix whatever breaks**, with priority on:
+  - File parsing edge cases (BOM in CSV, empty files, malformed JSON, frontmatter-only md)
+  - Group signature collisions (two unrelated csvs with same header count)
+  - Classification falling back to `needs_review` cleanly when no rule matches (never silently force-fit)
+  - The Run import step actually writing rows to the target tables
+- **Add visible failure states** on every step — today some errors fail silently. Each step gets an inline error card showing what failed and a "retry this step" button.
+- **Add a `Test with sample batch` button** on the empty Upload screen that loads 6 fixture files from the repo so the user can see the full flow without preparing data.
 
-Capture stays for one-off drops. Import is for batches of 5–500 files where classification, grouping, and schema discovery are the value.
+## Stage 2 — The five intelligence features
 
-## The flow (six steps, one route, sequential reveal)
+Built in this order because each one builds on the previous:
 
-```text
-/import
-  1 Upload      drop / pick files → uploaded into 'ingestion' bucket
-  2 Analysis    parse, group, classify → propose object types
-  3 Mapping     review per-file mapping; bulk-edit by group
-  4 Schema      review suggested new fields & object types
-  5 Import      run the import, watch results stream
-  6 Results     what landed, what was skipped, what to follow up
-```
+### A. Chunked analysis (foundation — fixes large-batch UX first)
 
-A persistent stepper at the top shows progress. Steps 2-4 can be re-entered until the user clicks Run.
+Today `analyzeRun` walks every file in one server call and freezes the UI for batches over ~30 files.
 
-## Data model
+- Split into orchestration + worker:
+  - `analyzeRun({ runId })` marks run `analyzing`, returns immediately with `total` and `chunkSize`.
+  - `analyzeChunk({ runId, offset, limit })` processes 25 files at a time, updates `ingestion_runs.analyzed_file_count`, returns `{ done, nextOffset }`.
+- Client polls `analyzeChunk` in a loop, updating an honest progress bar: `47 / 200 files analyzed · current group: Components`.
+- New columns: `ingestion_runs.analyzed_file_count int default 0` + `analysis_total int`.
 
-Eight new tables. All scoped per ingestion_run; nothing pollutes existing entities until step 5.
+### B. Data lineage (visible across Mapping, Schema, Results)
 
-```sql
-ingestion_runs               -- one per upload batch; status: draft|analyzing|review|importing|complete
-ingestion_files              -- raw uploaded files: storage_path, filename, mime, size, sha256, parsed_text, structure_json
-ingestion_file_groups        -- "these 14 files look the same" — heading_pattern, column_signature, sample_count
-ingestion_classifications    -- per-file proposal: target_object_type, target_table, confidence, rationale, status (proposed|approved|excluded|needs_review)
-ingestion_schema_suggestions -- "this column has no home": column_name, sample_values, suggested_type, suggested_destination, status
-ingestion_object_suggestions -- "this looks like a NEW object type we don't model yet": proposed_name, evidence_files[], suggested_fields[]
-ingestion_mapping_rules      -- learned aliases: pattern (column_name regex / heading regex / filename regex) → target_field, scope (global|per_run), hit_count
-ingestion_results            -- per-file outcome: created_entity_kind, created_entity_id, status (created|updated|skipped|failed), notes
-```
+- New columns: `ingestion_files.source_path text` (the original filename/path the user sent) — already partially captured but not surfaced.
+- `<LineageStrip>` component — expandable chevron on every `FileMappingRow` and every results row showing:
+  - **Source**: filename + size + sha256 (first 12 chars)
+  - **Group**: which signature it joined and why (e.g. "matched H1 + ## Inputs + ## Outputs")
+  - **Mapping**: which rule fired (alias / signature match / field overlap / manual override)
+  - **Destination**: target table + target id (after import) with a deep link to the created entity
+- The same strip mounts on the Results page so a user can audit "where did this component come from?" months later.
 
-Plus a tiny lookup: `ingestion_object_registry` — the canonical list of importable object types (component, journey, persona, prompt, workflow_template, document, etc.) with their target tables and required fields. Seeded from the existing entity canon.
+### C. Conflict detection (new step between Mapping and Schema)
 
-## Classification engine (placeholder-smart, AI-ready)
+The biggest data-integrity gap today: nothing checks whether `components.name = 'Auth Service'` already exists before importing one with the same name.
 
-A single edge function `analyze-ingestion-batch` that runs after upload. v1 logic, deterministic and visible — no fake-AI hand-waving:
+- New table `ingestion_conflicts` (file_id, target_table, existing_entity_id, conflict_kind, proposed_resolution, status, resolution_notes).
+- New column `ingestion_object_registry.conflict_key_fields text[]` — seeded per object type (components: `[name]`, journeys: `[name, relationship_id]`, etc.).
+- New server fn `detectConflicts({ runId })` runs after Mapping is approved. For each classification, queries the target table by its `conflict_key_fields` and writes any matches to `ingestion_conflicts`.
+- New step in `<ImportStepper>`: **Conflicts** (only appears if conflicts exist).
+- New `<ConflictCard>` per conflict shows existing vs incoming side-by-side with 4-way resolver: `create_new` · `update_existing` · `skip` · `merge`. Default = `needs_review` — never silently overwrite.
 
-1. **File-type detection** — extension + magic bytes.
-2. **Structure parse** — `.md` → headings/frontmatter; `.csv` → header row + 5 sample rows; `.json` → top-level keys; `.txt` → first 200 chars.
-3. **Signature** — hash of (extension + heading-pattern OR column-set). Files with identical signatures group automatically.
-4. **Type proposal per group** — rules table:
-   - `frontmatter has "stage" + "owner"` → likely **Journey/Quest**
-   - `H1 + ## "Inputs" + ## "Outputs"` → likely **Component**
-   - `H1 + "Prompt:" + "Variables:"` → likely **Prompt template**
-   - CSV header containing `name,description,domain,maturity` → likely **Components table**
-   - CSV header containing `from,to,kind` → likely **Relationships table**
-   - else → **Unknown / needs review** (never force-fit)
-5. **Field matching** — column/key names matched against existing field names + learned `ingestion_mapping_rules` aliases.
-6. **Schema suggestions** — any column/frontmatter key that didn't match goes into `ingestion_schema_suggestions` with sample values and a guessed type.
-7. **New-object detection** — if a group has a coherent shape but no rule matched, write to `ingestion_object_suggestions` with the proposed fields.
+### D. JSON schema inference (extends current JSON parsing)
 
-Confidence is a real number (0-1) derived from rule strength + alias hits, not a vibe. Lovable AI (`google/gemini-2.5-flash`) is called only as a tiebreaker on ambiguous groups, and the prompt is editable in `/settings/prompts` like the rest.
+Today `parseJson` only reads the top-level keys of the first record.
 
-## The six screens
+- Walk up to 50 sample records per file, union their key sets.
+- Infer per-key type: `string` | `number` | `boolean` | `array<T>` | `object` | `nullable<T>`.
+- Detect nested objects → propose as candidate sub-schemas in `ingestion_schema_suggestions`.
+- Detect array-of-objects → propose as candidate child-table relationships in `ingestion_object_suggestions` ("This `comments` field looks like a one-to-many — should it become a `document_comments` table?").
+- Same UI surfaces — just better content flowing into them.
 
-### 1. Upload
-Full-page dropzone (much larger than current FileDrop), supports folder drag, shows upload queue with per-file progress, sha256 dedupe (skip files we've already imported in any prior run).
+### E. Saved recipes (last, because it depends on everything above being stable)
 
-### 2. Analysis
-Left rail: groups, sorted by count. Right pane: group detail card showing file count, detected pattern, sample preview (first markdown headings or first CSV rows), proposed object type with confidence bar, and the rationale ("Matched: H1 + ## Inputs + ## Outputs"). Group-level actions: **Approve all**, **Change type for group**, **Split group**, **Exclude**.
+A "recipe" snapshots the full set of decisions for a run so the next batch with the same shape skips review.
 
-### 3. Mapping Review
-Table view, one row per file. Columns: filename · group · proposed type · destination · field-match summary (e.g. "8/10 mapped, 2 unmatched") · status chip · row-action menu. Inline edit per row. Bulk-select to reassign type or destination. Filters: by status, by group, by confidence.
+- New table `ingestion_recipes` (id, name, description, signature_set jsonb, field_aliases jsonb, conflict_defaults jsonb, hit_count, created_by).
+- After Results, **Save as recipe** dialog (name + description) snapshots the run's decisions.
+- On a new run's Analysis step, score each saved recipe against current group signatures. If ≥75% of groups match, surface a **Recipe match banner**: "Notion components export — 12/14 groups match. Apply recipe?" One click pre-approves matching groups.
+- New `<RecipesPanel>` (sibling to the existing `SavedRulesPanel`) lists saved recipes with hit counts and a delete action.
 
-### 4. Schema Suggestions
-Two stacked cards:
-- **Suggested new fields** — table of unmatched columns/keys with: source column · sample values · guessed type (text/number/date/enum/uuid-ref) · suggested destination table · approve/skip/rename. Approving writes a real migration via the migration tool (with explicit user confirmation).
-- **Suggested new object types** — cards showing "We see ~14 files that look like {proposed_name} — they share fields {a, b, c}. We don't have an object for this. Create as new entity, map to existing X, or ignore?"
+## Stage 3 — Sprawl guardrails (small but mandatory)
 
-### 5. Import (run)
-Big "Run import" button. Live progress strip with counts: created · updated · skipped · failed. Streams `ingestion_results` rows as they complete. Cancel button stops between files.
+Even with everything above, schema suggestions can explode. Two cheap guards:
 
-### 6. Results
-Summary header (X created, Y updated, Z skipped, N follow-ups). Below: filterable table of every file with its outcome and a link to the created entity. Three follow-up CTAs:
-- "Save as recipe" — persists the type/field decisions as `ingestion_mapping_rules` scoped global, so the next batch with the same shape skips review entirely.
-- "Open Schema Suggestions" — anything deferred from step 4.
-- "Open new entity proposals" — anything deferred from step 4 that needs design work.
-
-## Learning (lightweight, visible)
-
-Every approval in steps 2-4 writes a row to `ingestion_mapping_rules` with `hit_count=1`. Re-runs increment. The Analysis step always shows learned rules at the top of the group card ("Matched 3 saved rules · skipping ahead"). Rules are listed and editable on a small **Saved Rules** tab on `/import` so the user can prune them.
-
-No black-box "AI learned" claims. Just visible, editable rules.
-
-## UI language and feel
-
-- Calm, structured cards. No walls of text — the value is the right question at the right moment.
-- Confidence shown as a thin bar + percentage, not a vague label.
-- Ambiguity is a first-class state — `needs_review` items have their own muted color and never auto-import.
-- Copy: "We grouped 14 files that look like Journeys. Approve, or split them." Not "AI detected…"
-- The header chip on every screen reads: **Run · 47 files · 6 groups · 2 schema suggestions · 1 new object proposal**.
+- Before showing a schema suggestion, fuzzy-check `information_schema.columns` for the target table. If a column with edit-distance ≤2 exists, mark the suggestion `likely_alias_of: <existing_column>` and pre-fill rename input.
+- New columns: `ingestion_schema_suggestions.likely_alias_of text` + `low_value boolean default false` (flagged when a suggestion comes from only one file).
+- Cap at 30 new field suggestions and 5 new object type suggestions per run; remainder hidden behind a "Show all" toggle.
 
 ## Files
 
-**Migration:**
-- 8 new tables above + storage bucket `ingestion` (private)
-- Seed `ingestion_object_registry` with current entity canon
-
-**New route:**
-- `src/routes/_app.import.tsx` — top-level page with stepper + sub-views
-
-**New components:**
-- `src/components/import/import-stepper.tsx`
-- `src/components/import/upload-dropzone.tsx` — folder-aware large drop area
-- `src/components/import/group-card.tsx` — group preview + proposed type
-- `src/components/import/file-mapping-row.tsx`
-- `src/components/import/schema-suggestion-card.tsx`
-- `src/components/import/object-suggestion-card.tsx`
-- `src/components/import/run-progress-strip.tsx`
-- `src/components/import/results-table.tsx`
-- `src/components/import/saved-rules-panel.tsx`
-
-**New server:**
-- `supabase/functions/analyze-ingestion-batch/index.ts` — parse, group, classify, suggest
-- `supabase/functions/run-ingestion-import/index.ts` — execute approved mappings, stream results
-- `src/utils/ingestion.functions.ts` — server fns: `createRun`, `uploadFiles`, `analyzeRun`, `approveGroup`, `updateClassification`, `approveSchemaSuggestion`, `runImport`
+**Migration (one new):**
+- New table `ingestion_conflicts`
+- New table `ingestion_recipes`
+- New columns: `ingestion_files.source_path`, `ingestion_runs.analyzed_file_count`, `ingestion_runs.analysis_total`, `ingestion_object_registry.conflict_key_fields`, `ingestion_schema_suggestions.likely_alias_of`, `ingestion_schema_suggestions.low_value`, `ingestion_object_suggestions.likely_alias_of`
+- Seed `conflict_key_fields` for known object types
 
 **Edited:**
-- `src/components/sidebar-nav.tsx` — add `Import` under Today
-- `supabase/config.toml` — register the two functions (default verify_jwt)
+- `src/utils/ingestion.server.ts` — improved JSON inference, sprawl guards, lineage threading
+- `src/utils/ingestion.functions.ts` — split `analyzeRun` into orchestrate + `analyzeChunk`; add `detectConflicts`, `resolveConflict`, `saveRecipe`, `applyRecipe`, `listRecipes`, `runSampleBatch`
+- `src/routes/_app.import.tsx` — chunked-analysis polling loop with progress, new Conflicts step, recipe match banner on Analysis, Save-as-recipe on Results, sample batch button on Upload, inline error cards on every step
+- `src/components/import/import-stepper.tsx` — add Conflicts step
+- `src/components/import/file-mapping-row.tsx` — lineage chevron
+- `src/components/import/results-table.tsx` — lineage chevron
+- `src/components/import/upload-dropzone.tsx` — sample batch button + clearer per-file error states
+
+**New components:**
+- `src/components/import/lineage-strip.tsx`
+- `src/components/import/conflict-card.tsx`
+- `src/components/import/recipe-match-banner.tsx`
+- `src/components/import/save-recipe-dialog.tsx`
+- `src/components/import/recipes-panel.tsx`
+- `src/components/import/analysis-progress.tsx` — dedicated progress bar component for chunked analysis
+
+**Fixtures (for the sample batch):**
+- `src/fixtures/ingestion-sample/` — 6 small files (2 md components, 2 csv rows, 1 json schema, 1 prompt md) bundled into the app
 
 **Memory:**
-- `mem://design/smart-ingestion.md` — the rules: never force-fit, ambiguity is a state, learning is visible, schema gaps are a feature
+- Update `mem://design/smart-ingestion.md` with: chunked analysis is mandatory for batches >25, conflicts are a first-class state, recipes are run-level decisions, lineage is always one chevron away, sprawl guards cap suggestions.
 
 ## Sequencing
 
-1. Migrations + bucket + object registry seed (~15%)
-2. Upload screen + file storage + sha256 dedupe (~15%)
-3. `analyze-ingestion-batch` function: parse, group, deterministic rules, schema suggestions (~25%)
-4. Analysis + Mapping Review screens (~20%)
-5. Schema + new-object suggestion screens with approval → migration generation (~15%)
-6. `run-ingestion-import` function + Results screen + Saved Rules (~10%)
+1. **Stage 1 — validate & harden** (~15%): smoke test, fix breakage, sample batch button, visible failure states
+2. **Migration**: tables + columns + registry seed (~5%)
+3. **Chunked analysis** + progress bar (~15%)
+4. **Lineage strip** wired into Mapping + Results (~10%)
+5. **Conflict detection** + Conflicts step + resolver UI (~20%)
+6. **JSON schema inference** improvements (~10%)
+7. **Recipes**: save, list, match-on-analysis, apply (~20%)
+8. **Sprawl guardrails** (~5%)
 
 ## Not in this wave
 
-- No PDF/image OCR — text-based formats only (md, csv, txt, json). PDFs land in Vault as before.
-- No automatic schema migrations — every new field is a one-click confirmation that goes through the migration tool with user approval.
-- No multi-user collaboration on a run — single-operator for v1.
-- No Notion API direct connect — explicitly file-based, because the user is exporting from Notion already.
+- **No zip support.** Deliberately deferred until the per-file flow is rock-solid. The Lovable chat input handles individual files fine; that's enough for testing.
+- No PDF/image OCR — text only.
+- No automatic schema migration execution — approving a schema suggestion still goes through the migration tool with explicit confirmation.
+- No semantic dedupe (vector similarity) for conflicts — name + slug + edit-distance only.
+- No background job queue — chunked analysis runs in the user's browser session; closing the tab pauses at the last completed chunk and resumes on return.
 
-## After Wave 17
+## After this wave
 
-A user can drop their entire Notion export, walk through 6 calm screens, approve groups in bulk, see exactly what schema is missing, and end with a populated SweetOS plus a list of "here's what your Notion has that we don't model yet — do you want to model it?" Future imports of the same shape skip 80% of the review because of saved rules.
-
-Reply **"Run Wave 17"** to ship in this order, or **"Just upload + analysis first"** to land the front half before mapping/schema work.
+A user uploads 8 mixed files via the chat or the Upload screen. The system processes them in 25-file chunks with a real progress bar. Every file shows its lineage one click away. Before import, the system flags 2 components that already exist with a clear resolver. JSON files reveal hidden sub-schemas. After import, the user saves the run as a recipe so the next batch skips 80% of the review. Schema suggestions are deduplicated against existing columns and capped so the review stays human-scale. Then — and only then — we add zip support in a follow-up wave.
 
