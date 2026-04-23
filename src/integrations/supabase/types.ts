@@ -968,6 +968,13 @@ export type Database = {
             foreignKeyName: "components_journey_id_fkey"
             columns: ["journey_id"]
             isOneToOne: false
+            referencedRelation: "capabilities_derived"
+            referencedColumns: ["journey_id"]
+          },
+          {
+            foreignKeyName: "components_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
             referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
@@ -1164,9 +1171,13 @@ export type Database = {
       documents: {
         Row: {
           audience_primary_concern: string | null
+          catalog_entry_id: string | null
           component_template_for: string | null
           created_at: string
           created_by: string
+          deliverable_source:
+            | Database["public"]["Enums"]["deliverable_source"]
+            | null
           drive_chat_link: string | null
           execution_prompt: string | null
           for_client_id: string | null
@@ -1195,9 +1206,13 @@ export type Database = {
         }
         Insert: {
           audience_primary_concern?: string | null
+          catalog_entry_id?: string | null
           component_template_for?: string | null
           created_at?: string
           created_by?: string
+          deliverable_source?:
+            | Database["public"]["Enums"]["deliverable_source"]
+            | null
           drive_chat_link?: string | null
           execution_prompt?: string | null
           for_client_id?: string | null
@@ -1226,9 +1241,13 @@ export type Database = {
         }
         Update: {
           audience_primary_concern?: string | null
+          catalog_entry_id?: string | null
           component_template_for?: string | null
           created_at?: string
           created_by?: string
+          deliverable_source?:
+            | Database["public"]["Enums"]["deliverable_source"]
+            | null
           drive_chat_link?: string | null
           execution_prompt?: string | null
           for_client_id?: string | null
@@ -1256,6 +1275,13 @@ export type Database = {
           version?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "documents_catalog_entry_id_fkey"
+            columns: ["catalog_entry_id"]
+            isOneToOne: false
+            referencedRelation: "entity_canon"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "documents_component_template_fk"
             columns: ["component_template_for"]
@@ -1296,6 +1322,88 @@ export type Database = {
             columns: ["related_session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domain_assessment_versions: {
+        Row: {
+          assessment_id: string
+          client_id: string | null
+          client_score: number | null
+          confidence:
+            | Database["public"]["Enums"]["intelligence_confidence"]
+            | null
+          domain: string
+          gap: number | null
+          gap_direction: string | null
+          id: string
+          liz_score: number | null
+          notes: string | null
+          recorded_at: string
+          recorded_by: string | null
+          source_id: string | null
+          source_kind: string
+          version_no: number
+        }
+        Insert: {
+          assessment_id: string
+          client_id?: string | null
+          client_score?: number | null
+          confidence?:
+            | Database["public"]["Enums"]["intelligence_confidence"]
+            | null
+          domain: string
+          gap?: number | null
+          gap_direction?: string | null
+          id?: string
+          liz_score?: number | null
+          notes?: string | null
+          recorded_at?: string
+          recorded_by?: string | null
+          source_id?: string | null
+          source_kind?: string
+          version_no: number
+        }
+        Update: {
+          assessment_id?: string
+          client_id?: string | null
+          client_score?: number | null
+          confidence?:
+            | Database["public"]["Enums"]["intelligence_confidence"]
+            | null
+          domain?: string
+          gap?: number | null
+          gap_direction?: string | null
+          id?: string
+          liz_score?: number | null
+          notes?: string | null
+          recorded_at?: string
+          recorded_by?: string | null
+          source_id?: string | null
+          source_kind?: string
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_assessment_versions_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "domain_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_assessment_versions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "domain_assessment_versions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
         ]
@@ -3815,6 +3923,7 @@ export type Database = {
           created_by: string
           id: string
           minimum_viable_seed: string | null
+          module_tags: string[]
           name: string
           named_alternates: string | null
           persona_id: string | null
@@ -3838,6 +3947,7 @@ export type Database = {
           created_by?: string
           id?: string
           minimum_viable_seed?: string | null
+          module_tags?: string[]
           name: string
           named_alternates?: string | null
           persona_id?: string | null
@@ -3861,6 +3971,7 @@ export type Database = {
           created_by?: string
           id?: string
           minimum_viable_seed?: string | null
+          module_tags?: string[]
           name?: string
           named_alternates?: string | null
           persona_id?: string | null
@@ -4356,6 +4467,13 @@ export type Database = {
             foreignKeyName: "quests_journey_id_fkey"
             columns: ["journey_id"]
             isOneToOne: false
+            referencedRelation: "capabilities_derived"
+            referencedColumns: ["journey_id"]
+          },
+          {
+            foreignKeyName: "quests_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
             referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
@@ -4378,6 +4496,66 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reflection_events: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          kind: Database["public"]["Enums"]["reflection_event_kind"]
+          prompt: string | null
+          relationship_id: string | null
+          responded_at: string | null
+          responded_by: string | null
+          response: string | null
+          source_id: string | null
+          source_kind: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind: Database["public"]["Enums"]["reflection_event_kind"]
+          prompt?: string | null
+          relationship_id?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          response?: string | null
+          source_id?: string | null
+          source_kind?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["reflection_event_kind"]
+          prompt?: string | null
+          relationship_id?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          response?: string | null
+          source_id?: string | null
+          source_kind?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reflection_events_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_journey"
+            referencedColumns: ["relationship_id"]
+          },
+          {
+            foreignKeyName: "reflection_events_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "relationships"
             referencedColumns: ["id"]
           },
         ]
@@ -6928,6 +7106,7 @@ export type Database = {
           id: string
           machine_available: boolean | null
           map_available: boolean | null
+          module_tags: string[]
           name: string
           notes: string | null
           origin_client: string | null
@@ -6946,6 +7125,7 @@ export type Database = {
           id?: string
           machine_available?: boolean | null
           map_available?: boolean | null
+          module_tags?: string[]
           name: string
           notes?: string | null
           origin_client?: string | null
@@ -6964,6 +7144,7 @@ export type Database = {
           id?: string
           machine_available?: boolean | null
           map_available?: boolean | null
+          module_tags?: string[]
           name?: string
           notes?: string | null
           origin_client?: string | null
@@ -6994,6 +7175,18 @@ export type Database = {
       }
     }
     Views: {
+      capabilities_derived: {
+        Row: {
+          capability_state: string | null
+          component_count: number | null
+          journey_id: string | null
+          journey_name: string | null
+          l3_plus_component_ids: string[] | null
+          l3_plus_component_names: string[] | null
+          l3_plus_count: number | null
+        }
+        Relationships: []
+      }
       component_build_pipeline: {
         Row: {
           active_project_count: number | null
@@ -7419,6 +7612,7 @@ export type Database = {
         | "Documents"
         | "Retires"
       component_kind: "user" | "platform" | "internal"
+      deliverable_source: "quest" | "session" | "manual" | "workflow"
       drift_risk: "None" | "Low" | "Medium" | "High"
       engagement_plan_status:
         | "Proposed"
@@ -7550,6 +7744,13 @@ export type Database = {
       proposal_source: "capture" | "notion" | "external_ai" | "manual"
       proposal_status: "pending" | "approved" | "rejected" | "held" | "merged"
       quality_status: "Draft" | "Tested" | "Proven" | "Canonical"
+      reflection_event_kind:
+        | "quest_completion"
+        | "component_levelup"
+        | "journey_milestone"
+        | "mission_milestone"
+        | "periodic"
+        | "custom"
       relationship_temperature: "Warm" | "Cool" | "Cold" | "Paused"
       reusability_tier: "One-Time" | "Relationship" | "Org" | "System"
       sandbox_route_kind:
@@ -7787,6 +7988,7 @@ export const Constants = {
         "Retires",
       ],
       component_kind: ["user", "platform", "internal"],
+      deliverable_source: ["quest", "session", "manual", "workflow"],
       drift_risk: ["None", "Low", "Medium", "High"],
       engagement_plan_status: [
         "Proposed",
@@ -7926,6 +8128,14 @@ export const Constants = {
       proposal_source: ["capture", "notion", "external_ai", "manual"],
       proposal_status: ["pending", "approved", "rejected", "held", "merged"],
       quality_status: ["Draft", "Tested", "Proven", "Canonical"],
+      reflection_event_kind: [
+        "quest_completion",
+        "component_levelup",
+        "journey_milestone",
+        "mission_milestone",
+        "periodic",
+        "custom",
+      ],
       relationship_temperature: ["Warm", "Cool", "Cold", "Paused"],
       reusability_tier: ["One-Time", "Relationship", "Org", "System"],
       sandbox_route_kind: [
