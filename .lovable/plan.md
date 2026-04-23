@@ -1,132 +1,128 @@
 
 
-# Reconciling v1 (UX restructure) and v2 (operator platform) — one forward path
+# Wave 2 — Operator Dashboard rebuild + universal walk-menu
 
-## What you handed me
+Turn `/operators/$id` from a profile editor into a real cockpit that answers "what is on this operator's plate, what's stuck, what just landed?" — and ship the reusable **walk-menu** that every later wave will mount.
 
-Two architectural briefs that **don't conflict**. v2 explicitly says v1 is "incomplete, not wrong" and stacks on top of it.
+## What you'll see when this lands
 
-- **v1** optimizes for *Liz's day*: signal-first Today, walkable graph, mode anchoring, 4-group rail, 6 surfaces that carry 80% of the load.
-- **v2** reframes the same app as *SweetBot Inc.'s operator platform*: clients are managed entities, operators (human + workflow + agent) are first-class, and four new capabilities (Operator Dashboard · Handoff · Canon · Onboarding Quest) are what's actually missing.
+### 1. `/operators` index — capacity-visible grid
 
-The right move is **not to pick one**. It's to **merge them with v2's priority order** and ship in the sequence v2 already laid out, while applying v1's universal patterns (walk-menu, connection rail, universal detail shell) to every new surface as we build it.
-
----
-
-## The reconciled plan — five waves
-
-### Wave 1 · Sidebar IA + topbar shell (foundation for everything below)
-
-Without this, every later wave fights the rail. Small, pure UI, no schema.
-
-- Collapse 8 groups → **TODAY · WORK · PEOPLE** + collapsed **Canon · Library · Settings**
-- Promote **Operators** to first item in PEOPLE (v2 rule)
-- Move Sandbox out of Think into WORK; absorb OCDA Cockpit as a Flightdeck view toggle; move BizzyBots, Documents, Domain Assessments behind Library; move Missions/Journeys/Quests/Sparks onto the Relationship detail page (still reachable via Library index)
-- Add **Mode switcher** (Operate · Engage · Build) sticky above TODAY
-- Topbar gets: Search (⌘K), Quick Capture, mode indicator, **entity crumb trail (5 deep)**, bot alerts bell, profile
-- Update `mem://design/sidebar-ia.md` to the new IA so it's canon
-
-**Risk:** zero — route paths don't move, only sidebar grouping changes.
-
-### Wave 2 · Operator Dashboard (v2 priority #1)
-
-The single highest-leverage build in v2. `/operators/$id` exists but renders like a profile.
-
-- Rebuild with: header → **Capacity strip** (reads `operator_workload`) → **six-tab queue** (Now · Queue · Blocked · Awaiting · Handoffs · History) → measures panel → agent-canon block (agents only)
-- Rebuild `/operators` index as **capacity-visible grid** (one tile per operator with live counts)
-- Every row in every tab uses v1's universal **walk-menu** (Up · Down · Produces · Consumes · Advances · About) — built as a reusable component now so all later waves get it
-- Handoffs tab renders empty placeholder until Wave 3
-
-### Wave 3 · Handoff mechanism (v2 priority #2)
-
-What makes the EA hire actually work.
-
-- New `handoff_events` table (additive, no breaking change): `work_item_kind`, `work_item_id`, `from_operator_id`, `to_operator_id`, `brief`, `attached_context jsonb`, `status` (sent/accepted/bounced/completed), `gate_type`, `bounce_reason`
-- **Handoff sheet** — slide-in from right on any work item (task, project, session, workflow run). Auto-attaches relationship + component + execution_prompt + success_criteria from the item; lets sender pick optional sessions/decisions to include
-- Writes a `handoff` event to `entity_audit_log` on send
-- Handoffs tab in Operator Dashboard surfaces inbound with **Accept / Bounce-back** actions
-- Bounce-back returns to sender's Handoffs tab with reason — surfaces canon gaps as data
-
-### Wave 4 · Today as a decision surface (v1 priority — now ready, since Operator Dashboard handles "my plate")
-
-Today stops trying to *be* the operator dashboard and becomes the **signal + decision surface**.
-
-- **Decision bar** (top): four chips — Awaiting you · Ready to advance · Fired in last 24h · Stuck > 3 days
-- **Next best actions column** — computed top-5, each with inline Do / Schedule / **Hand off** action (uses Wave 3 sheet)
-- **Live signal strip** — SweetScan forward radar preview (KTI fires + classified inbound signals)
-- Today's scheduled work (existing) + Story trail (existing) below
-- SweetScan moves from rail item to Today tab (per v1 §3.1, v2 keeps SweetScan as page — recommend Today tab; flagging for your call)
-
-### Wave 5 · Platform Canon room (v2 priority #3)
-
-Wisdom's home. Evaluator's home.
-
-- New `/canon` route, seven tabs: Overview · Vocabulary · Entities · ERD · Decisions · Ship status · Evidence · Forks
-- ERD tab: auto-rendered from live schema (mermaid from `pg_catalog`), click table → columns + which routes read it (cross-reference already computed in your audit doc)
-- Vocabulary + Entities: read views over `entity_canon` / `lens_canon`; edit stays in Settings
-- Decisions: combined `decisions` + `open_decisions` with supersedes chain
-- Ship status: hand-maintained table v1, machine-checkable v2 later
-
-### Wave 6 (deferred, content not code) · Onboarding Quest (v2 priority #4)
-
-Pure content work on existing Quest/Spark primitives. One enum addition (`quest.kind = 'onboarding'`), then write the 10 EA Sparks. Defer until Waves 1–5 land — they're what makes the Quest's Sparks resolvable.
-
----
-
-## The cross-cutting features (apply to every wave as it ships)
-
-These are v1's load-bearing patterns. We don't build them as a wave — we build them once, then mount them into every surface above.
-
-| Feature | First built in | Reused in |
-|---|---|---|
-| **Walk-menu** (Up/Down/Produces/Consumes/Advances/About) | Wave 2 (Operator Dashboard cards) | Today, Flightdeck, Relationship detail, Work, Sandbox |
-| **Universal detail shell** (canonical header → work-context strip → connection rail + content → evidence footer) | Wave 2 (`/operators/$id` is the proof) | Every detail page; extend `entity-workspace`, don't fork |
-| **Topbar entity crumb trail (5-deep)** | Wave 1 | Persists across all navigation |
-| **Connection rail** on detail pages | Wave 2 | Component, Workflow, Session, Task, Project detail |
-| **Maturity overlay** (L-dot on every Component card, ring on Relationship card) | Wave 4 | Anywhere a Component or Relationship renders |
-
----
-
-## Open questions I need you to call before I start Wave 1
-
-These are v1's §9 plus one new from v2:
-
-1. **Mode switcher — ship in Wave 1, or defer until 3+ operators are live?** v2 implies it's overkill at 2 operators (you + Wisdom). Recommend: **build it, default to Operate, hide the picker until a 3rd operator joins**.
-2. **SweetScan — Today tab (v1) or keep as standalone page (v2 implies)?** Recommend: **Today tab** for the radar preview, keep `/sweetscan` page for the deeper inbox/world-watch view. Both surfaces, same data.
-3. **Sandbox count badge in rail** — show always or only when > 0? Recommend: only when > 0, color amber if any item is `framed > 3 days`.
-4. **Canon as its own collapsed top-level group, or under Library?** v2 says its own (so Wisdom doesn't feel he's in admin). Recommend: **own collapsed group** above Library.
-5. **Fork 1 (Work Item merge) — close it before Wave 4?** Wave 4 spec works either way but is cleaner if decided. No need to block; flagging.
-
-If you don't call them, I'll go with my recommended defaults above.
-
----
-
-## What I am NOT doing
-
-- Not breaking the database canon — all changes additive
-- Not touching `routeTree.gen.ts` or any auto-generated file
-- Not building Onboarding Quest content in code (Wave 6 is content authoring, separate from build)
-- Not changing route paths — only sidebar grouping moves in Wave 1
-- Not building visual design polish — IA + behavior first, visual second
-
----
-
-## Sequencing summary
+Each tile becomes a glanceable workload card (reads `operator_workload` view):
 
 ```text
-Wave 1  Sidebar + topbar + mode switcher        (UI only, ~1 day)
-Wave 2  Operator Dashboard + walk-menu + shell  (UI + 1 reusable lib)
-Wave 3  Handoff sheet + handoff_events table    (1 migration + UI)
-Wave 4  Today as decision surface               (UI; depends on Wave 2-3)
-Wave 5  /canon route                            (UI + auto-ERD generation)
-Wave 6  Onboarding Quest (content authoring)    (deferred)
+┌──────────────────────────────────┐
+│ 🤖 Drafter Agent      [agent]    │
+│ ● available · 3 skills           │
+│                                  │
+│   12     2       1     Nov 24    │
+│  open  blocked overdue  next     │
+│                                  │
+│ [ writing  research  +1 ]        │
+└──────────────────────────────────┘
 ```
 
-After Wave 5: SweetBOS reads as the operator platform v2 describes, with v1's signal-first Today and walkable graph baked into every surface.
+Filter chips stay (All/Human/Workflow/Agent). Cards sort by open_tasks desc by default; toggle to "alphabetical".
 
-**Reply with one of:**
-- **"Run Wave 1"** — ship the IA shift first, see it land, then approve Wave 2 separately
-- **"Run Waves 1 + 2"** — ship the foundation and the highest-leverage v2 build together
-- **"Run all five (1–5), defer Wave 6"** — full reconciliation in one push
-- Or push back / answer the 5 open questions and I'll re-sequence
+### 2. `/operators/$id` — six-tab cockpit
+
+Replaces the current edit-form layout. New structure top-to-bottom:
+
+1. **Header** — avatar/icon, name, kind badge, availability picker (kept), edit-profile drawer trigger (skills/likes/dislikes/agent config moves here so they don't dominate)
+2. **Capacity strip** — 4 stat tiles from `operator_workload`: Open · Blocked · Overdue · Next due. Color: blocked>0 red, overdue>0 amber.
+3. **Six-tab queue** with live counts:
+   - **Now** — tasks with `scheduled_for = today` OR `due_date = today`, not done
+   - **Queue** — tasks assigned to operator, status not Done/Cancelled, not in Now, not blocked
+   - **Blocked** — tasks where `blocked = true` OR `waiting_on` is set
+   - **Awaiting** — workflow_step_runs where assignee = this operator and `status = 'awaiting_approval'` (humans/agents only)
+   - **Handoffs** — empty placeholder card: "Handoff inbox lands in Wave 3" with a disabled outline
+   - **History** — recently completed (status in Done/Complete, ordered by updated_at desc, limit 25)
+4. **Measures panel** (kept)
+5. **Agent canon block** (agents only) — collapsed by default; expand to see model + system prompt
+6. **Story trail** (kept)
+
+Every row in every tab uses the new walk-menu (see §3).
+
+### 3. The walk-menu (the cross-cutting piece)
+
+A small popover trigger (`⋯` button) on every work-item row across the app. Six verbs, tuned per entity kind:
+
+```text
+┌─────────────────────────┐
+│ ↑ Up        Project     │
+│ ↓ Down      Subtasks (3)│
+│ → Produces  Component   │
+│ ← Consumes  Brief, Lens │
+│ ✓ Advances  Quest, KR   │
+│ ⓘ About     Open detail │
+└─────────────────────────┘
+```
+
+Resolution rules per item type:
+- **Task**: Up = project, Down = task_dependencies, Produces = task_components, Consumes = source_kind/proposal_id, Advances = measures attached to project
+- **Project**: Up = relationship, Down = tasks, Produces = project_components, Consumes = playbook, Advances = mission/quest
+- **Workflow run**: Up = workflow def, Down = step runs, Produces = component output, Consumes = inputs, Advances = session
+- **Session**: Up = engagement plan, Down = session items, Produces = documents/decisions, Consumes = template, Advances = sweetcycle phase
+
+Built once as `<WalkMenu kind="task" id={...} />`, fetches lazily on open. Mounts in Wave 2 on operator cockpit; reused in Today (Wave 4), Sandbox, Flightdeck, all detail pages later.
+
+### 4. Universal detail shell (proven on `/operators/$id`)
+
+A reusable `<DetailShell>` wrapper used by the new operator page and ready to extend to other detail routes in later waves:
+
+```text
+[ back link ]
+[ canonical header — icon + name + kind chip + status chips ]
+[ work-context strip — capacity / health / next due ]
+[ tabs OR connection rail + content ]
+[ evidence footer — story trail / audit ]
+```
+
+Operator dashboard is the proof. Component / Workflow / Session / Task / Project detail pages adopt it incrementally in Waves 3–5.
+
+## Files I'll touch
+
+**New:**
+- `src/components/walk-menu.tsx` — the reusable popover (uses shadcn Popover)
+- `src/lib/walk-menu-resolvers.ts` — per-kind resolver functions returning `{ up, down, produces, consumes, advances, about }`
+- `src/components/detail-shell.tsx` — header + strip + slot composition primitive
+- `src/components/operator-capacity-strip.tsx` — 4-tile strip reading `operator_workload`
+- `src/components/operator-queue-tabs.tsx` — the 6-tab component (renders one query per tab, lazy on tab activation)
+- `src/components/operator-edit-drawer.tsx` — moved skills/likes/dislikes/agent-config into a slide-out
+
+**Edited:**
+- `src/routes/_app.operators.$id.tsx` — rewritten around `<DetailShell>` + `<OperatorCapacityStrip>` + `<OperatorQueueTabs>`. `OperatorAssignmentsPanel` removed (queue tabs replace it). Edit fields move into the drawer.
+- `src/routes/_app.operators.index.tsx` — tiles show full capacity (open/blocked/overdue/next_due) instead of just open count
+
+**Memory updated:**
+- `mem://design/operator-dashboard.md` — new file canonizing the six-tab structure
+- `mem://design/walk-menu.md` — new file canonizing the six verbs and resolver contract
+- `mem://design/sidebar-ia.md` — note that walk-menu is the universal navigation primitive
+
+## Data sources (no new tables in Wave 2)
+
+- `operator_workload` view — capacity strip + index tiles ✓ exists
+- `tasks` filtered by `operator_id` — Now / Queue / Blocked / History tabs ✓
+- `workflow_step_runs` filtered by assignee — Awaiting tab (verify column name on first read; fall back to assigned_operator_id if `assignee_id` doesn't exist)
+- All schema changes deferred to **Wave 3** (`handoff_events` table)
+
+## Risks and what I'm NOT doing
+
+- **Not** building the handoff sheet yet — Handoffs tab is a stub so Wave 3 has a slot to fill
+- **Not** breaking `OperatorAssignmentsPanel` consumers — it's only used on `/operators/$id`, so removal is local
+- **Not** retrofitting the walk-menu into other pages this wave — the build proves the API; rollout follows
+- **Not** changing the index route, just the tile contents
+- **Not** touching `routeTree.gen.ts` or any Supabase schema
+
+## Sequencing inside Wave 2
+
+1. Build `<DetailShell>` + `<WalkMenu>` + resolvers (foundation, ~30%)
+2. Build `<OperatorCapacityStrip>` + `<OperatorQueueTabs>` (~40%)
+3. Rewrite `_app.operators.$id.tsx` around the new pieces, move edit fields into drawer (~20%)
+4. Refresh `_app.operators.index.tsx` tiles (~10%)
+5. Update memory canon files
+
+After Wave 2 lands you can navigate any operator → see their actual workload at a glance → walk from any task up/down/across the graph without leaving the cockpit. The Handoffs tab will be the only visibly empty slot, ready for Wave 3.
+
+Reply **"Run Wave 2"** to ship, or push back on any of the six tabs / walk-menu verbs before I start.
 
