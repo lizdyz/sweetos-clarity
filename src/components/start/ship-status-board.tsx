@@ -132,9 +132,9 @@ interface MountRow {
 
 const WAVE_9_MOUNTS: MountRow[] = [
   { label: "EntityShell composed", where: "src/components/entity-shell.tsx", shipped: true },
-  { label: "FrameworksRail on /tasks/$id", where: "Right rail with F1–F8", shipped: true },
-  { label: "FrameworksRail on /decisions/$id", where: "Right rail with F1–F8", shipped: true, href: "/decisions" },
-  { label: "FrameworksRail on /sparks/$id", where: "Right rail with F1–F8", shipped: true, href: "/sparks" },
+  { label: "SweetLens on /tasks/$id", where: "Right rail · ObjectCompanion", shipped: true },
+  { label: "SweetLens on /decisions/$id", where: "Right rail · ObjectCompanion", shipped: true, href: "/decisions" },
+  { label: "SweetLens on /sparks/$id", where: "Right rail · ObjectCompanion", shipped: true, href: "/sparks" },
   { label: "TriageCard on /sweetscan", where: "Inbound signals", shipped: true, href: "/sweetscan" },
   { label: "TriageCard on /sparks index", where: "Raw sparks rail", shipped: true, href: "/sparks" },
   { label: "TriageCard on /decisions index", where: "Proposed decisions rail", shipped: true, href: "/decisions" },
