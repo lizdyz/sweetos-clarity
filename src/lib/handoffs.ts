@@ -37,8 +37,11 @@ async function reassignSubject(
   reason?: HandoffReason,
 ) {
   if (kind === "task") {
-    const patch: Record<string, unknown> = { operator_id: toOperatorId, assignee_id: toOperatorId };
-    if (reason === "blocked" && receiverName) patch.waiting_on = receiverName;
+    const patch = {
+      operator_id: toOperatorId,
+      assignee_id: toOperatorId,
+      ...(reason === "blocked" && receiverName ? { waiting_on: receiverName } : {}),
+    };
     await supabase.from("tasks").update(patch).eq("id", id);
   } else if (kind === "workflow_step_run") {
     await supabase.from("workflow_step_runs").update({ operator_id: toOperatorId }).eq("id", id);
