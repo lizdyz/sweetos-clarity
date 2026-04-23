@@ -109,6 +109,17 @@ function OperatorDetailPage() {
                 </SelectContent>
               </Select>
             </div>
+            <HandoffSheet
+              subjectKind="task"
+              subjectId={id}
+              subjectLabel={op.name}
+              fromOperatorId={id}
+              trigger={
+                <Button variant="outline" size="sm" className="h-8 gap-1">
+                  <Send className="h-3 w-3" /> Hand off
+                </Button>
+              }
+            />
             <OperatorEditDrawer operator={op} />
           </div>
         </div>
