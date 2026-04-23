@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { RelationshipCreateSheet } from "@/components/relationship-create-sheet";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
@@ -81,6 +82,7 @@ function RelationshipsIndexPage() {
   const [stageFilter, setStageFilter] = useState<string | null>(null);
   const [hasSubOnly, setHasSubOnly] = useState(false);
   const [sort, setSort] = useState<SortMode>("stage");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data = [] } = useQuery<JourneyRow[]>({
     queryKey: ["relationship-journey-index"],
@@ -127,9 +129,7 @@ function RelationshipsIndexPage() {
             {data.length} total · sourced from <code className="text-[10px]">relationship_journey</code>
           </p>
         </div>
-        <Link to="/relationships/$id" params={{ id: "new" }}>
-          <Button size="sm">+ Add relationship</Button>
-        </Link>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>+ Add relationship</Button>
       </header>
 
       <Card className="p-3">
@@ -271,6 +271,8 @@ function RelationshipsIndexPage() {
           })}
         </div>
       )}
+
+      <RelationshipCreateSheet open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }

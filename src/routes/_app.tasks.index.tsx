@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { TaskCreateSheet } from "@/components/task-create-sheet";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -93,6 +94,7 @@ function TasksIndexPage() {
   const [q, setQ] = useState("");
   const [mode, setMode] = useState<Mode>("all");
   const [groupBy, setGroupBy] = useState<GroupBy>("status");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data: tasks = [] } = useQuery<TaskRow[]>({
     queryKey: ["tasks-index"],
@@ -270,9 +272,7 @@ function TasksIndexPage() {
             <span className="text-[color:var(--warning-foreground)]">{blockedCount} blocked</span>
           </p>
         </div>
-        <Link to="/tasks/$id" params={{ id: "new" }}>
-          <Button size="sm">+ New task</Button>
-        </Link>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>+ New task</Button>
       </header>
 
       {/* Pipeline ribbon */}
@@ -490,6 +490,8 @@ function TasksIndexPage() {
           ))}
         </div>
       )}
+
+      <TaskCreateSheet open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }
