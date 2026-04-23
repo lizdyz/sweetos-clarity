@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
@@ -21,9 +22,12 @@ import { cn } from "@/lib/utils";
 import { RollupStatChip } from "@/components/rollup-stat-chip";
 import { ComponentKindToggle, type ComponentKind } from "@/components/component-kind-toggle";
 import { CapabilitiesDerivedPanel } from "@/components/capabilities-derived-panel";
+import { UniversalFilterBar } from "@/components/universal-filter-bar";
+import { universalFilterSchema } from "@/lib/use-universal-filters";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 export const Route = createFileRoute("/_app/components/")({
+  validateSearch: zodValidator(universalFilterSchema),
   component: ComponentsListPage,
 });
 
@@ -180,6 +184,7 @@ function ComponentsListPage() {
       </div>
 
       <ComponentKindToggle value={kind} counts={kindCounts} onChange={setKind} />
+      <UniversalFilterBar show={["lens", "owner"]} />
 
       <Card className="p-3">
         <div className="flex flex-wrap items-center gap-2">

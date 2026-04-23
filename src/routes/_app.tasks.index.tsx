@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { sb } from "@/lib/sb";
@@ -9,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/chips";
 import { TasksPipelineRibbon } from "@/components/tasks-pipeline-ribbon";
 import { TaskProvenanceChip, type SpawnedByKind } from "@/components/task-provenance-chip";
+import { UniversalFilterBar } from "@/components/universal-filter-bar";
+import { universalFilterSchema } from "@/lib/use-universal-filters";
 import {
   Search,
   Filter,
@@ -26,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { format, parseISO, isPast, isToday, differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/_app/tasks/")({
+  validateSearch: zodValidator(universalFilterSchema),
   component: TasksIndexPage,
 });
 
@@ -273,6 +277,10 @@ function TasksIndexPage() {
 
       {/* Pipeline ribbon */}
       <TasksPipelineRibbon />
+
+      <UniversalFilterBar
+        stateOptions={["To Do", "In Progress", "Waiting", "Blocked", "Done"]}
+      />
 
       {/* Next up lane */}
       {nextUp.length > 0 && (
