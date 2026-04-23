@@ -109,7 +109,7 @@ function TopicRailRow({
           <span className="truncate font-medium">{title}</span>
           {hasUnpromoted && (
             <span
-              className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
               title={`${counts.unpromotedCandidates} unpromoted candidate${counts.unpromotedCandidates === 1 ? "" : "s"}`}
             />
           )}
