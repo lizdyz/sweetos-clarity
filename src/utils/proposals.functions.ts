@@ -517,6 +517,42 @@ export const captureProposal = createServerFn({ method: "POST" })
       console.error("tag suggester failed:", e);
     }
 
+    // Pass 3 — pollinate against personas, JTBDs (persona-scoped), quests, sparks, KTIs
+    const personas = (personasRes.data ?? []) as Array<{ id: string; name: string; sector: string | null }>;
+    const matchedPersonas = await matchPersonas(augmentedText, personas, model).catch(() => []);
+
+    let jtbdLibrary: Array<{ id: string; statement: string; persona_id: string | null }> = [];
+    if (matchedPersonas.length > 0) {
+      const { data: jtbdRows } = await sb
+        .from("jobs_to_be_done")
+        .select("id, statement, persona_id")
+        .in("persona_id", matchedPersonas)
+        .neq("status", "retired")
+        .limit(40);
+      jtbdLibrary = (jtbdRows ?? []) as typeof jtbdLibrary;
+    } else {
+      const { data: jtbdRows } = await sb
+        .from("jobs_to_be_done")
+        .select("id, statement, persona_id")
+        .neq("status", "retired")
+        .order("updated_at", { ascending: false })
+        .limit(20);
+      jtbdLibrary = (jtbdRows ?? []) as typeof jtbdLibrary;
+    }
+    const matchedJtbds = await matchJTBDs(augmentedText, jtbdLibrary, model).catch(() => []);
+
+    const quests = (questsRes.data ?? []) as Array<{ id: string; name: string }>;
+    const sparks = (sparksRes.data ?? []) as Array<{ id: string; name: string }>;
+    const { quests: matchedQuests, sparks: matchedSparks } = await matchQuestsAndSparks(
+      augmentedText, quests, sparks, model,
+    ).catch(() => ({ quests: [] as string[], sparks: [] as string[] }));
+
+    const ktis = (ktisRes.data ?? []) as Array<{ id: string; name: string; threshold_definition: string }>;
+    const matchedKtis = await matchKTIs(augmentedText, ktis, model).catch(() => []);
+
+    const intent = await intentPromise;
+    const ktiSuggestion = await suggestKTI(augmentedText, intent, model).catch(() => null);
+
     // Match existing record by name
     const table = ENTITY_TABLE[parsed.entity_type];
     const nf = nameField(table);
