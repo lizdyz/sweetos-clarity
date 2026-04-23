@@ -205,6 +205,28 @@ function OperatorsListPage() {
   );
 }
 
+function Stat({ n, label, tone = "muted" }: { n: number | string; label: string; tone?: "muted" | "warn" | "danger" }) {
+  return (
+    <div>
+      <div className={cn(
+        "text-sm font-semibold tabular-nums",
+        tone === "danger" && "text-rose-700 dark:text-rose-400",
+        tone === "warn" && "text-amber-700 dark:text-amber-400",
+        tone === "muted" && "text-foreground/80",
+      )}>{n}</div>
+      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function fmtNextDue(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
 function NewOperatorDialog({
   open,
   onOpenChange,
