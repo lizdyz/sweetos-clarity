@@ -67,6 +67,7 @@ import { Route as AppSettingsSparkTemplatesRouteImport } from './routes/_app.set
 import { Route as AppSettingsPromptsRouteImport } from './routes/_app.settings.prompts'
 import { Route as AppSettingsOpenDecisionsRouteImport } from './routes/_app.settings.open-decisions'
 import { Route as AppSettingsLensesRouteImport } from './routes/_app.settings.lenses'
+import { Route as AppSettingsLensStudioRouteImport } from './routes/_app.settings.lens-studio'
 import { Route as AppSettingsLensCanonRouteImport } from './routes/_app.settings.lens-canon'
 import { Route as AppSettingsExcellenceRouteImport } from './routes/_app.settings.excellence'
 import { Route as AppSettingsCanonRouteImport } from './routes/_app.settings.canon'
@@ -396,6 +397,11 @@ const AppSettingsLensesRoute = AppSettingsLensesRouteImport.update({
   path: '/lenses',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsLensStudioRoute = AppSettingsLensStudioRouteImport.update({
+  id: '/lens-studio',
+  path: '/lens-studio',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsLensCanonRoute = AppSettingsLensCanonRouteImport.update({
   id: '/lens-canon',
   path: '/lens-canon',
@@ -625,6 +631,7 @@ export interface FileRoutesByFullPath {
   '/settings/canon': typeof AppSettingsCanonRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/settings/lens-canon': typeof AppSettingsLensCanonRoute
+  '/settings/lens-studio': typeof AppSettingsLensStudioRoute
   '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
   '/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
   '/settings/prompts': typeof AppSettingsPromptsRoute
@@ -718,6 +725,7 @@ export interface FileRoutesByTo {
   '/settings/canon': typeof AppSettingsCanonRoute
   '/settings/excellence': typeof AppSettingsExcellenceRoute
   '/settings/lens-canon': typeof AppSettingsLensCanonRoute
+  '/settings/lens-studio': typeof AppSettingsLensStudioRoute
   '/settings/lenses': typeof AppSettingsLensesRouteWithChildren
   '/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
   '/settings/prompts': typeof AppSettingsPromptsRoute
@@ -814,6 +822,7 @@ export interface FileRoutesById {
   '/_app/settings/canon': typeof AppSettingsCanonRoute
   '/_app/settings/excellence': typeof AppSettingsExcellenceRoute
   '/_app/settings/lens-canon': typeof AppSettingsLensCanonRoute
+  '/_app/settings/lens-studio': typeof AppSettingsLensStudioRoute
   '/_app/settings/lenses': typeof AppSettingsLensesRouteWithChildren
   '/_app/settings/open-decisions': typeof AppSettingsOpenDecisionsRoute
   '/_app/settings/prompts': typeof AppSettingsPromptsRoute
@@ -910,6 +919,7 @@ export interface FileRouteTypes {
     | '/settings/canon'
     | '/settings/excellence'
     | '/settings/lens-canon'
+    | '/settings/lens-studio'
     | '/settings/lenses'
     | '/settings/open-decisions'
     | '/settings/prompts'
@@ -1003,6 +1013,7 @@ export interface FileRouteTypes {
     | '/settings/canon'
     | '/settings/excellence'
     | '/settings/lens-canon'
+    | '/settings/lens-studio'
     | '/settings/lenses'
     | '/settings/open-decisions'
     | '/settings/prompts'
@@ -1098,6 +1109,7 @@ export interface FileRouteTypes {
     | '/_app/settings/canon'
     | '/_app/settings/excellence'
     | '/_app/settings/lens-canon'
+    | '/_app/settings/lens-studio'
     | '/_app/settings/lenses'
     | '/_app/settings/open-decisions'
     | '/_app/settings/prompts'
@@ -1561,6 +1573,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsLensesRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/lens-studio': {
+      id: '/_app/settings/lens-studio'
+      path: '/lens-studio'
+      fullPath: '/settings/lens-studio'
+      preLoaderRoute: typeof AppSettingsLensStudioRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/lens-canon': {
       id: '/_app/settings/lens-canon'
       path: '/lens-canon'
@@ -1824,6 +1843,7 @@ interface AppSettingsRouteChildren {
   AppSettingsCanonRoute: typeof AppSettingsCanonRoute
   AppSettingsExcellenceRoute: typeof AppSettingsExcellenceRoute
   AppSettingsLensCanonRoute: typeof AppSettingsLensCanonRoute
+  AppSettingsLensStudioRoute: typeof AppSettingsLensStudioRoute
   AppSettingsLensesRoute: typeof AppSettingsLensesRouteWithChildren
   AppSettingsOpenDecisionsRoute: typeof AppSettingsOpenDecisionsRoute
   AppSettingsPromptsRoute: typeof AppSettingsPromptsRoute
@@ -1836,6 +1856,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsCanonRoute: AppSettingsCanonRoute,
   AppSettingsExcellenceRoute: AppSettingsExcellenceRoute,
   AppSettingsLensCanonRoute: AppSettingsLensCanonRoute,
+  AppSettingsLensStudioRoute: AppSettingsLensStudioRoute,
   AppSettingsLensesRoute: AppSettingsLensesRouteWithChildren,
   AppSettingsOpenDecisionsRoute: AppSettingsOpenDecisionsRoute,
   AppSettingsPromptsRoute: AppSettingsPromptsRoute,
