@@ -463,11 +463,14 @@ export const captureProposal = createServerFn({ method: "POST" })
 
     const augmentedText = [data.text, attachmentNotes].join("");
 
-    // Pass 1 — normalize
+    // Pass 1 — normalize entity
     const parsed = await callNormalizer(augmentedText, model);
 
-    // Pass 2 — suggest tags from canon
-    const [domainsRes, componentsRes, industriesRes] = await Promise.all([
+    // Pass 1b — classify intent (kicked off in parallel)
+    const intentPromise = classifyIntent(augmentedText, model).catch(() => null);
+
+    // Fetch canon + libraries for pollination in parallel
+    const [domainsRes, componentsRes, industriesRes, personasRes, questsRes, sparksRes, ktisRes] = await Promise.all([
       sb.from("domains").select("slug, name, description").eq("enabled", true).order("sort_order"),
       sb.from("components").select("id, name").order("updated_at", { ascending: false }).limit(40),
       sb.from("industries").select("id, slug").eq("enabled", true),
