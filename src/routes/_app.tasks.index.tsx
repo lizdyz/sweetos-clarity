@@ -12,6 +12,7 @@ import { Chip } from "@/components/chips";
 import { TasksPipelineRibbon } from "@/components/tasks-pipeline-ribbon";
 import { TaskProvenanceChip, type SpawnedByKind } from "@/components/task-provenance-chip";
 import { UniversalFilterBar } from "@/components/universal-filter-bar";
+import { PageHeader } from "@/components/page-header";
 import { universalFilterSchema } from "@/lib/use-universal-filters";
 import {
   Search,

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/chips";
 import { HeatRing, type Heat } from "@/components/heat-ring";
+import { PageHeader } from "@/components/page-header";
 import { Search, Filter, Users, Thermometer, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -119,18 +120,24 @@ function RelationshipsIndexPage() {
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5 p-6">
-      <header className="flex items-center gap-3">
-        <div className="grid h-10 w-10 place-items-center rounded-xl bg-iris/10 text-[color:var(--iris-violet)]">
-          <Users className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Relationships</h1>
-          <p className="text-sm text-muted-foreground">
-            {data.length} total · sourced from <code className="text-[10px]">relationship_journey</code>
-          </p>
-        </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>+ Add relationship</Button>
-      </header>
+      <PageHeader
+        icon={<Users className="h-5 w-5" />}
+        title="Relationships"
+        purpose="Every person and company in your orbit, scored by pipeline stage, temperature, and drift risk. The unit of engagement — every plan, project, and session anchors here."
+        whatYouCanDo={[
+          "Filter by stage, sort by temperature or drift",
+          "Open a relationship to see its journey, services, and SweetCycle",
+          "Spot at-risk clients via drift chips and heat rings",
+        ]}
+        connectsTo={[
+          { to: "/sweetcycle", label: "SweetCycle" },
+          { to: "/engagement-plans", label: "Engagement Plans" },
+          { to: "/sessions", label: "Sessions" },
+          { to: "/flightdeck", label: "Flightdeck" },
+        ]}
+        nextSteps={[`${data.length} total`]}
+        actions={<Button size="sm" onClick={() => setCreateOpen(true)}>+ Add relationship</Button>}
+      />
 
       <Card className="p-3">
         <div className="flex flex-wrap items-center gap-2">
