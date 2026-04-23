@@ -78,7 +78,8 @@ export const Route = createFileRoute("/api/public/hooks/workflow-callback")({
         const mappedStatus = mapStatus(body.status, statusMap);
 
         // Resolve step (if provided)
-        let stepRecord: { id: string; step_id: string } | null = null;
+        type StepRec = { id: string; step_id: string };
+        let stepRecord: StepRec | null = null;
         if (body.step) {
           const stepName = typeof body.step === "string" ? body.step : body.step?.name ?? null;
           const externalStepId =
@@ -91,10 +92,9 @@ export const Route = createFileRoute("/api/public/hooks/workflow-callback")({
               .eq("run_id", run.id)
               .eq("external_step_id", externalStepId)
               .maybeSingle();
-            stepRecord = bySr as typeof stepRecord;
+            if (bySr) stepRecord = bySr as StepRec;
           }
           if (!stepRecord && stepName) {
-            // Find the workflow step by name, then the step run for this run
             const { data: step } = await sb
               .from("workflow_steps")
               .select("id")
@@ -109,7 +109,7 @@ export const Route = createFileRoute("/api/public/hooks/workflow-callback")({
                 .eq("step_id", step.id)
                 .maybeSingle();
               if (existingSr) {
-                stepRecord = existingSr as typeof stepRecord;
+                stepRecord = existingSr as StepRec;
               } else {
                 const { data: newSr } = await sb
                   .from("workflow_step_runs")
@@ -122,7 +122,7 @@ export const Route = createFileRoute("/api/public/hooks/workflow-callback")({
                   })
                   .select("id, step_id")
                   .single();
-                stepRecord = newSr as typeof stepRecord;
+                if (newSr) stepRecord = newSr as StepRec;
               }
             }
           }
