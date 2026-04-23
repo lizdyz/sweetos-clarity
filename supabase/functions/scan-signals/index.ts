@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getPrompt, renderTemplate } from "../_shared/get-prompt.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -138,28 +139,37 @@ async function runRubricScan(sb: any, lovableKey: string, body: RubricBody) {
       .flatMap((r) => r.checklist_items ?? []);
   }
 
-  const { data: prompt } = await sb.from("system_prompts").select("*").eq("key", "signal.scan").maybeSingle();
-  const systemPrompt = (prompt as any)?.system_prompt ??
-    "You synthesize external best-practice signals into concrete checklist items. Each proposal must include text, rationale, source_url, confidence (0-1).";
-  const model = (prompt as any)?.model ?? "google/gemini-2.5-flash";
-
-  const userPrompt = `Domain: ${domainName}
+  const FALLBACK_SYSTEM = "You synthesize external best-practice signals into concrete checklist items. Each proposal must include text, rationale, source_url, confidence (0-1).";
+  const FALLBACK_USER = `Domain: {{domain_name}}
 Existing checklist items:
-${existing.map((s) => `- ${s}`).join("\n") || "(none)"}
+{{existing_items}}
 
-Query: ${body.query}
-${body.sources?.length ? `Sources to consider:\n${body.sources.join("\n")}` : ""}
+Query: {{query}}
+{{sources_block}}
 
 Return strict JSON: { "proposals": [{ "proposed_text": string, "rationale": string, "source_url": string, "source_snippet": string, "confidence": number }] }
 Suggest 3-5 distinct, high-quality items that are NOT already in the existing checklist.`;
+
+  const prompt = await getPrompt(sb, "signals.scan.classify", {
+    systemPrompt: FALLBACK_SYSTEM,
+    userTemplate: FALLBACK_USER,
+    model: "google/gemini-2.5-flash",
+  });
+
+  const userPrompt = renderTemplate(prompt.userTemplate, {
+    domain_name: domainName,
+    existing_items: existing.map((s) => `- ${s}`).join("\n") || "(none)",
+    query: body.query,
+    sources_block: body.sources?.length ? `Sources to consider:\n${body.sources.join("\n")}` : "",
+  });
 
   const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model,
+      model: prompt.model,
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: prompt.systemPrompt },
         { role: "user", content: userPrompt },
       ],
       response_format: { type: "json_object" },

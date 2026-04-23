@@ -11,6 +11,7 @@
 // }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.54.0";
+import { getPrompt, renderTemplate } from "../_shared/get-prompt.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +25,7 @@ interface Body {
   vault_source_ids: string[];
 }
 
-const SYSTEM_PROMPT = `You are a brand-canon distiller. Read the source documents and propose a structured Brand Canon for a narrative production system.
+const FALLBACK_SYSTEM_PROMPT = `You are a brand-canon distiller. Read the source documents and propose a structured Brand Canon for a narrative production system.
 
 Return STRICT JSON matching this schema (no prose, no markdown):
 {
@@ -37,6 +38,8 @@ Return STRICT JSON matching this schema (no prose, no markdown):
 }
 
 Be specific. Avoid generic SaaS language. Quote phrases from the source when useful. If a field is unclear from the documents, return an empty array rather than guessing.`;
+
+const FALLBACK_USER_TEMPLATE = `Source documents:\n\n{{source_text}}\n\nReturn the Brand Canon JSON now.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -85,16 +88,22 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
 
-    const model = "google/gemini-2.5-flash";
+    const prompt = await getPrompt(supabase, "brand.distill", {
+      systemPrompt: FALLBACK_SYSTEM_PROMPT,
+      userTemplate: FALLBACK_USER_TEMPLATE,
+      model: "google/gemini-2.5-flash",
+    });
+    const userMessage = renderTemplate(prompt.userTemplate, { source_text: sourceText });
+
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model,
+        model: prompt.model,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `Source documents:\n\n${sourceText}\n\nReturn the Brand Canon JSON now.` },
+          { role: "system", content: prompt.systemPrompt },
+          { role: "user", content: userMessage },
         ],
       }),
     });
@@ -136,7 +145,7 @@ Deno.serve(async (req) => {
         proposed: parsed,
         rationale,
         status: "pending",
-        generated_by_model: model,
+        generated_by_model: prompt.model,
       })
       .select("id")
       .single();

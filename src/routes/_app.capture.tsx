@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sb } from "@/lib/sb";
 import { FileDrop, type PendingFile } from "@/components/file-drop";
 import { CaptureQueueStrip } from "@/components/capture-queue-strip";
+import { CapturePollinationChips } from "@/components/capture-pollination-chips";
 import { UniversalDropZone } from "@/components/universal-drop-zone";
 import { TriageCard } from "@/components/triage-card";
 import { useTriagePromote } from "@/lib/use-triage-promote";
@@ -332,7 +333,9 @@ function CaptureProposalsTriageRail() {
     queryFn: async () => {
       const { data } = await sb
         .from("proposals")
-        .select("id, entity_type, payload, confidence, created_at")
+        .select(
+          "id, entity_type, payload, confidence, created_at, intent, matched_personas, matched_jtbds, matched_quests, matched_sparks, matched_ktis, suggested_kti_payload",
+        )
         .eq("status", "pending")
         .order("created_at", { ascending: false })
         .limit(8);
@@ -342,6 +345,13 @@ function CaptureProposalsTriageRail() {
         payload: Record<string, unknown> | null;
         confidence: number | null;
         created_at: string;
+        intent?: string | null;
+        matched_personas?: string[] | null;
+        matched_jtbds?: string[] | null;
+        matched_quests?: string[] | null;
+        matched_sparks?: string[] | null;
+        matched_ktis?: string[] | null;
+        suggested_kti_payload?: { suggested?: boolean; name?: string; what_to_watch?: string } | null;
       }>;
     },
   });
@@ -374,11 +384,22 @@ function CaptureProposalsTriageRail() {
         </span>
       </div>
       <ul className="grid gap-2 sm:grid-cols-2">
-        {items.map((it) => (
-          <li key={it.id}>
-            <TriageCard item={it} onPromote={(item, kind) => promote.mutate({ item, kind })} />
-          </li>
-        ))}
+        {items.map((it, idx) => {
+          const p = proposals[idx];
+          return (
+            <li key={it.id} className="space-y-1.5">
+              <TriageCard item={it} onPromote={(item, kind) => promote.mutate({ item, kind })} />
+              <CapturePollinationChips
+                matched_personas={p.matched_personas ?? undefined}
+                matched_jtbds={p.matched_jtbds ?? undefined}
+                matched_quests={p.matched_quests ?? undefined}
+                matched_sparks={p.matched_sparks ?? undefined}
+                matched_ktis={p.matched_ktis ?? undefined}
+                suggested_kti_payload={p.suggested_kti_payload ?? undefined}
+              />
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

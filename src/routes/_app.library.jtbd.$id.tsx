@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Target, ArrowLeft } from "lucide-react";
+import { Target, ArrowLeft, Briefcase, Megaphone, ListChecks } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -154,6 +154,145 @@ function JTBDDetail() {
           </Button>
         </div>
       </Card>
+
+      <WorkInFlightPanel jtbdId={id} />
+    </div>
+  );
+}
+
+function WorkInFlightPanel({ jtbdId }: { jtbdId: string }) {
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["jtbd-work", jtbdId, "tasks"],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("task_jtbds")
+        .select("task_id, tasks!inner(id, title, status)")
+        .eq("jtbd_id", jtbdId)
+        .limit(20);
+      return (data ?? []) as Array<{ task_id: string; tasks: { id: string; title: string; status: string | null } }>;
+    },
+  });
+  const { data: projects = [] } = useQuery({
+    queryKey: ["jtbd-work", jtbdId, "projects"],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("project_jtbds")
+        .select("project_id, projects!inner(id, project_name, status)")
+        .eq("jtbd_id", jtbdId)
+        .limit(20);
+      return (data ?? []) as Array<{ project_id: string; projects: { id: string; project_name: string; status: string | null } }>;
+    },
+  });
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ["jtbd-work", jtbdId, "campaigns"],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("campaign_jtbds")
+        .select("campaign_id, campaigns!inner(id, campaign_name, status)")
+        .eq("jtbd_id", jtbdId)
+        .limit(20);
+      return (data ?? []) as Array<{ campaign_id: string; campaigns: { id: string; campaign_name: string; status: string | null } }>;
+    },
+  });
+
+  const total = tasks.length + projects.length + campaigns.length;
+
+  return (
+    <Card className="space-y-4 p-4">
+      <header className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Work in flight against this JTBD</h2>
+        <span className="text-[11px] text-muted-foreground">{total} item{total === 1 ? "" : "s"}</span>
+      </header>
+
+      {total === 0 && (
+        <p className="text-xs text-muted-foreground">
+          No active work yet — captures linked to this JTBD will show up here.
+        </p>
+      )}
+
+      {tasks.length > 0 && (
+        <Group icon={ListChecks} label="Tasks" count={tasks.length}>
+          {tasks.slice(0, 5).map((t) => (
+            <Link
+              key={t.task_id}
+              to="/tasks/$id"
+              params={{ id: t.task_id }}
+              className="flex items-center justify-between rounded-md px-2 py-1 text-xs hover:bg-muted"
+            >
+              <span className="truncate">{t.tasks.title}</span>
+              {t.tasks.status && (
+                <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {t.tasks.status}
+                </span>
+              )}
+            </Link>
+          ))}
+        </Group>
+      )}
+
+      {projects.length > 0 && (
+        <Group icon={Briefcase} label="Projects" count={projects.length}>
+          {projects.slice(0, 5).map((p) => (
+            <Link
+              key={p.project_id}
+              to="/projects/$id"
+              params={{ id: p.project_id }}
+              className="flex items-center justify-between rounded-md px-2 py-1 text-xs hover:bg-muted"
+            >
+              <span className="truncate">{p.projects.project_name}</span>
+              {p.projects.status && (
+                <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {p.projects.status}
+                </span>
+              )}
+            </Link>
+          ))}
+        </Group>
+      )}
+
+      {campaigns.length > 0 && (
+        <Group icon={Megaphone} label="Campaigns" count={campaigns.length}>
+          {campaigns.slice(0, 5).map((c) => (
+            <Link
+              key={c.campaign_id}
+              to="/campaigns/$id"
+              params={{ id: c.campaign_id }}
+              className="flex items-center justify-between rounded-md px-2 py-1 text-xs hover:bg-muted"
+            >
+              <span className="truncate">{c.campaigns.campaign_name}</span>
+              {c.campaigns.status && (
+                <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {c.campaigns.status}
+                </span>
+              )}
+            </Link>
+          ))}
+        </Group>
+      )}
+    </Card>
+  );
+}
+
+function Group({
+  icon: Icon,
+  label,
+  count,
+  children,
+}: {
+  icon: typeof Briefcase;
+  label: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        <Icon className="h-3 w-3" />
+        {label} <span className="text-muted-foreground">({count})</span>
+      </div>
+      <div className="space-y-0.5 rounded-md border border-border/60 bg-surface/40 p-1">
+        {children}
+      </div>
     </div>
   );
 }
