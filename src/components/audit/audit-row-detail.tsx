@@ -70,7 +70,7 @@ export function AuditRowDetail({ row, onApplyFilter }: Props) {
             {pretty(row.new_value ?? row.old_value)}
           </pre>
         </div>
-      )}
+      ) : null}
 
       {row.diff != null && (
         <div>
