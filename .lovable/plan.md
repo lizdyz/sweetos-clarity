@@ -1,103 +1,140 @@
 
 
-# Wave 7 — Universal drop-zone + standardized triage on every object
+# Wave 8 — Universal entity shell + finish Wave 7 (in YOUR canon)
 
-You've named the real problem: every entity (Capture, Sandbox, Sparks, KTIs, Inbound signals, Decisions, Tasks) has its own bespoke "intake + triage + promote" UI. So dropping a link/doc/note into Sandbox feels different from dropping one into Capture, and routing an idea into OCDA feels different from routing it into Decisions. **The fix is one shared shape + one shared UI, mounted everywhere.**
+Your collaborator's mockups are sharp. Two of their three big ideas are pure wins and we should ship them. The third (renaming sidebar groups, adding a "Canon" group) **conflicts with your locked sidebar IA canon** (`mem://design/sidebar-ia.md`), so I'll achieve their *intent* (Wisdom can find canon without admin vibes) without renaming groups.
 
-You already have the seed for this — `src/lib/triageable.ts` and `<TriageCard>`/`<FrameworksRail>` exist per `mem://design/triageable-interface.md`. Wave 7 finishes that promise and adds the universal drop zone you're asking for.
+I'll also finish the four Wave-7 leftovers you listed.
 
-## Three moves, one wave
+## What from the mockups we adopt vs reject
 
-### 1. Universal `<UniversalDropZone />` — drop anything, anywhere
+| Mockup proposal | Verdict | Why |
+|---|---|---|
+| **Universal entity shell** (Zones 1–5: header · work-context strip · connection rail · tabbed content · evidence footer) | ✅ **Adopt** — this is the answer to "I want to use every page to its max" | Already half-built (`<DetailShell>`, `<WorkContextStrip>`, `<WalkMenu>`); Wave 8 finishes it |
+| **Canon tab on every detail page** | ✅ **Adopt** | One read-only tab pulled from `entity_canon` so canon is visible without going to Settings |
+| **Three-layer Excellence model surfaced** (Canon / Maturity / Sparks+Guardrails) | ✅ **Adopt as visual treatment, not new entities** — all three already exist in DB | Maturity dot + canon-guardrail chip in Zone 1 of every shell |
+| **"Ship status" page in a new "Canon" sidebar group** | 🟡 **Adopt the page, not the regroup** | Build `/start/ship-status` as a sub-route of `/start` (canon-locked sidebar stays untouched) |
+| **6-group sidebar rename** (Today/Work/People/Library/Canon/Settings) | ❌ **Reject** | `mem://design/sidebar-ia.md` is locked at your 7-group verb-first IA. Renaming would break Wave 5 canon. |
+| **Move SweetSync entities (Missions/Journeys/Quests/Sparks/Domain Assessments) onto Relationship detail tabs** | 🟡 **Half-adopt** — keep the global routes (you use them), ALSO surface them as tabs on `/relationships/$id` | No deletion, additive only |
+| **Delete stub routes (`/pipeline`, `/planner`, `/queue`, `/my-tasks`)** | 🟡 **Defer to Wave 9** | They're 9-line stubs but deleting routes deserves its own confirmation pass |
+| **Flightdeck absorbs OCDA Cockpit** | ❌ **Reject** | Wave 5 just made `/operate/ocda` a first-class page — flipping it now would erase recent canon |
 
-A single component that accepts:
-- **Files** (PDFs, images, audio, video → uploaded to storage, becomes a `document`)
-- **Links** (URL pasted → fetched + titled, becomes an `inbound_signal` with `kind='link'`)
-- **Text** (typed/pasted prose → becomes a `capture` row)
-- **Existing entity** (drag a Spark/Task/Decision card in → creates a new sandbox item linked to it as upstream provenance)
+## Part A — Universal Entity Shell (the big move)
 
-One component, four input modes, one output: a `sandbox_items` row in `state='raw'` ready for triage. Mounts on `/sandbox`, `/today`, `/capture`, and floats as a global "+" button in the topbar so you can drop from anywhere.
-
-### 2. Standardized `<TriageCard>` + `<FrameworksRail>` rollout — finish the promise
-
-The interface exists; the rollout doesn't. Wave 7 mounts the shared triage UI on every triageable surface so the gesture **select → overlay → frame → promote** is identical everywhere:
-
-| Surface | What it gets |
-|---|---|
-| `/sandbox` | Already has it (keep) |
-| `/sparks` index | Replace bespoke cards with `<TriageCard>` |
-| `/decisions` index | Add `<TriageCard>` for `state='proposed'` |
-| `/capture` queue | Replace bespoke triage row with `<TriageCard>` |
-| `/sweetscan` inbox | Replace `<InboundSignalCard>` with `<TriageCard>` |
-| `/operate/ocda` Observe lane | Mount `<TriageCard>` so signals route into Choose with one click |
-| Task detail · Decision detail · Spark detail | Mount `<FrameworksRail>` in the right rail |
-
-Same six promote verbs everywhere: **→ Task · → Project · → Spark · → Decision input · → Component canon · → Archive**. The "where does this go?" question gets answered the same way no matter what page you're on.
-
-### 3. `<UniversalFilterBar />` — filter any list the same way
-
-Today every index page has a different filter strip. Wave 7 introduces one component that handles the four filters that matter on **every** entity list:
+One component, one shape, every detail page. The mockup names it perfectly — Zone 1 → Zone 5. You already have most of the parts; Wave 8 wires them into one shell.
 
 ```text
-[ Domain ▾ ] [ Tenet ▾ ] [ 5 P ▾ ] [ Lens F1–F8 ▾ ] [ State ▾ ] [ Owner ▾ ]
-                                                     ↑ regroups via FrameworkLensSwitcher
+┌──────────────────────────────────────────────────────────────────────┐
+│ Z1  [Icon] Entity name · kind chip · state pill · scope · 🛡 canon · ⋯walk │  ← canonical header
+├──────────────────────────────────────────────────────────────────────┤
+│ Z2  Relationship › Plan › Service › Session › this entity              │  ← work context strip
+├──────────┬───────────────────────────────────────────────────────────┤
+│ Z3       │ Z4  [Overview] [Build] [Story trail] [Measures] [Canon]    │
+│ ↑ Up     │                                                            │
+│ ↓ Down   │     Tab body (entity-specific)                             │
+│ → Produc │                                                            │
+│ ← Consum │                                                            │
+│ ⤴ Advances│                                                           │
+│ # Tagged │                                                            │
+├──────────┴───────────────────────────────────────────────────────────┤
+│ Z5  ▾ Evidence footer · audit log · generation metadata · revisions  │  ← collapsible
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-Plus a `?` chip that opens a one-line legend explaining what each filter does in your canon vocabulary. Mounts on: `/sandbox`, `/sparks`, `/decisions`, `/tasks`, `/components`, `/quests`, `/today`, `/capture`, `/sweetscan`, `/projects`, `/sessions`. URL-state via TanStack search params (zod adapter + `fallback()`) so filter state is shareable and survives refresh.
+**New component:** `src/components/entity-shell.tsx` — composes header + work-context strip + connection rail + tabs + evidence footer. Takes `{kind, id, primaryTabs, evidenceQuery}`.
 
-## So — is the lack of standardization the real problem?
+**New tabs added everywhere:**
+- **Canon tab** — read-only view of `entity_canon` row for this entity_kind (what it is · what good looks like · inputs · outputs · loop). Pulled from existing `entity_canon` table. Edit-link goes to `/settings/canon` (Wisdom can read everywhere, edit in one place — answers the mockup's "Wisdom can access canon without admin vibes" intent).
+- **Story trail tab** — already exists as `<MasterStoryTrail>`, just standardize the mount.
 
-**Yes.** You correctly diagnosed it. Wave 6 reconciled the **data model** (8 issues closed). Wave 7 reconciles the **interaction model** so working with a Spark feels the same as working with a Decision feels the same as working with a Task. That's what makes "I should be able to move things around" actually true.
+**Canon guardrail chip in Zone 1** — `<CanonGuardrail>` already exists. Mount on every shell so red/amber/green is visible at a glance.
+
+## Part B — Finish Wave 7 (the four you listed)
+
+| Surface | Mount | Note |
+|---|---|---|
+| `/capture` | `<TriageCard>` rows + `<UniversalDropZone />` | Replace bespoke triage row with shared card |
+| `/sweetscan` | `<TriageCard>` for `inbound_signals` | Replace `<InboundSignalCard>` |
+| `/sparks` index | `<TriageCard>` for raw sparks | Adds the overlay rail to every spark |
+| `/decisions` index | `<TriageCard>` for `state='proposed'` | Promotes to Decided / Archived |
+| `/operate/ocda` Observe lane | `<TriageCard>` rows | Same gesture: select → frame → route to Choose |
+| `/today` | `<UniversalDropZone />` collapsed at top | Drop from your morning surface |
+| Task / Decision / Spark detail pages | `<FrameworksRail>` in right rail | Run any of F1–F8 on any open work item |
+
+## Part C — `/start/ship-status` (Wisdom's page)
+
+The collaborator nailed this one. New child route under `/start` — no sidebar regroup needed.
+
+```text
+SHIP STATUS — what is real vs aspirational
+─────────────────────────────────────────────
+LIVE (90%+ wired)              35 routes
+  Components · Workflows · Sessions · Tasks · …
+
+PARTIAL (built, not fully wired)  18 routes
+  Flightdeck (5 views in 1) · Sweetcycle multi-rel board · …
+
+STUB (under 50 lines)              4 routes
+  /pipeline /planner /queue /my-tasks → Wave 9
+
+ROUTE COUNT: 86 · TABLE COUNT: 111 · VIEW COUNT: 14
+```
+
+Reads live from filesystem walk + the `entity_canon` table. Updates every time you ship.
+
+## Part D — Relationship detail gets SweetSync tabs (additive)
+
+Add tabs to `/relationships/$id` that surface this client's slice:
+- **Missions** tab — filtered list of `missions` where `relationship_id = $id`
+- **Journeys** tab — same filter pattern
+- **Quests** tab — same
+- **Sparks** tab — same
+- **Mirror** tab — Domain Assessment (already exists, just promote it to a tab)
+
+Global routes (`/missions`, `/journeys`, etc.) **stay**. You can still see all clients' missions from the global rail. The Relationship tabs are an additional view, not a replacement.
 
 ## Files I'll touch
 
 **New components:**
-- `src/components/universal-drop-zone.tsx` — files/links/text/entity-drag → `sandbox_items`
-- `src/components/global-add-button.tsx` — topbar "+" that opens drop zone in a popover
-- `src/components/universal-filter-bar.tsx` — Domain/Tenet/5P/Lens/State/Owner with URL state
-- `src/lib/use-universal-filters.ts` — TanStack search-params hook (zod + fallback)
-- `src/lib/triage-promote.ts` — shared promote actions (Task/Project/Spark/Decision/Component/Archive) so every `<TriageCard>` writes provenance the same way
+- `src/components/entity-shell.tsx` — the universal Zone 1–5 shell
+- `src/components/entity-canon-tab.tsx` — read-only Canon tab body
+- `src/components/connection-rail.tsx` — Zone 3 (Up · Down · Produces · Consumes · Advances · Tagged)
+- `src/components/evidence-footer.tsx` — Zone 5 collapsible
+- `src/components/start/ship-status-board.tsx` — live route/table/view tally
+- `src/components/relationship/relationship-sweetsync-tabs.tsx` — Missions/Journeys/Quests/Sparks/Mirror tabs
 
-**Edited (mounts only — no rewrites):**
-- `src/components/app-topbar.tsx` — add `<GlobalAddButton />`
-- `src/routes/_app.sandbox.tsx` — add `<UniversalDropZone />` + `<UniversalFilterBar />`
-- `src/routes/_app.capture.tsx` — replace bespoke triage with `<TriageCard>` rows + drop zone
-- `src/routes/_app.sweetscan.tsx` — `<TriageCard>` on inbound signals
-- `src/routes/_app.sparks.index.tsx` — `<TriageCard>` + `<UniversalFilterBar />`
-- `src/routes/_app.decisions.index.tsx` — same
-- `src/routes/_app.tasks.index.tsx` — `<UniversalFilterBar />`
-- `src/routes/_app.components.index.tsx` — same
-- `src/routes/_app.quests.index.tsx` — same
-- `src/routes/_app.today.tsx` — `<UniversalDropZone />` collapsed at top + filter bar on the lists
-- `src/routes/_app.operate.ocda.tsx` — `<TriageCard>` in Observe lane
-- `src/routes/_app.tasks.$id.tsx`, `_app.decisions.$id.tsx`, `_app.sparks.$id.tsx` — mount `<FrameworksRail>` in right rail
+**New routes:**
+- `src/routes/_app.start.ship-status.tsx`
 
-**Migrations (small):**
-- `sandbox_items.attached_documents` (uuid array → `documents.id`) — so a sandbox row can carry the file/link you dropped
-- `sandbox_items.upstream_entity` (jsonb `{kind, id}`) — so dragging an existing Spark/Task in records provenance
+**Edited (mounts only):**
+- ~12 detail routes — wrap content in `<EntityShell kind=… id=…>` (tasks, projects, components, sessions, workflows, quests, sparks, decisions, relationships, missions, journeys, playbooks)
+- `src/routes/_app.capture.tsx` · `_app.sweetscan.tsx` · `_app.sparks.index.tsx` · `_app.decisions.index.tsx` · `_app.operate.ocda.tsx` · `_app.today.tsx` — Wave 7 mounts
+- `src/routes/_app.tasks.$id.tsx` · `_app.decisions.$id.tsx` · `_app.sparks.$id.tsx` — `<FrameworksRail>` in right rail
+- `src/routes/_app.relationships.$id.tsx` — mount sweetsync tabs
 
 **Memory:**
-- `mem://design/universal-triage-rollout.md` — what's mounted where + the rule "every triageable surface uses TriageCard"
-- update `mem://design/triageable-interface.md` to mark rollout complete
+- `mem://design/universal-entity-shell.md` — Zone 1–5 spec, what mounts where, the rule "every detail page uses EntityShell"
+- `mem://design/canon-tab-rule.md` — Canon tab is read-only on every detail; edit only at `/settings/canon`
+- update `mem://design/sidebar-ia.md` reaffirming the locked 7-group IA (so the next session doesn't try to regroup)
 
 ## What this wave is NOT
 
-- Not changing the underlying entities (Spark stays Spark, Decision stays Decision)
-- Not introducing a new "object" — sandbox_items is the existing triage row
-- Not auto-promoting anything (every promote is still a human click — canon)
-- Not regrouping the sidebar
-- Not touching Wave 5's `/start` or Wave 6's reconciliation work
+- Not renaming sidebar groups (canon-locked)
+- Not deleting any route (stubs deferred to Wave 9)
+- Not absorbing OCDA into Flightdeck (Wave 5 canon)
+- Not new entities (every part reads existing tables)
+- Not editing any auto-generated file
 
 ## Sequencing
 
-1. **`<UniversalDropZone />` + global "+" button** (~25%) — the thing you asked for first
-2. **Migrations for attached_documents + upstream_entity** (~10%)
-3. **`<TriageCard>` rollout to 6 surfaces** (~30%)
-4. **`<FrameworksRail>` mounts on 3 detail pages** (~10%)
-5. **`<UniversalFilterBar />` + URL search-param hook** (~20%)
-6. **Memory canon updates** (~5%)
+1. **Wave 7 finish** (~20%) — TriageCard rollout to 5 surfaces + FrameworksRail on 3 detail pages + drop zone on /today
+2. **`<EntityShell>` component + Canon tab + connection rail** (~35%) — the centerpiece
+3. **Mount EntityShell on 12 detail routes** (~25%) — one-line wraps, no rewrites
+4. **`/start/ship-status` page** (~10%)
+5. **Relationship SweetSync tabs** (~7%)
+6. **Memory canon updates** (~3%)
 
-After Wave 7: you can drop a file, link, paragraph, or existing card into any page and it lands in Sandbox as `raw`. From there, every triage card looks and behaves identically — overlay it with any of F1–F8, then promote with one of six verbs. Every list page filters the same way. The "I don't know where this should go" feeling disappears because the gesture is the same everywhere.
+After Wave 8: every detail page in the app has the same shell — same header, same connection rail, same Canon tab visible in one click, same evidence footer. Walking the graph feels identical from any starting point. Triage feels identical from any starting point. The collaborator's two best ideas land. Your locked sidebar canon stays intact.
 
-Reply **"Run Wave 7"** to ship in this order, or **"Just the drop zone + TriageCard rollout first"** if you want to land the two highest-leverage pieces before the filter bar.
+Reply **"Run Wave 8"** to ship in this order, or **"Just EntityShell + Canon tab first"** to land the centerpiece before the Wave-7 mounts.
 
