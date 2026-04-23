@@ -1,168 +1,154 @@
-# Wave 3 — Handoff inbox + `handoff_events` table
 
-Fill the empty slot left in Wave 2's operator cockpit. Make handoffs between operators (human → agent, agent → human, workflow step → reviewer) a first-class, auditable event with an inbox UI.  
-  
-operator - should be able to handle tasks, project, campaigns, etc...
 
-&nbsp;
+# Wave 4 — Today as decision surface
+
+Today is currently a wall of 6+ panels with no hierarchy. Wave 4 makes it answer **one question on open**: *"What's the best next thing I can do right now, and why?"* — using the data we already have plus the new `handoff_events` from Wave 3.
 
 ## What you'll see when this lands
 
-### 1. Operator cockpit → Handoffs tab becomes real
+### 1. Decision Bar — the new top of `/today`
 
-Replaces the "lands in Wave 3" placeholder. Shows two stacks:
-
-```text
-┌─ Inbound (3) ──────────────────────────────┐
-│ 🤖 Drafter Agent → you      2h ago         │
-│ "Brief draft ready for review"             │
-│ Task: Q1 launch brief    [Accept] [Decline]│
-├────────────────────────────────────────────┤
-│ ⚙ Workflow: Onboard step 3 → you           │
-│ Awaiting approval        [Open] [Reassign] │
-└────────────────────────────────────────────┘
-
-┌─ Sent (last 7d) ───────────────────────────┐
-│ you → 🤖 Drafter Agent     yesterday  ✓    │
-│ Task: Component spec       accepted        │
-└────────────────────────────────────────────┘
-```
-
-Each row uses the walk-menu (built in Wave 2).
-
-### 2. Handoff sheet — the new write surface
-
-A slide-out triggered from any task row, workflow step run, or the operator cockpit's "Hand off" button:
+Replaces the current "Today + date" title. One synthesized line + three primary actions:
 
 ```text
-[ From  you            ]
-[ To    ▾ pick operator ]   ← filtered by skills matching task tags
-[ What  Task: Q1 brief  ]
-[ Why   ▾ ready for review / blocked / escalation / FYI ]
-[ Note  optional context to receiver ]
-[ Due   inherits, editable ]
-                       [ Cancel ] [ Hand off ]
+┌───────────────────────────────────────────────────────────────────┐
+│ Tuesday, Apr 23                                                   │
+│                                                                   │
+│ 3 handoffs waiting on you · 2 overdue · 1 KTI fired in last 24h   │
+│                                                                   │
+│ [ ▶ Start with: "Review Q1 brief" — handoff from Drafter, 2h ago ]│
+│ [ Snooze 1h ]  [ Hand off ]  [ Show me 5 more ]                   │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
-On submit:
+The "Start with" recommendation comes from a deterministic ranker (no AI in Wave 4):
+1. Inbound handoffs in `pending` (oldest first)
+2. Workflow steps `awaiting_approval` assigned to me
+3. Overdue tasks owned by me (most overdue first)
+4. KTI fires in last 24h tied to my relationships
+5. Today's scheduled tasks
 
-- Inserts a `handoff_events` row (status=`pending`)
-- Reassigns `tasks.operator_id` (or `workflow_step_runs.assignee_id`) to the receiver
-- Sets task `waiting_on` to receiver name if `reason='blocked'`
-- Bumps `handoff_count` on the operator_workload-fed view
+Snooze writes `not_before = now() + 1h` on the subject. Hand off opens the existing `<HandoffSheet>`. "Show me 5 more" expands the Next-Best-Actions list (§3).
 
-### 3. Cross-cockpit visibility
+### 2. Live Signal Strip — merged
 
-The capacity strip on `/operators/$id` gains a 5th tile when handoffs are pending:
+Today already shows `<FiredKtisStrip>` for KTI fires only. Wave 4 swaps it for a **Live Signal Strip** that merges three feeds in one horizontal scroll, sorted by recency:
 
 ```text
-[ Open 12 ] [ Blocked 2 ] [ Overdue 1 ] [ Next Nov 24 ] [ Handoffs 3 ]
+🔥 KTI: Pipeline drift > 20%   2h     ⚙ Handoff: Q1 brief from Drafter  3h    📡 Signal: New inbound from Acme    5h
 ```
 
-Flightdeck (later wave) and Today (Wave 4) will read the same `handoff_events` table.
+- **🔥** rows from `kti_scans` where `fired=true` last 24h (existing)
+- **⚙** rows from `handoff_events` where `to_operator_id = me` and `status='pending'` (new — Wave 3 data)
+- **📡** rows from `inbound_signals` last 24h, status `new` (existing table, never surfaced on Today)
 
-## Schema change (one migration)
+Each chip is a Link to its source. Walk-menu (`<WalkMenu>`) mounts on each chip via long-press / right-click affordance (kept simple: `⋯` button on hover).
 
-```sql
-create type public.handoff_status as enum ('pending','accepted','declined','cancelled','auto_completed');
-create type public.handoff_reason as enum ('ready_for_review','blocked','escalation','fyi','reassign');
+### 3. Next-Best-Actions — the new primary panel
 
-create table public.handoff_events (
-  id uuid primary key default gen_random_uuid(),
-  from_operator_id uuid references public.operators(id) on delete set null,
-  to_operator_id   uuid not null references public.operators(id) on delete cascade,
-  subject_kind text not null check (subject_kind in ('task','workflow_step_run','session','project')),
-  subject_id   uuid not null,
-  reason public.handoff_reason not null default 'ready_for_review',
-  status public.handoff_status not null default 'pending',
-  note text,
-  due_date date,
-  created_at timestamptz not null default now(),
-  responded_at timestamptz,
-  created_by uuid references auth.users(id)
-);
+Replaces the current 6-panel grid (Overdue/Today/Week/Blocked/Sessions/Wins) as the *first* thing under the decision bar. A single ranked list of the **top 8 things you should consider doing right now**, each with a one-line "why":
 
-alter table public.handoff_events enable row level security;
-
-create policy "team can read handoffs"  on public.handoff_events for select using (public.is_team_member(auth.uid()));
-create policy "team can write handoffs" on public.handoff_events for insert with check (public.is_team_member(auth.uid()));
-create policy "team can update handoffs" on public.handoff_events for update using (public.is_team_member(auth.uid()));
-
-create index handoff_events_to_status_idx on public.handoff_events (to_operator_id, status, created_at desc);
-create index handoff_events_from_idx     on public.handoff_events (from_operator_id, created_at desc);
-create index handoff_events_subject_idx  on public.handoff_events (subject_kind, subject_id);
-
--- view used by the cockpit + capacity strip
-create or replace view public.operator_handoff_inbox as
-select
-  he.*,
-  case he.subject_kind
-    when 'task' then (select name from public.tasks where id = he.subject_id)
-    when 'workflow_step_run' then (select s.name from public.workflow_steps s
-                                   join public.workflow_step_runs r on r.step_id = s.id
-                                   where r.id = he.subject_id)
-    when 'session' then (select title from public.sessions where id = he.subject_id)
-    when 'project' then (select name from public.projects where id = he.subject_id)
-  end as subject_label;
+```text
+┌─ Next best actions ───────────────────────────────────────────────┐
+│ 1. ⚙ Review Q1 brief                          ← handoff · 2h ago  │
+│    Drafter Agent handed this to you. Reason: ready for review     │
+│    [Open] [Accept] [Decline]              [⋯ walk]                │
+├───────────────────────────────────────────────────────────────────┤
+│ 2. ✓ Approve onboarding step 3                ← workflow · 4h ago │
+│    Awaiting your approval in Onboard run #284                     │
+│    [Open]                                  [⋯ walk]               │
+├───────────────────────────────────────────────────────────────────┤
+│ 3. ⏰ Send Acme proposal                       ← overdue · 1d      │
+│    Due yesterday · tagged Profit, P3 Process                      │
+│    [Open] [Reschedule] [Hand off]          [⋯ walk]               │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
-No data migration needed — table starts empty, fills as handoffs happen.
+Each row carries a **walk-menu** trigger (Wave 2 reuse) so you can jump up/down/produces/consumes from Today without leaving.
+
+### 4. Existing 6-panel grid → moved below the fold + collapsed by default
+
+The Overdue/Today/Week/Blocked/Sessions/Wins grid stays — it's still useful for browsing — but moves under a `<Collapsible>` titled "Browse all open work" so it doesn't dominate. Wins panel stays standalone (positive reinforcement).
+
+### 5. OCDA + Decisions + Sandbox tile strip — kept, demoted
+
+Stays where it is, but moves *below* Next-Best-Actions. The decision bar already surfaced what's urgent; the OCDA tiles are for *navigating into* the deeper cockpits, not for daily triage.
+
+## Final page order top-to-bottom
+
+```text
+1. Decision Bar (new)
+2. Live Signal Strip (replaces FiredKtisStrip)
+3. Master Story Trail (kept)
+4. Next-Best-Actions (new) — primary
+5. Awaiting Approval + Maturity Wins Ready (kept)
+6. OCDA + Decision Queue + Sandbox tiles (kept, demoted)
+7. <Collapsible> "Browse all open work" → existing 6-panel grid
+```
 
 ## Files I'll touch
 
 **New:**
-
-- `src/components/handoff-sheet.tsx` — slide-out form (shadcn Sheet)
-- `src/components/handoff-inbox.tsx` — Inbound + Sent stacks for the Handoffs tab
-- `src/components/handoff-row.tsx` — single inbox row with Accept/Decline/Open
-- `src/lib/handoffs.ts` — `createHandoff()`, `respondToHandoff()` helpers (server functions via `createServerFn` + `requireSupabaseAuth`)
-- `supabase/migrations/<ts>_handoff_events.sql` — schema above
+- `src/components/today-decision-bar.tsx` — synthesized line + Start-with CTA + Snooze/Hand off/Show more
+- `src/components/today-next-actions.tsx` — ranked list of 8 next-best-actions with action buttons + walk-menu
+- `src/components/live-signal-strip.tsx` — merged horizontal feed (KTIs + handoffs + inbound_signals)
+- `src/lib/today-ranker.ts` — pure function `rankNextActions(handoffs, approvals, overdue, kti_fires, scheduled): RankedAction[]` with explicit priority weights
 
 **Edited:**
-
-- `src/components/operator-queue-tabs.tsx` — Handoffs tab renders `<HandoffInbox operatorId={id} />`
-- `src/components/operator-capacity-strip.tsx` — adds 5th tile when `handoff_count > 0`
-- `src/components/operator-edit-drawer.tsx` — no change
-- `src/routes/_app.operators.$id.tsx` — passes operator id to inbox; adds "Hand off" button in header that opens `<HandoffSheet>`
-- `src/components/walk-menu.tsx` — adds "Hand off" as a quick action in the About verb section
+- `src/routes/_app.today.tsx` — restructured to the new order; existing grid wrapped in `<Collapsible>`; `FiredKtisStrip` → `LiveSignalStrip`
+- `src/components/walk-menu.tsx` — no API change; just gets new mount sites
 
 **Memory:**
+- `mem://design/today-as-decision-surface.md` — new file: page order, ranker priority, what NOT to put on Today
 
-- `mem://features/handoffs.md` — new file: handoff_events schema, lifecycle, who-can-do-what
+## How "current operator = me" is resolved
 
-## Lifecycle rules (enforced in helpers, not triggers)
+Today doesn't currently know which operator the logged-in user *is*. Resolution:
+- Read `auth.uid()` via `useAuth()` (existing context)
+- Lookup `operators` row where `user_id = auth.uid()` and `kind = 'human'`
+- Cache via `useQuery(["me-operator"])`
+- If no operator row exists yet (new team member), Decision Bar falls back to "All open team work" mode and shows: *"Link your account to an Operator to get personalized next actions."* with a deep link to `/operators`
 
-1. **Create** — `pending`. Reassigns subject to `to_operator`.
-2. **Accept** — receiver clicks Accept. Status → `accepted`, `responded_at = now()`. Subject stays assigned to receiver.
-3. **Decline** — receiver clicks Decline. Status → `declined`. Subject reassigns back to `from_operator` (or unassigned if null). Sender gets a bot_alert.
-4. **Cancel** — sender can cancel a `pending` handoff before response. Status → `cancelled`, subject reassigns back.
-5. **Auto-complete** — when subject status becomes Done while handoff is `pending`, status → `auto_completed` (cron-style, deferred to Wave 5 cleanup).
+This same `useMeOperator()` hook will be reused by Flightdeck and any future personalization. No schema change — `operators.user_id` already exists (verified Wave 2/3).
 
-No DB triggers in Wave 3 — keeps the migration small and the logic visible in app code. Triggers can be added later once the lifecycle is proven.
+## Triple-check against the UX briefs (v1 + v2)
 
-## What I'm NOT doing
+I cross-checked Wave 4 against every UX update we've discussed. Coverage:
 
-- **Not** adding email/notification fanout — bot_alerts row is enough for in-app visibility
-- **Not** auto-suggesting a receiver yet (skill matching is Wave 5 polish)
-- **Not** wiring Today / Flightdeck consumption — those waves own their own surfaces
-- **Not** building bulk-handoff or handoff templates
-- **Not** touching the existing `Awaiting` tab (workflow_step_runs awaiting_approval is a parallel concept; we may merge in Wave 5 once we see how they overlap in practice)
+| Brief item | Where it lands in Wave 4 |
+|---|---|
+| **v1: Today as signal-first surface** | Decision Bar + Live Signal Strip = top of page |
+| **v1: walkable graph from anywhere** | Walk-menu mounts on every Next-Best-Action row |
+| **v1: triageable interface canon** | Next-Best-Actions rows follow the Triageable shape (id/kind/title/source/state/promote_options) — reuses the contract from `mem://design/triageable-interface.md` |
+| **v1: 80% of load from 6 surfaces** | Today is now lean — heavy panels collapsed |
+| **v2: operator-as-unit-of-work** | "Me = which operator?" hook resolved; ranker is per-operator |
+| **v2: handoffs first-class** | Handoffs surface on Live Signal Strip + are #1 priority in ranker |
+| **v2: decision-factory framing** | Decision Bar is literally one decision; OCDA tiles demoted (the cockpit is the deep dive, Today is the trigger) |
+| **5 Ps as overlay, not nav** | Ranker exposes P-tags as badge on each row, not as filter pills (matches `mem://design/sidebar-ia.md` rule) |
+| **Sparks vs Tasks canon** | Ranker excludes Sparks (system-generated, not actionable by humans directly — they belong in `/sparks`) |
+| **Views are truth** | Ranker reads `time_grid`, `operator_handoff_inbox`, `workflow_step_pipeline`, `kti_scans`, `inbound_signals` — never re-derives from raw tables |
+| **Walk-menu canon (six verbs only)** | Reused as-is; no new verbs |
+| **Wave 3 handoff lifecycle** | Accept/Decline buttons in Next-Best-Actions reuse `respondToHandoff()` server fn — no duplicate logic |
 
-## Sequencing inside Wave 3
+## Risks & what I'm NOT doing
 
-1. Migration: enums + table + RLS + view (~15%)
-2. `handoffs.ts` server functions + types (~20%)
-3. `<HandoffSheet>` write surface (~25%)
-4. `<HandoffInbox>` + `<HandoffRow>` read surface (~25%)
-5. Wire into Handoffs tab + capacity strip + operator header button (~10%)
+- **Not** building AI synthesis of the decision-bar line — Wave 4 uses deterministic templating ("3 handoffs · 2 overdue · 1 KTI fired"). AI version is Wave 5/6 polish.
+- **Not** adding new tables. Reads only.
+- **Not** killing the existing 6-panel grid — collapsing it preserves the muscle memory.
+- **Not** building Snooze across all entity kinds — Wave 4 implements snooze for tasks only (writes `not_before`); other kinds show a disabled tooltip "Snooze available on tasks for now".
+- **Not** changing the Today route path or nav location.
+- **Risk: empty-day state** — if nothing is pending, decision bar shows "Inbox zero. Want to plan tomorrow?" with a link to `/planner`. Live Signal Strip and Next-Best-Actions render empty-state copy instead of disappearing.
+
+## Sequencing inside Wave 4
+
+1. `useMeOperator()` hook + `today-ranker.ts` (pure logic, ~20%)
+2. `<TodayDecisionBar>` (~25%)
+3. `<TodayNextActions>` with walk-menu wiring (~25%)
+4. `<LiveSignalStrip>` merging 3 feeds (~15%)
+5. Restructure `_app.today.tsx` order + collapse old grid (~10%)
 6. Memory canon (~5%)
 
-## Risks
+After Wave 4 lands, opening Today gives Liz one decision in one glance, with the next 8 most-important things ranked underneath — all powered by data we already have plus Wave 3's handoff_events. Wave 5 (`/canon` room) is the only structural piece left.
 
-- **Reassignment race**: two people respond to the same handoff. Mitigation: `respondToHandoff()` does an `UPDATE ... WHERE status='pending'` and returns affected rows; UI shows "already handled" if 0.
-- **Workflow_step_runs assignee column name**: Wave 2 verified this exists. If subject_kind=`workflow_step_run`, helpers use that column; Wave 5 unifies if needed.
-- **Empty state**: first-time users see no handoffs. Empty state copy: "No handoffs yet. Use the **Hand off** button on any task to route it to another operator."
+Reply **"Run Wave 4"** to ship, or push back on the ranker priority order / decision bar wording / what gets demoted before I start.
 
-After Wave 3 lands, every operator has a real inbox, every task can be routed with an audit trail, and Wave 4 (Today as decision surface) can pull `handoff_events` into the morning brief.
-
-Reply **"Run Wave 3"** to ship, or push back on the lifecycle / schema / verbs first.
