@@ -39,7 +39,7 @@ export function AuditRowDetail({ row, onApplyFilter }: Props) {
   return (
     <div className="space-y-3 border-t border-border/40 bg-surface/40 p-4 text-xs">
       {/* Change diff */}
-      {row.field && (
+      {row.field ? (
         <div>
           <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Change · <span className="font-mono normal-case">{row.field}</span>
@@ -59,7 +59,7 @@ export function AuditRowDetail({ row, onApplyFilter }: Props) {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {!row.field && (row.old_value || row.new_value) && (
         <div>

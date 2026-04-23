@@ -28,6 +28,7 @@ import {
   BookOpen,
   FlaskConical,
   Inbox,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
