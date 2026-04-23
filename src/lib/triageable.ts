@@ -1,6 +1,7 @@
 // Shared "Triageable" interface used by /sandbox, Sparks, KTI fires, inbound
 // signals, and OCDA Observe lane. The contract: every triageable entity gets
-// the same select → overlay → frame → promote gesture.
+// the same select → promote gesture. Framework runs are now performed by the
+// SweetLens / ObjectCompanion sidebar, not by the legacy OVERLAY_REGISTRY.
 
 export type TriageKind =
   | "sandbox_item"
@@ -12,6 +13,7 @@ export type TriageKind =
 
 export type TriageState = "raw" | "framed" | "routed" | "archived" | "active";
 
+/** Kept for backwards-compat with existing `frames` JSONB column on sandbox_items. */
 export type OverlayKind =
   | "5ps"
   | "bizzybot_lens"
@@ -62,15 +64,6 @@ export interface Triageable {
   confidence?: number | null;
   relationship_id?: string | null;
 }
-
-export const OVERLAY_REGISTRY: { kind: OverlayKind; label: string; hint: string; v: 1 | 2 }[] = [
-  { kind: "5ps", label: "5Ps", hint: "Which Ps does this touch? Where are the gaps?", v: 1 },
-  { kind: "bizzybot_lens", label: "BizzyBot lens", hint: "Pick F1–F8 — generate a perspective with pros/cons/next questions", v: 1 },
-  { kind: "kti_candidate", label: "KTI candidate", hint: "Could this become a forward-looking indicator? Draft a definition.", v: 1 },
-  { kind: "domain_tenet_fit", label: "Domain / Tenet fit", hint: "Map to the 22 domains + active tenets.", v: 1 },
-  { kind: "decision_readiness", label: "Decision-readiness", hint: "Framed question? Options weighed? Evidence attached? Confidence set?", v: 2 },
-  { kind: "op_alpha", label: "Operational alpha", hint: "Where does it compound? Where does it leak?", v: 2 },
-];
 
 export const DEFAULT_PROMOTE_OPTIONS: PromoteAction[] = [
   { kind: "task", label: "→ Task", hint: "Create an executable task with provenance back here" },
