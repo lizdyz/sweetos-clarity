@@ -2416,6 +2416,7 @@ export type Database = {
           source_kind: Database["public"]["Enums"]["inbound_signal_source"]
           source_url: string | null
           status: Database["public"]["Enums"]["inbound_signal_status"]
+          suggested_kti_payload: Json | null
           summary: string | null
           updated_at: string
         }
@@ -2434,6 +2435,7 @@ export type Database = {
           source_kind: Database["public"]["Enums"]["inbound_signal_source"]
           source_url?: string | null
           status?: Database["public"]["Enums"]["inbound_signal_status"]
+          suggested_kti_payload?: Json | null
           summary?: string | null
           updated_at?: string
         }
@@ -2452,6 +2454,7 @@ export type Database = {
           source_kind?: Database["public"]["Enums"]["inbound_signal_source"]
           source_url?: string | null
           status?: Database["public"]["Enums"]["inbound_signal_status"]
+          suggested_kti_payload?: Json | null
           summary?: string | null
           updated_at?: string
         }

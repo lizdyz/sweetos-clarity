@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Send } from "lucide-react";
+import { Send, ChevronDown, ChevronRight, Compass, ScrollText, Maximize2, Minimize2 } from "lucide-react";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { EngagementPlanAnatomy } from "@/components/engagement-plan-anatomy";
 import { EngagementPlanSweetCycleTab } from "@/components/engagement-plan-sweetcycle-tab";
 import { AuditTrailPanel } from "@/components/audit-trail-panel";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/engagement-plans/$id")({
   component: PlanDetail,
@@ -13,6 +15,10 @@ export const Route = createFileRoute("/_app/engagement-plans/$id")({
 
 function PlanDetail() {
   const { id } = Route.useParams();
+  const [sweetcycleOpen, setSweetcycleOpen] = useState(true);
+  const [sweetcycleExpanded, setSweetcycleExpanded] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
+
   return (
     <div className="space-y-5">
       <div className="px-6 pt-4">
@@ -28,25 +34,82 @@ function PlanDetail() {
 
       <EntityDetailPage entityKey="engagement_plans" />
 
-      <div className="px-6 pb-6">
-        <Tabs defaultValue="anatomy" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="anatomy">Anatomy</TabsTrigger>
-            <TabsTrigger value="sweetcycle">SweetCycle</TabsTrigger>
-            <TabsTrigger value="audit">Audit</TabsTrigger>
-          </TabsList>
-          <TabsContent value="anatomy" className="space-y-4">
-            <EngagementPlanAnatomy planId={id} />
-          </TabsContent>
-          <TabsContent value="sweetcycle">
-            <EngagementPlanSweetCycleTab planId={id} />
-          </TabsContent>
-          <TabsContent value="audit">
-            <Card className="p-4">
+      <div className="space-y-4 px-6 pb-6">
+        <EngagementPlanAnatomy planId={id} />
+
+        {/* SweetCycle peek — collapsible, expanded by default */}
+        <Card className="overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setSweetcycleOpen((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-iris-soft/20"
+          >
+            <div className="flex items-center gap-2">
+              {sweetcycleOpen ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+              <Compass className="h-4 w-4 text-[color:var(--iris-violet)]" />
+              <span className="text-sm font-semibold tracking-tight">SweetCycle rhythm</span>
+              <span className="text-[11px] text-muted-foreground">
+                {sweetcycleExpanded ? "full board" : "5-phase peek"}
+              </span>
+            </div>
+            {sweetcycleOpen && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 gap-1 text-[11px]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSweetcycleExpanded((v) => !v);
+                }}
+              >
+                {sweetcycleExpanded ? (
+                  <>
+                    <Minimize2 className="h-3 w-3" /> Collapse to peek
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="h-3 w-3" /> Expand to board
+                  </>
+                )}
+              </Button>
+            )}
+          </button>
+          {sweetcycleOpen && (
+            <div className={cn("border-t border-border/40 p-4")}>
+              <EngagementPlanSweetCycleTab
+                planId={id}
+                mode={sweetcycleExpanded ? "full" : "compact"}
+              />
+            </div>
+          )}
+        </Card>
+
+        {/* Audit trail — collapsible, collapsed by default */}
+        <Card className="overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setAuditOpen((v) => !v)}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-iris-soft/20"
+          >
+            {auditOpen ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
+            <ScrollText className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-semibold tracking-tight">Audit trail</span>
+            <span className="text-[11px] text-muted-foreground">reference</span>
+          </button>
+          {auditOpen && (
+            <div className="border-t border-border/40 p-4">
               <AuditTrailPanel subjectKind="engagement_plan" subjectId={id} />
-            </Card>
-          </TabsContent>
-        </Tabs>
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );
