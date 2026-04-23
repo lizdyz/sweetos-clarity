@@ -46,8 +46,9 @@ interface NavGroup {
 }
 
 /**
- * Canonical IA — Scenario A "Verb-first":
- *   TODAY · DELIVER · THINK · SWEETSYNC · PEOPLE · LIBRARY · SETTINGS.
+ * Canonical IA — Verb-first, stripped to 3 always-open + 3 collapsed groups.
+ *   TODAY · WORK · PEOPLE  +  Library · Settings (collapsed by default).
+ * 5 Ps stay as a framework overlay (Sandbox, Relationship health), not a shelf.
  * See `mem://design/sidebar-ia.md`.
  */
 export const SIDEBAR_GROUPS: NavGroup[] = [
@@ -61,53 +62,36 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Deliver",
-    caption: "Run the work · session-led path",
+    label: "Work",
+    caption: "Run the work · triage · decide",
     items: [
-      { to: "/operate/ocda", label: "OCDA Cockpit", icon: Brain, hint: "Observe · Choose · Decide · Act" },
-      { to: "/sessions", label: "Sessions Bank", icon: Calendar, hint: "All Mirror / Map / Machine / Sync sessions" },
-      { to: "/sweetcycle", label: "SweetCycle", icon: Compass, hint: "Active client journey" },
-      { to: "/flightdeck", label: "Flightdeck", icon: Map, hint: "Cross-relationship cockpit" },
-      { to: "/engagement-plans", label: "Engagement Plans", icon: Send, hint: "Contract shape per relationship" },
-      { to: "/campaigns", label: "Campaigns", icon: Megaphone },
-    ],
-  },
-  {
-    label: "Think",
-    caption: "Registers & analysis",
-    items: [
-      { to: "/bizzybots", label: "BizzyBots", icon: Bot, hint: "9 Lens agents — ask any subject" },
       { to: "/sandbox", label: "Sandbox", icon: FlaskConical, hint: "Triage raw ideas — run framework lenses, promote to work" },
-      { to: "/sweetscan", label: "SweetScan", icon: Radar, hint: "Outside-in intelligence — forward radar + rubric scanner + signal inbox" },
+      { to: "/operate/ocda", label: "OCDA Cockpit", icon: Brain, hint: "Observe · Choose · Decide · Act" },
+      { to: "/flightdeck", label: "Flightdeck", icon: Map, hint: "Cross-relationship cockpit" },
+      { to: "/sweetcycle", label: "SweetCycle", icon: Compass, hint: "Active client journey" },
+      { to: "/sessions", label: "Sessions Bank", icon: Calendar, hint: "All Mirror / Map / Machine / Sync sessions" },
+      { to: "/sweetscan", label: "SweetScan", icon: Radar, hint: "Outside-in intelligence — radar + signal inbox" },
+      { to: "/engagement-plans", label: "Engagement Plans", icon: Send, hint: "Contract shape per relationship" },
+      { to: "/pipeline", label: "Pipeline", icon: GitBranch, hint: "Sales pipeline" },
+      { to: "/campaigns", label: "Campaigns", icon: Megaphone },
       { to: "/decisions", label: "Decisions", icon: FileText, hint: "Logged choices & rationale" },
       { to: "/delegation", label: "Delegation Register", icon: GitBranch, hint: "Work to hand off — the systematize list" },
       { to: "/measures", label: "Measures", icon: Gauge, hint: "Objectives, KRs, KPIs, CSFs" },
-      { to: "/documents", label: "Documents", icon: FileText, hint: "Briefs, deliverables, assets" },
-    ],
-  },
-  {
-    label: "SweetSync",
-    caption: "Self-paced path · between sessions",
-    collapsible: true,
-    items: [
-      { to: "/sweetsync", label: "SweetSync (per client)", icon: Sparkles, hint: "Self-paced board for one client" },
-      { to: "/missions", label: "Missions", icon: Target, hint: "Overarching transformation goal" },
-      { to: "/journeys", label: "Journeys", icon: Compass, hint: "Capability areas (contain Quests)" },
-      { to: "/quests", label: "Quests", icon: Compass, hint: "Group Sparks → advance Components" },
-      { to: "/sparks", label: "Sparks", icon: Sparkles, hint: "Atomic interactions (internal or client)" },
-      { to: "/domain-assessments", label: "Domain Assessments", icon: Gauge, hint: "Maturity scoring" },
     ],
   },
   {
     label: "People",
-    caption: "Relationships, contacts, operators",
-    collapsible: true,
+    caption: "Operators, relationships, projects",
     items: [
-      { to: "/relationships", label: "Relationships", icon: Users },
-      { to: "/people", label: "People", icon: Users },
-      { to: "/operators", label: "Operators", icon: Bot, hint: "Humans, workflows & AI agents" },
+      { to: "/operators", label: "Operators", icon: Bot, hint: "Humans, workflows & AI agents — who's doing what" },
+      { to: "/relationships", label: "Relationships", icon: Users, hint: "Clients & key relationships" },
+      { to: "/people", label: "People", icon: Users, hint: "Contacts" },
       { to: "/projects", label: "Projects", icon: Workflow },
       { to: "/tasks", label: "Tasks", icon: ListChecks, hint: "Atomic executable work" },
+      { to: "/missions", label: "Missions", icon: Target, hint: "Overarching transformation goal per client" },
+      { to: "/journeys", label: "Journeys", icon: Compass, hint: "Capability areas (contain Quests)" },
+      { to: "/quests", label: "Quests", icon: Compass, hint: "Group Sparks → advance Components" },
+      { to: "/sparks", label: "Sparks", icon: Sparkles, hint: "Atomic interactions (system-generated)" },
     ],
   },
   {
@@ -115,6 +99,7 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
     caption: "Definitions · what CAN be done",
     collapsible: true,
     items: [
+      { to: "/bizzybots", label: "BizzyBots", icon: Bot, hint: "9 Lens agents — ask any subject" },
       { to: "/workflows", label: "Workflows", icon: Workflow, hint: "Stored, versioned, reusable" },
       { to: "/session-templates", label: "Session Templates", icon: Calendar, hint: "Mirror / Machine / Map / Sync catalog" },
       { to: "/playbooks", label: "Playbooks", icon: LibraryIcon, hint: "How a service runs end-to-end" },
@@ -122,7 +107,9 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
       { to: "/personas", label: "Personas", icon: Users, hint: "Buyer archetypes" },
       { to: "/outcomes", label: "Outcomes", icon: Target, hint: "Six measurable result types" },
       { to: "/library/jtbd", label: "Jobs-to-be-done", icon: TargetIcon, hint: "What customers hire you for" },
-      { to: "/library/ktis", label: "KTIs", icon: Radar, hint: "Forward-facing signal trackers (not KPIs — KPIs measure the past)" },
+      { to: "/library/ktis", label: "KTIs", icon: Radar, hint: "Forward-facing signal trackers" },
+      { to: "/documents", label: "Documents", icon: FileText, hint: "Briefs, deliverables, assets" },
+      { to: "/domain-assessments", label: "Domain Assessments", icon: Gauge, hint: "Maturity scoring" },
       { to: "/vault", label: "Vault", icon: Vault, hint: "All captured & generated files" },
       { to: "/domains", label: "Domains", icon: Gauge, hint: "22 universal areas of excellence" },
       { to: "/tenets", label: "Tenets", icon: Sparkles, hint: "Industry-specific anchors" },
@@ -134,12 +121,13 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
     collapsible: true,
     items: [
       { to: "/settings/canon", label: "Entity Canon", icon: Sparkles, hint: "What perfection looks like per entity" },
-      { to: "/settings/lens-canon", label: "Lens Canon", icon: BookOpen, hint: "Curated best-practice Lens perspectives — canon-first, AI on demand" },
+      { to: "/settings/lens-canon", label: "Lens Canon", icon: BookOpen, hint: "Curated best-practice Lens perspectives" },
       { to: "/settings/prompts", label: "Prompt Console", icon: Wand2, hint: "Every editable AI prompt in one place" },
       { to: "/settings/spark-templates", label: "Spark Library", icon: BookOpen, hint: "Curated, reusable Spark templates" },
       { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "L1→L5 across the 5 Ps" },
       { to: "/settings/lenses", label: "BizzyBot prompts", icon: Bot, hint: "Edit AI instructions per Lens" },
       { to: "/settings/open-decisions", label: "Open decisions", icon: FileText, hint: "Architecture decisions we have not yet settled" },
+      { to: "/settings/ux-audit", label: "UX Audit", icon: Sparkles, hint: "Design system audit" },
       { to: "/settings", label: "Team & profile", icon: Settings },
     ],
   },
