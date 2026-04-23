@@ -31,6 +31,7 @@ import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
 import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
 import { Route as AppBizzybotsRouteImport } from './routes/_app.bizzybots'
+import { Route as AppAuditRouteImport } from './routes/_app.audit'
 import { Route as AppWorkflowsIndexRouteImport } from './routes/_app.workflows.index'
 import { Route as AppTenetsIndexRouteImport } from './routes/_app.tenets.index'
 import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
@@ -208,6 +209,11 @@ const AppCalendarRoute = AppCalendarRouteImport.update({
 const AppBizzybotsRoute = AppBizzybotsRouteImport.update({
   id: '/bizzybots',
   path: '/bizzybots',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAuditRoute = AppAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AppRoute,
 } as any)
 const AppWorkflowsIndexRoute = AppWorkflowsIndexRouteImport.update({
@@ -566,6 +572,7 @@ const AppWorkflowsIdRunsRunIdRoute = AppWorkflowsIdRunsRunIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/audit': typeof AppAuditRoute
   '/bizzybots': typeof AppBizzybotsRoute
   '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
@@ -658,6 +665,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/audit': typeof AppAuditRoute
   '/bizzybots': typeof AppBizzybotsRoute
   '/calendar': typeof AppCalendarRoute
   '/capture': typeof AppCaptureRoute
@@ -751,6 +759,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/audit': typeof AppAuditRoute
   '/_app/bizzybots': typeof AppBizzybotsRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/capture': typeof AppCaptureRoute
@@ -845,6 +854,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/audit'
     | '/bizzybots'
     | '/calendar'
     | '/capture'
@@ -937,6 +947,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/audit'
     | '/bizzybots'
     | '/calendar'
     | '/capture'
@@ -1029,6 +1040,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/audit'
     | '/_app/bizzybots'
     | '/_app/calendar'
     | '/_app/capture'
@@ -1283,6 +1295,13 @@ declare module '@tanstack/react-router' {
       path: '/bizzybots'
       fullPath: '/bizzybots'
       preLoaderRoute: typeof AppBizzybotsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/audit': {
+      id: '/_app/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AppAuditRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/workflows/': {
@@ -1870,6 +1889,7 @@ const AppWorkflowsIdRouteWithChildren = AppWorkflowsIdRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAuditRoute: typeof AppAuditRoute
   AppBizzybotsRoute: typeof AppBizzybotsRoute
   AppCalendarRoute: typeof AppCalendarRoute
   AppCaptureRoute: typeof AppCaptureRoute
@@ -1942,6 +1962,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAuditRoute: AppAuditRoute,
   AppBizzybotsRoute: AppBizzybotsRoute,
   AppCalendarRoute: AppCalendarRoute,
   AppCaptureRoute: AppCaptureRoute,

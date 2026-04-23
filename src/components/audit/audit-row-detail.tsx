@@ -151,7 +151,7 @@ export function AuditRowDetail({ row, onApplyFilter }: Props) {
       {row.notes && (
         <div className="rounded-md bg-muted/50 p-2 text-[11px]">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Notes · </span>
-          {row.notes}
+          <span>{row.notes}</span>
         </div>
       )}
 

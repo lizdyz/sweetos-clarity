@@ -129,6 +129,7 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
       { to: "/settings/lenses", label: "BizzyBot prompts", icon: Bot, hint: "Edit AI instructions per Lens" },
       { to: "/settings/open-decisions", label: "Open decisions", icon: FileText, hint: "Architecture decisions we have not yet settled" },
       { to: "/settings/ux-audit", label: "UX Audit", icon: Sparkles, hint: "Design system audit" },
+      { to: "/audit", label: "Audit Trail", icon: Shield, hint: "System-of-record · every meaningful change, who, when, what" },
       { to: "/settings", label: "Team & profile", icon: Settings },
     ],
   },
