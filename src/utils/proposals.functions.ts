@@ -474,6 +474,10 @@ export const captureProposal = createServerFn({ method: "POST" })
       sb.from("domains").select("slug, name, description").eq("enabled", true).order("sort_order"),
       sb.from("components").select("id, name").order("updated_at", { ascending: false }).limit(40),
       sb.from("industries").select("id, slug").eq("enabled", true),
+      sb.from("personas").select("id, name, sector").limit(40),
+      sb.from("quests").select("id, name").neq("progression_state", "Confirmed Complete").order("updated_at", { ascending: false }).limit(30),
+      sb.from("sparks").select("id, name").neq("progression_state", "Confirmed Complete").order("updated_at", { ascending: false }).limit(30),
+      sb.from("key_trend_indicators").select("id, name, threshold_definition").eq("status", "active").limit(30),
     ]);
 
     const industryRows = (industriesRes.data ?? []) as Array<{ id: string; slug: string }>;
