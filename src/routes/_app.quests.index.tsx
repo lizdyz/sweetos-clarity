@@ -1,14 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
 import { useQuery } from "@tanstack/react-query";
 import { sb as supabase } from "@/lib/sb";
 import { EntityListPage } from "@/components/entity-workspace";
 import { ScopeChip } from "@/components/scope-chip";
 import { PageHeader } from "@/components/page-header";
+import { UniversalFilterBar } from "@/components/universal-filter-bar";
+import { universalFilterSchema } from "@/lib/use-universal-filters";
 import { Compass } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/quests/")({
+  validateSearch: zodValidator(universalFilterSchema),
   component: QuestsIndex,
 });
 
@@ -53,6 +57,7 @@ function QuestsIndex() {
       />
 
       <ScopeTabs value={filter} onChange={setFilter} />
+      <UniversalFilterBar />
 
       {recent.length > 0 && (
         <section className="rounded-2xl border border-border bg-surface/60 p-4">
