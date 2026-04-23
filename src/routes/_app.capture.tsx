@@ -8,6 +8,7 @@ import { captureProposal } from "@/utils/proposals.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { FileDrop, type PendingFile } from "@/components/file-drop";
 import { CaptureQueueStrip } from "@/components/capture-queue-strip";
+import { UniversalDropZone } from "@/components/universal-drop-zone";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/capture")({
@@ -304,6 +305,13 @@ function CapturePage() {
           Open Sandbox →
         </Link>
       </Card>
+
+      <div className="mt-4">
+        <h2 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Or drop straight into Sandbox
+        </h2>
+        <UniversalDropZone />
+      </div>
 
       <CaptureQueueStrip />
     </div>
