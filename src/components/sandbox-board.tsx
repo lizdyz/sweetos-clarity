@@ -138,59 +138,8 @@ export function SandboxBoard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const runOverlay = useMutation({
-    mutationFn: async ({ target, overlay }: { target: Triageable; overlay: OverlayKind }) => {
-      // If item is from inbox feed (not yet stored), materialize it first
-      let realId = target.id;
-      let existing: SandboxItemRow | null = null;
-      if (target.id.startsWith("inbox-")) {
-        const { data, error } = await sb
-          .from("sandbox_items")
-          .insert({
-            title: target.title,
-            body: target.body,
-            source_kind: target.source.kind,
-            source_id: target.source.id,
-            relationship_id: target.relationship_id,
-            state: "raw",
-            frames: [],
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        existing = data as SandboxItemRow;
-        realId = existing.id;
-      } else {
-        const { data, error } = await sb
-          .from("sandbox_items")
-          .select("frames")
-          .eq("id", realId)
-          .single();
-        if (error) throw error;
-        existing = data as SandboxItemRow;
-      }
-
-      const newFrame: Frame = {
-        overlay_kind: overlay,
-        output: { summary: `${overlay} lens applied (stub — wire to AI in v1.5)` },
-        ran_at: new Date().toISOString(),
-      };
-      const nextFrames = [...(existing?.frames ?? []), newFrame];
-      const { error: upErr } = await sb
-        .from("sandbox_items")
-        .update({ frames: nextFrames, state: "framed" })
-        .eq("id", realId);
-      if (upErr) throw upErr;
-      return realId;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sandbox_items"] });
-      qc.invalidateQueries({ queryKey: ["sandbox_inbox"] });
-      toast.success("Frame attached");
-      setSelected(null);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  // Framework runs now happen inside ObjectCompanion (SweetLens) in the right rail.
+  // It writes to lens_perspectives + lens_outputs and supersedes the old `frames` stub.
 
   const promote = useMutation({
     mutationFn: async ({ target, kind }: { target: Triageable; kind: PromoteActionKind }) => {
@@ -347,10 +296,19 @@ export function SandboxBoard() {
         </div>
       </div>
 
-      <FrameworksRail
-        target={selected}
-        onRunOverlay={(target, overlay) => runOverlay.mutate({ target, overlay })}
-      />
+      {selected ? (
+        <ObjectCompanion
+          objectKind="sandbox_item"
+          objectId={selected.id}
+          objectTitle={selected.title}
+          objectBody={selected.body}
+        />
+      ) : (
+        <aside className="flex flex-col gap-2 rounded-2xl border bg-card p-4 text-xs text-muted-foreground">
+          <div className="text-sm font-semibold text-foreground">SweetLens</div>
+          Select an idea to interrogate it with a Lens.
+        </aside>
+      )}
     </div>
   );
 }
