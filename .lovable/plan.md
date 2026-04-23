@@ -1,103 +1,85 @@
+# Wave 10 — IA cleanup: nest SweetCycle under Engagement Plans + retire ghost routes
+
+You spotted two real issues. Both are symptoms of the same drift: routes listed in the sidebar that either duplicate other surfaces or only exist as legacy redirects. Here's the cleanup, plus the rest of what I found while looking.
+
+## What you flagged
+
+### 1. SweetCycle belongs under Engagement Plans
+
+You're right. SweetCycle is **the rhythm of an active engagement** — Seed → Synthesize → Session → Sync → Ship. It's only meaningful when:
+
+- a Relationship has an **Engagement Plan**, and
+- that plan has **Services** that consume sessions.
+
+Today SweetCycle sits as a peer in the WORK group, which makes it look like a separate destination. It should be a **view inside Engagement Plans** (and reachable from a Relationship detail too).
+
+**Move:**
+
+- Keep the `/sweetcycle` route alive (deep links work) but **remove it from the sidebar**.
+- Add a **"SweetCycle"** tab to `/engagement-plans/$id` showing that plan's sessions on the 5-phase board (filtered by `relationship_id` + plan's services).
+- Add a top-level **"View all SweetCycles"** link inside the Engagement Plans index header that opens `/sweetcycle` (multi-rel board) — for the "show me every active client's rhythm at once" use case.
+- Update `mem://design/sidebar-ia.md` to reflect: SweetCycle is a *view*, not a sidebar destination.
+
+### 2. `/pipeline` is dead weight
+
+`/pipeline` is a 7-line redirect to `/flightdeck` (Wave 2A retirement). It still shows in the WORK sidebar group with a `GitBranch` icon, which is misleading — clicking it just teleports you.
+
+**Remove:** Delete the `/pipeline` sidebar entry. Keep the redirect file so old bookmarks/links don't 404.
+
+(The "pipeline" word is fine elsewhere — `pipeline_stage` is a real column on relationships, used by the funnel filter on `/relationships`. That stays.)
+
+## Other ghost/duplicate routes I found while looking
 
 
-# Wave 9 — Wire the dead buttons + finish the Wave-8 mounts
+| Route                      | Status                                                                                                      | Recommendation                                                                                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/my-tasks`                | Redirect-only stub                                                                                          | Remove from any nav (already not in sidebar — confirm)                                                                                                                            |
+| `/queue`                   | Redirect-only stub                                                                                          | Same                                                                                                                                                                              |
+| `/planner`                 | Redirect-only stub                                                                                          | Same                                                                                                                                                                              |
+| `/sweetsync`               | Live page but not in sidebar; SweetSync entities are now reachable as tabs on `/relationships/$id` (Wave 9) | Keep as a **catch-all hub** OR retire. Recommend: **retire as a sidebar concept**, keep the route as a deep-link landing that lists relationships with active SweetSync activity. |
+| `/portals/$relationshipId` | Public-facing client portal                                                                                 | Keep, no sidebar (correct)                                                                                                                                                        |
+| `/p/$slug/seed`            | Public seed page                                                                                            | Keep, no sidebar (correct)                                                                                                                                                        |
 
-You're right — I left a trail of half-finished work. Here's the honest audit and what to ship to make every page feel real.
 
-## The 4 dead "+ New" buttons (the ones you're clicking)
+## Other cleanup wins worth bundling
 
-| Page | Dead button | Why it does nothing |
-|---|---|---|
-| `/components` | **+ New component** | Renders, no `onClick` |
-| `/projects` | **+ New project** | Renders, no `onClick` |
-| `/relationships` | **+ Add relationship** | Renders, no `onClick` |
-| `/tasks` | **+ New task** | Renders, no `onClick` |
+While I had the sidebar open:
 
-These are the most visible "nothing happens" moments. Every other button I scanned has a real handler.
-
-## What from Wave 8 actually shipped vs what's still pending
-
-**Shipped ✅**
-- `<EntityShell>` component built
-- `<EntityCanonTab>`, `<ConnectionRail>`, `<EvidenceFooter>`, `<EntityFrameworksRail>` built
-- `<UniversalDropZone>` mounted on `/today`, `/capture`, and as global `+` in topbar
-- `<TriageCard>` rolled out to `/sweetscan`, `/sparks` index, `/decisions` index
-- `<UniversalFilterBar>` refactored to honor form-control canon
-- Stub routes `/pipeline`, `/planner`, `/queue`, `/my-tasks` redirect cleanly
-
-**NOT shipped (you're right to call it out) ❌**
-- `<EntityShell>` is built but **mounted on zero detail routes** (it lives in the file but no page imports it)
-- `<EntityFrameworksRail>` not mounted on `/tasks/$id`, `/decisions/$id`, `/sparks/$id`
-- TriageCard not in `/operate/ocda` Observe lane (still bespoke)
-- TriageCard not in `/capture` (still bespoke triage rows)
-- `/start/ship-status` page never created
-- Relationship SweetSync tabs never created
-- `mem://design/canon-tab-rule.md` never written
-
-## Wave 9 — three crisp moves
-
-### 1. Wire every "+ New" button (highest visibility)
-
-Each opens a slide-in `<Sheet>` with a real create form. Same pattern, four entities:
-- `+ New component` → `<ComponentCreateSheet>` (name · kind · maturity L1)
-- `+ New project` → `<ProjectCreateSheet>` (name · relationship · status)
-- `+ Add relationship` → `<RelationshipCreateSheet>` (name · org · industry · stage)
-- `+ New task` → `<TaskCreateSheet>` (title · operator · due · scope)
-
-All four follow the form-control canon (Wave 8): Select for owner/status, Combobox for relationship, Calendar popover for due, Switch for "create another after save". On save → invalidate query → toast → navigate to detail page.
-
-### 2. Finish the Wave-8 mounts I promised
-
-| Mount | Where | What it gives you |
-|---|---|---|
-| `<EntityFrameworksRail>` in right rail | `/tasks/$id` · `/decisions/$id` · `/sparks/$id` | Run any of F1–F8 on the open item |
-| `<TriageCard>` rows | `/operate/ocda` Observe lane | One gesture from Capture → Choose |
-| `<TriageCard>` rows | `/capture` proposal queue | Replace bespoke triage row |
-| `<EntityShell>` wrap | 8 detail routes (tasks, projects, components, sessions, workflows, quests, sparks, decisions) | Zone 1–5 layout consistent everywhere |
-
-### 3. Two missing surfaces
-
-- **`/start/ship-status`** — the "what's real vs aspirational" board pulled from a live route count + entity_canon coverage. Reachable from `/start` via a "Ship status →" link.
-- **Relationship SweetSync tabs** on `/relationships/$id` — additive Missions / Journeys / Quests / Sparks / Mirror tabs filtered by `relationship_id`.
+- **"Sandbox" + "Capture" overlap.** Capture is the inbox ( this is where you can share multi node thought drops to pollinate many different entities in the system, ex this replace filling in a note in a crm or creating a task as it does it all from what you drop in, and then allows you to decide to save some as ideas to further explore in sandbox ; Sandbox is the triage table. After Wave 7 they share `<TriageCard>`. Add a one-line caption on each so the difference is obvious: Capture = "in", Sandbox = "frame & route".
+- **"Sessions Bank" naming.** Currently labeled "Sessions Bank" in IA canon but the route is `/sessions`. Confirm the label stays "Sessions Bank" (per canon) — verified, no change.
+- **"People" vs "Operators" vs "Relationships"** — three entities in the PEOPLE group, easy to confuse. Add one-line captions:
+  - Operators = *who does work* (humans · workflows · agents)
+  - Relationships = *clients & key relationships*
+  - People = *contacts within those relationships*
 
 ## Files
 
+**Edited:**
+
+- `src/components/sidebar-nav.tsx` — remove `/pipeline` and `/sweetcycle` entries from WORK group; add captions to Capture / Sandbox / Operators / Relationships / People
+- `src/routes/_app.engagement-plans.$id.tsx` — add tabs: **Anatomy** (current content) + **SweetCycle** (the 5-phase board scoped to this plan's sessions) + **Audit** (existing audit panel)
+- `src/routes/_app.engagement-plans.index.tsx` — add a "View all SweetCycles →" link in the header that goes to `/sweetcycle` (multi-rel)
+- `src/routes/_app.sweetcycle.tsx` — add a small banner: "SweetCycle is the rhythm of active engagements. Pick a plan to drill in, or [browse Engagement Plans →]"
+- `mem://design/sidebar-ia.md` — update WORK group list (remove SweetCycle + Pipeline); add note "SweetCycle is a view, not a destination"
+
 **New:**
-- `src/components/component-create-sheet.tsx`
-- `src/components/project-create-sheet.tsx`
-- `src/components/relationship-create-sheet.tsx`
-- `src/components/task-create-sheet.tsx`
-- `src/components/start/ship-status-board.tsx`
-- `src/components/relationship-sweetsync-tabs.tsx`
-- `src/routes/_app.start.ship-status.tsx`
-- `mem://design/canon-tab-rule.md`
 
-**Edited (mounts/wires only):**
-- `src/routes/_app.components.index.tsx` · `_app.projects.index.tsx` · `_app.relationships.index.tsx` · `_app.tasks.index.tsx` — wire the four "+ New" buttons
-- `src/routes/_app.tasks.$id.tsx` · `_app.decisions.$id.tsx` · `_app.sparks.$id.tsx` — mount FrameworksRail
-- `src/components/ocda-cockpit.tsx` — TriageCard rows in Observe lane
-- `src/routes/_app.capture.tsx` — TriageCard rows replacing bespoke triage
-- 8 detail routes — wrap content in `<EntityShell>` (one-line wraps, no rewrites)
-- `src/routes/_app.relationships.$id.tsx` — add SweetSync tabs
-- `src/routes/_app.start.tsx` — link to `/start/ship-status`
+- (none — pure consolidation)
 
-## What this wave is NOT
-
-- No new entities, no migrations
-- No sidebar regroup (still locked)
-- No edits to auto-generated files
-- No deletions (the four redirect stubs stay — they protect old bookmarks)
+**Not deleted:** `/pipeline`, `/my-tasks`, `/queue`, `/planner`, `/sweetcycle` route files all stay so old links keep redirecting cleanly.
 
 ## Sequencing
 
-1. Four "+ New" create sheets (~30%) — kills the "nothing happens" feeling immediately
-2. EntityShell wraps on 8 detail routes (~25%)
-3. FrameworksRail + TriageCard mounts (~20%)
-4. `/start/ship-status` page (~12%)
-5. Relationship SweetSync tabs (~10%)
-6. Memory canon update (~3%)
+1. Sidebar cleanup — remove `/pipeline` + `/sweetcycle`, add captions (~20%)
+2. Engagement Plan detail gets SweetCycle tab (~50%)
+3. Engagement Plans index gets "View all SweetCycles" link + SweetCycle page banner (~15%)
+4. Memory canon update (~15%)
 
-After Wave 9: every button visible in your sidebar leads somewhere, every "+ New" actually creates, every detail page has the same shell, and every triage surface uses the same card. No more dead clicks.
+## Not in this wave
 
-Reply **"Run Wave 9"** to ship in this order, or **"Just the four + New buttons first"** to land the most painful fix alone.
+- No route file deletions
+- No sidebar regroup (locked at 5 groups)
+- No new entities or migrations
+- No edits to auto-generated files
 
+Reply **"Run Wave 10"** to ship in this order, or **"Just the SweetCycle nesting first"** to land the conceptual fix before the smaller cleanups.
