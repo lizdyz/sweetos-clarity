@@ -5,6 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { sb } from "@/lib/sb";
 import { cn } from "@/lib/utils";
+import { TriageCard } from "@/components/triage-card";
+import { sparkToTriageable } from "@/lib/triage-adapters";
+import { useTriagePromote } from "@/lib/use-triage-promote";
+import type { Triageable } from "@/lib/triageable";
+import { DEFAULT_PROMOTE_OPTIONS } from "@/lib/triageable";
 
 type Stage = "observe" | "choose" | "decide" | "act";
 
@@ -24,38 +29,50 @@ const STAGE: { key: Stage; label: string; icon: typeof Eye; tone: string; captio
 ];
 
 export function OCDACockpit() {
+  const promote = useTriagePromote();
+
+  // Observe lane now uses the universal TriageCard. We fetch sparks + proposals
+  // and adapt them to Triageable so the same gesture (Frame · Promote) works.
   const observeQ = useQuery({
-    queryKey: ["ocda", "observe"],
+    queryKey: ["ocda", "observe", "triage"],
     queryFn: async () => {
       const [proposals, sparks] = await Promise.all([
-        sb.from("proposals")
+        sb
+          .from("proposals")
           .select("id, entity_type, payload, created_at")
           .eq("status", "pending")
           .order("created_at", { ascending: false })
-          .limit(15),
-        sb.from("sparks")
-          .select("id, name, origin_event, created_at")
+          .limit(10),
+        sb
+          .from("sparks" as never)
+          .select("id, name, description, created_at, origin_event, scope, relationship_id, done_at")
+          .is("done_at", null)
           .order("created_at", { ascending: false })
-          .limit(15),
+          .limit(10),
       ]);
-      const items: CardItem[] = [];
-      for (const p of (proposals.data ?? []) as Array<{ id: string; entity_type: string; payload: Record<string, unknown> | null }>) {
+      const items: Triageable[] = [];
+      for (const p of (proposals.data ?? []) as Array<{
+        id: string;
+        entity_type: string;
+        payload: Record<string, unknown> | null;
+        created_at: string;
+      }>) {
         items.push({
-          id: `p-${p.id}`,
-          kind: "proposal",
+          id: p.id,
+          kind: "sandbox_item",
           title: readTitle(p.payload) ?? `(${p.entity_type})`,
-          meta: p.entity_type,
-          href: "/capture",
+          body: null,
+          source: { kind: "proposal", id: p.id, label: p.entity_type },
+          state: "raw",
+          frames: [],
+          promote_options: DEFAULT_PROMOTE_OPTIONS,
+          provenance: { upstream: [], downstream: [] },
+          created_at: p.created_at,
+          relationship_id: null,
         });
       }
-      for (const s of (sparks.data ?? []) as Array<{ id: string; name: string; origin_event: string | null }>) {
-        items.push({
-          id: `s-${s.id}`,
-          kind: "spark",
-          title: s.name,
-          meta: s.origin_event ?? "system",
-          href: `/sparks/${s.id}`,
-        });
+      for (const s of (sparks.data ?? []) as unknown as Array<Parameters<typeof sparkToTriageable>[0]>) {
+        items.push(sparkToTriageable(s));
       }
       return items;
     },
@@ -117,13 +134,13 @@ export function OCDACockpit() {
 
   const byStage = useMemo(
     () => ({
-      observe: observeQ.data ?? [],
       choose: chooseQ.data ?? [],
       decide: decideQ.data ?? [],
       act: actQ.data ?? [],
     }),
-    [observeQ.data, chooseQ.data, decideQ.data, actQ.data],
+    [chooseQ.data, decideQ.data, actQ.data],
   );
+  const observeItems = observeQ.data ?? [];
 
   const loading = observeQ.isLoading || chooseQ.isLoading || decideQ.isLoading || actQ.isLoading;
 
@@ -136,7 +153,8 @@ export function OCDACockpit() {
       )}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
         {STAGE.map(({ key, label, icon: Icon, tone, caption }) => {
-          const items = byStage[key];
+          const isObserve = key === "observe";
+          const items = isObserve ? observeItems : byStage[key as "choose" | "decide" | "act"];
           return (
             <Card
               key={key}
@@ -160,8 +178,16 @@ export function OCDACockpit() {
                   <div className="rounded-lg border border-dashed border-border/60 bg-background/50 p-4 text-center text-[11px] text-muted-foreground">
                     Nothing here yet.
                   </div>
+                ) : isObserve ? (
+                  (items as Triageable[]).map((t) => (
+                    <TriageCard
+                      key={t.id}
+                      item={t}
+                      onPromote={(item, kind) => promote.mutate({ item, kind })}
+                    />
+                  ))
                 ) : (
-                  items.map((it) => (
+                  (items as CardItem[]).map((it) => (
                     <a
                       key={it.id}
                       href={it.href}

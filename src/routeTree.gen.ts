@@ -58,6 +58,7 @@ import { Route as PSlugSeedRouteImport } from './routes/p.$slug.seed'
 import { Route as AppWorkflowsIdRouteImport } from './routes/_app.workflows.$id'
 import { Route as AppTenetsSlugRouteImport } from './routes/_app.tenets.$slug'
 import { Route as AppTasksIdRouteImport } from './routes/_app.tasks.$id'
+import { Route as AppStartShipStatusRouteImport } from './routes/_app.start.ship-status'
 import { Route as AppSparksIdRouteImport } from './routes/_app.sparks.$id'
 import { Route as AppSettingsUxAuditRouteImport } from './routes/_app.settings.ux-audit'
 import { Route as AppSettingsSparkTemplatesRouteImport } from './routes/_app.settings.spark-templates'
@@ -343,6 +344,11 @@ const AppTasksIdRoute = AppTasksIdRouteImport.update({
   path: '/tasks/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppStartShipStatusRoute = AppStartShipStatusRouteImport.update({
+  id: '/ship-status',
+  path: '/ship-status',
+  getParentRoute: () => AppStartRoute,
+} as any)
 const AppSparksIdRoute = AppSparksIdRouteImport.update({
   id: '/sparks/$id',
   path: '/sparks/$id',
@@ -553,7 +559,7 @@ export interface FileRoutesByFullPath {
   '/queue': typeof AppQueueRoute
   '/sandbox': typeof AppSandboxRoute
   '/settings': typeof AppSettingsRouteWithChildren
-  '/start': typeof AppStartRoute
+  '/start': typeof AppStartRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
   '/sweetscan': typeof AppSweetscanRoute
   '/sweetsync': typeof AppSweetsyncRoute
@@ -591,6 +597,7 @@ export interface FileRoutesByFullPath {
   '/settings/spark-templates': typeof AppSettingsSparkTemplatesRoute
   '/settings/ux-audit': typeof AppSettingsUxAuditRoute
   '/sparks/$id': typeof AppSparksIdRoute
+  '/start/ship-status': typeof AppStartShipStatusRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
   '/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
@@ -640,7 +647,7 @@ export interface FileRoutesByTo {
   '/planner': typeof AppPlannerRoute
   '/queue': typeof AppQueueRoute
   '/sandbox': typeof AppSandboxRoute
-  '/start': typeof AppStartRoute
+  '/start': typeof AppStartRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
   '/sweetscan': typeof AppSweetscanRoute
   '/sweetsync': typeof AppSweetsyncRoute
@@ -678,6 +685,7 @@ export interface FileRoutesByTo {
   '/settings/spark-templates': typeof AppSettingsSparkTemplatesRoute
   '/settings/ux-audit': typeof AppSettingsUxAuditRoute
   '/sparks/$id': typeof AppSparksIdRoute
+  '/start/ship-status': typeof AppStartShipStatusRoute
   '/tasks/$id': typeof AppTasksIdRoute
   '/tenets/$slug': typeof AppTenetsSlugRoute
   '/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
@@ -730,7 +738,7 @@ export interface FileRoutesById {
   '/_app/queue': typeof AppQueueRoute
   '/_app/sandbox': typeof AppSandboxRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
-  '/_app/start': typeof AppStartRoute
+  '/_app/start': typeof AppStartRouteWithChildren
   '/_app/sweetcycle': typeof AppSweetcycleRoute
   '/_app/sweetscan': typeof AppSweetscanRoute
   '/_app/sweetsync': typeof AppSweetsyncRoute
@@ -768,6 +776,7 @@ export interface FileRoutesById {
   '/_app/settings/spark-templates': typeof AppSettingsSparkTemplatesRoute
   '/_app/settings/ux-audit': typeof AppSettingsUxAuditRoute
   '/_app/sparks/$id': typeof AppSparksIdRoute
+  '/_app/start/ship-status': typeof AppStartShipStatusRoute
   '/_app/tasks/$id': typeof AppTasksIdRoute
   '/_app/tenets/$slug': typeof AppTenetsSlugRoute
   '/_app/workflows/$id': typeof AppWorkflowsIdRouteWithChildren
@@ -858,6 +867,7 @@ export interface FileRouteTypes {
     | '/settings/spark-templates'
     | '/settings/ux-audit'
     | '/sparks/$id'
+    | '/start/ship-status'
     | '/tasks/$id'
     | '/tenets/$slug'
     | '/workflows/$id'
@@ -945,6 +955,7 @@ export interface FileRouteTypes {
     | '/settings/spark-templates'
     | '/settings/ux-audit'
     | '/sparks/$id'
+    | '/start/ship-status'
     | '/tasks/$id'
     | '/tenets/$slug'
     | '/workflows/$id'
@@ -1034,6 +1045,7 @@ export interface FileRouteTypes {
     | '/_app/settings/spark-templates'
     | '/_app/settings/ux-audit'
     | '/_app/sparks/$id'
+    | '/_app/start/ship-status'
     | '/_app/tasks/$id'
     | '/_app/tenets/$slug'
     | '/_app/workflows/$id'
@@ -1423,6 +1435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/start/ship-status': {
+      id: '/_app/start/ship-status'
+      path: '/ship-status'
+      fullPath: '/start/ship-status'
+      preLoaderRoute: typeof AppStartShipStatusRouteImport
+      parentRoute: typeof AppStartRoute
+    }
     '/_app/sparks/$id': {
       id: '/_app/sparks/$id'
       path: '/sparks/$id'
@@ -1731,6 +1750,18 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
   AppSettingsRouteChildren,
 )
 
+interface AppStartRouteChildren {
+  AppStartShipStatusRoute: typeof AppStartShipStatusRoute
+}
+
+const AppStartRouteChildren: AppStartRouteChildren = {
+  AppStartShipStatusRoute: AppStartShipStatusRoute,
+}
+
+const AppStartRouteWithChildren = AppStartRoute._addFileChildren(
+  AppStartRouteChildren,
+)
+
 interface AppLibraryJtbdRouteChildren {
   AppLibraryJtbdIdRoute: typeof AppLibraryJtbdIdRoute
 }
@@ -1791,7 +1822,7 @@ interface AppRouteChildren {
   AppQueueRoute: typeof AppQueueRoute
   AppSandboxRoute: typeof AppSandboxRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
-  AppStartRoute: typeof AppStartRoute
+  AppStartRoute: typeof AppStartRouteWithChildren
   AppSweetcycleRoute: typeof AppSweetcycleRoute
   AppSweetscanRoute: typeof AppSweetscanRoute
   AppSweetsyncRoute: typeof AppSweetsyncRoute
@@ -1862,7 +1893,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppQueueRoute: AppQueueRoute,
   AppSandboxRoute: AppSandboxRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
-  AppStartRoute: AppStartRoute,
+  AppStartRoute: AppStartRouteWithChildren,
   AppSweetcycleRoute: AppSweetcycleRoute,
   AppSweetscanRoute: AppSweetscanRoute,
   AppSweetsyncRoute: AppSweetsyncRoute,
