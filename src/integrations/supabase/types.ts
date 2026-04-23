@@ -2671,6 +2671,66 @@ export type Database = {
           },
         ]
       }
+      ingestion_conflicts: {
+        Row: {
+          conflict_kind: string
+          created_at: string
+          existing_entity_id: string | null
+          existing_entity_label: string | null
+          file_id: string
+          id: string
+          proposed_resolution: string
+          resolution_notes: string | null
+          run_id: string
+          status: string
+          target_table: string
+          updated_at: string
+        }
+        Insert: {
+          conflict_kind?: string
+          created_at?: string
+          existing_entity_id?: string | null
+          existing_entity_label?: string | null
+          file_id: string
+          id?: string
+          proposed_resolution?: string
+          resolution_notes?: string | null
+          run_id: string
+          status?: string
+          target_table: string
+          updated_at?: string
+        }
+        Update: {
+          conflict_kind?: string
+          created_at?: string
+          existing_entity_id?: string | null
+          existing_entity_label?: string | null
+          file_id?: string
+          id?: string
+          proposed_resolution?: string
+          resolution_notes?: string | null
+          run_id?: string
+          status?: string
+          target_table?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_conflicts_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_conflicts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingestion_file_groups: {
         Row: {
           column_signature: string[] | null
@@ -2748,6 +2808,7 @@ export type Database = {
           run_id: string
           sha256: string | null
           size_bytes: number | null
+          source_path: string | null
           storage_path: string
           structure_json: Json | null
           updated_at: string
@@ -2766,6 +2827,7 @@ export type Database = {
           run_id: string
           sha256?: string | null
           size_bytes?: number | null
+          source_path?: string | null
           storage_path: string
           structure_json?: Json | null
           updated_at?: string
@@ -2784,6 +2846,7 @@ export type Database = {
           run_id?: string
           sha256?: string | null
           size_bytes?: number | null
+          source_path?: string | null
           storage_path?: string
           structure_json?: Json | null
           updated_at?: string
@@ -2870,6 +2933,7 @@ export type Database = {
       }
       ingestion_object_registry: {
         Row: {
+          conflict_key_fields: string[]
           created_at: string
           description: string | null
           display_name: string
@@ -2883,6 +2947,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          conflict_key_fields?: string[]
           created_at?: string
           description?: string | null
           display_name: string
@@ -2896,6 +2961,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          conflict_key_fields?: string[]
           created_at?: string
           description?: string | null
           display_name?: string
@@ -2916,6 +2982,7 @@ export type Database = {
           evidence_file_ids: string[] | null
           group_id: string | null
           id: string
+          likely_alias_of: string | null
           proposed_name: string
           rationale: string | null
           run_id: string
@@ -2928,6 +2995,7 @@ export type Database = {
           evidence_file_ids?: string[] | null
           group_id?: string | null
           id?: string
+          likely_alias_of?: string | null
           proposed_name: string
           rationale?: string | null
           run_id: string
@@ -2940,6 +3008,7 @@ export type Database = {
           evidence_file_ids?: string[] | null
           group_id?: string | null
           id?: string
+          likely_alias_of?: string | null
           proposed_name?: string
           rationale?: string | null
           run_id?: string
@@ -2963,6 +3032,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ingestion_recipes: {
+        Row: {
+          conflict_defaults: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          field_aliases: Json
+          hit_count: number
+          id: string
+          name: string
+          signature_set: Json
+          updated_at: string
+        }
+        Insert: {
+          conflict_defaults?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          field_aliases?: Json
+          hit_count?: number
+          id?: string
+          name: string
+          signature_set?: Json
+          updated_at?: string
+        }
+        Update: {
+          conflict_defaults?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          field_aliases?: Json
+          hit_count?: number
+          id?: string
+          name?: string
+          signature_set?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       ingestion_results: {
         Row: {
@@ -3020,6 +3128,8 @@ export type Database = {
       }
       ingestion_runs: {
         Row: {
+          analysis_total: number
+          analyzed_file_count: number
           created_at: string
           created_by: string
           created_count: number
@@ -3039,6 +3149,8 @@ export type Database = {
           updated_count: number
         }
         Insert: {
+          analysis_total?: number
+          analyzed_file_count?: number
           created_at?: string
           created_by?: string
           created_count?: number
@@ -3058,6 +3170,8 @@ export type Database = {
           updated_count?: number
         }
         Update: {
+          analysis_total?: number
+          analyzed_file_count?: number
           created_at?: string
           created_by?: string
           created_count?: number
@@ -3085,6 +3199,8 @@ export type Database = {
           group_id: string | null
           guessed_type: string | null
           id: string
+          likely_alias_of: string | null
+          low_value: boolean
           occurrence_count: number | null
           rationale: string | null
           run_id: string
@@ -3101,6 +3217,8 @@ export type Database = {
           group_id?: string | null
           guessed_type?: string | null
           id?: string
+          likely_alias_of?: string | null
+          low_value?: boolean
           occurrence_count?: number | null
           rationale?: string | null
           run_id: string
@@ -3117,6 +3235,8 @@ export type Database = {
           group_id?: string | null
           guessed_type?: string | null
           id?: string
+          likely_alias_of?: string | null
+          low_value?: boolean
           occurrence_count?: number | null
           rationale?: string | null
           run_id?: string

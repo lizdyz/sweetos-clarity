@@ -1,28 +1,33 @@
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 
-export type ImportStep = "upload" | "analysis" | "mapping" | "schema" | "import" | "results";
+export type ImportStep = "upload" | "analysis" | "mapping" | "conflicts" | "schema" | "import" | "results";
 
 const STEPS: { id: ImportStep; label: string; sub: string }[] = [
-  { id: "upload",   label: "Upload",   sub: "Drop your files" },
-  { id: "analysis", label: "Analysis", sub: "Detect & group" },
-  { id: "mapping",  label: "Mapping",  sub: "Approve targets" },
-  { id: "schema",   label: "Schema",   sub: "New fields & types" },
-  { id: "import",   label: "Import",   sub: "Run it" },
-  { id: "results",  label: "Results",  sub: "What landed" },
+  { id: "upload",    label: "Upload",    sub: "Drop your files" },
+  { id: "analysis",  label: "Analysis",  sub: "Detect & group" },
+  { id: "mapping",   label: "Mapping",   sub: "Approve targets" },
+  { id: "conflicts", label: "Conflicts", sub: "Existing entities" },
+  { id: "schema",    label: "Schema",    sub: "New fields & types" },
+  { id: "import",    label: "Import",    sub: "Run it" },
+  { id: "results",   label: "Results",   sub: "What landed" },
 ];
 
-export function ImportStepper({ active, onSelect, completed }: {
+export function ImportStepper({
+  active, onSelect, completed, conflictsCount,
+}: {
   active: ImportStep;
   onSelect: (s: ImportStep) => void;
   completed: Set<ImportStep>;
+  conflictsCount?: number;
 }) {
   return (
     <div className="rounded-2xl border bg-card/50 p-2">
-      <ol className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
+      <ol className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-7">
         {STEPS.map((s, i) => {
           const isActive = s.id === active;
           const isDone = completed.has(s.id);
+          const showBadge = s.id === "conflicts" && (conflictsCount ?? 0) > 0;
           return (
             <li key={s.id}>
               <button
@@ -42,9 +47,12 @@ export function ImportStepper({ active, onSelect, completed }: {
                 >
                   {isDone ? <Check className="h-3.5 w-3.5" /> : i + 1}
                 </span>
-                <span className="min-w-0">
-                  <span className={cn("block text-[13px] font-semibold leading-tight", isActive ? "text-foreground" : "text-foreground/80")}>
+                <span className="min-w-0 flex-1">
+                  <span className={cn("flex items-center gap-1.5 text-[13px] font-semibold leading-tight", isActive ? "text-foreground" : "text-foreground/80")}>
                     {s.label}
+                    {showBadge && (
+                      <span className="rounded-full bg-amber-500/15 px-1.5 text-[10px] text-amber-700">{conflictsCount}</span>
+                    )}
                   </span>
                   <span className="block truncate text-[11px] text-muted-foreground">{s.sub}</span>
                 </span>

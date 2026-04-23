@@ -8,8 +8,25 @@ export type ParsedStructure = {
   columns?: string[];
   sampleRows?: string[][];
   jsonKeys?: string[];
+  /** Inferred per-key type union across up to 50 sample records (JSON only). */
+  jsonSchema?: Record<string, JsonInferredType>;
+  /** Coherent nested object keys (JSON only). */
+  jsonNestedObjects?: string[];
+  /** Array-of-objects keys, candidates for child relationships (JSON only). */
+  jsonArrayOfObjects?: string[];
   preview?: string;
+  parseError?: string;
 };
+
+export type JsonInferredType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "object"
+  | "array"
+  | "array<object>"
+  | "null"
+  | "mixed";
 
 export type ClassificationProposal = {
   object_type: string | null;
@@ -26,9 +43,17 @@ export type RegistryEntry = {
   target_table: string;
   required_fields: string[];
   optional_fields: string[];
+  conflict_key_fields?: string[];
 };
 
-const TEXT_DECODER = new TextDecoder();
+const TEXT_DECODER = new TextDecoder("utf-8");
+
+/** Strip a UTF-8 BOM if present. Real Notion/Excel exports often include one. */
+function decode(content: ArrayBuffer | string): string {
+  const raw = typeof content === "string" ? content : TEXT_DECODER.decode(content);
+  if (raw.charCodeAt(0) === 0xfeff) return raw.slice(1);
+  return raw;
+}
 
 export function detectExtension(filename: string): string {
   const m = filename.match(/\.([a-zA-Z0-9]+)$/);
@@ -37,14 +62,18 @@ export function detectExtension(filename: string): string {
 
 export function parseFile(filename: string, content: ArrayBuffer | string): ParsedStructure {
   const ext = detectExtension(filename);
-  const text = typeof content === "string" ? content : TEXT_DECODER.decode(content);
+  const text = decode(content);
+  if (text.trim().length === 0) {
+    return { kind: "unknown", preview: "", parseError: "empty file" };
+  }
 
   if (ext === "md" || ext === "markdown") return parseMarkdown(text);
   if (ext === "csv") return parseCsv(text);
   if (ext === "json") return parseJson(text);
   if (ext === "txt") return { kind: "text", preview: text.slice(0, 200) };
   // Fallback: try to detect from content
-  if (text.trim().startsWith("{") || text.trim().startsWith("[")) return parseJson(text);
+  const t = text.trim();
+  if (t.startsWith("{") || t.startsWith("[")) return parseJson(text);
   if (text.includes(",") && text.split("\n").length > 1) return parseCsv(text);
   return { kind: "unknown", preview: text.slice(0, 200) };
 }
@@ -55,13 +84,20 @@ function parseMarkdown(text: string): ParsedStructure {
   let bodyStart = 0;
 
   if (lines[0]?.trim() === "---") {
+    let closed = false;
     for (let i = 1; i < lines.length; i++) {
       if (lines[i].trim() === "---") {
         bodyStart = i + 1;
+        closed = true;
         break;
       }
       const m = lines[i].match(/^([A-Za-z0-9_\- ]+)\s*:\s*(.*)$/);
       if (m) frontmatter[m[1].trim().toLowerCase()] = m[2].trim();
+    }
+    if (!closed) {
+      // Frontmatter never closed — treat the whole file as body, drop the partial.
+      bodyStart = 0;
+      for (const k of Object.keys(frontmatter)) delete frontmatter[k];
     }
   }
 
@@ -81,9 +117,8 @@ function parseMarkdown(text: string): ParsedStructure {
 
 function parseCsv(text: string): ParsedStructure {
   const lines = text.split(/\r?\n/).filter((l) => l.length > 0);
-  if (lines.length === 0) return { kind: "csv", columns: [], sampleRows: [] };
+  if (lines.length === 0) return { kind: "csv", columns: [], sampleRows: [], parseError: "empty csv" };
   const splitRow = (row: string): string[] => {
-    // Minimal CSV splitter; handles simple quoted fields.
     const out: string[] = [];
     let cur = "";
     let inQ = false;
@@ -110,12 +145,54 @@ function parseCsv(text: string): ParsedStructure {
 function parseJson(text: string): ParsedStructure {
   try {
     const obj = JSON.parse(text);
-    const top = Array.isArray(obj) ? (obj[0] ?? {}) : obj;
-    const keys = top && typeof top === "object" ? Object.keys(top) : [];
-    return { kind: "json", jsonKeys: keys, preview: text.slice(0, 200) };
-  } catch {
-    return { kind: "unknown", preview: text.slice(0, 200) };
+    const records: unknown[] = Array.isArray(obj) ? obj.slice(0, 50) : [obj];
+    const schema: Record<string, JsonInferredType> = {};
+    const nestedObjects = new Set<string>();
+    const arrayOfObjects = new Set<string>();
+
+    for (const rec of records) {
+      if (!rec || typeof rec !== "object") continue;
+      for (const [k, v] of Object.entries(rec as Record<string, unknown>)) {
+        const t = inferJsonType(v);
+        if (t === "object") nestedObjects.add(k);
+        if (t === "array<object>") arrayOfObjects.add(k);
+        if (!(k in schema)) {
+          schema[k] = t;
+        } else if (schema[k] !== t && t !== "null" && schema[k] !== "null") {
+          schema[k] = "mixed";
+        } else if (schema[k] === "null") {
+          schema[k] = t;
+        }
+      }
+    }
+
+    const keys = Object.keys(schema);
+    return {
+      kind: "json",
+      jsonKeys: keys,
+      jsonSchema: schema,
+      jsonNestedObjects: Array.from(nestedObjects),
+      jsonArrayOfObjects: Array.from(arrayOfObjects),
+      preview: text.slice(0, 200),
+    };
+  } catch (e) {
+    return { kind: "unknown", preview: text.slice(0, 200), parseError: `invalid JSON: ${String(e).slice(0, 120)}` };
   }
+}
+
+function inferJsonType(v: unknown): JsonInferredType {
+  if (v === null) return "null";
+  if (Array.isArray(v)) {
+    if (v.length > 0 && v.every((x) => x !== null && typeof x === "object" && !Array.isArray(x))) {
+      return "array<object>";
+    }
+    return "array";
+  }
+  if (typeof v === "object") return "object";
+  if (typeof v === "string") return "string";
+  if (typeof v === "number") return "number";
+  if (typeof v === "boolean") return "boolean";
+  return "mixed";
 }
 
 /** Stable signature for grouping files that look the same. */
@@ -141,6 +218,7 @@ export function classifyGroup(
   const fields = collectFields(s);
   const matched: string[] = [];
   const unmatched: string[] = [];
+  void matched; void unmatched; // declared for parity
 
   // 1) Try strong rule patterns
   if (s.kind === "markdown") {
@@ -262,4 +340,42 @@ export function guessFieldType(samples: string[]): string {
   const distinct = new Set(vals.map((v) => v.toLowerCase()));
   if (distinct.size <= Math.max(3, Math.floor(vals.length / 4))) return "enum";
   return "text";
+}
+
+/** Damerau-style Levenshtein distance, capped at 4 for speed. */
+export function editDistance(a: string, b: string, max = 4): number {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const dp: number[] = new Array(b.length + 1);
+  for (let j = 0; j <= b.length; j++) dp[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    let rowMin = dp[0];
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = dp[j];
+      dp[j] = a[i - 1] === b[j - 1]
+        ? prev
+        : 1 + Math.min(prev, dp[j - 1], dp[j]);
+      prev = tmp;
+      if (dp[j] < rowMin) rowMin = dp[j];
+    }
+    if (rowMin > max) return max + 1;
+  }
+  return dp[b.length];
+}
+
+/** Find the closest existing column name on a target table within edit distance. */
+export function findLikelyAlias(
+  candidate: string,
+  existingColumns: string[],
+  maxDist = 2,
+): string | null {
+  const c = candidate.toLowerCase();
+  let best: { col: string; d: number } | null = null;
+  for (const col of existingColumns) {
+    const d = editDistance(c, col.toLowerCase(), maxDist);
+    if (d <= maxDist && (!best || d < best.d)) best = { col, d };
+  }
+  return best ? best.col : null;
 }
