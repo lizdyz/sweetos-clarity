@@ -10,6 +10,7 @@ import { MeasuresPanel } from "@/components/measures-panel";
 import { TimeControls } from "@/components/time-controls";
 import { OperatorChip } from "@/components/operator-chip";
 import { CreatedByChip } from "@/components/created-by-chip";
+import { WalkMenu } from "@/components/walk-menu";
 
 export const Route = createFileRoute("/_app/tasks/$id")({
   component: TaskDetail,
@@ -24,6 +25,7 @@ function TaskDetail() {
       <div className="flex items-center justify-end gap-2 px-6 pt-4">
         <TaskCreatedByChip taskId={id} />
         <TaskOperatorChip taskId={id} />
+        <WalkMenu kind="task" id={id} />
       </div>
       <WorkContextStrip entityType="task" entityId={id} />
       <TaskTimeBlock taskId={id} />
