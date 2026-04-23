@@ -76,11 +76,13 @@ export const listAuditEvents = createServerFn({ method: "POST" })
     if (error) {
       // eslint-disable-next-line no-console
       console.error("[audit.list] failed", error);
-      return { rows: [], total: 0, error: error.message };
+      return { rows: "[]", total: 0, error: error.message };
     }
-    // JSON-roundtrip ensures the payload is plain serializable for the RPC boundary.
-    const safeRows = JSON.parse(JSON.stringify(rows ?? [])) as Record<string, unknown>[];
-    return { rows: safeRows, total: count ?? 0, error: null as string | null };
+    return {
+      rows: JSON.stringify(rows ?? []),
+      total: count ?? 0,
+      error: null as string | null,
+    };
   });
 
 export const listAuditSavedViews = createServerFn({ method: "GET" })
