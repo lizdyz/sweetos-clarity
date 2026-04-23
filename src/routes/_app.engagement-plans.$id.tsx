@@ -126,6 +126,16 @@ function PlanDetail() {
           )}
         </Card>
       </div>
+      {lensOpen && (
+        <div className="px-6 pt-4 lg:pr-6">
+          <ObjectCompanion
+            objectKind="engagement_plan"
+            objectId={id}
+            objectTitle={plan?.plan_name ?? "Engagement Plan"}
+            className="self-start lg:sticky lg:top-4"
+          />
+        </div>
+      )}
     </div>
   );
 }
