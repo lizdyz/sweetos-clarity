@@ -9,6 +9,7 @@ import { TimeControls } from "@/components/time-controls";
 import { SparkProvenanceChip } from "@/components/spark-provenance-chip";
 import { ScopeChip } from "@/components/scope-chip";
 import { CanonGuardrail } from "@/components/canon-guardrail";
+import { EntityFrameworksRail } from "@/components/entity-frameworks-rail";
 import { Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/sparks/$id")({
