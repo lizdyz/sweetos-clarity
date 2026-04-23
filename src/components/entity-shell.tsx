@@ -50,7 +50,7 @@ export interface EntityShellTab {
 }
 
 interface Props {
-  kind: WalkKind;
+  kind: EntityShellKind;
   id: string;
   /** Optional header content (title, status pills, etc.) shown in Zone 1. */
   header?: ReactNode;
@@ -69,14 +69,6 @@ interface Props {
   className?: string;
 }
 
-/**
- * Map our generic walk kind to the entity_canon row's entity_kind.
- * They're already aligned for most kinds.
- */
-function canonKindFor(kind: WalkKind): string {
-  return kind;
-}
-
 export function EntityShell({
   kind,
   id,
@@ -93,13 +85,14 @@ export function EntityShell({
       key: "canon",
       label: "Canon",
       icon: <BookOpen className="h-3 w-3" />,
-      body: <EntityCanonTab entityKind={canonKindFor(kind)} />,
+      body: <EntityCanonTab entityKind={kind} />,
     },
   ];
 
   const initial = defaultTabKey ?? allTabs[0]?.key ?? "canon";
   const [tab, setTab] = useState(initial);
 
+  const hasWalk = WALK_KINDS.has(kind);
   const isWorkContextEntity = kind === "task" || kind === "project";
 
   return (
@@ -108,11 +101,13 @@ export function EntityShell({
       <header className="flex items-start gap-3">
         <div className="min-w-0 flex-1 space-y-3">
           {header}
-          <CanonGuardrail entityKind={canonKindFor(kind)} />
+          <CanonGuardrail entityKind={kind} />
         </div>
-        <div className="shrink-0">
-          <WalkMenu kind={kind} id={id} />
-        </div>
+        {hasWalk && (
+          <div className="shrink-0">
+            <WalkMenu kind={kind as WalkKind} id={id} />
+          </div>
+        )}
       </header>
 
       {/* Z2 — Work context strip (only for task/project right now) */}
@@ -121,8 +116,8 @@ export function EntityShell({
       )}
 
       {/* Z3 + Z4 — Side-by-side connection rail + tabs */}
-      <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <ConnectionRail kind={kind} id={id} className="self-start" />
+      <div className={cn("grid gap-4", hasWalk && "lg:grid-cols-[220px_minmax(0,1fr)]")}>
+        {hasWalk && <ConnectionRail kind={kind as WalkKind} id={id} className="self-start" />}
 
         <div className="min-w-0">
           <Tabs value={tab} onValueChange={setTab}>
@@ -158,3 +153,4 @@ export function EntityShell({
     </div>
   );
 }
+
