@@ -36,7 +36,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { KanbanBoard } from "@/components/kanban-board";
 import { TagPicker } from "@/components/tag-picker";
-import { PageCaptureButton } from "@/components/page-capture-button";
+// PageCaptureButton retired — Capture now lives in the topbar (TopbarCaptureButton).
 
 /** Map plural entity keys to entity_canon.entity_kind (singular). */
 const ENTITY_KEY_TO_CANON_KIND: Record<string, string> = {
@@ -577,13 +577,7 @@ function EntityDetail({ entity, id }: { entity: EntityDef; id: string }) {
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">{id}</p>
         </div>
         <div className="flex items-center gap-2">
-          {ENTITY_KEY_TO_CANON_KIND[entity.key] && (
-            <PageCaptureButton
-              subjectKind={ENTITY_KEY_TO_CANON_KIND[entity.key]}
-              subjectId={id}
-              subjectLabel={headline}
-            />
-          )}
+          {/* Capture lives in the topbar — it auto-detects this page's kind + id. */}
           <Button variant="outline" onClick={() => setEditing(true)}>
             Edit
           </Button>
