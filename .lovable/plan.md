@@ -1,201 +1,205 @@
 
 
-# Wave 19 — Audit Trail: a real system-of-record review surface
+# Wave 20 — Product Clarity & Actionability Audit
 
-Story Trail stays as the narrative read. This wave adds a **formal, system-wide audit log** with its own home, designed for operational review, security oversight, and compliance traceability. We build on the existing `entity_audit_log` table — extend it with the missing fields, write to it consistently from every meaningful action, and ship a dedicated review console.
+A focused architecture pass: every page declares **what · why · do · connects to · next**, OCDA becomes a real pipeline (not a label), and Open Decisions stops being a passive list.
 
-## Where it lives
+---
 
-New top-level entry under the **Settings** group: **Audit Trail** at `/audit`. Settings is the right home — it's where compliance-minded operators already look for governance surfaces (Canon, Excellence, Prompts, UX Audit). The audit page itself is full-bleed, not nested in the Settings tab strip, because review sessions need the full viewport.
+## Part 1 — Audit findings
 
-A small **"View in audit"** chip is added to every existing `<EvidenceFooter>` and `<AuditTrailPanel>` so per-entity histories deep-link into the global console pre-filtered to that subject.
+I reviewed all 60+ routes against five tests: purpose clarity, actionability, connection logic, system role, gaps. Grouping by severity:
 
-## Story Trail vs Audit Trail — clear separation
+### A. Passive when they should be active
 
-| | Story Trail | Audit Trail |
+| Page | Issue | Fix |
 |---|---|---|
-| Purpose | Narrative read of progress | System-of-record of changes |
-| Sources | sparks + outputs + decisions + filtered audit | `entity_audit_log` only |
-| Tone | Iris pulses, emerald checks, story beats | Dense table, monospace IDs, diffs |
-| Audience | Operators reviewing momentum | Compliance / security / ops review |
-| Filtering | None — chronological story | Heavy filter rail, click-to-filter chips |
-| Detail | Beat title + chip | Full diff, actor, source, related run |
+| `/settings/open-decisions` | Read-only list. No status change, no link to triggering work, no "promote to Decision". Lives in Settings but is actually operational. | **Move to `/decisions/open`**, add inline status cycle, add "Promote to Decision" action, link evidence. |
+| `/sparks` | Index lists sparks but offers no triage gesture (Open / Snooze / Promote / Archive). | Mount `<TriageCard>` row actions. |
+| `/delegation` | Shows handoffs but doesn't show "what stage is this in" or next valid action. | Add OCDA stage chip + next-action button. |
+| `/measures` | Shows current vs target but no "log reading" or "open subject" CTA in the row. | Inline `Log reading` + `Open subject`. |
+| `/vault` | Pure archive — no "use this", "link to entity", "re-classify". | Add 3 row actions. |
+| `/library/jtbd`, `/library/ktis`, `/personas`, `/outcomes` | Library catalogs with no "where is this used" rollup. | Add usage chip → click filters list of using entities. |
 
-Story Trail keeps its current home (bottom of detail pages, top of `/today`). Nothing about it changes.
+### B. Connection logic missing
 
-## Schema — extend `entity_audit_log`, don't replace it
+| Surface | Missing connection | Fix |
+|---|---|---|
+| Decisions detail | Doesn't show what created it (capture? proposal? KTI? sandbox?) or what it affects (tasks, projects, components). | Add **upstream/downstream rail** (`<DecisionImpactRail>`). |
+| OCDA Cockpit Observe lane | Shows proposals + sparks but no inbound_signals or KTI fires. | Union all four sources into one Observe feed. |
+| OCDA Choose lane | Only reads `tasks.ocda_stage='choose'`. No way to *enter* this stage from Observe. | Add "Move to Choose" action on each Observe card → writes `ocda_stage='choose'`. |
+| OCDA Decide lane | Lists every decision ever made. Should be **just the active decide queue** (proposed + last 7 days). | Filter + add "Log decision" inline composer. |
+| OCDA Act lane | Lists tasks but doesn't show workflow runs or session executions actively running. | Union `workflow_step_runs` where status='running'. |
+| `/sandbox` → `/decisions` | Sandbox can promote to task/project/spark but **not to decision**. | Add `decision` to `DEFAULT_PROMOTE_OPTIONS`. |
 
-The existing table already has the right shape (subject_kind, subject_id, field, old_value, new_value, change_type, source, operator_id, agent_run_id, model, notes, created_at, created_by). One migration adds the columns that make it a real audit surface:
+### C. Naming / role mismatches
 
-```sql
-alter table entity_audit_log add column
-  event_category    text not null default 'data_change'
-    check (event_category in (
-      'data_change','lifecycle','tag_change','relationship_change',
-      'import','schema','recipe','workflow','prompt','review','exception','auth'
-    )),
-  severity          text not null default 'info'
-    check (severity in ('info','notice','warning','error','critical')),
-  source_run_kind   text,                 -- 'workflow_run' | 'ingestion_run' | 'lens_run' | 'curator_run' | null
-  source_run_id     uuid,                 -- the run id within that kind
-  ip_address        inet,                 -- captured for human actions where available
-  user_agent        text,
-  diff              jsonb,                -- optional pre-computed structural diff for nested fields
-  tags              text[] default '{}',  -- free-form tag array (e.g. ['pii','schema-evo'])
-  request_id        text;                 -- correlation id across multi-step actions
+| Page | Problem | Fix |
+|---|---|---|
+| `/settings/open-decisions` | Not a setting — it's a live decision queue. | Move to `/decisions/open` (tab on Decisions index). |
+| `/queue` vs `/sandbox` vs `/capture` | Three intake-ish surfaces; relationship not obvious. | Add a **flow strip** at top of each: `Capture → Sandbox → Queue → routed`. |
+| `/my-tasks` vs `/tasks` vs `/today` | Overlap unclear. | One-liner role caption on each header that explicitly contrasts the others. |
 
-create index idx_audit_category_time on entity_audit_log(event_category, created_at desc);
-create index idx_audit_severity_time on entity_audit_log(severity, created_at desc);
-create index idx_audit_actor_time    on entity_audit_log(created_by, created_at desc);
-create index idx_audit_source_run    on entity_audit_log(source_run_kind, source_run_id);
-```
+### D. Pages that imply a workflow but don't support it
 
-A view `audit_events_enriched` joins in actor display name (from `profiles`), operator name (from `operators`), and a denormalized `subject_label` (best-effort name lookup per `subject_kind`) so the UI doesn't fan out N+1 queries.
+- **Decisions** implies "decide → supersede prior → notify affected" — no supersede picker, no notification.
+- **OCDA** implies stage progression — but no row anywhere (task, decision, proposal) lets you click and *advance the OCDA stage* in one gesture.
+- **Open Decisions** implies "calibration over time" — no audit of when status last moved.
 
-RLS is already on the table (team read / team insert). Add: only admins can `delete` (they shouldn't, but the policy makes intent explicit), and an immutability trigger that blocks `UPDATE` on any row — audit events are append-only.
+### E. The OCDA verdict
 
-## Writing to the log — make it consistent
+OCDA today is **a label, not a pipeline**. The cockpit reads four queries but offers no way to move an item between stages. The `ocda_stage` column exists on tasks/projects/decisions but is rarely set and never edited. The system has the bones — we need three things to make it a real pipeline:
+1. A universal **`<OCDAStageChip>`** that's editable (click to advance).
+2. The cockpit's columns must be **drop targets**, not read-only buckets.
+3. Every actionable detail page mounts the chip in a consistent slot.
 
-Today writes are ad-hoc (a few edge functions and the frameworks rail). This wave adds a **single helper** every server function and trigger calls:
+---
 
-```ts
-// src/lib/audit.ts (client-safe types) + src/utils/audit.server.ts (writer)
-export async function logAuditEvent({
-  subjectKind, subjectId, field, oldValue, newValue,
-  changeType, eventCategory, severity = 'info',
-  source, operatorId, agentRunId, model,
-  sourceRunKind, sourceRunId, notes, tags, requestId,
-}: AuditEventInput): Promise<void>
-```
+## Part 2 — Implementation plan
 
-Wired into:
+### 1. PageHeader → contract upgrade (foundational)
 
-- **Generic CRUD trigger**: a new pg trigger on a curated allow-list of tables (components, journeys, quests, missions, tasks, projects, decisions, sessions, workflows, operators, relationships, engagement_plans, sparks) writes a row on INSERT/UPDATE/DELETE. UPDATE rows include only changed columns (one row per changed field) so diffs are queryable. Excluded fields (`updated_at`, view-only computed cols) are configured per table in a small `audit_field_blacklist` table.
-- **Ingestion**: every approved mapping, conflict resolution, schema suggestion approval, recipe save/apply writes an audit row with `source_run_kind='ingestion_run'`.
-- **Workflows**: each `workflow_step_run` state transition writes an audit row with `source_run_kind='workflow_run'`.
-- **Prompts**: any `generate-*` edge function execution writes one row with `event_category='prompt'`, `model`, and the prompt key in `notes`.
-- **Auth**: a daily cron-style server fn pulls `auth.audit_log_entries` (or equivalent) and mirrors meaningful events (sign-in, password change, role grant) into our log so the audit console is a single pane.
-
-Important: writes are best-effort and never block the originating action — failures log to console and surface as a dedicated `audit_write_failures` table (visible to admins as a "writer health" strip on the audit console).
-
-## The console (`/audit`)
+`<PageHeader>` adds two required props that every route must fill in: `connectsTo` (chips → routes) and `nextSteps` (verb-led actions). Builds the "what · why · do · connects · next" frame into the component itself, so any page missing them fails review by being visibly empty.
 
 ```text
-┌── Filter rail (sticky left, 280px) ─┬── Results pane ───────────────────────┐
-│                                      │                                       │
-│  Date range                          │  Header strip:                        │
-│  [last 24h ▾]                        │   847 events · 12 actors · 3 warnings │
-│                                      │   [export csv] [export json] [save view] │
-│  Severity                            │                                       │
-│   ▢ info  ▢ notice                   │  ┌─────────────────────────────────┐  │
-│   ▣ warning  ▣ error  ▣ critical    │  │ time · actor · cat · subject ·  │  │
-│                                      │  │  field · old → new · run        │  │
-│  Event category                      │  └─────────────────────────────────┘  │
-│   ▣ data_change                      │  Dense table, 60 rows/page.           │
-│   ▣ lifecycle  ▣ tag_change          │  Each row click expands inline:       │
-│   ▣ import  ▣ schema  ▣ workflow     │   • full old/new diff (jsonb pretty)  │
-│   ▣ prompt  ▣ review  ▣ exception    │   • actor card + ip + user_agent      │
-│                                      │   • related run link (workflow/run)   │
-│  Subject kind                        │   • request_id correlation            │
-│   [components ✕] [journeys ✕] …      │   • tags as removable chips           │
-│                                      │                                       │
-│  Subject (search)                    │  Every cell is click-to-filter:       │
-│  [▢ search by id or name]            │   click an actor → adds actor filter  │
-│                                      │   click a category → adds cat filter  │
-│  Actor                               │   click a subject → adds subject id   │
-│  [▢ user picker]                     │   click a run → jumps to run scope    │
-│                                      │                                       │
-│  Source                              │                                       │
-│   ▣ human  ▣ agent  ▣ workflow ▣ system │                                  │
-│                                      │                                       │
-│  Run                                 │                                       │
-│  [workflow_run / ingestion_run] +id │                                       │
-│                                      │                                       │
-│  Field changed                       │                                       │
-│  [▢ field name]                      │                                       │
-│                                      │                                       │
-│  [Reset all]                         │                                       │
-└──────────────────────────────────────┴───────────────────────────────────────┘
+┌ icon  Title                                         [actions] ┐
+│       One-sentence purpose.                                    │
+│       What you can do · here · here · here                     │
+│       Connects to: Capture · Decisions · OCDA                  │
+│       Next: Triage 3 · Promote 2 · Archive 1                   │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-Three saved-view presets ship by default, mapping to the user's three lenses:
+Apply across the 12 highest-traffic routes in this wave (Today, Decisions, OCDA, Sandbox, Sparks, Tasks, Projects, Quests, Engagement Plans, Sessions, Operators, Relationships). The remaining routes get a follow-up pass.
 
-- **Operational review** — last 7d, all categories, severity ≥ info, grouped by subject kind.
-- **Security & change visibility** — last 30d, categories: `auth`, `lifecycle` (delete only), `schema`, severity ≥ warning, source = human.
-- **Compliance traceability** — last 90d, categories: `schema`, `import`, `review`, `prompt`, `exception`, plus any row tagged `pii`, immutable export.
+### 2. Open Decisions — promote to first-class operational surface
 
-Saved views are stored in a small `audit_saved_views` table per user; admins can pin views to the workspace.
+- Move route from `/settings/open-decisions` to `/decisions/open` (sidebar moves from Settings to Work, under Decisions).
+- Decisions index becomes tabbed: **All · Open (calibrating) · Recent · Superseded**.
+- Each open decision row gets:
+  - **Status cycle chip** — click cycles `open → exploring → calibrating → settled`.
+  - **Provenance** — what raised it (capture / proposal / project / KTI), surfaced as a chip.
+  - **Affects** — chips for the tasks, projects, components it gates.
+  - **Primary action**: "Settle this" → opens dialog that creates a real `decisions` row, links it back via `supersedes`-style reference, marks the open decision `settled`.
+  - **Secondary**: "Add evidence" (note + link), "Snooze 7d", "Reassign owner".
+- Audit log every status change (already wired in Wave 19's generic CRUD trigger — confirm `open_decisions` is in the table list).
 
-## Detail panel (expanded row)
+### 3. OCDA — make it a real pipeline
 
-Inline expand, not a sheet — keeps the operator scanning. Shows:
+**a) Stage chip everywhere**
+New `<OCDAStageChip subject={{kind, id, stage}} />` — click-to-advance dropdown (`observe → choose → decide → act → done`). Mount on:
+- Task detail header
+- Project detail header
+- Decision detail header
+- Proposal/sandbox row
+- Spark detail header
+- Triage cards (so Observe → Choose is one click)
 
-1. **Header**: timestamp (with relative + absolute), actor avatar + name + ip, source pill, severity badge.
-2. **Subject**: kind + name (deep link to the entity page) + id (monospace, click-to-copy).
-3. **Change**: `field` · `old_value` → `new_value` rendered as a side-by-side diff (jsonb pretty-printed when nested).
-4. **Context**: linked workflow run, ingestion run, or prompt with deep links; `request_id` chip that filters to the full correlated trail.
-5. **Actions**: "View entity", "View run", "Filter to this subject", "Copy as evidence" (markdown snippet for compliance reports).
+**b) Cockpit becomes drag-aware**
+Reuse `useDragToStatus` (already exists per memory). Each lane is a drop target writing `ocda_stage` on the dragged subject. Observe lane unions: `proposals` + `sparks` + `inbound_signals` + `kti_scans` (last 24h).
 
-## Export and retention
+**c) Decide lane gets an inline composer**
+"Log decision" button in the Decide column header → opens sheet with title + context + linked-from + supersedes. Writes to `decisions` with `ocda_stage='decide'`, status='decided'.
 
-- **Export**: CSV and JSONL streams of the current filtered query, generated server-side (`/api/audit/export.csv` and `.jsonl`) with admin-only access. Exports themselves write a `prompt`/`review` audit event noting "audit_export by X covering Y rows" so exports are themselves auditable.
-- **Retention**: a `retention_policy` setting per category (default: never delete). A nightly server fn enforces it — but only soft-archives by moving rows to `entity_audit_log_archive` (same schema). Hard delete requires admin + a typed confirmation.
+**d) Act lane unions running work**
+Current tasks + `workflow_step_runs.status='running'` + active sessions (today's scheduled).
+
+**e) Per-stage "next action" hint**
+Empty state and per-card hint tells the user the verb: Observe→Frame, Choose→Weigh, Decide→Log, Act→Open.
+
+### 4. Decision detail — impact rail
+
+New `<DecisionImpactRail>` rendered right of the Decisions detail page (replaces / augments the current Frameworks rail when on a decision):
+
+```text
+Upstream
+ • Captured from: capture #abc (link)
+ • Raised by: open_decision "Component thresholds" (link)
+ • Supersedes: decision "Old policy" (link)
+
+Downstream  
+ • Affects: 3 tasks · 1 project · 2 components
+ • Notifies: @liz, @ops
+ • Workflow runs created: 1 (link)
+```
+
+Pulled from `decisions` joins + `entity_audit_log` cross-references.
+
+### 5. Cross-linking flow strips
+
+Three small `<FlowStrip>` instances at top of the related pages:
+
+- `/capture` → "**Capture** → Sandbox → Queue → Routed" (current step highlighted)
+- `/sandbox` → same, current = Sandbox
+- `/queue` → same, current = Queue
+
+Each chip is a link. Removes the "what's the difference?" friction in one glance.
+
+### 6. Library "where used" chips
+
+For `/library/jtbd`, `/library/ktis`, `/personas`, `/outcomes`, `/components`, `/playbooks` — add a small "Used by N" chip per row that, on click, filters a side panel to the using entities. Read from existing junction tables / tag arrays.
+
+### 7. Sidebar nudges (no IA rewrite)
+
+- Move **Open decisions** out of Settings into Work (right under Decisions, label "Open Decisions").
+- Add hint captions clarifying overlap: `/today` ("My live working surface · today only"), `/my-tasks` ("Everything assigned to me, all timeframes"), `/tasks` ("All tasks across the system").
+
+### 8. Audit-trail integration
+
+Every new action (OCDA stage advance, open-decision settle, decision impact link, library re-classify) flows through `logAuditEvent` so the new actionability is itself reviewable.
+
+---
 
 ## Files
 
-**Migration (one):**
-- `entity_audit_log`: add columns above + indexes + immutability trigger
-- New tables: `audit_field_blacklist`, `audit_write_failures`, `audit_saved_views`, `entity_audit_log_archive`
-- New view: `audit_events_enriched`
-- New trigger function `trg_generic_audit()` + per-table triggers on the curated allow-list
-- Seed default field blacklist (timestamps, computed cols)
+**New components**
+- `src/components/ocda-stage-chip.tsx` — universal click-to-advance chip
+- `src/components/decision-impact-rail.tsx` — upstream/downstream for decision detail
+- `src/components/flow-strip.tsx` — Capture → Sandbox → Queue → Routed
+- `src/components/library/used-by-chip.tsx` — popover with using entities
+- `src/components/decisions/open-decision-row.tsx` — actionable row with cycle + settle
+- `src/components/decisions/settle-decision-dialog.tsx`
 
-**New server:**
-- `src/utils/audit.server.ts` — `logAuditEvent` writer used by edge functions
-- `src/utils/audit.functions.ts` — `listAuditEvents`, `exportAuditEvents`, `saveView`, `listViews`, `mirrorAuthEvents`
-- `src/routes/api/audit/export.csv.ts` and `.jsonl.ts` — admin-only streaming exports
+**Edited components**
+- `src/components/page-header.tsx` — add `connectsTo`, `nextSteps`
+- `src/components/ocda-cockpit.tsx` — drop targets, Decide composer, union sources
+- `src/components/triage-card.tsx` — add OCDA chip
+- `src/components/sidebar-nav.tsx` — move Open Decisions; refine hints
+- `src/lib/triageable.ts` — add `'decision'` to default promote options
 
-**New route + components:**
-- `src/routes/_app.audit.tsx` — full-bleed console
-- `src/components/audit/audit-filter-rail.tsx`
-- `src/components/audit/audit-results-table.tsx` (dense table with expand)
-- `src/components/audit/audit-row-detail.tsx` (diff + context)
-- `src/components/audit/audit-saved-views.tsx`
-- `src/components/audit/audit-summary-strip.tsx` (counts + warnings)
-- `src/components/audit/audit-export-dialog.tsx`
-- `src/components/audit/severity-pill.tsx`, `event-category-chip.tsx`
+**Routes**
+- New: `src/routes/_app.decisions.open.tsx` (replaces settings route as primary)
+- Edited: `src/routes/_app.decisions.index.tsx` (tabs), `_app.decisions.$id.tsx` (rail), `_app.operate.ocda.tsx` (drop), `_app.settings.open-decisions.tsx` (now redirects to `/decisions/open`), the 12 PageHeader routes
 
-**Edited:**
-- `src/components/sidebar-nav.tsx` — add **Audit Trail** under Settings group
-- `src/components/evidence-footer.tsx` — add "View in audit" deep link
-- `src/components/audit-trail-panel.tsx` — add the same deep link
-- `src/components/entity-frameworks-rail.tsx` — switch its direct insert over to `logAuditEvent` (sets category=`prompt`, source=`agent`)
-- `supabase/functions/generate-lens-perspectives/index.ts` (and the other `generate-*` functions) — switch to `logAuditEvent` for consistent metadata
-- `src/utils/ingestion.functions.ts` — emit audit events at every approval / conflict resolution / recipe save
+**Migration (one)**
+- Confirm `open_decisions` and `decisions` are in the audit allow-list
+- Add `open_decisions.settled_decision_id uuid references decisions(id)` for the "Settle this" link
+- Add `decisions.raised_from_kind text` + `raised_from_id uuid` for explicit provenance
 
-**Memory:**
-- New `mem://design/audit-trail.md`: Audit Trail and Story Trail are different surfaces with different jobs. Audit is append-only, formal, filterable, exportable. Story is narrative, summarized, no diffs. Every meaningful write goes through `logAuditEvent`. Generic CRUD trigger keeps coverage automatic.
+**Memory**
+- New `mem://design/ocda-as-pipeline.md` — rule that every actionable subject mounts `<OCDAStageChip>`, cockpit is drag-aware, no read-only OCDA labels.
+- New `mem://design/page-contract.md` — every page must declare what · why · do · connects · next via `<PageHeader>`.
+
+---
 
 ## Sequencing
 
-1. Migration: extend table, add indexes, immutability trigger, archive table, saved views, blacklist, enriched view (~15%)
-2. `logAuditEvent` helper + retrofit existing call sites (frameworks rail, generate-* functions) (~10%)
-3. Generic CRUD trigger + field blacklist seed for the curated table list (~15%)
-4. `/audit` route shell + filter rail + dense results table + summary strip (~25%)
-5. Row detail expand with diff + click-to-filter on every cell (~10%)
-6. Saved views + 3 default presets + per-user persistence (~10%)
-7. CSV/JSONL streaming exports + audit-of-audit write (~5%)
-8. Ingestion + workflow event emitters + auth event mirror cron (~10%)
+1. PageHeader contract upgrade + apply to 12 routes (~15%)
+2. OCDA stage chip + drop targets in cockpit + Decide composer (~25%)
+3. Open Decisions rebuild as actionable surface + route move (~15%)
+4. Decision impact rail + provenance migration (~15%)
+5. Flow strips + sidebar hint refinements (~5%)
+6. Library "used by" chips across 6 catalogs (~15%)
+7. Audit-trail wiring for all new actions (~10%)
 
 ## Not in this wave
 
-- No real-time tail (websocket stream) — polling refresh button + 30s auto-poll is enough for review work; live tailing is a follow-up.
-- No anomaly detection / "this is unusual" alerts — useful but a separate wave.
-- No SIEM forwarder (Splunk, Datadog) — exports cover the immediate need.
-- No cryptographic chaining (hash-chain rows for tamper-evidence) — append-only + admin-only delete is the v1 guarantee; chaining is a follow-up if compliance asks.
-- No rewriting Story Trail — it stays exactly as it is.
+- No full IA rewrite (sidebar groups stay).
+- No new entity types.
+- No rewriting Today, Sandbox, Flightdeck — they're already actionable; only their headers get the contract upgrade.
+- No automatic OCDA stage inference — staying explicit-click for trust.
 
 ## After this wave
 
-A compliance reviewer opens `/audit`, picks the **Compliance traceability** preset, narrows to the last 30 days and category `schema`, sees every approved schema change with actor, ip, and the exact field/value diff, expands two rows, exports the filtered set as JSONL, and the export itself appears as the next audit event. An operator triaging an incident clicks an actor name in any row, the filter rail snaps to that actor, and they can see every action that user took across every subject in the workspace — without leaving the page.
+Open Decisions is a working operational queue, not a memo. Every actionable record carries a one-click OCDA chip. The cockpit moves work between stages by drag. Decision detail shows what raised it and what it affects. Every page header tells you what · why · do · connects · next in one glance — and the routes that don't fill those props are visibly incomplete, which surfaces the next wave's targets automatically.
 
