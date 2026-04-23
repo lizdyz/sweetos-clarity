@@ -43,6 +43,7 @@ import {
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TASK_STATUS } from "@/lib/enums";
+import { EntityKindHelper } from "@/components/entity-kind-helper";
 
 interface Props {
   open: boolean;
@@ -156,7 +157,9 @@ export function TaskCreateSheet({ open, onOpenChange, projectId, relationshipId 
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>New task</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            New task <EntityKindHelper kind="task" />
+          </SheetTitle>
           <SheetDescription>
             A unit of work. Assign an operator and a due date to make it actionable.
           </SheetDescription>

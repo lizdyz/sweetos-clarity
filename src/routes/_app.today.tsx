@@ -13,6 +13,7 @@ import { MasterStoryTrail } from "@/components/master-story-trail";
 import { LiveSignalStrip } from "@/components/live-signal-strip";
 import { TodayDecisionBar } from "@/components/today-decision-bar";
 import { TodayNextActions } from "@/components/today-next-actions";
+import { TodaysFocusStrip } from "@/components/today/todays-focus-strip";
 import { UniversalDropZone } from "@/components/universal-drop-zone";
 import { useMeOperator } from "@/lib/use-me-operator";
 import {
@@ -265,6 +266,7 @@ function TodayPage() {
 
   return (
     <div className="px-6 py-5">
+      <TodaysFocusStrip />
       <TodayDecisionBar
         ranked={ranked}
         counts={{
