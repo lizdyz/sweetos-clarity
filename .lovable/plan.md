@@ -1,157 +1,165 @@
 
 
-# Wave 16 — Workflow execution adapters: native, n8n, and make.com under one roof
+# Wave 17 — Smart Ingestion: bulk import that thinks
 
-You're asking the right architectural question early. The answer is: **you don't embed n8n or Make. You wrap them.** Workflows in this system are already a first-class entity (`workflows` + `workflow_steps` + `workflow_runs`). External tools become *execution adapters* behind that same surface — the user never sees "this is n8n" unless they want to.
+A dedicated ingestion area that turns "drop a folder of Notion exports" into a guided conversation: detect → group → propose → clarify only where it matters → map → flag missing schema → import → learn. Lives alongside Capture (single-thought) and Vault (final files). This is the new front door for migrating Notion (or anything else) into SweetOS.
 
-## The model
+## Where it lives
 
-A `workflow` has an `execution_kind`:
-
-| kind | What runs the steps | Where it lives |
-|---|---|---|
-| `native` | Your own `workflow_step_runs` engine (today's default) | In-app |
-| `n8n` | An n8n workflow, triggered via webhook | External n8n instance |
-| `make` | A Make.com scenario, triggered via webhook | External Make scenario |
-| `zapier` | A Zap, triggered via webhook | External Zapier |
-
-All four feel identical to the user: same `<WorkflowRunTracker>`, same step cards, same approval gates, same Sparks on regression. The difference is *who executes* — and that's a config detail on the workflow, not a different page.
-
-## Part 1 — `workflow_execution_bindings` (the port layer)
-
-One new table — the "port" you mentioned:
-
-```sql
-create table public.workflow_execution_bindings (
-  workflow_id uuid primary key references workflows(id) on delete cascade,
-  execution_kind text not null default 'native',  -- native | n8n | make | zapier
-  trigger_url text,                                -- webhook URL we POST to start a run
-  callback_secret text,                            -- HMAC secret they POST back with
-  external_id text,                                -- n8n workflow id / Make scenario id (display only)
-  field_map jsonb default '{}',                    -- map our fields → their input shape
-  status_map jsonb default '{}',                   -- map their states → ours (planned/running/done/failed)
-  last_synced_at timestamptz,
-  notes text
-);
-```
-
-Plus a tiny extension to existing tables:
-- `workflows.execution_kind text default 'native'` (denormalized for fast filtering)
-- `workflow_runs.external_run_id text` (so callbacks can find the run)
-- `workflow_step_runs.external_step_id text` (so per-step callbacks land correctly)
-
-## Part 2 — Outbound: starting an external run
-
-When a user clicks "Run workflow" and `execution_kind != 'native'`:
-
-1. `activateWorkflow` server function (already exists in `src/utils/workflows.functions.ts`) checks the binding
-2. Builds a payload from `field_map` (relationship name, project context, etc.)
-3. POSTs to `trigger_url` with HMAC-signed body
-4. Stores returned `external_run_id` on `workflow_runs`
-5. Marks run as `running`, polls UI shows "Executing in n8n…" with the external link visible
-
-No SDK. No embed. Just signed webhooks — works with n8n, Make, Zapier, anything that accepts HTTP.
-
-## Part 3 — Inbound: callbacks update the run
-
-New public route — one endpoint, all providers:
-
-`src/routes/api/public/hooks/workflow-callback.ts`
-
-Accepts POSTs with HMAC signature. Body shape:
-```json
-{
-  "external_run_id": "...",
-  "step": "Send intro email",
-  "status": "succeeded",
-  "output": { "any": "json" }
-}
-```
-
-Looks up the binding, verifies signature, updates `workflow_step_runs`, fires Sparks if a step fails. The same endpoint serves all three providers — the binding tells us which secret to verify against.
-
-## Part 4 — UI: one workflow detail page, three execution badges
-
-On `src/routes/_app.workflows.$id.tsx`:
-
-- Header gets an **Execution chip**: `Native · runs in-app` / `n8n · {external_id} ↗` / `Make · {scenario_name} ↗`
-- New tab "Execution" on the workflow detail — edits the binding (URL, secret, field map, status map)
-- Step cards show external state alongside ours: "succeeded in n8n at 14:02"
-- `<WorkflowRunTracker>` is unchanged — it just renders whatever `workflow_step_runs` says
-
-The user experience: they author intent here, they see results here, they audit here. Where it ran is metadata.
-
-## Part 5 — Authoring helpers
-
-For each external kind, a one-time setup helper on the Execution tab:
-
-- **n8n**: "Paste your n8n webhook URL. We'll generate a callback URL + secret to drop into your final n8n node." Copy buttons for both.
-- **Make**: Same flow — paste scenario webhook, copy callback URL into a Make HTTP module at the end.
-- **Zapier**: Same — paste webhook, copy callback into a final Webhooks-by-Zapier step.
-
-A "Test connection" button POSTs a ping payload and waits for the callback. Green check or red error inline. No leaving the app.
-
-## Part 6 — Field map editor (the only mildly hard UI)
-
-Small JSON-driven form that lets the user say "when this workflow fires, send these fields":
+New sidebar entry under **Today**: `Capture` (existing) gets a sibling **Import** (`/import`).
 
 ```text
-Our field            →  Their input key
-─────────────────────────────────────
-relationship.name    →  customer_name
-relationship.email   →  to
-project.name         →  project
-trigger.notes        →  context
+Today
+  ├─ Start
+  ├─ Today
+  ├─ Calendar
+  ├─ Capture          ← single thoughts (existing)
+  └─ Import           ← bulk file ingestion (new)
 ```
 
-Stored as `field_map` JSON. Rendered in a chip-pair editor (no raw JSON shown to user). Defaults are sensible per provider.
+Capture stays for one-off drops. Import is for batches of 5–500 files where classification, grouping, and schema discovery are the value.
+
+## The flow (six steps, one route, sequential reveal)
+
+```text
+/import
+  1 Upload      drop / pick files → uploaded into 'ingestion' bucket
+  2 Analysis    parse, group, classify → propose object types
+  3 Mapping     review per-file mapping; bulk-edit by group
+  4 Schema      review suggested new fields & object types
+  5 Import      run the import, watch results stream
+  6 Results     what landed, what was skipped, what to follow up
+```
+
+A persistent stepper at the top shows progress. Steps 2-4 can be re-entered until the user clicks Run.
+
+## Data model
+
+Eight new tables. All scoped per ingestion_run; nothing pollutes existing entities until step 5.
+
+```sql
+ingestion_runs               -- one per upload batch; status: draft|analyzing|review|importing|complete
+ingestion_files              -- raw uploaded files: storage_path, filename, mime, size, sha256, parsed_text, structure_json
+ingestion_file_groups        -- "these 14 files look the same" — heading_pattern, column_signature, sample_count
+ingestion_classifications    -- per-file proposal: target_object_type, target_table, confidence, rationale, status (proposed|approved|excluded|needs_review)
+ingestion_schema_suggestions -- "this column has no home": column_name, sample_values, suggested_type, suggested_destination, status
+ingestion_object_suggestions -- "this looks like a NEW object type we don't model yet": proposed_name, evidence_files[], suggested_fields[]
+ingestion_mapping_rules      -- learned aliases: pattern (column_name regex / heading regex / filename regex) → target_field, scope (global|per_run), hit_count
+ingestion_results            -- per-file outcome: created_entity_kind, created_entity_id, status (created|updated|skipped|failed), notes
+```
+
+Plus a tiny lookup: `ingestion_object_registry` — the canonical list of importable object types (component, journey, persona, prompt, workflow_template, document, etc.) with their target tables and required fields. Seeded from the existing entity canon.
+
+## Classification engine (placeholder-smart, AI-ready)
+
+A single edge function `analyze-ingestion-batch` that runs after upload. v1 logic, deterministic and visible — no fake-AI hand-waving:
+
+1. **File-type detection** — extension + magic bytes.
+2. **Structure parse** — `.md` → headings/frontmatter; `.csv` → header row + 5 sample rows; `.json` → top-level keys; `.txt` → first 200 chars.
+3. **Signature** — hash of (extension + heading-pattern OR column-set). Files with identical signatures group automatically.
+4. **Type proposal per group** — rules table:
+   - `frontmatter has "stage" + "owner"` → likely **Journey/Quest**
+   - `H1 + ## "Inputs" + ## "Outputs"` → likely **Component**
+   - `H1 + "Prompt:" + "Variables:"` → likely **Prompt template**
+   - CSV header containing `name,description,domain,maturity` → likely **Components table**
+   - CSV header containing `from,to,kind` → likely **Relationships table**
+   - else → **Unknown / needs review** (never force-fit)
+5. **Field matching** — column/key names matched against existing field names + learned `ingestion_mapping_rules` aliases.
+6. **Schema suggestions** — any column/frontmatter key that didn't match goes into `ingestion_schema_suggestions` with sample values and a guessed type.
+7. **New-object detection** — if a group has a coherent shape but no rule matched, write to `ingestion_object_suggestions` with the proposed fields.
+
+Confidence is a real number (0-1) derived from rule strength + alias hits, not a vibe. Lovable AI (`google/gemini-2.5-flash`) is called only as a tiebreaker on ambiguous groups, and the prompt is editable in `/settings/prompts` like the rest.
+
+## The six screens
+
+### 1. Upload
+Full-page dropzone (much larger than current FileDrop), supports folder drag, shows upload queue with per-file progress, sha256 dedupe (skip files we've already imported in any prior run).
+
+### 2. Analysis
+Left rail: groups, sorted by count. Right pane: group detail card showing file count, detected pattern, sample preview (first markdown headings or first CSV rows), proposed object type with confidence bar, and the rationale ("Matched: H1 + ## Inputs + ## Outputs"). Group-level actions: **Approve all**, **Change type for group**, **Split group**, **Exclude**.
+
+### 3. Mapping Review
+Table view, one row per file. Columns: filename · group · proposed type · destination · field-match summary (e.g. "8/10 mapped, 2 unmatched") · status chip · row-action menu. Inline edit per row. Bulk-select to reassign type or destination. Filters: by status, by group, by confidence.
+
+### 4. Schema Suggestions
+Two stacked cards:
+- **Suggested new fields** — table of unmatched columns/keys with: source column · sample values · guessed type (text/number/date/enum/uuid-ref) · suggested destination table · approve/skip/rename. Approving writes a real migration via the migration tool (with explicit user confirmation).
+- **Suggested new object types** — cards showing "We see ~14 files that look like {proposed_name} — they share fields {a, b, c}. We don't have an object for this. Create as new entity, map to existing X, or ignore?"
+
+### 5. Import (run)
+Big "Run import" button. Live progress strip with counts: created · updated · skipped · failed. Streams `ingestion_results` rows as they complete. Cancel button stops between files.
+
+### 6. Results
+Summary header (X created, Y updated, Z skipped, N follow-ups). Below: filterable table of every file with its outcome and a link to the created entity. Three follow-up CTAs:
+- "Save as recipe" — persists the type/field decisions as `ingestion_mapping_rules` scoped global, so the next batch with the same shape skips review entirely.
+- "Open Schema Suggestions" — anything deferred from step 4.
+- "Open new entity proposals" — anything deferred from step 4 that needs design work.
+
+## Learning (lightweight, visible)
+
+Every approval in steps 2-4 writes a row to `ingestion_mapping_rules` with `hit_count=1`. Re-runs increment. The Analysis step always shows learned rules at the top of the group card ("Matched 3 saved rules · skipping ahead"). Rules are listed and editable on a small **Saved Rules** tab on `/import` so the user can prune them.
+
+No black-box "AI learned" claims. Just visible, editable rules.
+
+## UI language and feel
+
+- Calm, structured cards. No walls of text — the value is the right question at the right moment.
+- Confidence shown as a thin bar + percentage, not a vague label.
+- Ambiguity is a first-class state — `needs_review` items have their own muted color and never auto-import.
+- Copy: "We grouped 14 files that look like Journeys. Approve, or split them." Not "AI detected…"
+- The header chip on every screen reads: **Run · 47 files · 6 groups · 2 schema suggestions · 1 new object proposal**.
 
 ## Files
 
 **Migration:**
-- `workflow_execution_bindings` table
-- `workflows.execution_kind`, `workflow_runs.external_run_id`, `workflow_step_runs.external_step_id` columns
-- Backfill: every existing workflow gets `execution_kind='native'`
+- 8 new tables above + storage bucket `ingestion` (private)
+- Seed `ingestion_object_registry` with current entity canon
 
-**New server route:**
-- `src/routes/api/public/hooks/workflow-callback.ts` — HMAC-verified callback receiver
+**New route:**
+- `src/routes/_app.import.tsx` — top-level page with stepper + sub-views
 
 **New components:**
-- `src/components/workflow-execution-chip.tsx` — header badge + popover with external link
-- `src/components/workflow-execution-tab.tsx` — binding editor (URL, secret reveal, field map, status map, test button)
-- `src/components/workflow-field-map-editor.tsx` — chip-pair mapping UI
+- `src/components/import/import-stepper.tsx`
+- `src/components/import/upload-dropzone.tsx` — folder-aware large drop area
+- `src/components/import/group-card.tsx` — group preview + proposed type
+- `src/components/import/file-mapping-row.tsx`
+- `src/components/import/schema-suggestion-card.tsx`
+- `src/components/import/object-suggestion-card.tsx`
+- `src/components/import/run-progress-strip.tsx`
+- `src/components/import/results-table.tsx`
+- `src/components/import/saved-rules-panel.tsx`
+
+**New server:**
+- `supabase/functions/analyze-ingestion-batch/index.ts` — parse, group, classify, suggest
+- `supabase/functions/run-ingestion-import/index.ts` — execute approved mappings, stream results
+- `src/utils/ingestion.functions.ts` — server fns: `createRun`, `uploadFiles`, `analyzeRun`, `approveGroup`, `updateClassification`, `approveSchemaSuggestion`, `runImport`
 
 **Edited:**
-- `src/utils/workflows.functions.ts` — `activateWorkflow` branches on `execution_kind`; new `triggerExternalWorkflow` helper
-- `src/routes/_app.workflows.$id.tsx` — mount execution chip + new tab
-- `src/components/workflow-run-tracker.tsx` — show external state next to native state
-- `src/routes/_app.settings.canon.tsx` — add note about execution kinds in workflow canon
+- `src/components/sidebar-nav.tsx` — add `Import` under Today
+- `supabase/config.toml` — register the two functions (default verify_jwt)
 
 **Memory:**
-- `mem://design/workflow-execution-adapters.md` — the rule: external tools are adapters behind one workflow surface, never embedded UIs
+- `mem://design/smart-ingestion.md` — the rules: never force-fit, ambiguity is a state, learning is visible, schema gaps are a feature
 
 ## Sequencing
 
-1. Migration + binding table + execution_kind columns (~15%)
-2. Outbound trigger: HMAC-signed POST from `activateWorkflow` (~20%)
-3. Inbound callback route + signature verification + step-state updates (~20%)
-4. Execution tab UI: URL/secret/test button (~15%)
-5. Field map editor + status map editor (~15%)
-6. Execution chip on header + external state on step cards (~15%)
+1. Migrations + bucket + object registry seed (~15%)
+2. Upload screen + file storage + sha256 dedupe (~15%)
+3. `analyze-ingestion-batch` function: parse, group, deterministic rules, schema suggestions (~25%)
+4. Analysis + Mapping Review screens (~20%)
+5. Schema + new-object suggestion screens with approval → migration generation (~15%)
+6. `run-ingestion-import` function + Results screen + Saved Rules (~10%)
 
 ## Not in this wave
 
-- No embedded n8n/Make iframes — explicitly rejected
-- No outbound SDK installs (n8n-client, etc.) — webhooks only, keeps Worker bundle clean
-- No automatic conversion of existing native workflows to external (manual opt-in per workflow)
-- No new sidebar entry — execution is a workflow property, not a destination
+- No PDF/image OCR — text-based formats only (md, csv, txt, json). PDFs land in Vault as before.
+- No automatic schema migrations — every new field is a one-click confirmation that goes through the migration tool with user approval.
+- No multi-user collaboration on a run — single-operator for v1.
+- No Notion API direct connect — explicitly file-based, because the user is exporting from Notion already.
 
-## After Wave 16
+## After Wave 17
 
-- Any workflow can be marked `native`, `n8n`, `make`, or `zapier` — the rest of the app doesn't care
-- Users paste a webhook URL once, copy a callback URL once, and the external tool is "in" the system
-- Run history, step status, approvals, Sparks, and audit trail all flow through your existing surfaces regardless of where execution happens
-- Adding a new provider later (Inngest, Temporal, custom) = one new entry in the `execution_kind` enum + a setup helper, nothing else
+A user can drop their entire Notion export, walk through 6 calm screens, approve groups in bulk, see exactly what schema is missing, and end with a populated SweetOS plus a list of "here's what your Notion has that we don't model yet — do you want to model it?" Future imports of the same shape skip 80% of the review because of saved rules.
 
-Reply **"Run Wave 16"** to ship in this order, or **"Just n8n adapter first"** to land one provider end-to-end before generalizing.
+Reply **"Run Wave 17"** to ship in this order, or **"Just upload + analysis first"** to land the front half before mapping/schema work.
 
