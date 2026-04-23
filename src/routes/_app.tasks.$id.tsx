@@ -11,7 +11,7 @@ import { TimeControls } from "@/components/time-controls";
 import { OperatorChip } from "@/components/operator-chip";
 import { CreatedByChip } from "@/components/created-by-chip";
 import { WalkMenu } from "@/components/walk-menu";
-import { ObjectCompanion, SweetLensButton } from "@/components/object-companion";
+import { SweetLensLayout } from "@/components/sweet-lens-layout";
 import { JTBDChips } from "@/components/jtbd-chips";
 import { OCDAStageChip } from "@/components/ocda-stage-chip";
 
@@ -23,7 +23,6 @@ const DONE_STATUSES = ["Done", "Complete", "Completed", "Cancelled", "Canceled",
 
 function TaskDetail() {
   const { id } = Route.useParams();
-  const [lensOpen, setLensOpen] = useState(false);
   const { data: task } = useQuery({
     queryKey: ["tasks", "title", id],
     queryFn: async () => {
@@ -36,9 +35,13 @@ function TaskDetail() {
     },
   });
   return (
-    <div className={lensOpen ? "grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]" : "grid gap-5"}>
-      <div className="space-y-5 min-w-0">
-        <div className="flex items-center justify-end gap-2 px-6 pt-4">
+    <SweetLensLayout
+      objectKind="task"
+      objectId={id}
+      objectTitle={task?.name ?? "Task"}
+      objectBody={task?.description}
+      headerLeft={
+        <>
           <OCDAStageChip
             subjectTable="tasks"
             subjectId={id}
@@ -47,30 +50,21 @@ function TaskDetail() {
           />
           <TaskCreatedByChip taskId={id} />
           <TaskOperatorChip taskId={id} />
-          <SweetLensButton active={lensOpen} onClick={() => setLensOpen((o) => !o)} />
-          <WalkMenu kind="task" id={id} />
-        </div>
-        <WorkContextStrip entityType="task" entityId={id} />
-        <TaskTimeBlock taskId={id} />
-        <TaskPanels taskId={id} />
-        <EntityDetailPage entityKey="tasks" />
-        <div className="px-6">
-          <JTBDChips subject="task" subjectId={id} />
-        </div>
-        <div className="px-6 pb-8">
-          <MeasuresPanel subjectType="task" subjectId={id} />
-        </div>
+        </>
+      }
+      headerRight={<WalkMenu kind="task" id={id} />}
+    >
+      <WorkContextStrip entityType="task" entityId={id} />
+      <TaskTimeBlock taskId={id} />
+      <TaskPanels taskId={id} />
+      <EntityDetailPage entityKey="tasks" />
+      <div className="px-6">
+        <JTBDChips subject="task" subjectId={id} />
       </div>
-      {lensOpen && (
-        <ObjectCompanion
-          objectKind="task"
-          objectId={id}
-          objectTitle={task?.name ?? "Task"}
-          objectBody={task?.description}
-          className="self-start lg:sticky lg:top-4 lg:mt-4 lg:mr-6"
-        />
-      )}
-    </div>
+      <div className="px-6 pb-8">
+        <MeasuresPanel subjectType="task" subjectId={id} />
+      </div>
+    </SweetLensLayout>
   );
 }
 

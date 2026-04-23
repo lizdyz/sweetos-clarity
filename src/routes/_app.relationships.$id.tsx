@@ -23,7 +23,7 @@ import { KtiPanel } from "@/components/kti-panel";
 import { WorldWatchPanel } from "@/components/world-watch-panel";
 import { RelationshipSweetSyncTabs } from "@/components/relationship-sweetsync-tabs";
 import { PipelineStageStepper } from "@/components/pipeline-stage-stepper";
-import { ObjectCompanion, SweetLensButton } from "@/components/object-companion";
+import { SweetLensLayout } from "@/components/sweet-lens-layout";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/relationships/$id")({
@@ -32,7 +32,6 @@ export const Route = createFileRoute("/_app/relationships/$id")({
 
 function RelationshipDetail() {
   const { id } = Route.useParams();
-  const [lensOpen, setLensOpen] = useState(false);
   const { data: relMeta } = useQuery({
     queryKey: ["relationships", "lens-meta", id],
     queryFn: async () => {
@@ -41,45 +40,34 @@ function RelationshipDetail() {
     },
   });
   return (
-    <div className={lensOpen ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]" : ""}>
-      <div className="min-w-0 space-y-5">
-        <div className="flex items-center justify-end gap-2 px-6 pt-4">
-          <SweetLensButton active={lensOpen} onClick={() => setLensOpen((o) => !o)} />
-        </div>
-        <ServiceShapeStrip relationshipId={id} />
-        <div className="px-6">
-          <RelationshipStageHeader relationshipId={id} />
-        </div>
-        <RelationshipPanels relationshipId={id} />
-        <EntityDetailPage entityKey="relationships" />
-        <RelationshipSweetSyncTabs relationshipId={id} />
-        <div className="px-6">
-          <TwoPathsStrip relationshipId={id} />
-        </div>
-        <div className="px-6">
-          <MeasuresPanel subjectType="relationship" subjectId={id} />
-        </div>
-        <div className="px-6">
-          <BrandCanonEditor relationshipId={id} />
-        </div>
-        <div className="px-6">
-          <WorldWatchPanel relationshipId={id} />
-        </div>
-        <div className="px-6 pb-8">
-          <StoryTrail subjectKind="relationship" subjectId={id} />
-        </div>
+    <SweetLensLayout
+      objectKind="relationship"
+      objectId={id}
+      objectTitle={relMeta?.name ?? "Relationship"}
+    >
+      <ServiceShapeStrip relationshipId={id} />
+      <div className="px-6">
+        <RelationshipStageHeader relationshipId={id} />
       </div>
-      {lensOpen && (
-        <div className="px-6 pt-4 lg:pr-6">
-          <ObjectCompanion
-            objectKind="relationship"
-            objectId={id}
-            objectTitle={relMeta?.name ?? "Relationship"}
-            className="self-start lg:sticky lg:top-4"
-          />
-        </div>
-      )}
-    </div>
+      <RelationshipPanels relationshipId={id} />
+      <EntityDetailPage entityKey="relationships" />
+      <RelationshipSweetSyncTabs relationshipId={id} />
+      <div className="px-6">
+        <TwoPathsStrip relationshipId={id} />
+      </div>
+      <div className="px-6">
+        <MeasuresPanel subjectType="relationship" subjectId={id} />
+      </div>
+      <div className="px-6">
+        <BrandCanonEditor relationshipId={id} />
+      </div>
+      <div className="px-6">
+        <WorldWatchPanel relationshipId={id} />
+      </div>
+      <div className="px-6 pb-8">
+        <StoryTrail subjectKind="relationship" subjectId={id} />
+      </div>
+    </SweetLensLayout>
   );
 }
 
