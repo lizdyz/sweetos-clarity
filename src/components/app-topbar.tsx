@@ -9,6 +9,7 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import { BotAlertsBell } from "@/components/bot-alerts-bell";
 import { CommandPalette } from "@/components/command-palette";
 import { GlobalAddButton } from "@/components/global-add-button";
+import { GapCloserToggle } from "@/components/gap-closer-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +83,7 @@ export function AppTopBar() {
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
 
       <div className="ml-auto flex items-center gap-2">
+        <GapCloserToggle />
         <GlobalAddButton />
         <BotAlertsBell />
 
