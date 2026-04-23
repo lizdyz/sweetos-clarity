@@ -17,7 +17,10 @@ import {
 } from "@/components/ui/select";
 import { Radar, Loader2, Play, Inbox, Flame, Eye, Globe } from "lucide-react";
 import { KtiPanel } from "@/components/kti-panel";
-import { InboundSignalCard, type InboundSignal } from "@/components/inbound-signal-card";
+import { type InboundSignal } from "@/components/inbound-signal-card";
+import { TriageCard } from "@/components/triage-card";
+import { inboundSignalToTriageable } from "@/lib/triage-adapters";
+import { useTriagePromote } from "@/lib/use-triage-promote";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -354,7 +357,7 @@ function SignalInboxTab() {
           <ul className="space-y-2">
             {inbound.map((s) => (
               <li key={s.id}>
-                <InboundSignalCard signal={s} />
+                <SignalTriageItem signal={s} />
               </li>
             ))}
           </ul>
@@ -433,5 +436,20 @@ function SignalInboxTab() {
         )}
       </Card>
     </div>
+  );
+}
+
+/**
+ * One row in the SweetScan inbox. Wraps the inbound signal as a Triageable
+ * so the same TriageCard gesture works here as in /sandbox, /sparks, /decisions.
+ */
+function SignalTriageItem({ signal }: { signal: InboundSignal }) {
+  const triageable = inboundSignalToTriageable(signal);
+  const promote = useTriagePromote();
+  return (
+    <TriageCard
+      item={triageable}
+      onPromote={(item, kind) => promote.mutate({ item, kind })}
+    />
   );
 }

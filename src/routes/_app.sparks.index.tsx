@@ -8,6 +8,9 @@ import { ScopeChip } from "@/components/scope-chip";
 import { PageHeader } from "@/components/page-header";
 import { UniversalFilterBar } from "@/components/universal-filter-bar";
 import { universalFilterSchema } from "@/lib/use-universal-filters";
+import { TriageCard } from "@/components/triage-card";
+import { sparkToTriageable } from "@/lib/triage-adapters";
+import { useTriagePromote } from "@/lib/use-triage-promote";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -121,8 +124,48 @@ function SparksIndex() {
           </ul>
         </section>
       )}
+      <RawSparksTriageRail />
       <EntityListPage entityKey="sparks" />
     </div>
+  );
+}
+
+function RawSparksTriageRail() {
+  const promote = useTriagePromote();
+  const { data: raw = [] } = useQuery({
+    queryKey: ["sparks", "raw-for-triage"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("sparks" as never)
+        .select("id, name, description, created_at, origin_event, scope, relationship_id, done_at")
+        .is("done_at", null)
+        .order("created_at", { ascending: false })
+        .limit(8);
+      return (data ?? []) as Array<Parameters<typeof sparkToTriageable>[0]>;
+    },
+  });
+  if (raw.length === 0) return null;
+  return (
+    <section className="rounded-2xl border border-border bg-surface/40 p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Triage — raw sparks
+        </h2>
+        <span className="text-[11px] text-muted-foreground">
+          Frame and promote with the universal gesture
+        </span>
+      </div>
+      <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {raw.map((s) => (
+          <li key={s.id}>
+            <TriageCard
+              item={sparkToTriageable(s)}
+              onPromote={(item, kind) => promote.mutate({ item, kind })}
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { FileText, Brain } from "lucide-react";
+import { sb as supabase } from "@/lib/sb";
 import { EntityListPage } from "@/components/entity-workspace";
 import { PageHeader } from "@/components/page-header";
 import { UniversalFilterBar } from "@/components/universal-filter-bar";
 import { universalFilterSchema } from "@/lib/use-universal-filters";
+import { TriageCard } from "@/components/triage-card";
+import { decisionToTriageable } from "@/lib/triage-adapters";
+import { useTriagePromote } from "@/lib/use-triage-promote";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/decisions/")({
@@ -36,8 +41,48 @@ function DecisionsPage() {
         <UniversalFilterBar
           stateOptions={["proposed", "decided", "superseded", "rolled_back"]}
         />
+        <ProposedDecisionsTriageRail />
       </div>
       <EntityListPage entityKey="decisions" />
     </div>
+  );
+}
+
+function ProposedDecisionsTriageRail() {
+  const promote = useTriagePromote();
+  const { data: proposed = [] } = useQuery({
+    queryKey: ["decisions", "proposed-for-triage"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("decisions")
+        .select("id, decision, context, status, created_at, ocda_stage")
+        .eq("status", "proposed")
+        .order("created_at", { ascending: false })
+        .limit(8);
+      return (data ?? []) as Array<Parameters<typeof decisionToTriageable>[0]>;
+    },
+  });
+  if (proposed.length === 0) return null;
+  return (
+    <section className="rounded-2xl border border-border bg-surface/40 p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Triage — proposed decisions
+        </h2>
+        <span className="text-[11px] text-muted-foreground">
+          Frame and promote with the universal gesture
+        </span>
+      </div>
+      <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {proposed.map((d) => (
+          <li key={d.id}>
+            <TriageCard
+              item={decisionToTriageable(d)}
+              onPromote={(item, kind) => promote.mutate({ item, kind })}
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
