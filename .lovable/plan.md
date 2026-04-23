@@ -1,118 +1,103 @@
 
 
-# Wave 21 — Final wiring (close out)
+# Planning your real work inside SweetOS Clarity
 
-The architecture is in place. What remains is the **wiring**: mounting the SweetLens panel everywhere, killing the legacy surfaces, and tightening the sidebar so the muddle is actually gone.
+You want to take SweetOS from "the system we're building" to "the system we're using to run the build." Good news: the canon is already there — Missions, Journeys, Quests, Projects, Tasks, JTBDs, Components, Decisions. You don't need new entities. You need a **seeding pass** plus one small **planning surface** that makes the hierarchy obvious so you and your dev can sit down and actually use it.
 
-## What's done
-- DB: `lenses` extended, `lens_object_fit` + `lens_outputs` created and seeded.
-- `<ObjectCompanion>` family + **SweetLens** trigger button.
-- `/settings/lens-studio` with Library / Definition / Persona / Object fit / Outputs tabs.
-- `/bizzybots` redirected to the Studio.
+## The canonical hierarchy (use this, don't invent)
 
-## What still needs doing
+```text
+Mission         — the long-term why (e.g. "SweetOS Clarity is the operating system for service businesses")
+  └─ Journey    — a multi-quarter arc (e.g. "Ship v1 of Clarity to first 10 paying users")
+       └─ Quest — a themed body of work (e.g. "Lens System", "Operator Dashboard", "Capture-to-Routed pipeline")
+            ├─ JTBD       — what a user is hiring this for ("When I open a Decision, I want the right lens…")
+            ├─ Component  — the piece of product being built ("SweetLens panel", "Lens Studio")
+            ├─ Project    — a time-boxed effort that builds Components ("Wave 21 — Lens Studio")
+            │    └─ Task  — the unit of work, assigned to an Operator (you, your dev, a workflow)
+            └─ Decision   — open questions blocking the Quest
+```
 
-### 1. Mount SweetLens everywhere it belongs
-For each detail page below: add a `useState` toggle and render `<SweetLensButton>` in the header + `<ObjectCompanion>` as a right rail when active. Where an `<EntityFrameworksRail>` exists, **remove it** (it's the placeholder this replaces).
+Sparks are system-suggested; ignore them while seeding — they'll appear once the pipeline runs against real objects.
 
-| Route | Object kind | Action |
-|---|---|---|
-| `_app.tasks.$id.tsx` | `task` | Replace `EntityFrameworksRail` |
-| `_app.decisions.$id.tsx` | `decision` | Replace `EntityFrameworksRail` |
-| `_app.sparks.$id.tsx` | `spark` | Add fresh |
-| `_app.quests.$id.tsx` | `quest` | Add fresh |
-| `_app.projects.$id.tsx` | `project` | Add fresh |
-| `_app.missions.$id.tsx` | `mission` | Add fresh |
-| `_app.journeys.$id.tsx` | `journey` | Add fresh |
-| `_app.engagement-plans.$id.tsx` | `engagement_plan` | Add fresh |
-| `_app.sessions.$id.tsx` | `session` | Add fresh |
-| `_app.relationships.$id.tsx` | `relationship` | Add fresh |
-| `_app.components.$id.tsx` | `component` | Add fresh |
-| `_app.personas.$id.tsx` | `persona` | Add fresh |
+## What we'll do — three phases
 
-`/sandbox` board: swap its right rail for `<ObjectCompanion>` bound to the selected sandbox item.
+### Phase 1 — Seed the hierarchy (one working session, ~60 min)
 
-### 2. Kill the placeholders
-- Delete `src/components/frameworks-rail.tsx`
-- Delete `src/components/entity-frameworks-rail.tsx`
-- Search for residual imports and clean them up.
-- `src/lib/triageable.ts` → drop `OVERLAY_REGISTRY` if no consumer remains.
+A guided **Planning Workspace** at `/planning` that walks you and your dev through populating the canon top-down:
 
-### 3. Redirect legacy lens routes
-Rewrite these as 1-line redirects to `/settings/lens-studio` so old links still land cleanly:
-- `_app.settings.lenses.tsx`
-- `_app.settings.lenses.$id.tsx`
-- `_app.settings.lens-canon.tsx`
+```text
+Step 1  Mission       — confirm the one-liner
+Step 2  Journeys      — 2-4 arcs for the next 6 months
+Step 3  Quests        — 3-6 per Journey (this is where most thinking happens)
+Step 4  For each Quest:
+          • JTBDs      (1-3 — who's hiring this and for what)
+          • Components (the deliverables)
+          • Projects   (the waves/sprints that build them)
+          • Decisions  (anything still open)
+Step 5  Tasks         — break down the active Project into operator-assignable tasks
+Step 6  Operators     — confirm you + dev as operators with skills
+```
 
-### 4. Sidebar cleanup (the muddle)
-In `src/components/sidebar-nav.tsx`:
-- **Library group**: change the `BizzyBots` row → `Lens Studio` pointing at `/settings/lens-studio`, hint "Define lenses · personas · object fit".
-- **Settings group**: remove `Lens Canon` and `BizzyBot prompts` rows (folded into Studio). Update Prompt Console hint to "Non-lens AI prompts (capture, OCDA, scanners) — lens prompts live in Lens Studio".
+Each step is a single-screen form with an inline list of what's already there, "Add" inline, and a "Next" button. No modals. Skipping is allowed; nothing's destructive.
 
-### 5. Prompt Console scoping
-In `_app.settings.prompts.tsx`: filter out `scope='lens'` rows from the list and add a one-line banner: *"Lens prompts now live in **Lens Studio**."* with a link.
+### Phase 2 — Wire the views you'll actually look at daily
 
-### 6. Lens Wall structured-outputs footer
-In `src/components/lens-wall.tsx` and `src/components/lens-perspective-card.tsx`: append `<LensOutputsList sourceKind=… sourceId=…>` so the wide Domain/Tenet view also surfaces structured outputs (parity with the rail).
+Three existing surfaces become the daily drivers — light edits only:
 
-### 7. Memory writes
-- New `mem://design/lens-system.md`: the 3-layer model (Lens · Interrogation · Object Companion), Lens-as-unified-object rule, **SweetLens button** is the canonical trigger, Lens Studio is the only admin surface.
-- Update `mem://design/lenses-bizzybots.md`: BizzyBot = persona attribute of a Lens; Framework = structure attribute; same row.
+- **`/today`** — already exists. Add a top strip: *"Today's Quest" · "Today's Project" · "Blocked decisions"*.
+- **`/flightdeck`** — operator dashboard across Quests. Filter by operator (you vs dev) so you each see your lane.
+- **`/sweetcycle`** (or new **`/planning/board`**) — Quest board: rows = Quests, columns = `Discovery → Building → Shipping → Done`. Drag Quests across as state changes.
 
-## Plus: Wave-20 leftovers still open
+### Phase 3 — Distinction guardrails (so the canon doesn't drift)
 
-These were planned but not finished and should land in the same pass since they share files:
+A small **`<EntityKindHelper>`** chip mounted on the create dialogs for Mission/Journey/Quest/Project/Task that explains in one sentence what belongs at this level + 2 examples + 1 anti-example. Stops you and your dev from creating "a Project" when you mean "a Quest."
 
-- **PageHeader contract** still missing on the remaining detail/index routes that didn't get the upgrade — apply the `connectsTo` + `nextSteps` pattern across: Today, Operate/OCDA, Flightdeck, Sweetscan, Calendar, Capture, Import, Sessions Bank, Operators detail, Engagement Plans index/detail.
-- **OCDA cockpit**: convert lanes into drop targets (reuse `useDragToStatus`), union the Observe lane sources (`proposals + sparks + inbound_signals + kti_scans last 24h`), add the inline "Log decision" composer in Decide, and union running workflow runs into Act.
-- **`<OCDAStageChip>`** also mounted on Project, Spark, Quest detail headers (currently only on Task and Decision).
-- **FlowStrip** at the top of `/capture`, `/sandbox`, `/queue` showing `Capture → Sandbox → Queue → Routed` with current step highlighted.
-- **Library "used by" chip** on rows of `/library/jtbd`, `/library/ktis`, `/personas`, `/outcomes`, `/components`, `/playbooks`.
-- Confirm `lens_outputs`, `open_decisions`, `decisions` are in the audit-log allow-list trigger.
+Plus a memory write: `mem://design/planning-hierarchy.md` codifying the 6-level rule so future AI work doesn't blur it.
 
-## File plan
-
-**Edited (heavy)**
-- 12 detail routes listed above + `_app.sandbox.tsx` for SweetLens mount.
-- `src/components/sidebar-nav.tsx` — Library + Settings cleanup.
-- `src/components/ocda-cockpit.tsx` — drop targets, union sources, Decide composer.
-- `src/components/lens-wall.tsx`, `src/components/lens-perspective-card.tsx` — outputs footer.
-- `src/routes/_app.settings.prompts.tsx` — scope filter + banner.
-- ~10 PageHeader-only edits for the remaining routes.
-
-**Edited (light, redirects)**
-- `_app.settings.lenses.tsx`, `_app.settings.lenses.$id.tsx`, `_app.settings.lens-canon.tsx`.
+## What we'll build
 
 **New**
-- `src/components/flow-strip-mount.tsx` (or just inline the existing `flow-strip.tsx` on the 3 routes).
-- `src/components/library/used-by-chip.tsx`.
-- Memory: `mem://design/lens-system.md`.
+- `src/routes/_app.planning.tsx` — the 6-step Planning Workspace (stepper + inline lists + add forms, all reading/writing the existing tables).
+- `src/components/planning/step-mission.tsx`, `step-journeys.tsx`, `step-quests.tsx`, `step-quest-detail.tsx` (JTBD/Component/Project/Decision tabs), `step-tasks.tsx`, `step-operators.tsx`.
+- `src/components/entity-kind-helper.tsx` — the in-dialog explainer chip.
+- `src/components/today/todays-focus-strip.tsx` — Quest + Project + blocked Decisions header for `/today`.
+- `mem://design/planning-hierarchy.md`.
 
-**Deleted**
-- `src/components/frameworks-rail.tsx`
-- `src/components/entity-frameworks-rail.tsx`
+**Edited (light)**
+- `src/routes/_app.today.tsx` — mount the focus strip.
+- `src/routes/_app.flightdeck.tsx` — add operator filter (if not present).
+- `src/components/sidebar-nav.tsx` — add **Planning** entry under Today (top of sidebar) with hint *"Set Missions · Journeys · Quests · Projects"*.
+- The 5 create-sheets (`mission-create-sheet`, etc. — or wherever Mission/Journey/Quest/Project/Task creation happens) — mount `<EntityKindHelper>`.
 
-**Migration (one)**
-- Audit allow-list: add `lens_outputs` (and confirm `open_decisions`, `decisions`).
+**No DB changes.** Everything writes to `missions`, `journeys`, `quests`, `projects`, `tasks`, `jobs_to_be_done`, `components`, `decisions`, `operators` — all already exist with the right shape.
+
+## A worked example (so you see the shape)
+
+```text
+Mission   "SweetOS Clarity — the OS for service businesses"
+└─ Journey "Ship v1 to 10 paying users by Q3"
+    ├─ Quest "Lens System"            ← Wave 21 lives here
+    │   ├─ JTBD       "When I open any object, I want the right lens"
+    │   ├─ Component  "SweetLens panel", "Lens Studio"
+    │   ├─ Project    "Wave 21 — final wiring"
+    │   │   └─ Tasks  "Mount SweetLens on /quests", "OCDA drop targets" …
+    │   └─ Decision   "Should F12 Op-alpha auto-run on Sandbox items?"
+    ├─ Quest "Capture → Routed pipeline"
+    └─ Quest "Operator Dashboard (Flightdeck)"
+```
+
+By the end of the seeding session you'll have your real Missions/Journeys/Quests/Projects in the system, daily views that show *your* work, and create-flows that prevent canon drift.
 
 ## Sequencing
 
-1. SweetLens mount across the 12 routes + sandbox swap (~30%)
-2. Sidebar cleanup + legacy route redirects + Prompt Console scoping (~10%)
-3. Delete frameworks rails + cleanup imports (~5%)
-4. Lens Wall outputs footer (~5%)
-5. OCDA cockpit drop targets + Decide composer + source union (~20%)
-6. OCDAStageChip on remaining detail headers (~5%)
-7. FlowStrip on Capture / Sandbox / Queue (~5%)
-8. Library "used by" chips (~10%)
-9. Remaining PageHeader contract upgrades (~5%)
-10. Audit-log allow-list migration + memory writes (~5%)
+1. EntityKindHelper + 5 create-sheet edits + planning-hierarchy memory (~15%)
+2. Planning Workspace route + 6 step components (~55%)
+3. Today focus strip + Flightdeck operator filter (~15%)
+4. Sidebar entry + smoke test of full hierarchy create flow (~15%)
 
-## Not in this wave
-- No new lenses beyond F10–F12 already seeded.
-- No changes to `generate-lens-perspectives` edge function signature (structured outputs come later).
-- No IA rewrite — Library and Settings stay as groups; just one row each gets renamed/removed.
+## Not in this plan
 
-## After this wave
-SweetLens lives on every meaningful object. The sidebar has one entry — Lens Studio — for everything lens-related. The OCDA cockpit accepts drag-to-stage. Frameworks Rail is deleted. The "BizzyBots vs Frameworks vs Prompts" muddle is gone.
+- No new entities, no schema changes.
+- No automation of Spark generation against your seeded Quests — that's separate.
+- No external project-management import (Linear/Jira) — manual seeding for v1.
 
