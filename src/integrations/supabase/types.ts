@@ -1918,6 +1918,8 @@ export type Database = {
       entity_canon: {
         Row: {
           alternate_viewpoints: Json
+          child_kinds: string[]
+          composition_notes: string | null
           created_at: string
           display_name: string
           entity_kind: string
@@ -1926,6 +1928,8 @@ export type Database = {
           inputs: string[]
           one_liner: string | null
           outputs: string[]
+          parent_kinds: string[]
+          peer_kinds: string[]
           reinforcement_loop: string | null
           status: string
           updated_at: string
@@ -1936,6 +1940,8 @@ export type Database = {
         }
         Insert: {
           alternate_viewpoints?: Json
+          child_kinds?: string[]
+          composition_notes?: string | null
           created_at?: string
           display_name: string
           entity_kind: string
@@ -1944,6 +1950,8 @@ export type Database = {
           inputs?: string[]
           one_liner?: string | null
           outputs?: string[]
+          parent_kinds?: string[]
+          peer_kinds?: string[]
           reinforcement_loop?: string | null
           status?: string
           updated_at?: string
@@ -1954,6 +1962,8 @@ export type Database = {
         }
         Update: {
           alternate_viewpoints?: Json
+          child_kinds?: string[]
+          composition_notes?: string | null
           created_at?: string
           display_name?: string
           entity_kind?: string
@@ -1962,6 +1972,8 @@ export type Database = {
           inputs?: string[]
           one_liner?: string | null
           outputs?: string[]
+          parent_kinds?: string[]
+          peer_kinds?: string[]
           reinforcement_loop?: string | null
           status?: string
           updated_at?: string
