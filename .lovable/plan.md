@@ -1,136 +1,161 @@
 
 
-# Wave 11 — Make SweetScan intuitive + reclaim Pipeline stages + collapsible SweetCycle peek
+# Wave 12 — Make Capture truly pollinate everything (and make the Prompt Console honest)
 
-You're flagging three real things. All three are about the same instinct: information should appear *where you already are*, not on a separate page you have to remember to visit. Here's the fix.
+You're flagging two things that are actually the same root cause:
 
-## 1. SweetScan first surface = the Watchlist Dashboard (not a Forward Radar tab)
+1. **The Prompt Console only lists 2 prompts under "Capture & Queue"** because that's all that exists — `capture.parse` and `capture.parse.jtbd`. But more importantly: **none of those prompts are even being used.** `proposals.functions.ts` has the prompts hardcoded inline. Editing them in `/settings/prompts` does nothing. That's the dishonesty.
+2. **Capture today only matches against ~18 entity types** (persona, relationship, project, task, etc.) and only suggests Domain/Tenet/Component tags. It doesn't search the rich layer — JTBDs, Sparks, Quests, KTIs, Outcomes, Decisions, Sandbox items — so it can't *pollinate*. A capture about "client keeps asking how to price retainers" should also suggest: "this matches JTBD #X for persona Y, KTI #Z is watching for this, attach to Quest Q."
 
-Right now `/sweetscan` opens to "Forward Radar" — a raw list of every KTI in the system. That's the *output*, not the dashboard. You should land on **what you've decided to watch** and how each watch is doing.
+Here's the fix.
 
-**New first tab — `Watchlist`:**
+## Part A — Make the Prompt Console real
 
-```text
-┌─ SweetScan / Watchlist ────────────────────────────────────────────┐
-│ 5 KTIs watching · 2 fired this week · 3 quiet · 1 needs config    │
-│                                                                    │
-│ ┌──────────────────────┬──────────────────────┬──────────────────┐│
-│ │ 🔥 ACTIVE FIRES (2)  │ 👁 WATCHING (3)      │ ⚠ NEEDS SETUP   ││
-│ │                      │                      │                  ││
-│ │ • SaaS churn spike   │ • LinkedIn job posts │ • Funding alerts ││
-│ │   3 clients hit      │   last scan 2d ago   │   no source set  ││
-│ │   [Make Tasks →]     │   [Scan now]         │   [Configure]    ││
-│ └──────────────────────┴──────────────────────┴──────────────────┘│
-│                                                                    │
-│ + Add KTI to watch    + Suggest from recent captures (3)          │
-└────────────────────────────────────────────────────────────────────┘
-```
+**Problem:** the Console reads from `system_prompts` but the actual capture pipeline ignores that table.
 
-**Then below**, the existing tabs as drill-downs: Forward radar (the firehose), Rubric scanner (active scan), World Watch (per-client lens), Signal inbox (results queue). The Watchlist is the *home*; the others are tools you reach for from it.
+**Fix:** rewrite the capture pipeline to load every prompt from `system_prompts` by `key`, with the inline string only as fallback if a row is missing. One small loader: `getPrompt(key, fallback)`. Every AI call in `proposals.functions.ts`, `workflows.functions.ts`, and the four edge functions uses it.
 
-## 2. Capture → "You should SweetScan this" suggestion
+After this, edits in `/settings/prompts` actually change behavior.
 
-You're right — when you drop a thing into Capture, the AI already classifies it. If it spots a *recurring pattern* or an *external trend signal* in what you dropped, it should propose adding a **new KTI to the Watchlist**, not just route it to a task.
+## Part B — Capture pollinates the whole system (the part you're really asking for)
 
-**New flow:**
-- Capture submission with content classified as `kind = trend_signal | external_observation` → AI generates a suggested KTI shape (name, search terms, threshold, trigger action).
-- Suggestion appears in two places:
-  1. **Inline in Capture** as a new chip on the proposal: `[+ Watch this in SweetScan]`
-  2. **On the Watchlist dashboard** in the "Suggest from recent captures" pile.
-- One click → opens a pre-filled KTI create sheet → confirm → it's now on your Watchlist.
-
-This closes the loop: outside-in captures *become* outside-in scans.
-
-## 3. SweetCycle as a collapsible peek on the Engagement Plan page
-
-You're right that I overthought the tabs. Tabs hide context. **Make it a collapsible section on the same page**, expanded by default, that shows a compact 5-phase strip. Click "Expand →" to get the full board.
-
-**New Engagement Plan detail layout:**
+Today's capture pipeline:
 
 ```text
-┌─ Engagement Plan: Acme Q1 Map+Machine ─────────────────────────┐
-│ [Anatomy current content unchanged]                            │
-│ ────────────────────────────────────────────────────────────── │
-│ ▼ SweetCycle rhythm                          [Expand to board] │
-│ ┌──────┬──────────┬─────────┬──────┬──────┐                   │
-│ │ Seed │ Synth    │ Session │ Sync │ Ship │                   │
-│ │  2   │    1     │    1    │  3   │  4   │                   │
-│ │ ●●   │   ●      │    ●    │ ●●●  │ ●●●● │                   │
-│ └──────┴──────────┴─────────┴──────┴──────┘                   │
-│ Next due: Sync recap for "Discovery #3" — Thu                  │
-│ ────────────────────────────────────────────────────────────── │
-│ ▶ Audit trail (collapsed)                                      │
-└────────────────────────────────────────────────────────────────┘
+text ──▶ [normalize: pick 1 of 18 entities] ──▶ [tag: domains/tenets/components]
 ```
 
-- **Collapsed peek** = phase counts + next due item. Always visible.
-- **Expand** = full SweetCycleBoard inline (no route change), or jump to `/engagement-plans/$id/sweetcycle` for full screen.
-
-Same pattern for Audit (collapse it, since it's reference-only). Removes the tabs entirely → you see the whole engagement at a glance, expand only what you want.
-
-## 4. Reclaim the Pipeline stages — surface them on Relationship + Flightdeck
-
-The Pipeline route is dead, but the *stages* (Awareness → Pre-Engagement → Mirror → Map → Machine → Sync) are alive and powering Flightdeck. Two places they're underused:
-
-**A. Relationship detail header — Stage stepper**
-
-Currently the Relationship detail page doesn't visualize where this client sits in the journey. Add a compact stepper at the top:
+What it should be:
 
 ```text
-Awareness ──▶ Pre-Engagement ──▶ ●Mirror ──▶ Map ──▶ Machine ──▶ Sync
-                                  ^ you are here · 14 days in stage
-[Advance to Map →]   [Mark stalled]
+text ──▶ [classify intent] ──▶ [normalize entity] ──▶ [pollinate: search ALL relevant libraries]
+                                                       ├─ JTBDs (by persona/role/job-shape match)
+                                                       ├─ Personas (whose role matches)
+                                                       ├─ Open Quests / Sparks (active triage)
+                                                       ├─ KTIs (anything watching for this pattern?)
+                                                       ├─ Outcomes/Decisions in flight
+                                                       ├─ Components that address this
+                                                       └─ Domains/Tenets (already done)
+                                                       │
+                                                       ▼
+                                           Single proposal carrying ALL related-record IDs
+                                           that the user can confirm/reject in Queue
 ```
 
-Click any stage to drag/advance. This is the contact-level integration you're asking about — every relationship shows its place on the same shared pipeline that Flightdeck shows in aggregate.
+### The new prompt set under "Capture & Queue"
 
-**B. Flightdeck — already has swimlanes, add a sticky stage-health summary**
+The Prompt Console section grows from 2 prompts to a coherent set:
 
-Above the swimlanes, a one-line health bar:
+| key | role |
+|---|---|
+| `capture.intent` | classify *what kind of input this is*: observation · jtbd · task · question · trend signal · client update · idea |
+| `capture.parse` (existing, honored) | pick the single best entity type + extract fields |
+| `capture.parse.jtbd` (existing) | when intent=jtbd, extract the full JTBD shape |
+| **`capture.match.persona`** (new) | given input + persona library, pick which personas this lights up |
+| **`capture.match.jtbd`** (new) | given input + JTBD library scoped to matched personas, pick relevant jobs |
+| **`capture.match.quest_spark`** (new) | given input + open Quests/Sparks, pick which to attach |
+| **`capture.match.kti`** (new) | given input + active KTIs, flag any whose patterns just got evidence |
+| **`capture.suggest.kti`** (new — Wave 11 follow-through) | propose a *new* KTI when input looks like a recurring trend signal |
+| `queue.tag` (existing) | domain/tenet/component tagging (stays as final pass) |
+
+Each is one row in `system_prompts`, editable from the Console, used by the pipeline.
+
+### Persona-aware library spawning (your specific question)
+
+> "How do we spawn the libraries that are relevant depending on the persona?"
+
+The match passes are **scoped, not global**:
+
+1. `capture.match.persona` runs first against the small persona table (~6 rows now, capped at top-N by relevance).
+2. Once we have matched persona IDs, **only the JTBDs belonging to those personas** are sent to `capture.match.jtbd`. So if input mentions "advisor onboarding," and that lights up the "Wealth Advisor" persona, the JTBD library passed to the next pass is *just* that persona's jobs — not all 8 globally. Token-cheap and accurate.
+3. Same scoping for Quests/Sparks (filtered by `relationship_id` if one was matched in the normalize step).
+
+This is the canonical "JTBD = the role's standard jobs; campaigns/projects/tasks = work instances against those jobs" model from your memory. The pipeline now respects it: capture finds the persona → loads that persona's JTBDs → links the new task/project/campaign to the matched JTBD.
+
+### What lands on the proposal row (DB)
+
+Add these columns to `proposals` (one migration, additive, all nullable):
+
+| column | type | purpose |
+|---|---|---|
+| `intent` | text | from `capture.intent` |
+| `matched_personas` | uuid[] | from `capture.match.persona` |
+| `matched_jtbds` | uuid[] | from `capture.match.jtbd` |
+| `matched_quests` | uuid[] | from `capture.match.quest_spark` |
+| `matched_sparks` | uuid[] | same |
+| `matched_ktis` | uuid[] | from `capture.match.kti` |
+| `suggested_kti_payload` | jsonb | *(already added Wave 11 on `inbound_signals`; mirror here)* |
+
+When a proposal is approved into a Task/Project/Campaign, those `matched_jtbds` are written to the new entity's `jtbd_ids` link (see Part C).
+
+### Queue UI = what gets confirmed
+
+In `/capture` the proposal card already shows entity type, fields, suggested tags. Add three new chip rows below:
 
 ```text
-Awareness 4 · Pre-Eng 3 · Mirror 2 · Map 5 ⚠ (3 stalled >30d) · Machine 4 · Sync 1
+👤 Personas this touches:   [Wealth Advisor]  [Compliance Officer]
+🎯 JTBDs this advances:     [Onboard new client smoothly]  [+ create]
+🔭 Watch matches:           [KTI: rising churn — fired]
+🧭 Active work:             [Quest: Q1 Mirror]  [Spark #142]
 ```
 
-Click any segment to filter the swimlanes to just that stage. Surfaces "where am I bottlenecked" in one glance.
+Each chip is editable (add/remove) before approve. Approve writes the links.
+
+## Part C — JTBD ↔ work-instance plumbing
+
+You said it cleanly: **JTBDs are the role's standard jobs; Campaigns/Projects/Tasks are the work instances that advance them.** Today there's no link. Add:
+
+| join table | purpose |
+|---|---|
+| `task_jtbds (task_id, jtbd_id)` | which JTBDs a task advances |
+| `project_jtbds (project_id, jtbd_id)` | same for projects |
+| `campaign_jtbds (campaign_id, jtbd_id)` | same for campaigns |
+
+Surface on detail pages via a small `<JTBDChips>` component, and on JTBD detail show "Work in flight against this JTBD" (rollup view `jtbd_work_pipeline`).
 
 ## Files
 
-**Edited:**
-- `src/routes/_app.sweetscan.tsx` — add `Watchlist` as first tab; reorder tabs; add "Suggest from recent captures" pile
-- `src/routes/_app.engagement-plans.$id.tsx` — replace tabs with collapsible sections; SweetCycle peek expanded by default
-- `src/routes/_app.relationships.$id.tsx` — add `<PipelineStageStepper>` to header
-- `src/routes/_app.flightdeck.tsx` — add sticky stage-health summary bar above swimlanes
-- `src/routes/_app.capture.tsx` — show "Watch this in SweetScan" chip when AI classifies as trend signal
-- `src/components/engagement-plan-sweetcycle-tab.tsx` — add `compact` mode (counts + dots, no full board)
+**New backend:**
+- One migration: add proposal columns + 3 join tables + `jtbd_work_pipeline` view
+- `src/lib/get-prompt.ts` — single loader: `getPrompt(key, { fallbackSystem, fallbackUser, fallbackModel })`
 
-**New:**
-- `src/components/sweetscan/watchlist-dashboard.tsx` — Active fires / Watching / Needs setup tri-pile
-- `src/components/sweetscan/kti-suggestion-from-capture.tsx` — pre-fill KTI sheet from a capture row
-- `src/components/pipeline-stage-stepper.tsx` — compact horizontal stepper (reusable on Relationship + future surfaces)
-- `src/components/flightdeck-stage-health-bar.tsx` — clickable stage-count summary
-- `mem://design/sweetscan-watchlist-first.md` — codify "Watchlist = home, Forward Radar = drill-down"
+**Edited backend:**
+- `src/utils/proposals.functions.ts` — break the monolithic normalizer into a 4-stage pipeline (intent → normalize → match-personas → match-jtbds/quests/ktis → tag); every stage uses `getPrompt`
+- `src/utils/workflows.functions.ts` + 4 edge functions — switch their inline prompts to `getPrompt`
 
-**Backend (additive, no migrations):**
-- `supabase/functions/scan-signals/index.ts` — extend `classify_inbound` mode to also propose `suggested_kti` JSON when content matches trend-signal patterns. Stored on the existing `inbound_signals.classified_kind = 'trend_signal'` row plus a new `suggested_kti_payload` jsonb column (one tiny migration: `alter table inbound_signals add column suggested_kti_payload jsonb`).
+**New frontend:**
+- `src/components/jtbd-chips.tsx` — read/edit JTBD links on Tasks/Projects/Campaigns
+- `src/components/capture-pollination-chips.tsx` — the persona/JTBD/KTI/Quest chip row on proposal cards
+
+**Edited frontend:**
+- `src/routes/_app.capture.tsx` — render the new chip rows; allow edit before approve
+- `src/routes/_app.tasks.$id.tsx` · `_app.projects.$id.tsx` · `_app.campaigns.$id.tsx` — mount `<JTBDChips>`
+- `src/routes/_app.library.jtbd.$id.tsx` — add "Work in flight" panel reading `jtbd_work_pipeline`
+
+**New seed rows in `system_prompts`** (one SQL insert in the migration):
+- `capture.intent` · `capture.match.persona` · `capture.match.jtbd` · `capture.match.quest_spark` · `capture.match.kti` · `capture.suggest.kti`
+
+**Memory:**
+- `mem://design/capture-pollination.md` — codify the four-pass capture pipeline + persona-scoped JTBD loading rule
 
 ## Sequencing
 
-1. SweetScan Watchlist dashboard + reorder tabs (~25%)
-2. Engagement Plan collapsible-peek refactor + compact SweetCycle mode (~20%)
-3. Relationship stage stepper + Flightdeck health bar (~25%)
-4. Capture → KTI suggestion pipeline (~25%)
-5. Memory canon update (~5%)
+1. Migration + `getPrompt` loader (~15%)
+2. Switch existing 10 prompts to load via loader (~10%)
+3. Seed the 6 new prompt rows + new pipeline passes in `proposals.functions.ts` (~30%)
+4. Capture UI chip rows + edit-before-approve (~20%)
+5. JTBD link tables + `<JTBDChips>` mounts on Task/Project/Campaign detail (~15%)
+6. JTBD detail "Work in flight" panel + memory doc (~10%)
 
 ## Not in this wave
 
-- No sidebar changes (locked)
-- No route deletions
+- No sidebar changes
+- No new top-level routes
+- No changes to the persona R1 enforcement decision (still `jtbd_id` nullable)
 - No edits to auto-generated files
-- No changes to KTI schema beyond the one additive column
-- The full `/sweetcycle` multi-relationship route stays as the "all clients at once" view — unchanged
+- The KTI suggestion-from-capture chip from Wave 11 piggybacks on this same pipeline (the missing Wave-11 piece gets shipped here cleanly)
 
-After Wave 11: SweetScan opens to *what you're watching* (not the firehose), Capture *proposes* what to watch next, the Engagement Plan page shows SweetCycle inline at a glance, and Pipeline stages are visible at both the contact level (stepper) and the cockpit level (health bar). Pipeline becomes a concept you *see everywhere* instead of a route that redirects.
+After Wave 12: Capture lights up everything it should (personas, JTBDs, KTIs, quests, sparks, components, domains, tenets) — scoped intelligently by persona — and the Prompt Console actually controls the prompts that run. Every "+ New" of a Task/Project/Campaign carries the JTBDs it advances. The Console section count under Capture & Queue grows from 2 to 8, all editable, all live.
 
-Reply **"Run Wave 11"** to ship in this order, or name the slice you want first (e.g. *"Just the Watchlist + collapsible SweetCycle"*).
+Reply **"Run Wave 12"** to ship in this order, or **"Just the prompt-loader + new prompts first"** to land the honesty fix before the pollination passes.
 
