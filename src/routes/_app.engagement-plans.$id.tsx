@@ -7,7 +7,7 @@ import { EntityDetailPage } from "@/components/entity-workspace";
 import { EngagementPlanAnatomy } from "@/components/engagement-plan-anatomy";
 import { EngagementPlanSweetCycleTab } from "@/components/engagement-plan-sweetcycle-tab";
 import { AuditTrailPanel } from "@/components/audit-trail-panel";
-import { ObjectCompanion, SweetLensButton } from "@/components/object-companion";
+import { SweetLensLayout } from "@/components/sweet-lens-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,6 @@ function PlanDetail() {
   const [sweetcycleOpen, setSweetcycleOpen] = useState(true);
   const [sweetcycleExpanded, setSweetcycleExpanded] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
-  const [lensOpen, setLensOpen] = useState(false);
   const { data: plan } = useQuery({
     queryKey: ["engagement_plans", "lens-meta", id],
     queryFn: async () => {
@@ -31,11 +30,11 @@ function PlanDetail() {
   });
 
   return (
-    <div className={lensOpen ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]" : ""}>
-      <div className="min-w-0 space-y-5">
-        <div className="flex items-center justify-end gap-2 px-6 pt-4">
-          <SweetLensButton active={lensOpen} onClick={() => setLensOpen((o) => !o)} />
-        </div>
+    <SweetLensLayout
+      objectKind="engagement_plan"
+      objectId={id}
+      objectTitle={plan?.plan_name ?? "Engagement Plan"}
+    >
       <div className="px-6 pt-4">
         <Card className="flex items-start gap-3 border-iris/20 bg-iris-soft/40 p-3 text-xs">
           <Send className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--iris-violet)]" />
@@ -125,18 +124,7 @@ function PlanDetail() {
             </div>
           )}
         </Card>
-        </div>
       </div>
-      {lensOpen && (
-        <div className="px-6 pt-4 lg:pr-6">
-          <ObjectCompanion
-            objectKind="engagement_plan"
-            objectId={id}
-            objectTitle={plan?.plan_name ?? "Engagement Plan"}
-            className="self-start lg:sticky lg:top-4"
-          />
-        </div>
-      )}
-    </div>
+    </SweetLensLayout>
   );
 }

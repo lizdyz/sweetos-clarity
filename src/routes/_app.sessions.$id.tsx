@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { sb as supabase } from "@/lib/sb";
 import { EntityDetailPage } from "@/components/entity-workspace";
 import { MeasuresPanel } from "@/components/measures-panel";
 import { Calendar, ExternalLink, Layers } from "lucide-react";
 import { OperatorChip } from "@/components/operator-chip";
 import { WalkMenu } from "@/components/walk-menu";
-import { ObjectCompanion, SweetLensButton } from "@/components/object-companion";
+import { SweetLensLayout } from "@/components/sweet-lens-layout";
 
 export const Route = createFileRoute("/_app/sessions/$id")({
   component: SessionDetail,
@@ -31,7 +30,6 @@ interface TemplateRow {
 
 function SessionDetail() {
   const { id } = Route.useParams();
-  const [lensOpen, setLensOpen] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session-meta", id],
@@ -76,21 +74,23 @@ function SessionDetail() {
   });
 
   return (
-    <div className={lensOpen ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]" : ""}>
-      <div className="min-w-0 space-y-5">
-        <div className="flex items-center justify-end gap-2 px-6 pt-4">
-          <OperatorChip
-            table="sessions"
-            column="operator_id"
-            rowId={id}
-            operatorId={session?.operator_id}
-            label="Facilitator"
-            invalidateKeys={[["session-meta", id]]}
-          />
-          <WalkMenu kind="session" id={id} />
-          <SweetLensButton active={lensOpen} onClick={() => setLensOpen((o) => !o)} />
-        </div>
-        <EntityDetailPage entityKey="sessions" />
+    <SweetLensLayout
+      objectKind="session"
+      objectId={id}
+      objectTitle={session?.name ?? "Session"}
+      headerLeft={
+        <OperatorChip
+          table="sessions"
+          column="operator_id"
+          rowId={id}
+          operatorId={session?.operator_id}
+          label="Facilitator"
+          invalidateKeys={[["session-meta", id]]}
+        />
+      }
+      headerRight={<WalkMenu kind="session" id={id} />}
+    >
+      <EntityDetailPage entityKey="sessions" />
       <div className="space-y-5 px-6 pb-8">
         {template && (
           <section className="rounded-xl border border-border/60 bg-card/50 p-4">
@@ -146,18 +146,7 @@ function SessionDetail() {
         )}
 
         <MeasuresPanel subjectType="session" subjectId={id} title="Session measures" />
-        </div>
       </div>
-      {lensOpen && (
-        <div className="px-6 pt-4 lg:pr-6">
-          <ObjectCompanion
-            objectKind="session"
-            objectId={id}
-            objectTitle={session?.name ?? "Session"}
-            className="self-start lg:sticky lg:top-4"
-          />
-        </div>
-      )}
-    </div>
+    </SweetLensLayout>
   );
 }
