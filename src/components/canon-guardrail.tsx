@@ -147,10 +147,3 @@ function GraphLine({ label, kinds }: { label: string; kinds: string[] }) {
     </div>
   );
 }
-
-          {k}
-        </Link>
-      ))}
-    </div>
-  );
-}
