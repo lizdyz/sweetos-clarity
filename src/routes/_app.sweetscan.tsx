@@ -17,7 +17,10 @@ import {
 } from "@/components/ui/select";
 import { Radar, Loader2, Play, Inbox, Flame, Eye, Globe } from "lucide-react";
 import { KtiPanel } from "@/components/kti-panel";
-import { InboundSignalCard, type InboundSignal } from "@/components/inbound-signal-card";
+import { type InboundSignal } from "@/components/inbound-signal-card";
+import { TriageCard } from "@/components/triage-card";
+import { inboundSignalToTriageable } from "@/lib/triage-adapters";
+import { useTriagePromote } from "@/lib/use-triage-promote";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
