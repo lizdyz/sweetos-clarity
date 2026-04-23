@@ -87,8 +87,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       const [rels, ops, ts, ps, cs, sp, qs] = await Promise.all([
         supabase
           .from("relationships")
-          .select("id, account_name, primary_contact_name")
-          .or(`account_name.ilike.${like},primary_contact_name.ilike.${like}`)
+          .select("id, name, company")
+          .or(`name.ilike.${like},company.ilike.${like}`)
           .limit(limit),
         supabase
           .from("operators")
@@ -98,7 +98,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         supabase.from("tasks").select("id, name, status").ilike("name", like).limit(limit),
         supabase.from("projects").select("id, name, status").ilike("name", like).limit(limit),
         supabase.from("components").select("id, name, component_kind").ilike("name", like).limit(limit),
-        supabase.from("sparks").select("id, title, status").ilike("title", like).limit(limit),
+        supabase.from("sparks").select("id, name, status").ilike("name", like).limit(limit),
         supabase.from("quests").select("id, name, progression_state").ilike("name", like).limit(limit),
       ]);
 
@@ -106,8 +106,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       setHits({
         relationships: (rels.data ?? []).map((r) => ({
           id: r.id,
-          label: r.account_name ?? "Untitled",
-          sublabel: r.primary_contact_name ?? undefined,
+          label: r.name ?? "Untitled",
+          sublabel: r.company ?? undefined,
           icon: Users,
           to: "/relationships/$id",
           params: { id: r.id },
@@ -146,7 +146,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         })),
         sparks: (sp.data ?? []).map((s) => ({
           id: s.id,
-          label: s.title ?? "Spark",
+          label: s.name ?? "Spark",
           sublabel: s.status ?? undefined,
           icon: Sparkles,
           to: "/sparks/$id",
