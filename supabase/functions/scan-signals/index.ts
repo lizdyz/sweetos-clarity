@@ -167,9 +167,9 @@ Suggest 3-5 distinct, high-quality items that are NOT already in the existing ch
     method: "POST",
     headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model,
+      model: prompt.model,
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: prompt.systemPrompt },
         { role: "user", content: userPrompt },
       ],
       response_format: { type: "json_object" },
