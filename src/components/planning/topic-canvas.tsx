@@ -11,9 +11,17 @@ import {
 
 interface Props {
   topicId: string;
+  onWordCountChange?: (n: number) => void;
+  large?: boolean;
 }
 
-export function TopicCanvas({ topicId }: Props) {
+function countWords(s: string): number {
+  const t = s.trim();
+  if (!t) return 0;
+  return t.split(/\s+/).length;
+}
+
+export function TopicCanvas({ topicId, onWordCountChange, large }: Props) {
   const { data: items = [] } = useThinkingItems(topicId);
   const createItem = useCreateItem();
   const updateItem = useUpdateItem();
@@ -26,6 +34,10 @@ export function TopicCanvas({ topicId }: Props) {
   useEffect(() => {
     setValue(canvas?.body ?? "");
   }, [canvas?.id]);
+
+  useEffect(() => {
+    onWordCountChange?.(countWords(value));
+  }, [value, onWordCountChange]);
 
   const save = async (next: string) => {
     if (canvas) {
@@ -43,9 +55,10 @@ export function TopicCanvas({ topicId }: Props) {
   };
 
   const isSaving = createItem.isPending || updateItem.isPending;
+  const isEmpty = !value.trim();
 
   return (
-    <div className="space-y-2">
+    <div className="flex h-full flex-col gap-2">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground">Canvas</h3>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -66,8 +79,16 @@ export function TopicCanvas({ topicId }: Props) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={() => save(value)}
-        placeholder="Write freely. Paste, draft, wrestle. No structure required."
-        className="min-h-[260px] resize-y bg-background/60 leading-relaxed"
+        placeholder={
+          isEmpty
+            ? "Start anywhere — paste a draft, jot a sentence, list constraints. No structure required."
+            : ""
+        }
+        className={
+          large
+            ? "min-h-[60vh] flex-1 resize-none border-0 bg-transparent text-base leading-relaxed shadow-none focus-visible:ring-0"
+            : "min-h-[40vh] flex-1 resize-none bg-background/60 text-[15px] leading-relaxed"
+        }
       />
     </div>
   );
