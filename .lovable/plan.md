@@ -1,133 +1,166 @@
+# Wave 15 — Page-by-page audit to 10/10, run by the system itself
 
+You already have the auditor. It's at `/settings/ux-audit`, it scores routes against canon, and it's the headline KPI surface. The problem isn't capability — it's **coverage, criteria, and follow-through.** This wave turns the auditor from a tool you remember to use into a campaign that walks every page to 10/10.
 
-# Wave 14 — Frictionless onboarding: Capture-from-here + Gap-Closer mode
+## The core idea
 
-You're flagging the highest-leverage UX problem in the system: **getting information *in* is still a separate destination.** Three changes turn capture from a place you visit into a thing that follows you around — and then a thing the system does *for* you when you toggle it on.
+Every route gets a **canonical purpose**, a **clarity score**, and a **next action** — stored, not implied. The auditor already produces findings; we make those findings *the actual to-do list* with assignees, due dates, and a visible cockpit that ranks every page from worst to best until the whole app sits at 10/10.
 
-## Part 1 — "Capture here" button on every page
+## Part 1 — Give every page a canonical purpose (`route_canon`)
 
-A new control mounts inside `<PageHeader>` (already on every route). Click → a popover opens with:
-
-- **Mic-on-by-default** big record button (uses the existing `SpeechRecognition` hook from `/capture`).
-- **A coverage checklist** above the mic showing *what to talk about for this page* — derived from the page's entity canon (see Part 2).
-- **Live transcript** below.
-- **Stop & Stage** writes a `proposals` row pre-tagged with `source_page`, `subject_kind`, `subject_id` so it skips the entity-classifier and goes straight into the existing pollination pipeline scoped to that subject.
-
-```text
-┌─ /relationships/acme ─────────────────────────────┐
-│ [🎙 Capture for Acme]   ← in the page header     │
-│                                                    │
-│  Talking about Acme? Hit any of these:            │
-│   ○ Current pain or wedge moment                  │
-│   ○ Decision they're stuck on                     │
-│   ○ Who else is in the room                       │
-│   ○ What "good" looks like in 90 days             │
-│   ○ Any KTI evidence you've seen                  │
-│                                                    │
-│  ●REC  47s   "…they keep asking how to price…"    │
-│  [ Stop & stage ]                                 │
-└────────────────────────────────────────────────────┘
-```
-
-The capture lands as a normal proposal — but because it carries `subject_kind=relationship, subject_id=<acme>`, the existing `capture.match.*` passes already filter their search space (Acme's personas, JTBDs, KTIs, quests). Same pipeline, much higher signal.
-
-## Part 2 — `entity_canon.capture_prompts` (the dropdown of vital points)
-
-The "what to talk about" list is not invented per-page — it's a property of the entity kind, stored in `entity_canon`. New column:
+New table — one row per route, the canon for what that page is *for*:
 
 ```sql
-alter table entity_canon
-  add column capture_prompts text[] default '{}';
+create table public.route_canon (
+  route_path text primary key,            -- '/tasks', '/relationships/$id'
+  display_name text not null,             -- 'My Tasks'
+  classifier text not null,               -- entity_detail | actionable_detail | index | operate | library | settings | other
+  one_liner text not null,                -- "Triage and execute work assigned to me"
+  primary_job text not null,              -- "Move a task from inbox to done in <60s"
+  what_good_looks_like text[] default '{}',
+  must_have_components text[] default '{}', -- ['CanonGuardrail','TimeControls','MeasuresPanel']
+  must_not_have text[] default '{}',
+  related_canon_kinds text[] default '{}',
+  status text default 'draft'             -- draft | defined | needs_review
+);
 ```
 
-Seed it for the 17 canon kinds with 4–7 prompts each (Relationship gets the list above; Project gets "what's blocking · what shipped · who saw the artifact · is the JTBD still right"; Persona gets "fresh quote · changed circumstance · new objection"; etc.).
+The existing `ROUTE_CLASSIFIER` and `PRESENCE_RULES` constants in the ux-audit edge function get **migrated into this table** so they're editable from the admin UI, not buried in code. Every new route requires a `route_canon` row before it can ship — the auditor refuses to score a route without one (forces intentionality).
 
-The PageHeader popover reads `capture_prompts` for the current entity kind and renders them as the checklist. Editing them is a one-row update from `/settings/canon` — already an admin surface.
+## Part 2 — Auditor v2: clarity, ease, purpose-fit (3 new axes)
 
-## Part 3 — Gap-Closer mode (the "system works for us" toggle)
+Current axes: hierarchy · density · states · a11y · canon. We add three:
 
-A new switch in the topbar (next to the bell): **`Auto-spark gaps`**.
 
-When ON, a backend cron (every 6h via `pg_cron` + a server route) runs `gap-scanner.run`:
+| Axis          | What it measures                                                        | How                                                      |
+| ------------- | ----------------------------------------------------------------------- | -------------------------------------------------------- |
+| `purpose_fit` | Does the page deliver its `primary_job` in <3 clicks from landing?      | AI judges against `route_canon.primary_job`              |
+| `clarity`     | Can a new user explain what this page is for in one sentence after 10s? | AI scores headline + sub-copy + first-screen affordances |
+| `ease`        | Number of clicks/fields to complete the primary job                     | AI counts; deterministic floor                           |
 
-1. Walks every active `relationship` / `persona` / `quest` / `kti`.
-2. For each, checks coverage against canon: do we have a recent capture? a JTBD? evidence for the KTIs that should fire? a Spark in the last 30 days?
-3. For each gap, spawns a **system-attributed Spark** (`generated_by_kind='agent'`, generator op = `gap_scanner`) with a focused question:
-   - *"Acme: no capture in 21 days — what changed since last session?"*
-   - *"KTI 'rising churn' has 0 readings this week — anything in inbound signals?"*
-   - *"Persona 'Wealth Advisor' has 2 JTBDs but 0 work instances against either — propose a campaign?"*
 
-Sparks land where they already do (`/sparks`, embedded in Today, surfaced by `<TriageCard>`). User triages with the existing universal gesture. **Nothing new on the read side.**
+The 10/10 target = **all 8 axes at 5/5 + 0 canon misses**. Stored as `total_score = sum(axes) + (5 if canon_misses=0 else -10)`. Easy ranking.
 
-A small `gap_scan_runs` table records each pass for audit + the existing Prompt Console gets one new row (`gap.scanner.propose`) so you can edit the Spark prompt template.
+## Part 3 — Findings become tasks (the follow-through loop)
+
+Right now `ux_audit_runs.findings[]` is a JSON blob you read once and forget. Change:
+
+- New table `ux_audit_findings` — one row per finding, with `status` (open · acknowledged · in_progress · fixed · wont_fix), `assignee_operator_id`, `due_date`, `fixed_by_run_id`.
+- When a run inserts findings, dedupe against open findings on the same route — same `rule_name` + `axis` + similar `description` collapses to existing row, bumps `last_seen_at`.
+- A finding fixed in a later run auto-closes (by absence). Resurfaces if it comes back.
+- Each finding can be promoted to a real `task` with one click — `task_provenance` records `audit_finding_id`.
+
+Now the auditor isn't a report — it's a backlog that closes itself when fixes ship.
+
+## Part 4 — `/settings/ux-audit` becomes the "Path to 10/10" cockpit
+
+Redesigned cockpit, three sections:
 
 ```text
-text ──▶ [gap_scanner cron] ──▶ for each entity:
-                                 ├─ canon.coverage_rules ↔ actual data
-                                 ├─ if gap → generate spark via getPrompt('gap.scanner.propose')
-                                 └─ insert spark with provenance back to subject
+┌─ PATH TO 10/10 ────────────────────────────────────────┐
+│ App score: 6.4 / 10   ▲ +0.3 vs last week              │
+│ Routes at 10/10: 4 / 47                                │
+│ Open findings: 138 (24 high · 71 med · 43 low)         │
+│ Canon misses: 19  ← headline KPI                       │
+└─────────────────────────────────────────────────────────┘
+
+┌─ WORST FIRST (sortable) ────────────────────────────────┐
+│ /flightdeck       3.2  18 findings  ▶ Run audit · Open │
+│ /sweetcycle       3.8  14 findings                     │
+│ /library/jtbd/$id 4.1  11 findings                     │
+│ ...                                                    │
+└─────────────────────────────────────────────────────────┘
+
+┌─ BULK RUNNER ──────────────────────────────────────────┐
+│ [ Run all stale (>7d) ]   [ Run all <8.0 ]   [ Run all ]│
+│ Concurrency: 3  ETA: ~4 min                            │
+└─────────────────────────────────────────────────────────┘
 ```
 
-Coverage rules are also canon-driven — a new `coverage_rules` jsonb on `entity_canon`:
+Click any route → existing per-route detail card, now with the finding list as an **interactive backlog** (assign, due-date, promote-to-task).
 
-```jsonc
-{
-  "stale_capture_days": 21,
-  "require_jtbd_link": true,
-  "require_active_kti": true,
-  "min_sparks_per_quarter": 1
-}
-```
+## Part 5 — Auditor runs itself (Gap-Closer for pages)
 
-Default sensible values; admin can tighten per kind from `/settings/canon`.
+The Gap-Closer cron from Wave 14 already runs every 6h. Hook into it:
+
+- Each pass picks the **5 stalest routes** (no audit in >7d OR score <8.0) and queues them.
+- New server route `api/public/hooks/ux-audit-batch.ts` — accepts an array of route paths, runs the existing edge function in parallel (concurrency 3, AI-rate-limit-aware).
+- Results flow into `ux_audit_runs` + `ux_audit_findings` like any manual run.
+- A new `agent` Spark fires when a route regresses (score drops by >0.5 between runs) — surfaces in your existing triage gesture.
+
+So the audit doesn't depend on remembering to click "Run."
+
+## Part 6 — Per-page Canon Guardrail upgrade
+
+`<CanonGuardrail>` already shows the entity canon checklist on detail pages. Extend it to also show the **route canon**:
+
+- Tiny chip on every page header: `Page score: 7.2/10 · 4 open findings ·  ▶ Audit`
+- Click → opens a slide-over with the page's `route_canon`, the latest audit, and the open findings.
+- For admins only — invisible to end users.
+
+Now the cockpit isn't a destination; the score follows you onto the page being scored.
 
 ## Files
 
-**New backend:**
-- One migration: `entity_canon.capture_prompts text[]`, `entity_canon.coverage_rules jsonb`, `gap_scan_runs` table, seed `capture_prompts` for all 17 canon kinds, seed `gap.scanner.propose` system_prompt row.
-- `src/routes/api/public/hooks/gap-scan.ts` — server route that pg_cron hits every 6h (HMAC-protected). Uses `getPrompt` + the agent-attributed Spark insert path.
+**Migration (one):**
 
-**New frontend:**
-- `src/components/page-capture-button.tsx` — the in-PageHeader mic+checklist popover. Takes `subjectKind`, `subjectId`, optional `subjectLabel`. Reads `entity_canon.capture_prompts` for the kind. Reuses the existing SpeechRecognition + `captureProposal` flow.
-- `src/components/gap-closer-toggle.tsx` — topbar switch; flips `org_settings.gap_closer_enabled`.
+- `route_canon` table + seed all ~95 routes from `src/routes/` (script reads the file tree, classifies each, assigns sensible defaults; admin curates from there).
+- `ux_audit_findings` table + backfill from existing `ux_audit_runs.findings` JSON.
+- `total_score` generated column on `ux_audit_runs`.
+- Three new prompt rows in `system_prompts`: `ux.audit.purpose_fit`, `ux.audit.clarity`, `ux.audit.ease`.
+
+**Edge function:**
+
+- `supabase/functions/ux-audit/index.ts` — read `route_canon` for the target route, score new axes, write findings to `ux_audit_findings` with dedup.
+
+**New server route:**
+
+- `src/routes/api/public/hooks/ux-audit-batch.ts` — HMAC-protected, runs N audits in parallel, called by gap-scanner.
+
+**New components:**
+
+- `src/components/audit-cockpit.tsx` — Path-to-10/10 overview (replaces top of `/settings/ux-audit`).
+- `src/components/audit-finding-row.tsx` — interactive finding (status, assign, promote-to-task).
+- `src/components/route-score-chip.tsx` — page-header chip showing live score + drawer.
 
 **Edited:**
-- `src/components/page-header.tsx` — accept optional `subjectKind` / `subjectId` and slot the capture button in the actions area.
-- `src/components/app-topbar.tsx` — mount `<GapCloserToggle/>`.
-- `src/routes/_app.settings.canon.tsx` — add `capture_prompts` and `coverage_rules` editors to each canon row.
-- The ~25 detail routes (`_app.relationships.$id.tsx`, `_app.projects.$id.tsx`, `_app.personas.$id.tsx`, etc.) — pass `subjectKind="relationship"` etc. into `<PageHeader>`. One-line each.
-- `src/utils/proposals.functions.ts` — accept optional `subject_kind`, `subject_id` on input; persist to proposal; the persona/JTBD/quest match passes prefilter their library by these IDs when present.
 
-**Cron seed (separate migration):**
-- `select cron.schedule('gap-scanner', '0 */6 * * *', $$ select net.http_post(url := '<published>/api/public/hooks/gap-scan', headers := …) $$)`
+- `src/routes/_app.settings.ux-audit.tsx` — new cockpit layout, finding backlog UI, bulk runner.
+- `src/components/canon-guardrail.tsx` — mount `<RouteScoreChip>` for admins.
+- `src/routes/api/public/hooks/gap-scan.ts` — call `ux-audit-batch` for stale routes.
+- `src/routes/_app.settings.canon.tsx` — add a "Routes" tab editing `route_canon` rows.
 
 **Memory:**
-- `mem://design/capture-everywhere.md` — codify the `<PageHeader subjectKind/subjectId>` contract and the canon-driven `capture_prompts` rule.
-- `mem://features/gap-closer.md` — codify how the scanner reads `coverage_rules` and writes Sparks.
+
+- `mem://design/route-canon.md` — every route has a row in `route_canon` before it ships. The auditor refuses to score routes without canon.
+- `mem://features/path-to-10.md` — the 8-axis scoring model + finding lifecycle + auto-run cadence.
 
 ## Sequencing
 
-1. Migration: `capture_prompts`, `coverage_rules`, `gap_scan_runs`, seed all 17 kinds (~20%)
-2. `<PageCaptureButton>` + PageHeader integration + the 25 route prop wires (~25%)
-3. `proposals.functions.ts` accepts subject context + scopes match passes (~10%)
-4. `/settings/canon` editors for `capture_prompts` + `coverage_rules` (~10%)
-5. `gap-scan` server route + cron + `gap.scanner.propose` prompt (~20%)
-6. `<GapCloserToggle>` in topbar + `org_settings` flag + memory docs (~15%)
+1. Migration: `route_canon` + seed all routes + `ux_audit_findings` + 3 new prompts (~20%)
+2. Edge function v2: read route_canon, score 3 new axes, dedup findings (~20%)
+3. Cockpit redesign: Path-to-10/10 overview + worst-first table + bulk runner (~20%)
+4. Finding backlog UI: status, assign, due, promote-to-task (~15%)
+5. `<RouteScoreChip>` in CanonGuardrail + Routes tab in `/settings/canon` (~10%)
+6. `ux-audit-batch` server route + Gap-Closer hookup + regression Spark (~15%)
 
 ## Not in this wave
 
 - No new top-level routes
 - No sidebar changes
-- No new "modes" beyond the single Gap-Closer toggle
-- Whisper / server-side transcription stays out — browser `SpeechRecognition` is good enough for v1
+- No automatic *fixes* — auditor proposes, humans/agents execute (existing task pipeline)
+- No A/B testing or analytics integration (separate wave)
 - No edits to auto-generated files
 
-## After Wave 14
+## After Wave 15
 
-- Every page has a one-click capture button **that knows what to ask for on that page** (canon-driven prompts).
-- The same capture flows through the existing pollination pipeline, but pre-scoped to the page's subject — so matches are tighter and faster.
-- Flip one switch and the system *itself* starts hunting gaps — every 6 hours it walks the active surface area and drops Sparks where coverage is thin, using your existing universal triage gesture as the response surface.
-- All of this is canon-controlled: `capture_prompts` and `coverage_rules` live in `entity_canon`, editable from `/settings/canon`, version-tracked by the existing `entity_canon_revisions` trigger.
+- Every route has a stated purpose, primary job, and 10/10 criteria — visible to admins on the page itself.
+- The auditor scores 8 axes including clarity, ease, and purpose-fit — not just canon presence.
+- Every finding is a tracked, assignable, closable backlog item with task-promotion.
+- Stale and low-scoring routes get re-audited every 6h automatically. Regressions fire Sparks.
+- One screen — `/settings/ux-audit` — tells you exactly which page to fix next and ranks the whole app from worst to best until everything sits at 10/10.
 
-Reply **"Run Wave 14"** to ship in this order, or **"Just the per-page capture button first"** to land the highest-impact piece before the gap scanner.
-
+Reply **"Run Wave 15"** to ship in this order, or **"Just route_canon + the new cockpit first"** to land the foundation before the auto-run loop.  
+  
+  
+can you create the ability to have the control panel do this without me wasting tokens to talk to you to do it - i am very confused with the new additions at the top of the page i wanted that which page you were on you over index to help that page collect info more as its likely relevant to that page
