@@ -447,6 +447,42 @@ function CanonForm({ canon, userId, onCancel, onSaved }: { canon: CanonRow; user
         <Field label="Composition notes"><Input value={compNotes} onChange={(e) => setCompNotes(e.target.value)} placeholder="Nuance about how it composes" /></Field>
       </div>
 
+      <div className="rounded-xl border border-dashed border-border p-3 space-y-3">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Capture prompts (one per line — shown when operator clicks "Capture for {canon.display_name}")
+        </div>
+        <Textarea
+          rows={6}
+          value={capturePrompts}
+          onChange={(e) => setCapturePrompts(e.target.value)}
+          placeholder="e.g. Current pain or wedge moment&#10;Decision they're stuck on"
+        />
+      </div>
+
+      <div className="rounded-xl border border-dashed border-border p-3 space-y-3">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Coverage rules (Gap-Closer)
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Stale capture (days)">
+            <Input type="number" value={staleDays} onChange={(e) => setStaleDays(e.target.value)} />
+          </Field>
+          <Field label="Min Sparks per quarter">
+            <Input type="number" value={minSparks} onChange={(e) => setMinSparks(e.target.value)} />
+          </Field>
+        </div>
+        <div className="flex flex-wrap gap-4 pt-1">
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={requireJtbd} onChange={(e) => setRequireJtbd(e.target.checked)} />
+            Require JTBD link
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={requireKti} onChange={(e) => setRequireKti(e.target.checked)} />
+            Require active KTI
+          </label>
+        </div>
+      </div>
+
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button onClick={save} disabled={busy} className="bg-iris text-white">{busy ? "Saving…" : "Save canon"}</Button>
