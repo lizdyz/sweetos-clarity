@@ -98,7 +98,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         supabase.from("tasks").select("id, name, status").ilike("name", like).limit(limit),
         supabase.from("projects").select("id, name, status").ilike("name", like).limit(limit),
         supabase.from("components").select("id, name, component_kind").ilike("name", like).limit(limit),
-        supabase.from("sparks").select("id, name, status").ilike("name", like).limit(limit),
+        supabase.from("sparks").select("id, name, progression_state").ilike("name", like).limit(limit),
         supabase.from("quests").select("id, name, progression_state").ilike("name", like).limit(limit),
       ]);
 
@@ -147,7 +147,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         sparks: (sp.data ?? []).map((s) => ({
           id: s.id,
           label: s.name ?? "Spark",
-          sublabel: s.status ?? undefined,
+          sublabel: s.progression_state ?? undefined,
           icon: Sparkles,
           to: "/sparks/$id",
           params: { id: s.id },
