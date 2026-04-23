@@ -83,6 +83,10 @@ const CaptureInput = z.object({
   sourceLabel: z.string().trim().max(120).optional(),
   model: z.string().trim().max(120).optional(),
   attachments: z.array(AttachmentInput).max(20).optional(),
+  // Wave 14 — capture-from-here context
+  subjectKind: z.string().trim().max(40).optional(),
+  subjectId: z.string().uuid().optional(),
+  sourcePage: z.string().trim().max(200).optional(),
 });
 
 const NORMALIZER_SCHEMA = {
