@@ -30,6 +30,13 @@ function DecisionsPage() {
             "Link to the project, the supersedes prior decision, and tag domains",
             "Open the OCDA Cockpit to see this in the live decide pipeline",
           ]}
+          connectsTo={[
+            { to: "/decisions/open", label: "Open Decisions" },
+            { to: "/operate/ocda", label: "OCDA Cockpit" },
+            { to: "/sandbox", label: "Sandbox" },
+            { to: "/audit", label: "Audit Trail" },
+          ]}
+          nextSteps={["Triage proposed", "Settle open", "Log new"]}
           actions={
             <Button asChild size="sm" variant="outline" className="gap-1.5">
               <Link to="/operate/ocda">

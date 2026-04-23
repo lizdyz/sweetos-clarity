@@ -54,6 +54,12 @@ function QuestsIndex() {
           "Open a Quest to see its core workflow and Components advanced",
           "Anchor any Quest to a relationship to make it client-facing",
         ]}
+        connectsTo={[
+          { to: "/sparks", label: "Sparks" },
+          { to: "/components", label: "Components" },
+          { to: "/sweetsync", label: "SweetSync" },
+        ]}
+        nextSteps={[`${recent.length} recent`, "Open active"]}
       />
 
       <ScopeTabs value={filter} onChange={setFilter} />

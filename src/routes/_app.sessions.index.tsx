@@ -66,6 +66,13 @@ function SessionsIndex() {
             "See past sessions, today's live ones (status chip), and what's scheduled",
             "Open a session to capture outcomes, decisions, and Component movement",
           ]}
+          connectsTo={[
+            { to: "/calendar", label: "Calendar" },
+            { to: "/session-templates", label: "Templates" },
+            { to: "/engagement-plans", label: "Engagement Plans" },
+            { to: "/relationships", label: "Relationships" },
+          ]}
+          nextSteps={["Open today's sessions", "Schedule next", "Log outcomes"]}
         />
       </div>
       {serviceTypes.length > 0 && (

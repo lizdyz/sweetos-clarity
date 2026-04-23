@@ -19,6 +19,13 @@ function EngagementPlansPage() {
             "Set the term dates and revenue target",
             "Open a plan to see its anatomy + drill into its SweetCycle",
           ]}
+          connectsTo={[
+            { to: "/relationships", label: "Relationships" },
+            { to: "/sweetcycle", label: "SweetCycle" },
+            { to: "/sessions", label: "Sessions" },
+            { to: "/playbooks", label: "Playbooks" },
+          ]}
+          nextSteps={["Activate plans", "Track revenue", "Schedule sessions"]}
           actions={
             <Link
               to="/sweetcycle"
