@@ -12,6 +12,9 @@ interface CanonRow {
   one_liner: string | null;
   what_good_looks_like: string[];
   what_bad_looks_like: string[];
+  parent_kinds: string[] | null;
+  child_kinds: string[] | null;
+  peer_kinds: string[] | null;
 }
 
 interface Props {
@@ -33,12 +36,16 @@ export function CanonGuardrail({ entityKind, className, defaultOpen = false }: P
     queryFn: async () => {
       const { data } = await supabase
         .from("entity_canon")
-        .select("id, entity_kind, display_name, one_liner, what_good_looks_like, what_bad_looks_like")
+        .select("id, entity_kind, display_name, one_liner, what_good_looks_like, what_bad_looks_like, parent_kinds, child_kinds, peer_kinds")
         .eq("entity_kind", entityKind)
         .maybeSingle();
       return data as CanonRow | null;
     },
   });
+
+  const parents = canon?.parent_kinds ?? [];
+  const childs = canon?.child_kinds ?? [];
+  const peers = canon?.peer_kinds ?? [];
 
   if (!canon) return null;
 
