@@ -368,6 +368,12 @@ function CanonForm({ canon, userId, onCancel, onSaved }: { canon: CanonRow; user
   const [peers, setPeers] = useState((canon.peer_kinds ?? []).join(", "));
   const [compNotes, setCompNotes] = useState(canon.composition_notes ?? "");
   const [status, setStatus] = useState(canon.status);
+  const [capturePrompts, setCapturePrompts] = useState((canon.capture_prompts ?? []).join("\n"));
+  const cr = canon.coverage_rules ?? {};
+  const [staleDays, setStaleDays] = useState(String(cr.stale_capture_days ?? 21));
+  const [requireJtbd, setRequireJtbd] = useState(!!cr.require_jtbd_link);
+  const [requireKti, setRequireKti] = useState(!!cr.require_active_kti);
+  const [minSparks, setMinSparks] = useState(String(cr.min_sparks_per_quarter ?? 1));
   const [busy, setBusy] = useState(false);
 
   const toLines = (s: string) => s.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -389,6 +395,13 @@ function CanonForm({ canon, userId, onCancel, onSaved }: { canon: CanonRow; user
         child_kinds: toCsv(children),
         peer_kinds: toCsv(peers),
         composition_notes: compNotes || null,
+        capture_prompts: toLines(capturePrompts),
+        coverage_rules: {
+          stale_capture_days: Number(staleDays) || 21,
+          require_jtbd_link: requireJtbd,
+          require_active_kti: requireKti,
+          min_sparks_per_quarter: Number(minSparks) || 1,
+        },
         status,
         updated_by: userId,
       })
