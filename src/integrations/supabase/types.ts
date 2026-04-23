@@ -2598,6 +2598,552 @@ export type Database = {
         }
         Relationships: []
       }
+      ingestion_classifications: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          field_map: Json | null
+          file_id: string
+          group_id: string | null
+          id: string
+          matched_field_count: number | null
+          rationale: string | null
+          run_id: string
+          status: Database["public"]["Enums"]["ingestion_classification_status"]
+          target_object_type: string | null
+          target_table: string | null
+          unmatched_field_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          field_map?: Json | null
+          file_id: string
+          group_id?: string | null
+          id?: string
+          matched_field_count?: number | null
+          rationale?: string | null
+          run_id: string
+          status?: Database["public"]["Enums"]["ingestion_classification_status"]
+          target_object_type?: string | null
+          target_table?: string | null
+          unmatched_field_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          field_map?: Json | null
+          file_id?: string
+          group_id?: string | null
+          id?: string
+          matched_field_count?: number | null
+          rationale?: string | null
+          run_id?: string
+          status?: Database["public"]["Enums"]["ingestion_classification_status"]
+          target_object_type?: string | null
+          target_table?: string | null
+          unmatched_field_count?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_classifications_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_classifications_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_file_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_classifications_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingestion_file_groups: {
+        Row: {
+          column_signature: string[] | null
+          confidence: number | null
+          created_at: string
+          heading_pattern: string[] | null
+          id: string
+          matched_rule_ids: string[] | null
+          pattern_label: string | null
+          proposed_object_type: string | null
+          proposed_target_table: string | null
+          rationale: string | null
+          run_id: string
+          sample_count: number
+          signature: string
+          status: Database["public"]["Enums"]["ingestion_classification_status"]
+          updated_at: string
+        }
+        Insert: {
+          column_signature?: string[] | null
+          confidence?: number | null
+          created_at?: string
+          heading_pattern?: string[] | null
+          id?: string
+          matched_rule_ids?: string[] | null
+          pattern_label?: string | null
+          proposed_object_type?: string | null
+          proposed_target_table?: string | null
+          rationale?: string | null
+          run_id: string
+          sample_count?: number
+          signature: string
+          status?: Database["public"]["Enums"]["ingestion_classification_status"]
+          updated_at?: string
+        }
+        Update: {
+          column_signature?: string[] | null
+          confidence?: number | null
+          created_at?: string
+          heading_pattern?: string[] | null
+          id?: string
+          matched_rule_ids?: string[] | null
+          pattern_label?: string | null
+          proposed_object_type?: string | null
+          proposed_target_table?: string | null
+          rationale?: string | null
+          run_id?: string
+          sample_count?: number
+          signature?: string
+          status?: Database["public"]["Enums"]["ingestion_classification_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_file_groups_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingestion_files: {
+        Row: {
+          created_at: string
+          created_by: string
+          duplicate_of: string | null
+          extension: string | null
+          filename: string
+          group_id: string | null
+          id: string
+          mime_type: string | null
+          parse_error: string | null
+          parsed_text: string | null
+          run_id: string
+          sha256: string | null
+          size_bytes: number | null
+          storage_path: string
+          structure_json: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          duplicate_of?: string | null
+          extension?: string | null
+          filename: string
+          group_id?: string | null
+          id?: string
+          mime_type?: string | null
+          parse_error?: string | null
+          parsed_text?: string | null
+          run_id: string
+          sha256?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          structure_json?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          duplicate_of?: string | null
+          extension?: string | null
+          filename?: string
+          group_id?: string | null
+          id?: string
+          mime_type?: string | null
+          parse_error?: string | null
+          parsed_text?: string | null
+          run_id?: string
+          sha256?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          structure_json?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_files_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "ingestion_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_files_group_fk"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_file_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_files_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingestion_mapping_rules: {
+        Row: {
+          created_at: string
+          created_by: string
+          hit_count: number
+          id: string
+          notes: string | null
+          pattern: string
+          pattern_kind: string
+          run_id: string | null
+          scope: string
+          target_field: string | null
+          target_object_type: string | null
+          target_table: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          hit_count?: number
+          id?: string
+          notes?: string | null
+          pattern: string
+          pattern_kind: string
+          run_id?: string | null
+          scope?: string
+          target_field?: string | null
+          target_object_type?: string | null
+          target_table?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          hit_count?: number
+          id?: string
+          notes?: string | null
+          pattern?: string
+          pattern_kind?: string
+          run_id?: string | null
+          scope?: string
+          target_field?: string | null
+          target_object_type?: string | null
+          target_table?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_mapping_rules_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingestion_object_registry: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_name: string
+          enabled: boolean
+          id: string
+          object_type: string
+          optional_fields: string[] | null
+          required_fields: string[] | null
+          sort_order: number
+          target_table: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_name: string
+          enabled?: boolean
+          id?: string
+          object_type: string
+          optional_fields?: string[] | null
+          required_fields?: string[] | null
+          sort_order?: number
+          target_table: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          enabled?: boolean
+          id?: string
+          object_type?: string
+          optional_fields?: string[] | null
+          required_fields?: string[] | null
+          sort_order?: number
+          target_table?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ingestion_object_suggestions: {
+        Row: {
+          created_at: string
+          evidence_file_ids: string[] | null
+          group_id: string | null
+          id: string
+          proposed_name: string
+          rationale: string | null
+          run_id: string
+          status: Database["public"]["Enums"]["ingestion_suggestion_status"]
+          suggested_fields: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          evidence_file_ids?: string[] | null
+          group_id?: string | null
+          id?: string
+          proposed_name: string
+          rationale?: string | null
+          run_id: string
+          status?: Database["public"]["Enums"]["ingestion_suggestion_status"]
+          suggested_fields?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          evidence_file_ids?: string[] | null
+          group_id?: string | null
+          id?: string
+          proposed_name?: string
+          rationale?: string | null
+          run_id?: string
+          status?: Database["public"]["Enums"]["ingestion_suggestion_status"]
+          suggested_fields?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_object_suggestions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_file_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_object_suggestions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingestion_results: {
+        Row: {
+          created_at: string
+          created_entity_id: string | null
+          created_entity_kind: string | null
+          created_entity_table: string | null
+          error_message: string | null
+          file_id: string
+          id: string
+          notes: string | null
+          run_id: string
+          status: Database["public"]["Enums"]["ingestion_result_status"]
+        }
+        Insert: {
+          created_at?: string
+          created_entity_id?: string | null
+          created_entity_kind?: string | null
+          created_entity_table?: string | null
+          error_message?: string | null
+          file_id: string
+          id?: string
+          notes?: string | null
+          run_id: string
+          status: Database["public"]["Enums"]["ingestion_result_status"]
+        }
+        Update: {
+          created_at?: string
+          created_entity_id?: string | null
+          created_entity_kind?: string | null
+          created_entity_table?: string | null
+          error_message?: string | null
+          file_id?: string
+          id?: string
+          notes?: string | null
+          run_id?: string
+          status?: Database["public"]["Enums"]["ingestion_result_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_results_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_results_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingestion_runs: {
+        Row: {
+          created_at: string
+          created_by: string
+          created_count: number
+          failed_count: number
+          file_count: number
+          finished_at: string | null
+          group_count: number
+          id: string
+          name: string | null
+          notes: string | null
+          object_suggestion_count: number
+          schema_suggestion_count: number
+          skipped_count: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["ingestion_run_status"]
+          updated_at: string
+          updated_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          created_count?: number
+          failed_count?: number
+          file_count?: number
+          finished_at?: string | null
+          group_count?: number
+          id?: string
+          name?: string | null
+          notes?: string | null
+          object_suggestion_count?: number
+          schema_suggestion_count?: number
+          skipped_count?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ingestion_run_status"]
+          updated_at?: string
+          updated_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          created_count?: number
+          failed_count?: number
+          file_count?: number
+          finished_at?: string | null
+          group_count?: number
+          id?: string
+          name?: string | null
+          notes?: string | null
+          object_suggestion_count?: number
+          schema_suggestion_count?: number
+          skipped_count?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ingestion_run_status"]
+          updated_at?: string
+          updated_count?: number
+        }
+        Relationships: []
+      }
+      ingestion_schema_suggestions: {
+        Row: {
+          approved_field_name: string | null
+          created_at: string
+          group_id: string | null
+          guessed_type: string | null
+          id: string
+          occurrence_count: number | null
+          rationale: string | null
+          run_id: string
+          sample_values: string[] | null
+          source_column: string
+          status: Database["public"]["Enums"]["ingestion_suggestion_status"]
+          suggested_destination_table: string | null
+          suggested_field_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_field_name?: string | null
+          created_at?: string
+          group_id?: string | null
+          guessed_type?: string | null
+          id?: string
+          occurrence_count?: number | null
+          rationale?: string | null
+          run_id: string
+          sample_values?: string[] | null
+          source_column: string
+          status?: Database["public"]["Enums"]["ingestion_suggestion_status"]
+          suggested_destination_table?: string | null
+          suggested_field_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_field_name?: string | null
+          created_at?: string
+          group_id?: string | null
+          guessed_type?: string | null
+          id?: string
+          occurrence_count?: number | null
+          rationale?: string | null
+          run_id?: string
+          sample_values?: string[] | null
+          source_column?: string
+          status?: Database["public"]["Enums"]["ingestion_suggestion_status"]
+          suggested_destination_table?: string | null
+          suggested_field_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_schema_suggestions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_file_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_schema_suggestions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingestion_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs_to_be_done: {
         Row: {
           context: string | null
@@ -7992,6 +8538,26 @@ export type Database = {
         | "screenshot"
         | "text"
       inbound_signal_status: "pending" | "routed" | "dismissed"
+      ingestion_classification_status:
+        | "proposed"
+        | "approved"
+        | "excluded"
+        | "needs_review"
+      ingestion_result_status: "created" | "updated" | "skipped" | "failed"
+      ingestion_run_status:
+        | "draft"
+        | "uploading"
+        | "analyzing"
+        | "review"
+        | "importing"
+        | "complete"
+        | "failed"
+        | "cancelled"
+      ingestion_suggestion_status:
+        | "proposed"
+        | "approved"
+        | "skipped"
+        | "renamed"
       intelligence_confidence:
         | "Not Yet Verified"
         | "Inferred"
@@ -8374,6 +8940,29 @@ export const Constants = {
         "text",
       ],
       inbound_signal_status: ["pending", "routed", "dismissed"],
+      ingestion_classification_status: [
+        "proposed",
+        "approved",
+        "excluded",
+        "needs_review",
+      ],
+      ingestion_result_status: ["created", "updated", "skipped", "failed"],
+      ingestion_run_status: [
+        "draft",
+        "uploading",
+        "analyzing",
+        "review",
+        "importing",
+        "complete",
+        "failed",
+        "cancelled",
+      ],
+      ingestion_suggestion_status: [
+        "proposed",
+        "approved",
+        "skipped",
+        "renamed",
+      ],
       intelligence_confidence: [
         "Not Yet Verified",
         "Inferred",
