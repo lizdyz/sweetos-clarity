@@ -224,26 +224,27 @@ interface ProposeArgs {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function proposeSpark(sb: any, args: ProposeArgs): Promise<boolean> {
-  // Dedupe: skip if an open agent-spark already exists for this subject within 7d.
+  // Dedupe: skip if an agent-spark for the same subject was created in last 7d.
+  const originTag = `gap_scanner:${args.subjectKind}:${args.subjectId}`;
   const { count } = await sb
     .from("sparks")
     .select("id", { count: "exact", head: true })
-    .eq("subject_kind", args.subjectKind)
-    .eq("subject_id", args.subjectId)
-    .eq("generated_by_kind", "agent")
+    .eq("origin_event", originTag)
     .gte("created_at", new Date(Date.now() - 7 * 86_400_000).toISOString());
   if ((count ?? 0) > 0) return false;
 
-  const { error } = await sb.from("sparks").insert({
-    title: `${args.subjectLabel}: ${args.reason}`,
-    spark_text: args.question,
-    subject_kind: args.subjectKind,
-    subject_id: args.subjectId,
+  // Fan subject onto the row's existing FK columns where possible.
+  const payload: Record<string, unknown> = {
+    name: `${args.subjectLabel}: ${args.reason}`,
+    content: args.question,
     generated_by_kind: "agent",
-    generated_by_label: "gap_scanner",
     progression_state: "captured",
-    notes: JSON.stringify({ gap_scan_run: args.runId, reason: args.reason }),
-  });
+    origin_event: originTag,
+  };
+  if (args.subjectKind === "relationship") payload.relationship_id = args.subjectId;
+  if (args.subjectKind === "quest") payload.quest_id = args.subjectId;
+
+  const { error } = await sb.from("sparks").insert(payload);
   return !error;
 }
 
