@@ -4993,6 +4993,7 @@ export type Database = {
       }
       sandbox_items: {
         Row: {
+          attached_documents: string[]
           body: string | null
           confidence: number | null
           created_at: string
@@ -5014,8 +5015,10 @@ export type Database = {
           tagged_tenets: string[]
           title: string
           updated_at: string
+          upstream_entity: Json | null
         }
         Insert: {
+          attached_documents?: string[]
           body?: string | null
           confidence?: number | null
           created_at?: string
@@ -5037,8 +5040,10 @@ export type Database = {
           tagged_tenets?: string[]
           title: string
           updated_at?: string
+          upstream_entity?: Json | null
         }
         Update: {
+          attached_documents?: string[]
           body?: string | null
           confidence?: number | null
           created_at?: string
@@ -5060,6 +5065,7 @@ export type Database = {
           tagged_tenets?: string[]
           title?: string
           updated_at?: string
+          upstream_entity?: Json | null
         }
         Relationships: []
       }
