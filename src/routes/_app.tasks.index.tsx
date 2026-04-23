@@ -283,27 +283,6 @@ function TasksIndexPage() {
         ]}
         actions={<Button size="sm" onClick={() => setCreateOpen(true)}>+ New task</Button>}
       />
-    </>
-  );
-}
-
-function TasksIndexPageInner() {
-  // placeholder unused — header inlined above
-  return null;
-}
-
-function _UnusedHeader() {
-  return (
-    <div>
-      <header className="flex items-center gap-3" />
-    </div>
-  );
-}
-
-function NoopHeader() {
-  return (
-    <>
-      <header className="flex items-center gap-3"></header>
 
       {/* Pipeline ribbon */}
       <TasksPipelineRibbon />
