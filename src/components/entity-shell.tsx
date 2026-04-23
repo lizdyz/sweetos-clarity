@@ -21,6 +21,27 @@ import { type WalkKind } from "@/lib/walk-menu-resolvers";
 import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Entity kinds used by EntityShell. Wider than WalkKind so we can mount the
+ * shell on entities that don't yet have a graph resolver — those entities just
+ * skip the ConnectionRail.
+ */
+export type EntityShellKind =
+  | WalkKind
+  | "spark"
+  | "decision"
+  | "component"
+  | "relationship"
+  | "mission"
+  | "journey"
+  | "quest"
+  | "playbook"
+  | "document"
+  | "persona"
+  | "outcome";
+
+const WALK_KINDS = new Set<EntityShellKind>(["task", "project", "workflow_run", "session"]);
+
 export interface EntityShellTab {
   key: string;
   label: string;
