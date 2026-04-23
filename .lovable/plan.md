@@ -1,81 +1,78 @@
 
 
-# Wave 13 — Entity Canon as a knowledge graph + finish Wave 12
+# Wave 13 — Finish the 3 remaining items
 
-Two things to land together: make `/settings/canon` a place where you can **add** entities and **see how they connect**, and close out the Wave 12 loose ends so capture pollination is actually live in the UI.
+Three small, well-scoped pieces to close out Wave 13.
 
-## Part A — Entity Canon: add new + show the knowledge graph
+## 1. Mount `<CapturePollinationChips>` on the Capture queue
 
-### What's there now
-14 entity kinds (Component, Domain, Journey, Mission, Operator, Outcome, Project, Quest, Relationship, Session, Spark, Task, Tenet, Workflow) — read & edit only. No "+ New", no relationships visible.
+The component already exists (`src/components/capture-pollination-chips.tsx`) and the `proposals` row now carries `matched_personas`, `matched_jtbds`, `matched_quests`, `matched_sparks`, `matched_ktis`, `intent`, and `suggested_kti_payload`. It's just unmounted.
 
-### What to add
+**Edit:** `src/routes/_app.capture.tsx`
+- On each proposal card in the queue list, render `<CapturePollinationChips>` below the existing tag chips, passing the proposal row.
+- Component already handles its own loading/empty states.
 
-**1. "+ New entity kind" button (admin only)**
-Opens a sheet with: `entity_kind` (lowercase slug, immutable), `display_name`, `one_liner`, status. Inserts into `entity_canon`. After save, it appears in the left rail like the others.
+## 2. JTBD detail "Work in flight" panel
 
-**2. Knowledge graph — parents & children**
-Two new arrays on `entity_canon`:
+The `jtbd_work_pipeline` view exists (created in the Wave 12 migration). Surface it.
 
-| column | purpose |
+**Edit:** `src/routes/_app.library.jtbd.$id.tsx`
+- Add a new section under the existing JTBD detail content: **"Work in flight against this JTBD"**.
+- Read `jtbd_work_pipeline` filtered by `jtbd_id = $id`, group by `subject_kind` (task / project / campaign), show count per group + a small list of the top 5 in each with a link to the entity.
+- Empty state: "No active work yet — captures linked to this JTBD will show up here."
+
+## 3. Switch remaining AI call sites to `getPrompt`
+
+The `getPrompt` loader (`src/utils/prompts.server.ts`) exists. Five call sites still inline their prompts:
+
+| File | Prompt key to use |
 |---|---|
-| `parent_kinds` text[] | "this entity lives inside / is owned by" (e.g. Task → Project, Session → Engagement Plan) |
-| `child_kinds` text[] | "this entity contains / spawns" (e.g. Project → Task, Quest → Spark) |
-| `peer_kinds` text[] | "associates with at the same level" (e.g. JTBD ↔ Persona) |
+| `src/utils/workflows.functions.ts` | `workflow.step.run`, `workflow.step.summarize` |
+| `supabase/functions/distill-brand-canon/index.ts` | `brand.distill` |
+| `supabase/functions/generate-component-output/index.ts` | `component.output.generate` |
+| `supabase/functions/generate-component-sparks/index.ts` | `component.sparks.generate` |
+| `supabase/functions/generate-lens-perspectives/index.ts` | `lens.perspective.generate` |
+| `supabase/functions/scan-signals/index.ts` | `signals.scan.classify` |
+| `supabase/functions/ux-audit/index.ts` | `ux.audit.score` |
 
-Plus a `composition_notes` text field for nuance ("a Task can also belong to a Campaign or stand alone").
+For each:
+- Replace inlined `system` / `user` strings with `await getPrompt(key, { fallbackSystem, fallbackUser, fallbackModel })`.
+- Inline string moves into the `fallback*` so behavior is identical if no DB row.
+- Edge functions use a small inline copy of the loader (one fetch against `system_prompts` via service-role key) since they can't import `prompts.server.ts` directly.
 
-**3. New "Knowledge Graph" tab on `/settings/canon`**
-Two views, toggle in the header:
+**Migration:** seed `system_prompts` rows for the 7 new keys above so they appear in the Prompt Console immediately, with the inlined text as the seeded `system_prompt` / `user_prompt_template`.
 
-- **List view** (per-entity) — on each canon detail, show three small chip rows under the header:
-  ```
-  ▲ Parent kinds:   [Project] [Engagement Plan]
-  ▼ Child kinds:    [Task Comment] [Subtask]
-  ↔ Peers:           [JTBD] [Component]
-  ```
-  Click a chip → jump to that entity's canon. This is the navigation graph.
+## Files
 
-- **Map view** (whole system) — a single Mermaid graph rendered from all `parent_kinds` / `child_kinds` rows. Honest reflection of what's declared. No layout magic — Mermaid auto-lays it out, dark/light aware.
+**Edited:**
+- `src/routes/_app.capture.tsx` — mount `<CapturePollinationChips>`
+- `src/routes/_app.library.jtbd.$id.tsx` — add Work-in-flight panel
+- `src/utils/workflows.functions.ts` — switch to `getPrompt`
+- `supabase/functions/distill-brand-canon/index.ts`
+- `supabase/functions/generate-component-output/index.ts`
+- `supabase/functions/generate-component-sparks/index.ts`
+- `supabase/functions/generate-lens-perspectives/index.ts`
+- `supabase/functions/scan-signals/index.ts`
+- `supabase/functions/ux-audit/index.ts`
 
-**4. Add JTBD + Persona + Campaign to the canon**
-Three obvious omissions from your current 14. Seed rows so the graph doesn't lie.
-
-### Files
-- Migration: `alter table entity_canon add column parent_kinds text[] default '{}', add column child_kinds text[] default '{}', add column peer_kinds text[] default '{}', add column composition_notes text;` + insert 3 seed rows (jtbd, persona, campaign)
-- Edit `src/routes/_app.settings.canon.tsx` — add "+ New entity" sheet; add Map tab; render parent/child/peer chips on detail
-- New `src/components/entity-canon-graph.tsx` — Mermaid renderer reading all canon rows
-- Edit `src/components/entity-canon-tab.tsx` + `src/components/canon-guardrail.tsx` — show the parent/child chip row so the graph is visible from every entity detail page, not just from settings
-
-## Part B — Close out Wave 12 (the 6 unfinished items)
-
-From the previous wave, these were left dangling. All small, all need to happen for the pollination work to show up in the UI:
-
-1. **Persist pollination columns** in `proposals.functions.ts` — the helper passes already run; the INSERT just needs to write `intent`, `matched_personas`, `matched_jtbds`, `matched_quests`, `matched_sparks`, `matched_ktis`, `suggested_kti_payload`.
-2. **Render `<CapturePollinationChips>`** on `/capture` queue cards (component exists, just unmounted).
-3. **Mount `<JTBDChips>`** on `_app.tasks.$id.tsx`, `_app.projects.$id.tsx`, `_app.campaigns.$id.tsx`.
-4. **JTBD detail "Work in flight" panel** on `_app.library.jtbd.$id.tsx` — read the `jtbd_work_pipeline` view that already exists.
-5. **Memory doc** `mem://design/capture-pollination.md` — codify the four-pass pipeline + persona-scoped rule.
-6. **Switch `workflows.functions.ts` + 4 edge functions to `getPrompt`** — the loader exists, the call sites still use inline strings. (Lowest risk to do alongside.)
+**New:**
+- `supabase/functions/_shared/get-prompt.ts` — tiny edge-function-side prompt loader (mirrors `prompts.server.ts`)
+- One migration: seed 7 `system_prompts` rows so the Console shows them
 
 ## Sequencing
 
-1. Migration: parent/child/peer columns + seed JTBD/Persona/Campaign canon rows (~15%)
-2. `/settings/canon` "+ New" sheet + parent/child/peer chip rows + Mermaid map tab (~30%)
-3. Surface parent/child chips on `<EntityCanonTab>` and `<CanonGuardrail>` (~10%)
-4. Wire pollination INSERT + mount `<CapturePollinationChips>` on Capture queue (~15%)
-5. Mount `<JTBDChips>` on Task/Project/Campaign detail + JTBD "Work in flight" panel (~15%)
-6. Switch remaining 5 AI call sites to `getPrompt` + memory doc (~15%)
+1. Migration: seed 7 prompt rows (~10%)
+2. `<CapturePollinationChips>` mount on `/capture` (~10%)
+3. JTBD "Work in flight" panel (~20%)
+4. `workflows.functions.ts` → `getPrompt` (~15%)
+5. Edge function shared loader + 6 edge functions switched (~45%)
 
 ## Not in this wave
 
-- No sidebar changes
-- No new top-level routes
-- No deletions
+- No schema changes beyond the `system_prompts` seed
+- No new components
+- No sidebar / route changes
 - No edits to auto-generated files
-- The Mermaid graph reads what canon declares — it does not auto-infer from FK definitions (that's a future wave if ever)
 
-After Wave 13: `/settings/canon` becomes the place to **add entity kinds**, see **how they fit together** as a graph, and judge any instance against canon — and capture pollination is actually visible everywhere it was promised in Wave 12.
-
-Reply **"Run Wave 13"** to ship in this order, or **"Just the canon graph + add button first"** to land the entity-canon work before closing Wave 12.
+After this: every AI call in the system reads from the Prompt Console, the Capture queue visibly shows what each capture pollinated, and JTBD detail shows the live work advancing each job. Wave 13 closed; Wave 12 fully delivered.
 
