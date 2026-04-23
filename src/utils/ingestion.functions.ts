@@ -11,25 +11,30 @@ import {
   type RegistryEntry,
 } from "./ingestion.server";
 
+// All ingestion tables are strict-typed at the SDK boundary; this app uses an
+// untyped client for dynamic table access. We cast once here for clarity.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyClient = any;
+
 // ----------------------------------------------------------------------------
-// createRun
+// createIngestionRun
 // ----------------------------------------------------------------------------
 export const createIngestionRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { name?: string }) => z.object({ name: z.string().max(200).optional() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const supabase = context.supabase as AnyClient;
     const { data: row, error } = await supabase
       .from("ingestion_runs")
       .insert({ name: data.name ?? `Import · ${new Date().toLocaleString()}`, status: "draft" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
-    return { runId: row.id };
+    return { runId: row.id as string };
   });
 
 // ----------------------------------------------------------------------------
-// recordUploadedFile  — called once per file *after* it's been put in storage
+// recordUploadedFile
 // ----------------------------------------------------------------------------
 export const recordUploadedFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -51,9 +56,8 @@ export const recordUploadedFile = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const supabase = context.supabase as AnyClient;
 
-    // Dedupe: any prior file (any run) with the same sha for this user
     let duplicateOf: string | null = null;
     if (data.sha256) {
       const { data: existing } = await supabase
@@ -83,37 +87,28 @@ export const recordUploadedFile = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    // Bump file_count
-    await supabase.rpc("noop").catch(() => {}); // optional: ignored
-    await supabase
-      .from("ingestion_runs")
-      .update({ file_count: await fileCount(supabase, data.runId) })
-      .eq("id", data.runId);
+    const { count } = await supabase
+      .from("ingestion_files")
+      .select("id", { count: "exact", head: true })
+      .eq("run_id", data.runId);
+    await supabase.from("ingestion_runs").update({ file_count: count ?? 0 }).eq("id", data.runId);
 
-    return { fileId: row.id, duplicate: !!row.duplicate_of };
+    return { fileId: row.id as string, duplicate: !!row.duplicate_of };
   });
 
-async function fileCount(supabase: any, runId: string) {
-  const { count } = await supabase
-    .from("ingestion_files")
-    .select("id", { count: "exact", head: true })
-    .eq("run_id", runId);
-  return count ?? 0;
-}
-
 // ----------------------------------------------------------------------------
-// analyzeRun  — parse, group, classify, suggest
+// analyzeRun
 // ----------------------------------------------------------------------------
 export const analyzeRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { runId: string }) => z.object({ runId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const supabase = context.supabase as AnyClient;
+    const userId = context.userId;
     const runId = data.runId;
 
     await supabase.from("ingestion_runs").update({ status: "analyzing", started_at: new Date().toISOString() }).eq("id", runId);
 
-    // Load files (skip duplicates)
     const { data: files, error: filesErr } = await supabase
       .from("ingestion_files")
       .select("id, filename, storage_path, extension, duplicate_of")
@@ -121,21 +116,21 @@ export const analyzeRun = createServerFn({ method: "POST" })
       .is("duplicate_of", null);
     if (filesErr) throw new Error(filesErr.message);
 
-    // Load registry + learned aliases
     const [{ data: registry }, { data: aliasRows }] = await Promise.all([
       supabase.from("ingestion_object_registry").select("object_type, display_name, target_table, required_fields, optional_fields").eq("enabled", true),
       supabase.from("ingestion_mapping_rules").select("pattern, target_object_type, target_table").eq("created_by", userId),
     ]);
     const aliasMap = new Map<string, { target_object_type: string | null; target_table: string | null }>();
-    for (const r of aliasRows ?? []) aliasMap.set(r.pattern.toLowerCase(), { target_object_type: r.target_object_type, target_table: r.target_table });
+    for (const r of (aliasRows ?? []) as Array<{ pattern: string; target_object_type: string | null; target_table: string | null }>) {
+      aliasMap.set(r.pattern.toLowerCase(), { target_object_type: r.target_object_type, target_table: r.target_table });
+    }
 
-    // Parse each file (download from storage)
     const parsed: Array<{ id: string; filename: string; ext: string; structure: ParsedStructure; signature: string }> = [];
-    for (const f of files ?? []) {
+    for (const f of (files ?? []) as Array<{ id: string; filename: string; storage_path: string; extension: string | null }>) {
       const dl = await supabase.storage.from("ingestion").download(f.storage_path);
       let structure: ParsedStructure = { kind: "unknown", preview: "" };
       if (!dl.error && dl.data) {
-        const buf = await dl.data.arrayBuffer();
+        const buf = await (dl.data as Blob).arrayBuffer();
         try { structure = parseFile(f.filename, buf); }
         catch (e) { structure = { kind: "unknown", preview: String(e).slice(0, 200) }; }
       }
@@ -144,11 +139,10 @@ export const analyzeRun = createServerFn({ method: "POST" })
 
       await supabase.from("ingestion_files").update({
         parsed_text: structure.preview ?? null,
-        structure_json: structure as any,
+        structure_json: structure,
       }).eq("id", f.id);
     }
 
-    // Group by signature
     const groups = new Map<string, typeof parsed>();
     for (const p of parsed) {
       const arr = groups.get(p.signature) ?? [];
@@ -156,7 +150,6 @@ export const analyzeRun = createServerFn({ method: "POST" })
       groups.set(p.signature, arr);
     }
 
-    // Reset prior groups/classifications/suggestions for re-analysis
     await Promise.all([
       supabase.from("ingestion_classifications").delete().eq("run_id", runId),
       supabase.from("ingestion_schema_suggestions").delete().eq("run_id", runId),
@@ -189,7 +182,6 @@ export const analyzeRun = createServerFn({ method: "POST" })
       if (gErr) throw new Error(gErr.message);
       groupRowIds.push(g.id);
 
-      // Per-file classification rows + group_id link
       const classRows = members.map((m) => ({
         run_id: runId,
         file_id: m.id,
@@ -205,7 +197,6 @@ export const analyzeRun = createServerFn({ method: "POST" })
       if (classRows.length) await supabase.from("ingestion_classifications").insert(classRows);
       await supabase.from("ingestion_files").update({ group_id: g.id }).in("id", members.map((m) => m.id));
 
-      // Schema suggestions for unmatched fields
       for (const f of proposal.unmatched_fields) {
         const samples = collectSamples(members, f);
         await supabase.from("ingestion_schema_suggestions").insert({
@@ -222,7 +213,6 @@ export const analyzeRun = createServerFn({ method: "POST" })
         schemaCount++;
       }
 
-      // New-object suggestion when we have many files but no type
       if (!proposal.object_type && members.length >= 3) {
         await supabase.from("ingestion_object_suggestions").insert({
           run_id: runId,
@@ -290,7 +280,7 @@ function collectFieldShape(members: Array<{ structure: ParsedStructure }>): Arra
 }
 
 // ----------------------------------------------------------------------------
-// updateClassification  — user edits per-file or per-group
+// updateClassification
 // ----------------------------------------------------------------------------
 export const updateClassification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -306,7 +296,7 @@ export const updateClassification = createServerFn({ method: "POST" })
     status: z.enum(["proposed","approved","excluded","needs_review"]).optional(),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const supabase = context.supabase as AnyClient;
     const patch: Record<string, unknown> = {};
     if (data.target_object_type !== undefined) patch.target_object_type = data.target_object_type;
     if (data.target_table !== undefined) patch.target_table = data.target_table;
@@ -317,7 +307,7 @@ export const updateClassification = createServerFn({ method: "POST" })
   });
 
 // ----------------------------------------------------------------------------
-// approveGroup  — approve / change type / exclude all files in a group
+// approveGroup
 // ----------------------------------------------------------------------------
 export const approveGroup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -333,7 +323,8 @@ export const approveGroup = createServerFn({ method: "POST" })
     target_table: z.string().max(100).nullable().optional(),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const supabase = context.supabase as AnyClient;
+    const userId = context.userId;
     const status = data.action === "exclude" ? "excluded" : "approved";
     const groupPatch: Record<string, unknown> = { status };
     const filePatch: Record<string, unknown> = { status };
@@ -343,14 +334,15 @@ export const approveGroup = createServerFn({ method: "POST" })
       filePatch.target_object_type = data.target_object_type;
       filePatch.target_table = data.target_table;
     }
-    const { data: group } = await supabase.from("ingestion_file_groups").select("signature, proposed_object_type, proposed_target_table").eq("id", data.groupId).single();
+    const { data: group } = await supabase.from("ingestion_file_groups")
+      .select("signature, proposed_object_type, proposed_target_table")
+      .eq("id", data.groupId).single();
 
     await supabase.from("ingestion_file_groups").update(groupPatch).eq("id", data.groupId);
     await supabase.from("ingestion_classifications").update(filePatch).eq("group_id", data.groupId);
 
-    // Save as learned rule on approve
     if (data.action === "approve" && group?.proposed_object_type) {
-      await supabase.from("ingestion_mapping_rules").upsert({
+      await supabase.from("ingestion_mapping_rules").insert({
         pattern_kind: "signature",
         pattern: group.signature,
         target_object_type: group.proposed_object_type,
@@ -358,7 +350,7 @@ export const approveGroup = createServerFn({ method: "POST" })
         scope: "global",
         hit_count: 1,
         created_by: userId,
-      }, { onConflict: "pattern_kind,pattern" }).select();
+      });
     }
     return { ok: true };
   });
@@ -375,7 +367,7 @@ export const updateSchemaSuggestion = createServerFn({ method: "POST" })
       approved_field_name: z.string().max(100).optional(),
     }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const supabase = context.supabase as AnyClient;
     const patch: Record<string, unknown> = { status: data.status };
     if (data.approved_field_name) patch.approved_field_name = data.approved_field_name;
     const { error } = await supabase.from("ingestion_schema_suggestions").update(patch).eq("id", data.id);
@@ -388,20 +380,20 @@ export const updateObjectSuggestion = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string; status: "proposed"|"approved"|"skipped"|"renamed" }) =>
     z.object({ id: z.string().uuid(), status: z.enum(["proposed","approved","skipped","renamed"]) }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const supabase = context.supabase as AnyClient;
     const { error } = await supabase.from("ingestion_object_suggestions").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 // ----------------------------------------------------------------------------
-// runImport  — execute approved classifications
+// runImport
 // ----------------------------------------------------------------------------
 export const runImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { runId: string }) => z.object({ runId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const supabase = context.supabase as AnyClient;
     const runId = data.runId;
 
     await supabase.from("ingestion_runs").update({ status: "importing" }).eq("id", runId);
@@ -413,9 +405,15 @@ export const runImport = createServerFn({ method: "POST" })
       .eq("run_id", runId)
       .eq("status", "approved");
 
-    let created = 0, updated = 0, skipped = 0, failed = 0;
+    let created = 0;
+    const updated = 0;
+    let skipped = 0;
+    let failed = 0;
 
-    for (const c of (classes ?? []) as any[]) {
+    for (const c of (classes ?? []) as Array<{
+      id: string; file_id: string; target_object_type: string | null; target_table: string | null;
+      ingestion_files: { filename: string; structure_json: ParsedStructure } | null;
+    }>) {
       try {
         if (!c.target_table || !c.target_object_type) {
           await supabase.from("ingestion_results").insert({
@@ -426,7 +424,7 @@ export const runImport = createServerFn({ method: "POST" })
           continue;
         }
         const file = c.ingestion_files;
-        const struct = file?.structure_json as ParsedStructure | undefined;
+        const struct = file?.structure_json;
         const rows = buildRowsForInsert(struct, c.target_object_type, file?.filename ?? "untitled");
 
         if (rows.length === 0) {
@@ -477,41 +475,38 @@ export const runImport = createServerFn({ method: "POST" })
     return { created, updated, skipped, failed };
   });
 
-function buildRowsForInsert(struct: ParsedStructure | undefined, objectType: string, filename: string): Record<string, unknown>[] {
+function buildRowsForInsert(struct: ParsedStructure | undefined, _objectType: string, filename: string): Record<string, unknown>[] {
   if (!struct) return [];
-  // CSV → one row per data row
   if (struct.kind === "csv" && struct.columns && struct.sampleRows) {
     return struct.sampleRows.map((row) => {
       const obj: Record<string, unknown> = {};
       struct.columns!.forEach((col, i) => {
         if (row[i] !== undefined && row[i] !== "") obj[col] = row[i];
       });
-      ensureRequired(obj, objectType, filename);
+      ensureRequired(obj, filename);
       return obj;
     }).filter((r) => Object.keys(r).length > 0);
   }
-  // Markdown → one row from frontmatter + filename as name
   if (struct.kind === "markdown") {
     const obj: Record<string, unknown> = { ...(struct.frontmatter ?? {}) };
-    ensureRequired(obj, objectType, filename);
+    ensureRequired(obj, filename);
     return [obj];
   }
-  // JSON → if it's an array, flatten, else one row
   return [];
 }
 
-function ensureRequired(obj: Record<string, unknown>, objectType: string, filename: string) {
+function ensureRequired(obj: Record<string, unknown>, filename: string) {
   const name = filename.replace(/\.[^.]+$/, "");
   if (!obj.name && !obj.campaign_name && !obj.decision) obj.name = name;
 }
 
 // ----------------------------------------------------------------------------
-// listIngestionData  — page-load fetch
+// Read paths
 // ----------------------------------------------------------------------------
 export const listIngestionRuns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
+    const supabase = context.supabase as AnyClient;
     const { data, error } = await supabase
       .from("ingestion_runs")
       .select("*")
@@ -525,7 +520,7 @@ export const getIngestionRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { runId: string }) => z.object({ runId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const supabase = context.supabase as AnyClient;
     const [runRes, filesRes, groupsRes, classesRes, schemaRes, objRes, resultsRes, registryRes, rulesRes] = await Promise.all([
       supabase.from("ingestion_runs").select("*").eq("id", data.runId).single(),
       supabase.from("ingestion_files").select("*").eq("run_id", data.runId).order("created_at"),
@@ -554,7 +549,8 @@ export const deleteMappingRule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("ingestion_mapping_rules").delete().eq("id", data.id);
+    const supabase = context.supabase as AnyClient;
+    const { error } = await supabase.from("ingestion_mapping_rules").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
