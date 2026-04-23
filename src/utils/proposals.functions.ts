@@ -83,6 +83,10 @@ const CaptureInput = z.object({
   sourceLabel: z.string().trim().max(120).optional(),
   model: z.string().trim().max(120).optional(),
   attachments: z.array(AttachmentInput).max(20).optional(),
+  // Wave 14 — capture-from-here context
+  subjectKind: z.string().trim().max(40).optional(),
+  subjectId: z.string().uuid().optional(),
+  sourcePage: z.string().trim().max(200).optional(),
 });
 
 const NORMALIZER_SCHEMA = {
@@ -469,15 +473,30 @@ export const captureProposal = createServerFn({ method: "POST" })
     // Pass 1b — classify intent (kicked off in parallel)
     const intentPromise = classifyIntent(augmentedText, model).catch(() => null);
 
+    // Wave 14 — pre-scope persona / KTI / quest libraries when capture is bound to a relationship.
+    const subjectKind = data.subjectKind ?? null;
+    const subjectId = data.subjectId ?? null;
+    const isRelationshipCtx = subjectKind === "relationship" && !!subjectId;
+
     // Fetch canon + libraries for pollination in parallel
+    // Fetch canon + libraries for pollination in parallel.
+    // Personas are global (no per-relationship scope); quests + KTIs scope when ctx is a relationship.
+    const personaQ = sb.from("personas").select("id, name, sector").limit(40);
+    const questQ = isRelationshipCtx
+      ? sb.from("quests").select("id, name").eq("relationship_id", subjectId).neq("progression_state", "Confirmed Complete").order("updated_at", { ascending: false }).limit(30)
+      : sb.from("quests").select("id, name").neq("progression_state", "Confirmed Complete").order("updated_at", { ascending: false }).limit(30);
+    const ktiQ = isRelationshipCtx
+      ? sb.from("key_trend_indicators").select("id, name, threshold_definition").eq("relationship_id", subjectId).eq("status", "active").limit(30)
+      : sb.from("key_trend_indicators").select("id, name, threshold_definition").eq("status", "active").limit(30);
+
     const [domainsRes, componentsRes, industriesRes, personasRes, questsRes, sparksRes, ktisRes] = await Promise.all([
       sb.from("domains").select("slug, name, description").eq("enabled", true).order("sort_order"),
       sb.from("components").select("id, name").order("updated_at", { ascending: false }).limit(40),
       sb.from("industries").select("id, slug").eq("enabled", true),
-      sb.from("personas").select("id, name, sector").limit(40),
-      sb.from("quests").select("id, name").neq("progression_state", "Confirmed Complete").order("updated_at", { ascending: false }).limit(30),
+      personaQ,
+      questQ,
       sb.from("sparks").select("id, name").neq("progression_state", "Confirmed Complete").order("updated_at", { ascending: false }).limit(30),
-      sb.from("key_trend_indicators").select("id, name, threshold_definition").eq("status", "active").limit(30),
+      ktiQ,
     ]);
 
     const industryRows = (industriesRes.data ?? []) as Array<{ id: string; slug: string }>;
@@ -599,6 +618,9 @@ export const captureProposal = createServerFn({ method: "POST" })
         matched_sparks: matchedSparks,
         matched_ktis: matchedKtis,
         suggested_kti_payload: ktiSuggestion ?? null,
+        subject_kind: subjectKind,
+        subject_id: subjectId,
+        source_page: data.sourcePage ?? null,
         created_by: userId,
       } as never)
       .select("*")

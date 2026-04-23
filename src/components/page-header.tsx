@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { PageCaptureButton } from "@/components/page-capture-button";
 
 interface PageHeaderProps {
   title: string;
@@ -8,11 +9,21 @@ interface PageHeaderProps {
   icon?: ReactNode;
   actions?: ReactNode;
   className?: string;
+  /**
+   * Entity canon kind for this page (e.g. "relationship", "project", "persona").
+   * When provided, mounts the per-page Capture button next to the actions.
+   */
+  subjectKind?: string;
+  /** Specific subject id — when set, pollination scopes to it. */
+  subjectId?: string | null;
+  /** Friendly label, e.g. the entity's name. */
+  subjectLabel?: string | null;
 }
 
 /**
  * Compact "why this page exists" banner.
  * One sentence describing the page's purpose, plus optional 3-bullet "what you can do here".
+ * When `subjectKind` is provided, also renders the canon-driven Capture popover.
  */
 export function PageHeader({
   title,
@@ -21,6 +32,9 @@ export function PageHeader({
   icon,
   actions,
   className,
+  subjectKind,
+  subjectId,
+  subjectLabel,
 }: PageHeaderProps) {
   return (
     <header className={cn("mb-5 flex items-start gap-3", className)}>
@@ -43,7 +57,18 @@ export function PageHeader({
           </ul>
         )}
       </div>
-      {actions && <div className="shrink-0">{actions}</div>}
+      {(actions || subjectKind) && (
+        <div className="shrink-0 flex items-center gap-2">
+          {subjectKind && (
+            <PageCaptureButton
+              subjectKind={subjectKind}
+              subjectId={subjectId ?? null}
+              subjectLabel={subjectLabel ?? null}
+            />
+          )}
+          {actions}
+        </div>
+      )}
     </header>
   );
 }

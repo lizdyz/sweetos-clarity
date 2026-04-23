@@ -1918,8 +1918,10 @@ export type Database = {
       entity_canon: {
         Row: {
           alternate_viewpoints: Json
+          capture_prompts: string[]
           child_kinds: string[]
           composition_notes: string | null
+          coverage_rules: Json
           created_at: string
           display_name: string
           entity_kind: string
@@ -1940,8 +1942,10 @@ export type Database = {
         }
         Insert: {
           alternate_viewpoints?: Json
+          capture_prompts?: string[]
           child_kinds?: string[]
           composition_notes?: string | null
+          coverage_rules?: Json
           created_at?: string
           display_name: string
           entity_kind: string
@@ -1962,8 +1966,10 @@ export type Database = {
         }
         Update: {
           alternate_viewpoints?: Json
+          capture_prompts?: string[]
           child_kinds?: string[]
           composition_notes?: string | null
+          coverage_rules?: Json
           created_at?: string
           display_name?: string
           entity_kind?: string
@@ -2377,6 +2383,42 @@ export type Database = {
             referencedColumns: ["rubric_id"]
           },
         ]
+      }
+      gap_scan_runs: {
+        Row: {
+          entities_scanned: number
+          error: string | null
+          finished_at: string | null
+          gaps_found: number
+          id: string
+          notes: Json | null
+          sparks_created: number
+          started_at: string
+          status: string
+        }
+        Insert: {
+          entities_scanned?: number
+          error?: string | null
+          finished_at?: string | null
+          gaps_found?: number
+          id?: string
+          notes?: Json | null
+          sparks_created?: number
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          entities_scanned?: number
+          error?: string | null
+          finished_at?: string | null
+          gaps_found?: number
+          id?: string
+          notes?: Json | null
+          sparks_created?: number
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
       }
       handoff_events: {
         Row: {
@@ -3726,6 +3768,27 @@ export type Database = {
           },
         ]
       }
+      org_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       outcomes: {
         Row: {
           auto_completed_at: string | null
@@ -4404,8 +4467,11 @@ export type Database = {
           rejected_reason: string | null
           source: Database["public"]["Enums"]["proposal_source"]
           source_label: string | null
+          source_page: string | null
           source_ref: string | null
           status: Database["public"]["Enums"]["proposal_status"]
+          subject_id: string | null
+          subject_kind: string | null
           suggested_kti_payload: Json | null
           tag_suggestions: Json
           tagged_components: string[]
@@ -4439,8 +4505,11 @@ export type Database = {
           rejected_reason?: string | null
           source: Database["public"]["Enums"]["proposal_source"]
           source_label?: string | null
+          source_page?: string | null
           source_ref?: string | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          subject_id?: string | null
+          subject_kind?: string | null
           suggested_kti_payload?: Json | null
           tag_suggestions?: Json
           tagged_components?: string[]
@@ -4474,8 +4543,11 @@ export type Database = {
           rejected_reason?: string | null
           source?: Database["public"]["Enums"]["proposal_source"]
           source_label?: string | null
+          source_page?: string | null
           source_ref?: string | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          subject_id?: string | null
+          subject_kind?: string | null
           suggested_kti_payload?: Json | null
           tag_suggestions?: Json
           tagged_components?: string[]
