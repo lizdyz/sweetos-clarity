@@ -1,26 +1,31 @@
-// UniversalFilterBar — Domain · Tenet · 5P · Lens · State · Owner.
-// Single component mounted on every list page. State lives in URL search
-// params via useUniversalFilters. The Lens dropdown is the same component
-// used by FrameworkLensSwitcher (canon: F1–F8 view layers).
+// UniversalFilterBar — Domain · Tenet · Owner (single, searchable combobox)
+// + 5P · Lens (F1–F8) · State (multi-select chip groups, always visible).
+//
+// Implements the form-control canon (`mem://design/form-controls.md`):
+//   small enums => multi-select chips
+//   large sets  => searchable combobox (Popover + Command)
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { HelpCircle, X } from "lucide-react";
+import { Check, ChevronsUpDown, HelpCircle, X } from "lucide-react";
 import { sb } from "@/lib/sb";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useUniversalFilters } from "@/lib/use-universal-filters";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  useUniversalFilters,
+  FIVE_PS,
+  LENS_CODES,
+} from "@/lib/use-universal-filters";
 import { LENS_DEFS, type LensCode } from "@/components/framework-lens-switcher";
-
-const FIVE_PS = ["Purpose", "People", "Process", "Product", "Profit"] as const;
 
 interface UniversalFilterBarProps {
   /** Which filters apply on this page. Defaults to all. */
@@ -35,8 +40,7 @@ export function UniversalFilterBar({
   stateOptions = [],
   className,
 }: UniversalFilterBarProps) {
-  const { filters, setFilter, clear } = useUniversalFilters();
-  const activeCount = Object.values(filters).filter((v) => v !== undefined).length;
+  const { filters, setSingle, toggleMulti, clear, activeCount } = useUniversalFilters();
 
   const { data: domains = [] } = useQuery({
     queryKey: ["filter-bar", "domains"],
@@ -70,106 +74,61 @@ export function UniversalFilterBar({
   });
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      {/* === Searchable single-select comboboxes (large sets) === */}
       {show.includes("domain") && (
-        <FilterDropdown
+        <FilterCombobox
           label="Domain"
           value={filters.domain}
-          onClear={() => setFilter("domain", undefined)}
-          renderLabel={(v) => domains.find((d) => d.slug === v)?.name ?? v}
-        >
-          {domains.map((d) => (
-            <DropdownMenuItem key={d.id} onClick={() => setFilter("domain", d.slug)}>
-              {d.name}
-            </DropdownMenuItem>
-          ))}
-        </FilterDropdown>
+          options={domains.map((d) => ({ value: d.slug, label: d.name }))}
+          onChange={(v) => setSingle("domain", v)}
+        />
       )}
-
       {show.includes("tenet") && (
-        <FilterDropdown
+        <FilterCombobox
           label="Tenet"
           value={filters.tenet}
-          onClear={() => setFilter("tenet", undefined)}
-          renderLabel={(v) => tenets.find((t) => t.slug === v)?.name ?? v}
-        >
-          {tenets.map((t) => (
-            <DropdownMenuItem key={t.id} onClick={() => setFilter("tenet", t.slug)}>
-              {t.name}
-            </DropdownMenuItem>
-          ))}
-        </FilterDropdown>
+          options={tenets.map((t) => ({ value: t.slug, label: t.name }))}
+          onChange={(v) => setSingle("tenet", v)}
+        />
       )}
-
-      {show.includes("p") && (
-        <FilterDropdown
-          label="5P"
-          value={filters.p}
-          onClear={() => setFilter("p", undefined)}
-          renderLabel={(v) => v}
-        >
-          {FIVE_PS.map((p) => (
-            <DropdownMenuItem key={p} onClick={() => setFilter("p", p)}>
-              {p}
-            </DropdownMenuItem>
-          ))}
-        </FilterDropdown>
-      )}
-
-      {show.includes("lens") && (
-        <FilterDropdown
-          label="Lens"
-          value={filters.lens}
-          onClear={() => setFilter("lens", undefined)}
-          renderLabel={(v) => `${v} ${LENS_DEFS[v as LensCode]?.name ?? ""}`.trim()}
-        >
-          <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-            Framework lenses
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {Object.values(LENS_DEFS).map((l) => (
-            <DropdownMenuItem
-              key={l.code}
-              onClick={() => setFilter("lens", l.code)}
-              className="flex flex-col items-start"
-            >
-              <span className="text-xs font-medium">
-                {l.code} {l.name}
-              </span>
-              <span className="text-[10px] text-muted-foreground">{l.tagline}</span>
-            </DropdownMenuItem>
-          ))}
-        </FilterDropdown>
-      )}
-
-      {show.includes("state") && stateOptions.length > 0 && (
-        <FilterDropdown
-          label="State"
-          value={filters.state}
-          onClear={() => setFilter("state", undefined)}
-          renderLabel={(v) => v}
-        >
-          {stateOptions.map((s) => (
-            <DropdownMenuItem key={s} onClick={() => setFilter("state", s)}>
-              {s}
-            </DropdownMenuItem>
-          ))}
-        </FilterDropdown>
-      )}
-
       {show.includes("owner") && (
-        <FilterDropdown
+        <FilterCombobox
           label="Owner"
           value={filters.owner}
-          onClear={() => setFilter("owner", undefined)}
-          renderLabel={(v) => operators.find((o) => o.id === v)?.name ?? v}
-        >
-          {operators.map((o) => (
-            <DropdownMenuItem key={o.id} onClick={() => setFilter("owner", o.id)}>
-              {o.name}
-            </DropdownMenuItem>
-          ))}
-        </FilterDropdown>
+          options={operators.map((o) => ({ value: o.id, label: o.name }))}
+          onChange={(v) => setSingle("owner", v)}
+        />
+      )}
+
+      {/* === Multi-select chip groups (small enums, always visible) === */}
+      {show.includes("p") && (
+        <ChipGroup
+          label="5P"
+          values={filters.p}
+          options={FIVE_PS.map((p) => ({ value: p, label: p }))}
+          onToggle={(v) => toggleMulti("p", v)}
+        />
+      )}
+      {show.includes("lens") && (
+        <ChipGroup
+          label="Lens"
+          values={filters.lens}
+          options={LENS_CODES.map((c) => ({
+            value: c,
+            label: c,
+            tooltip: LENS_DEFS[c as LensCode]?.name,
+          }))}
+          onToggle={(v) => toggleMulti("lens", v)}
+        />
+      )}
+      {show.includes("state") && stateOptions.length > 0 && (
+        <ChipGroup
+          label="State"
+          values={filters.state}
+          options={stateOptions.map((s) => ({ value: s, label: s }))}
+          onToggle={(v) => toggleMulti("state", v)}
+        />
       )}
 
       {activeCount > 0 && (
@@ -185,19 +144,34 @@ export function UniversalFilterBar({
 
       <Popover>
         <PopoverTrigger asChild>
-          <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="What do these filters mean?">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            aria-label="What do these filters mean?"
+          >
             <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-72 text-xs leading-relaxed">
           <p className="mb-2 font-semibold">Universal filters</p>
           <ul className="space-y-1 text-muted-foreground">
-            <li><span className="font-medium text-foreground">Domain</span> — one of the 22 universal business dimensions.</li>
-            <li><span className="font-medium text-foreground">Tenet</span> — industry-specific competency.</li>
-            <li><span className="font-medium text-foreground">5P</span> — Purpose / People / Process / Product / Profit.</li>
-            <li><span className="font-medium text-foreground">Lens (F1–F8)</span> — re-projects rows under a framework's stages. View only.</li>
-            <li><span className="font-medium text-foreground">State</span> — entity-specific lifecycle.</li>
-            <li><span className="font-medium text-foreground">Owner</span> — who's accountable.</li>
+            <li>
+              <span className="font-medium text-foreground">Domain</span> — one of the 22
+              universal business dimensions (single-select).
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Tenet</span> — industry-specific
+              competency (single-select).
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Owner</span> — who's accountable
+              (single-select).
+            </li>
+            <li>
+              <span className="font-medium text-foreground">5P · Lens · State</span> —
+              multi-select chips: combine to narrow.
+            </li>
           </ul>
         </PopoverContent>
       </Popover>
@@ -205,23 +179,68 @@ export function UniversalFilterBar({
   );
 }
 
-function FilterDropdown({
+/* ============================================================
+   ChipGroup — multi-select, always-visible chip list.
+   ============================================================ */
+function ChipGroup({
+  label,
+  values,
+  options,
+  onToggle,
+}: {
+  label: string;
+  values: string[];
+  options: { value: string; label: string; tooltip?: string }[];
+  onToggle: (v: string) => void;
+}) {
+  return (
+    <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface/60 p-0.5">
+      <span className="px-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+      {options.map((opt) => {
+        const active = values.includes(opt.value);
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onToggle(opt.value)}
+            title={opt.tooltip}
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-[11px] font-medium transition-colors",
+              active
+                ? "bg-iris text-white shadow-[var(--shadow-glow)]"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ============================================================
+   FilterCombobox — single-select searchable popover.
+   ============================================================ */
+function FilterCombobox({
   label,
   value,
-  onClear,
-  renderLabel,
-  children,
+  options,
+  onChange,
 }: {
   label: string;
   value: string | undefined;
-  onClear: () => void;
-  renderLabel: (v: string) => string;
-  children: React.ReactNode;
+  options: { value: string; label: string }[];
+  onChange: (v: string | undefined) => void;
 }) {
+  const [open, setOpen] = useState(false);
   const active = value !== undefined;
+  const current = options.find((o) => o.value === value);
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <button
           type="button"
           className={cn(
@@ -232,22 +251,50 @@ function FilterDropdown({
           )}
         >
           <span className="text-muted-foreground/70">{label}:</span>
-          <span>{active ? renderLabel(value!) : "any"}</span>
-          {active && (
+          <span className="max-w-[10rem] truncate">{active ? current?.label ?? value : "any"}</span>
+          {active ? (
             <X
               className="h-3 w-3 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                onClear();
+                onChange(undefined);
               }}
             />
+          ) : (
+            <ChevronsUpDown className="h-3 w-3 opacity-60" />
           )}
         </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="max-h-80 w-56 overflow-auto">
-        {children}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-0">
+        <Command>
+          <CommandInput placeholder={`Search ${label.toLowerCase()}…`} className="h-8 text-xs" />
+          <CommandList>
+            <CommandEmpty>No matches.</CommandEmpty>
+            <CommandGroup>
+              {options.map((opt) => (
+                <CommandItem
+                  key={opt.value}
+                  value={opt.label}
+                  onSelect={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  className="text-xs"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-3 w-3",
+                      value === opt.value ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  {opt.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
