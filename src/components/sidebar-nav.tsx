@@ -103,7 +103,7 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
     caption: "Definitions · what CAN be done",
     collapsible: true,
     items: [
-      { to: "/bizzybots", label: "BizzyBots", icon: Bot, hint: "9 Lens agents — ask any subject" },
+      { to: "/settings/lens-studio", label: "Lens Studio", icon: Bot, hint: "Define lenses · personas · object fit · canon" },
       { to: "/workflows", label: "Workflows", icon: Workflow, hint: "Stored, versioned, reusable" },
       { to: "/session-templates", label: "Session Templates", icon: Calendar, hint: "Mirror / Machine / Map / Sync catalog" },
       { to: "/playbooks", label: "Playbooks", icon: LibraryIcon, hint: "How a service runs end-to-end" },
@@ -125,11 +125,9 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
     collapsible: true,
     items: [
       { to: "/settings/canon", label: "Entity Canon", icon: Sparkles, hint: "What perfection looks like per entity" },
-      { to: "/settings/lens-canon", label: "Lens Canon", icon: BookOpen, hint: "Curated best-practice Lens perspectives" },
-      { to: "/settings/prompts", label: "Prompt Console", icon: Wand2, hint: "Every editable AI prompt in one place" },
+      { to: "/settings/prompts", label: "Prompt Console", icon: Wand2, hint: "Non-lens AI prompts (capture · OCDA · scanners) — lens prompts live in Lens Studio" },
       { to: "/settings/spark-templates", label: "Spark Library", icon: BookOpen, hint: "Curated, reusable Spark templates" },
       { to: "/settings/excellence", label: "Excellence rubric", icon: Sparkles, hint: "L1→L5 across the 5 Ps" },
-      { to: "/settings/lenses", label: "BizzyBot prompts", icon: Bot, hint: "Edit AI instructions per Lens" },
       { to: "/settings/ux-audit", label: "UX Audit", icon: Sparkles, hint: "Design system audit" },
       { to: "/audit", label: "Audit Trail", icon: ShieldCheck, hint: "System-of-record · every meaningful change, who, when, what" },
       { to: "/settings", label: "Team & profile", icon: Settings },
