@@ -591,6 +591,14 @@ export const captureProposal = createServerFn({ method: "POST" })
           confidence_per_tag: suggestion.confidence_per_tag,
           inferred_industry_slug: parsed.inferred_industry_slug ?? null,
         } as never,
+        // Wave 12 pollination
+        intent: intent ?? null,
+        matched_personas: matchedPersonas,
+        matched_jtbds: matchedJtbds,
+        matched_quests: matchedQuests,
+        matched_sparks: matchedSparks,
+        matched_ktis: matchedKtis,
+        suggested_kti_payload: ktiSuggestion ?? null,
         created_by: userId,
       } as never)
       .select("*")
