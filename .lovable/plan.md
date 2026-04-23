@@ -1,110 +1,103 @@
 
 
-# Wave 6 — Canon Reconciliation (close the 8 gaps in YOUR vocabulary)
+# Wave 7 — Universal drop-zone + standardized triage on every object
 
-You're right to evolve — but only **toward** the canon dump you just shared, not away from it. The app already has 95+ tables and most of your families exist. What's missing is the **wiring** that makes the 8 reconciliation issues you flagged actually true in the database and UI.
+You've named the real problem: every entity (Capture, Sandbox, Sparks, KTIs, Inbound signals, Decisions, Tasks) has its own bespoke "intake + triage + promote" UI. So dropping a link/doc/note into Sandbox feels different from dropping one into Capture, and routing an idea into OCDA feels different from routing it into Decisions. **The fix is one shared shape + one shared UI, mounted everywhere.**
 
-This wave is not new vocabulary, not new layers, not regrouping. It's **closing the gaps you already named** so the system finally matches the doc.
+You already have the seed for this — `src/lib/triageable.ts` and `<TriageCard>`/`<FrameworksRail>` exist per `mem://design/triageable-interface.md`. Wave 7 finishes that promise and adds the universal drop zone you're asking for.
 
-## How your canon dump maps to what already exists
+## Three moves, one wave
 
-| Family from your dump | What's already in the app | Gap to close in Wave 6 |
-|---|---|---|
-| F1 Reference/Taxonomy (Domain, Tenet, Maturity, BizzyBot, Framework) | `domains`, `tenets`, `lenses`, excellence levels | ✅ already canon — surface the F1–F8 **Framework Lens overlay** as a switcher on list pages |
-| F2 Type System (Spark/Deliverable/Outcome/Reflection/Advancement/Confidence/Decision types) | `sparks.kind`, `outcomes`, `decisions`, `excellence_scores.confidence` | ⚠ split **Reflection** into Spark-type vs lifecycle event |
-| F3 Mission → Journey → Quest → Spark → Component | All 5 tables exist + `project_components`, `task_components`, `workflow_components` | ⚠ wire **Map/Machine session evidence → Component maturity** |
-| F4 Platform (SweetSync, Vault, Portal, etc.) | `/vault`, `relationship_portals`, `client_mirror_portals` | ✅ already canon |
-| F5 Commercial (Relationship→Client, Session, Domain Assessment, SweetCycle, Persona, Playbook) | `relationships`, `sessions.sweetcycle_phase`, `domain_assessments`, `personas`, `playbooks` | ⚠ make **Domain Assessment a living model** (versioned) |
-| F6 Knowledge & Governance (Input Library, Workflow Library, Canon Gate, IP) | `entity_canon`, `workflow_states`, `seed_templates` | ✅ already canon |
-| F7 Infrastructure (Data Class A–D, AI Routing, Advisor pattern) | partial — Class A/B/C/D not modeled on artifacts | 🛠 backlog (not Wave 6) |
+### 1. Universal `<UniversalDropZone />` — drop anything, anywhere
 
-## The 8 reconciliation issues — exactly what Wave 6 does about each
+A single component that accepts:
+- **Files** (PDFs, images, audio, video → uploaded to storage, becomes a `document`)
+- **Links** (URL pasted → fetched + titled, becomes an `inbound_signal` with `kind='link'`)
+- **Text** (typed/pasted prose → becomes a `capture` row)
+- **Existing entity** (drag a Spark/Task/Decision card in → creates a new sandbox item linked to it as upstream provenance)
 
-| # | Issue (your words) | Wave 6 move | Touches |
-|---|---|---|---|
-| 1 | **Component vs Module vs Capability** | Confirm in canon: Component = stored, Capability = derived view, Module = tag on `playbooks`/`workflows`. Add a `capabilities` SQL view (Components ≥ L3 grouped by Journey). No new table. | migration (view only) + `/components` list shows derived capabilities tab |
-| 2 | **Quest = exactly 1 Deliverable** | Hold the rule for Quests. For Sessions, formalize `session_deliverables` (already exists). Add a `deliverable_source` enum on documents: `quest` / `session` / `manual`. Show source chip everywhere. | migration + `<DeliverableSourceChip>` component on Vault/Documents |
-| 3 | **Map/Machine work counting in SweetSync** | Add `session_components` link with `advancement_type` (already exists ✅) + a trigger: when a Session writes `session_components` with `Primary`, advance the Component the same way Quest completion does. This makes services *retroactively count*. | migration (trigger) + `/sessions/$id` "Advances" panel |
-| 4 | **Domain Assessment as living model** | Add `domain_assessment_versions` table. Mirror writes v1; subsequent Sessions / SweetScan signals append v2+. Existing `domain_assessments` becomes a current-version view. | migration + `/domain-assessments/$id` shows version timeline |
-| 5 | **SweetCycle is a state machine, not entity** | Already correct in schema (`sessions.sweetcycle_phase`). Just add a canon note + remove the standalone "SweetCycle" framing from any UI that treats it as a peer entity. | memory canon update only |
-| 6 | **Deliverable Catalog vs instances** | The catalog lives in `entity_canon` + `session_templates` + `playbooks`. Instances live in `documents`, `session_deliverables`, `component_outputs`. Add a `catalog_entry_id` nullable FK on `documents` so instances can point home. Add `<CatalogLinkChip>` in document detail. | migration (one column) + chip component |
-| 7 | **Reflection: Spark type vs lifecycle event** | Keep `sparks.kind = 'reflection'` for in-Quest reflection inputs. Add a new `reflection_events` table for milestone-triggered reflections (Quest complete, Component level-up, Journey milestone, Periodic, Custom). Fire from existing triggers (`trg_quest_complete_outcome` etc.). | migration (new table + trigger updates) + small `/reflections` index page (or tab on `/today`) |
-| 8 | **8 Modules page should be tags** | No `/modules` route exists ✅. Add a `module_tags` array on `playbooks` and `workflows` so the 8 commercial groupings live as tags. Render as chips. | migration (column) + chip in playbook/workflow lists |
+One component, four input modes, one output: a `sandbox_items` row in `state='raw'` ready for triage. Mounts on `/sandbox`, `/today`, `/capture`, and floats as a global "+" button in the topbar so you can drop from anywhere.
 
-## The Framework Lens overlay (F1–F8) — finally surfaced
+### 2. Standardized `<TriageCard>` + `<FrameworksRail>` rollout — finish the promise
 
-Your dump is explicit: **"These are VIEW LAYERS. The data model doesn't change."** Wave 6 makes that real with one component:
+The interface exists; the rollout doesn't. Wave 7 mounts the shared triage UI on every triageable surface so the gesture **select → overlay → frame → promote** is identical everywhere:
 
-`<FrameworkLensSwitcher />` — a small dropdown that mounts on the top of any list page (Sparks, Decisions, Quests, Components, Today). Switching the lens **re-groups the same rows** under the chosen framework's stages. No data migration, no new entity. Just a projection.
+| Surface | What it gets |
+|---|---|
+| `/sandbox` | Already has it (keep) |
+| `/sparks` index | Replace bespoke cards with `<TriageCard>` |
+| `/decisions` index | Add `<TriageCard>` for `state='proposed'` |
+| `/capture` queue | Replace bespoke triage row with `<TriageCard>` |
+| `/sweetscan` inbox | Replace `<InboundSignalCard>` with `<TriageCard>` |
+| `/operate/ocda` Observe lane | Mount `<TriageCard>` so signals route into Choose with one click |
+| Task detail · Decision detail · Spark detail | Mount `<FrameworksRail>` in the right rail |
+
+Same six promote verbs everywhere: **→ Task · → Project · → Spark · → Decision input · → Component canon · → Archive**. The "where does this go?" question gets answered the same way no matter what page you're on.
+
+### 3. `<UniversalFilterBar />` — filter any list the same way
+
+Today every index page has a different filter strip. Wave 7 introduces one component that handles the four filters that matter on **every** entity list:
 
 ```text
-[ Framework lens: ▾ F1 OCDA ]
-  Observe (12)  · Choose (4)  · Decide (3)  · Act (8)
-
-[ Framework lens: ▾ F4 5Ps ]
-  Purpose (6) · People (5) · Process (9) · Product (4) · Profit (3)
-
-[ Framework lens: ▾ F6 5Ls ]
-  Lacking · Learning · Launching · Leveraging · Leading
+[ Domain ▾ ] [ Tenet ▾ ] [ 5 P ▾ ] [ Lens F1–F8 ▾ ] [ State ▾ ] [ Owner ▾ ]
+                                                     ↑ regroups via FrameworkLensSwitcher
 ```
 
-The grouping logic reads existing tags (`ocda_stage`, `tagged_p`, `current_maturity_level`, etc.). Where a row has no tag for a chosen lens, it lands in an "Unmapped" column you can drag from. **Eight lenses, one component, zero new vocabulary.**
+Plus a `?` chip that opens a one-line legend explaining what each filter does in your canon vocabulary. Mounts on: `/sandbox`, `/sparks`, `/decisions`, `/tasks`, `/components`, `/quests`, `/today`, `/capture`, `/sweetscan`, `/projects`, `/sessions`. URL-state via TanStack search params (zod adapter + `fallback()`) so filter state is shareable and survives refresh.
 
-## So — is it right or wrong to evolve?
+## So — is the lack of standardization the real problem?
 
-**Right when:** the evolution closes a gap you already named in canon. All 8 Wave 6 moves are on your own list.
-
-**Wrong when:** evolution invents new framing (what I did with Capture/Decide/Operate/Reflect — that was a drift, you correctly pushed back). Wave 5 fixed the framing. Wave 6 fixes the wiring.
+**Yes.** You correctly diagnosed it. Wave 6 reconciled the **data model** (8 issues closed). Wave 7 reconciles the **interaction model** so working with a Spark feels the same as working with a Decision feels the same as working with a Task. That's what makes "I should be able to move things around" actually true.
 
 ## Files I'll touch
 
-**Migrations (one batch):**
-- `capabilities` view (Components ≥ L3 grouped by Journey)
-- `documents.deliverable_source` enum + `documents.catalog_entry_id`
-- `session_components` advancement trigger (mirrors quest completion)
-- `domain_assessment_versions` table + view making `domain_assessments` current-version
-- `reflection_events` table + trigger updates on quest/journey/mission completion
-- `playbooks.module_tags` + `workflows.module_tags`
-
 **New components:**
-- `src/components/framework-lens-switcher.tsx` — F1–F8 dropdown + grouping logic
-- `src/components/deliverable-source-chip.tsx`
-- `src/components/catalog-link-chip.tsx`
-- `src/components/capabilities-derived-panel.tsx` (mounts on `/components`)
-- `src/components/reflection-event-row.tsx`
-- `src/components/domain-assessment-timeline.tsx` (mounts on `/domain-assessments/$id`)
+- `src/components/universal-drop-zone.tsx` — files/links/text/entity-drag → `sandbox_items`
+- `src/components/global-add-button.tsx` — topbar "+" that opens drop zone in a popover
+- `src/components/universal-filter-bar.tsx` — Domain/Tenet/5P/Lens/State/Owner with URL state
+- `src/lib/use-universal-filters.ts` — TanStack search-params hook (zod + fallback)
+- `src/lib/triage-promote.ts` — shared promote actions (Task/Project/Spark/Decision/Component/Archive) so every `<TriageCard>` writes provenance the same way
 
-**Edited (small mounts):**
-- `/sparks`, `/decisions`, `/quests`, `/components`, `/today` — mount `<FrameworkLensSwitcher />`
-- `/sessions/$id` — add Advances panel using new trigger output
-- `/domain-assessments/$id` — show version timeline
-- `/components` — add Capabilities tab
-- `/vault` & `/documents` — add source chip + catalog link chip
+**Edited (mounts only — no rewrites):**
+- `src/components/app-topbar.tsx` — add `<GlobalAddButton />`
+- `src/routes/_app.sandbox.tsx` — add `<UniversalDropZone />` + `<UniversalFilterBar />`
+- `src/routes/_app.capture.tsx` — replace bespoke triage with `<TriageCard>` rows + drop zone
+- `src/routes/_app.sweetscan.tsx` — `<TriageCard>` on inbound signals
+- `src/routes/_app.sparks.index.tsx` — `<TriageCard>` + `<UniversalFilterBar />`
+- `src/routes/_app.decisions.index.tsx` — same
+- `src/routes/_app.tasks.index.tsx` — `<UniversalFilterBar />`
+- `src/routes/_app.components.index.tsx` — same
+- `src/routes/_app.quests.index.tsx` — same
+- `src/routes/_app.today.tsx` — `<UniversalDropZone />` collapsed at top + filter bar on the lists
+- `src/routes/_app.operate.ocda.tsx` — `<TriageCard>` in Observe lane
+- `src/routes/_app.tasks.$id.tsx`, `_app.decisions.$id.tsx`, `_app.sparks.$id.tsx` — mount `<FrameworksRail>` in right rail
+
+**Migrations (small):**
+- `sandbox_items.attached_documents` (uuid array → `documents.id`) — so a sandbox row can carry the file/link you dropped
+- `sandbox_items.upstream_entity` (jsonb `{kind, id}`) — so dragging an existing Spark/Task in records provenance
 
 **Memory:**
-- `mem://design/canon-reconciliation-wave6.md` — the 8 issues × what shipped
-- update `mem://design/sidebar-ia.md` confirming SweetCycle is state-machine-only
+- `mem://design/universal-triage-rollout.md` — what's mounted where + the rule "every triageable surface uses TriageCard"
+- update `mem://design/triageable-interface.md` to mark rollout complete
 
 ## What this wave is NOT
 
-- Not deleting any route or entity
-- Not regrouping the sidebar (locked)
-- Not introducing new layer vocabulary
-- Not building the Wave-7 Data Class A/B/C/D system (that's the Infrastructure wave)
-- Not building the BizzyBot active-scanning gap (separate wave)
-- Not touching Wave 4's `/today` structure — only adding the lens switcher above it
+- Not changing the underlying entities (Spark stays Spark, Decision stays Decision)
+- Not introducing a new "object" — sandbox_items is the existing triage row
+- Not auto-promoting anything (every promote is still a human click — canon)
+- Not regrouping the sidebar
+- Not touching Wave 5's `/start` or Wave 6's reconciliation work
 
 ## Sequencing
 
-1. **Migrations** (~30%) — one approval, all 6 schema moves
-2. **Framework Lens switcher** (~25%) — the highest-leverage piece; reuses everywhere
-3. **Reflection events + trigger wiring** (~15%)
-4. **Map/Machine → Component advancement trigger + Advances panel** (~10%)
-5. **Domain Assessment versioning + timeline** (~10%)
-6. **Source/catalog chips + capabilities view + module tags** (~5%)
-7. **Memory canon updates** (~5%)
+1. **`<UniversalDropZone />` + global "+" button** (~25%) — the thing you asked for first
+2. **Migrations for attached_documents + upstream_entity** (~10%)
+3. **`<TriageCard>` rollout to 6 surfaces** (~30%)
+4. **`<FrameworksRail>` mounts on 3 detail pages** (~10%)
+5. **`<UniversalFilterBar />` + URL search-param hook** (~20%)
+6. **Memory canon updates** (~5%)
 
-After Wave 6: the database matches the doc you wrote. The 8 reconciliation issues are closed (or explicitly deferred with a written reason). The F1–F8 Framework Lens overlay is real and reusable. **Zero new vocabulary introduced.**
+After Wave 7: you can drop a file, link, paragraph, or existing card into any page and it lands in Sandbox as `raw`. From there, every triage card looks and behaves identically — overlay it with any of F1–F8, then promote with one of six verbs. Every list page filters the same way. The "I don't know where this should go" feeling disappears because the gesture is the same everywhere.
 
-Reply **"Run Wave 6"** to ship in this order, or pick a subset (e.g. *"Just Framework Lens switcher + reflection events first"*) if you want to land the highest-leverage pieces alone.
+Reply **"Run Wave 7"** to ship in this order, or **"Just the drop zone + TriageCard rollout first"** if you want to land the two highest-leverage pieces before the filter bar.
 
