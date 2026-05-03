@@ -1,191 +1,85 @@
-# Entity wiring map — what your dev's PRD is missing
+# SweetSync Entity Wiring Handoff — full rebuild
 
-Your dev's PRD is a clean *surface* spec (7 nav pages, capture → triage → decision/task → execute) but it treats the system as if it only has 4 entities (Capture, Task, Project, Decision). The real OS already has **20+ canonical entities arranged in a strict hierarchy**, and the MVP only works if those connections are wired correctly underneath the 7 pages. Otherwise you'll ship a pretty Trello clone and lose the operating model that makes SweetSync different.
+One canonical document your dev can read end-to-end and know exactly what every entity is, how they connect, and what is built vs. what still needs planning. It folds in every correction from this thread (Persona as external calibration lens, Two-Rail spine, Spark-as-bridge, Sparks can be orphan, Sessions = 1:1 SweetCycle engagements, JTBD = standing role responsibilities, Outcome = Aspired vs Actual, Quest→Campaign→Project→Task hierarchy).
 
-Below is the full picture, written so you can hand it to him.
+## Deliverables
 
----
+1. **`SweetSync_Entity_Wiring_Handoff.pdf`** — the master document (12–16 pages)
+2. **`SweetSync_Wiring_Map.mmd`** — Mermaid diagram of the full entity graph (renders inline in the chat)
+3. **`SweetSync_Entity_Wiring_Handoff.md`** — same content as the PDF in markdown, for your dev to keep in the repo
 
-## 1. What the PRD got right
+All written to `/mnt/documents/`.
 
-- The **operating loop** (Capture → Triage → Decide/Task → Execute → Track) is correct. That *is* the daily rhythm.
-- The **7 surfaces** map roughly to existing routes (`/capture`, `/sandbox`, `/tasks`, `/decisions`, `/sessions`, `/operators`, `/today`).
-- The **24-hour triage SLA** and **decision-required-before-major-change** rules are good policy hooks.
-- Phase 2 deferrals (Flightdeck, SweetScan, Lens Studio) are correctly identified as "needs MVP first."
+## PDF structure
 
-## 2. What the PRD is missing — the connection layer
+**Section 1 — How to read this doc**
+The two rails, the one truth model, and the five universal substrates that live under every screen.
 
-The PRD names **4 entity types**. The system has **3 layered taxonomies** that all need to coexist on every piece of work. If the dev only models Project/Task/Decision, the MVP will technically work but will erase the architecture.
+**Section 2 — The Two Rails (the spine)**
+- Nudge Rail: Mission → Journey → Quest → Spark (system + client)
+- Work Rail: Campaign → Project → Task (operationalized)
+- Sparks are the **bridge**: when you decide to operationalize, a Spark spawns Tasks/Projects/Campaigns
+- Sparks can be orphan or parented by Quest **or** Journey
+- ASCII spine diagram
 
-### A. The Planning Hierarchy (6 levels — non-negotiable)
+**Section 3 — Entity Lexicon (every entity, one card each)**
+Each card: *Name · One-line definition · Concrete sample · What it is NOT · Key fields · Connects to*
 
-```text
-Mission         WHY (one per org)
-  └─ Journey    Multi-quarter capability arc
-       └─ Quest Themed body of work that advances Components
-            ├─ JTBD       What a user is hiring this for
-            ├─ Component  The reusable piece of product (L1→L5 maturity)
-            ├─ Project    Time-boxed deliverable (days–weeks)
-            │    └─ Task  Atomic unit, one Operator
-            └─ Decision   Open question OR logged choice
-```
+Strategy & Demand
+- Mission, Journey, Quest, JTBD (standing role responsibility), Persona (external calibration lens; internal = Operator)
 
-**Rules the PRD must respect:**
-- Tasks roll up to Projects → Quests → Journeys → Missions. A Task without that chain is an orphan.
-- Decisions **block Quests** — they are a planning blocker, not a Kanban card.
-- JTBDs and Components are NOT planning units — they describe *demand* (JTBD) and *supply* (Component) and get *referenced* by Quests/Projects.
-- Sparks are **system-generated only** (DB trigger blocks human inserts). They appear under Quests after the pipeline runs. The dev should not let users "create a Spark" in the MVP.
+Capability & Quality
+- Component (L1→L5), Decision (open vs logged), Quality Gate, Outcome (Aspired vs Actual), Measure (Objective/KR/KPI/CSF)
 
-### B. The Two Progression Paths (both write to one truth)
+Work Vehicles
+- Campaign, Project, Task, Spark (system-only), Sandbox Item, Capture, Inbound Signal, KTI Scan
 
-- **Session path** — Evidence → Judgment → Decision (advisor-led, lives in Sessions + SweetCycle stages: Seed → Synthesize → Session → Sync → Ship).
-- **SweetSync path** — Mission → Journey → Quest → Spark (self-paced, between sessions).
+Operators & Engagement
+- Operator (human/workflow/agent), Relationship, Engagement Plan, Service, Session (1:1 SweetCycle engagement), Session Template, Workflow, Workflow Step, Document, Playbook
 
-Both paths advance the same `components` records via `project_components`, `task_components`, `spark.advances_component_id`. The MVP must not model these as competing funnels — they're two entry rhythms into one truth.
+Lenses & Perspectives
+- Lens (F1–F8 BizzyBots), Lens Perspective, Crib Sheet, Domain (22 universal), Tenet (industry-scoped)
 
-### C. The Operator model (the PRD's biggest blind spot)
+**Section 4 — The "vs" Pairs (kill the confusion)**
+Spark vs Task · Project vs Campaign · Project vs Quest · Component vs Project · JTBD vs Session Purpose · Persona (external) vs Operator (internal) · Outcome vs Measure · Decision vs Quality Gate · Mission vs Journey vs Quest · Sandbox Item vs Spark vs Capture · Workflow vs Session · Session vs SweetCycle · Domain vs Tenet · Aspired Outcome vs Actual Outcome · Quest scope=client vs scope=internal · Nudge Rail vs Work Rail
 
-"Team" in the PRD is wrong. The canonical unit is **Operator** — a single table holding three kinds:
-- **Humans** (your team)
-- **Workflows** (sequenced steps)
-- **AI agents**
+**Section 5 — The full wiring map (Mermaid)**
+The entity graph with every relationship: parent/child, references, blocks, advances, spawned_by, declares_contribution_to. This is also delivered as a standalone `.mmd` artifact so it renders interactively.
 
-All three carry skills/likes/dislikes. `tasks.operator_id` is the canonical assignment. The "Team" page in the PRD must be the existing `/operators` cockpit (Now/Queue/Blocked/Awaiting/Handoffs/History tabs over the `operator_workload` view). Don't let him build a new "Team" page from scratch.
+**Section 6 — The five universal substrates**
+Triageable · WalkMenu · TimeControls (5 time fields + recurrence) · MeasuresPanel (polymorphic) · CribSheetCard + LensWall. Plus the Domain × Tenet two-axis filter rule.
 
-### D. The Triage substrate (already exists — don't rebuild)
+**Section 7 — Hidden contracts (do not violate)**
+Provenance is sacred · Sparks are system-only (DB trigger) · Roles in separate table · Status fields render as boards · Views are truth · Aspired vs Actual outcomes are separate columns, never one field
 
-The PRD says "Capture → Triage queue → 24h SLA". Underneath that sits a **shared `Triageable` interface** (`src/lib/triageable.ts`) that already unifies five sources:
+**Section 8 — What's built vs what to plan**
+Two columns side by side. Built = exists in code/DB today (Quests, Sparks with scope, Components, Operators, Triageable, OCDA, Sessions, Measures, Workflows, Lenses, Domains, Tenets, Outcomes table). To plan = the gaps surfaced in this thread:
+- Outcome split into `aspired_*` and `actual_*` columns + tracking journal
+- Campaign as a first-class layer between Quest and Project (currently Campaigns exist but the Quest→Campaign→Project→Task chain isn't enforced)
+- Persona dual-mode wiring (external archetype rows vs internal Operator rows — same table, two `kind` values, different UI surfaces)
+- Spark→Task/Project/Campaign promotion flow on the Work Rail (spawn provenance written both sides)
+- Session Purpose as free-text + suggested-tags field on `sessions` (lightweight, not a new table)
+- JTBD attached to Persona with `when_context / want_responsibility / so_that_outcome` shape
 
-```text
-sandbox_items + sparks + kti_scans + inbound_signals + captures
-        ↓
-   <TriageCard>  (universal UI, mounted everywhere)
-        ↓
-   promote → task | project | spark | decision input | component canon | archive
-```
+**Section 9 — One-page TL;DR for the dev**
+The single page to pin above his monitor. Two rails, one truth, five substrates, six hidden contracts, the wiring diagram thumbnail.
 
-Promoting writes provenance to BOTH sides (`sandbox_items.routed_to_*` AND `tasks/projects/sparks.spawned_by_*`). That provenance chain is what makes "Why does this task exist?" answerable on every row. The MVP must preserve it.
+## Process
 
-### E. OCDA is a pipeline, not a label
+1. Pull the canonical entity list directly from the codebase (route files, `src/lib/entities.ts`, `src/lib/triageable.ts`, memory files under `.lovable/memory/design/` and `features/`) so every card matches what actually exists.
+2. Cross-check against this thread's corrections so nothing reverts to a stale definition.
+3. Build the Mermaid wiring diagram and visually QA it.
+4. Generate the PDF with reportlab, convert to images, and visually QA every page (no overlapping text, no clipped tables, contrast OK).
+5. Write the `.md` mirror so the doc lives in the repo too.
+6. Deliver all three artifacts in chat.
 
-The PRD's "Triage queue" is actually the existing **OCDA Cockpit** (Observe → Choose → Decide → Act). It's not a passive label — it's a working surface where:
-- Observe lane unions proposals + sparks + inbound_signals + kti_scans
-- Decide lane has an inline composer that writes a `decisions` row
-- Cards drag between lanes and that updates `ocda_stage` on the underlying row
+## Open question before I build
 
-Either the MVP reuses `/operate/ocda` as its triage page, or it duplicates the entire substrate badly.
+One thing I want to lock so the doc is final on first pass:
 
-## 3. The connection map your dev actually needs
+**Campaign placement.** Earlier you said *"Project sits in the hierarchy between campaign and task."* That gives us the chain **Quest → Campaign → Project → Task**. But Campaigns today live mostly as marketing/GTM pushes in the codebase (`/campaigns` route). Two options for the doc:
 
-Every "card" in the MVP — whether on Command Center, Tasks, Decisions, or Team — must carry these connections, or context is lost:
+- **(A) Campaign is always a layer** between Quest and Project — every Project rolls up to a Campaign (Campaign can be a thin "default" container if there's no real GTM push)
+- **(B) Campaign is optional** — Projects can roll up to either a Campaign *or* directly to a Quest, depending on whether the work is part of a broader push
 
-```text
-                       ┌─────────────────────────┐
-                       │   Mission / Journey     │  (long arc)
-                       └────────────┬────────────┘
-                                    │
-                          ┌─────────▼─────────┐
-                ┌─────────┤      QUEST        ├─────────┐
-                │         └─────────┬─────────┘         │
-                │                   │                   │
-        references                blocked-by         advances
-                │                   │                   │
-        ┌───────▼──────┐    ┌───────▼──────┐    ┌──────▼───────┐
-        │ JTBD         │    │  DECISION    │    │  COMPONENT   │
-        │ (demand)     │    │  (open/log)  │    │  (L1→L5)     │
-        └──────────────┘    └──────┬───────┘    └──────┬───────┘
-                                   │                   │
-                       ┌───────────▼───────────────────▼───┐
-                       │           PROJECT                 │
-                       │  rolls up to Quest                │
-                       │  declares contribution to Components
-                       └──────────────┬────────────────────┘
-                                      │
-                              ┌───────▼────────┐
-                              │     TASK       │
-                              │  operator_id   │  ← Operator (human/workflow/agent)
-                              │  spawned_by_*  │  ← provenance
-                              │  blocks/blocked│
-                              └───────┬────────┘
-                                      │
-                    ┌─────────────────┴─────────────────┐
-                    │                                   │
-            ┌───────▼──────┐                    ┌───────▼──────┐
-            │   SESSION    │                    │   MEASURE    │
-            │ (advisor-led)│                    │ (KPI/KR/CSF) │
-            └──────────────┘                    └──────────────┘
-```
-
-Plus the universal substrate underneath:
-- **Triageable** → every card uses `<TriageCard>`
-- **WalkMenu** → every row exposes the same nav menu
-- **Provenance chips** → every row shows `spawned_by_kind` + downstream "Blocks N"
-- **TimeControls** → every actionable record carries 5 time fields (created · not_before · scheduled_for · due · done) + recurrence
-- **MeasuresPanel** → polymorphic, attaches to any subject (project, task, session, operator, …)
-- **CribSheetCard / LensWall** → 8 BizzyBot lenses (F1–F8) generate perspectives on any subject
-- **Domains (22 universal) × Tenets (industry-scoped)** → two parallel filter axes on every list
-
-## 4. What the dev should build for MVP (corrected scope)
-
-| PRD page | What he should actually wire |
-|---|---|
-| Command Center `/today` | Already exists. Surface: today's tasks ranked by `today-ranker.ts`, blocked decisions, active Quest + Project context strip, capacity flags from `operator_workload` view. **Don't build new — extend.** |
-| Projects `/projects` | Project list MUST show parent Quest + linked Components + Decisions. Detail page mounts `<MeasuresPanel>`, `<TimeControls>`, `<TriageCard>` history, `<WalkMenu>`. |
-| Tasks `/tasks` | Reuse existing workbench. Every row shows provenance chip (`spawned_by_kind`), blocks-N chip, operator avatar, due date. Next-up lane composed top-8 across (unblocked+due-today, unblocked+spawned-by-KTI, unblocking-most-others, stalled). |
-| Decisions `/decisions` | Two states: **open** (blocking a Quest) and **logged** (history with context). Decisions attach polymorphically — same as Measures. Required-before-scope-change is a UI gate, not a new entity. |
-| Sessions `/sessions` | Untouched. Already wired. Session prep/follow-up writes Tasks via existing workflow. |
-| Team → **Operators** `/operators` | Rename the PRD's "Team" to **Operators**. Use the existing 6-tab cockpit. Capacity strip is `operator_workload` view. |
-| Capture + Triage | Capture is the **topbar button** (already mounted, context-aware). Triage queue is the existing **Sandbox** at `/sandbox` OR the **OCDA Cockpit** at `/operate/ocda`. **Don't build a third triage page.** |
-
-## 5. The five "hidden contracts" he must not violate
-
-1. **Provenance is sacred.** Every auto-spawned row sets `spawned_by_kind` + `spawned_by_id`. Manual creates leave them NULL.
-2. **Sparks are system-only.** A DB trigger rejects human inserts. If the MVP UI offers "Create Spark", it will fail at the database.
-3. **Roles in a separate table.** `user_roles` + `has_role()` security-definer function. Never store roles on profiles.
-4. **Status fields render as boards.** Linear stages = drag columns. Heatmaps = click-to-cycle cells. Single-select = inline Select. No read-only badges on actionable kinds.
-5. **Views are truth.** Index pages read rollup views (`relationship_domain_maturity`, `operator_workload`, `time_grid`, `measure_health`, `task_blockers`, `component_build_pipeline`, `sandbox_inbox`). Don't re-aggregate in app code.
-
-## 6. The one diagram to send him
-
-If you only send your dev one thing, send this — it answers "what connects to what" for every MVP screen:
-
-```text
-CAPTURE  ─────────────►  TRIAGE (Sandbox / OCDA)  ─────────────►  PROMOTE
- (topbar)                  ▲     unifies 5 sources                   │
-                           │                                         │
-                    inbound_signals                                  ▼
-                    sparks (system-gen)                ┌─────────────────────┐
-                    kti_scans                          │ Task | Project |    │
-                    captures                           │ Spark | Decision |  │
-                    sandbox_items                      │ Component canon |   │
-                                                       │ Archive             │
-                                                       └──────────┬──────────┘
-                                                                  │
-                                          ┌───────────────────────┼───────────────────────┐
-                                          ▼                       ▼                       ▼
-                                  TASK (operator_id)      PROJECT (→ Quest)       DECISION (blocks Quest)
-                                  spawned_by_* set        declares Components     opens/logged
-                                          │                       │                       │
-                                          └───────────┬───────────┴───────────┬───────────┘
-                                                      ▼                       ▼
-                                              SESSION (advisor-led)    OUTCOME / MEASURE
-                                                      │                       │
-                                                      └──── advances ────►  COMPONENT (L1→L5)
-                                                                                │
-                                                                          Mission / Journey / Quest
-                                                                          (the long arc above it all)
-```
-
----
-
-## TL;DR for the dev
-
-You are **not** building a new entity model. The MVP is an *organizing layer* over an existing 20+ entity canon. Before writing the first line:
-
-1. Read `mem://design/planning-hierarchy.md` — the 6-level rule is non-negotiable.
-2. Read `mem://design/triageable-interface.md` — Capture/Triage already unifies 5 sources via one shared interface.
-3. Read `mem://features/operators.md` — "Team" = Operators (humans + workflows + agents).
-4. Read `mem://design/ocda-as-pipeline.md` — your "Triage queue" probably already exists as OCDA.
-5. Reuse `<TriageCard>`, `<WalkMenu>`, `<TimeControls>`, `<MeasuresPanel>`, `<CanonGuardrail>`, `<OCDAStageChip>` everywhere. Don't build parallel components.
-
-Ship the 7 surfaces, but wire each card with **Quest · Project · Operator · Provenance · Decision-link** chips so context never gets lost. That's the MVP. Anything less and you're building Trello.
+Pick A or B and I'll bake it in. After that I write the whole thing in one pass — no more loops.
