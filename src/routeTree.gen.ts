@@ -20,16 +20,25 @@ import { Route as AppSweetcycleRouteImport } from './routes/_app.sweetcycle'
 import { Route as AppStartRouteImport } from './routes/_app.start'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSandboxRouteImport } from './routes/_app.sandbox'
+import { Route as AppRoadmapRouteImport } from './routes/_app.roadmap'
+import { Route as AppRisksRouteImport } from './routes/_app.risks'
 import { Route as AppQueueRouteImport } from './routes/_app.queue'
+import { Route as AppPortfolioRouteImport } from './routes/_app.portfolio'
 import { Route as AppPlanningRouteImport } from './routes/_app.planning'
 import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppPeopleRouteImport } from './routes/_app.people'
+import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMyTasksRouteImport } from './routes/_app.my-tasks'
+import { Route as AppMetricsRouteImport } from './routes/_app.metrics'
+import { Route as AppMessagesRouteImport } from './routes/_app.messages'
 import { Route as AppMeasuresRouteImport } from './routes/_app.measures'
+import { Route as AppInsightsRouteImport } from './routes/_app.insights'
 import { Route as AppImportRouteImport } from './routes/_app.import'
 import { Route as AppFlightdeckRouteImport } from './routes/_app.flightdeck'
+import { Route as AppEvidenceRouteImport } from './routes/_app.evidence'
 import { Route as AppCaptureRouteImport } from './routes/_app.capture'
+import { Route as AppCapacityRouteImport } from './routes/_app.capacity'
 import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
 import { Route as AppBizzybotsRouteImport } from './routes/_app.bizzybots'
 import { Route as AppAuditRouteImport } from './routes/_app.audit'
@@ -160,9 +169,24 @@ const AppSandboxRoute = AppSandboxRouteImport.update({
   path: '/sandbox',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRoadmapRoute = AppRoadmapRouteImport.update({
+  id: '/roadmap',
+  path: '/roadmap',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRisksRoute = AppRisksRouteImport.update({
+  id: '/risks',
+  path: '/risks',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppQueueRoute = AppQueueRouteImport.update({
   id: '/queue',
   path: '/queue',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPortfolioRoute = AppPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlanningRoute = AppPlanningRouteImport.update({
@@ -185,14 +209,34 @@ const AppPeopleRoute = AppPeopleRouteImport.update({
   path: '/people',
   getParentRoute: () => AppRoute,
 } as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMyTasksRoute = AppMyTasksRouteImport.update({
   id: '/my-tasks',
   path: '/my-tasks',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMetricsRoute = AppMetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMessagesRoute = AppMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMeasuresRoute = AppMeasuresRouteImport.update({
   id: '/measures',
   path: '/measures',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInsightsRoute = AppInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
   getParentRoute: () => AppRoute,
 } as any)
 const AppImportRoute = AppImportRouteImport.update({
@@ -205,9 +249,19 @@ const AppFlightdeckRoute = AppFlightdeckRouteImport.update({
   path: '/flightdeck',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEvidenceRoute = AppEvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCaptureRoute = AppCaptureRouteImport.update({
   id: '/capture',
   path: '/capture',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCapacityRoute = AppCapacityRouteImport.update({
+  id: '/capacity',
+  path: '/capacity',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCalendarRoute = AppCalendarRouteImport.update({
@@ -599,16 +653,25 @@ export interface FileRoutesByFullPath {
   '/audit': typeof AppAuditRoute
   '/bizzybots': typeof AppBizzybotsRoute
   '/calendar': typeof AppCalendarRoute
+  '/capacity': typeof AppCapacityRoute
   '/capture': typeof AppCaptureRoute
+  '/evidence': typeof AppEvidenceRoute
   '/flightdeck': typeof AppFlightdeckRoute
   '/import': typeof AppImportRoute
+  '/insights': typeof AppInsightsRoute
   '/measures': typeof AppMeasuresRoute
+  '/messages': typeof AppMessagesRoute
+  '/metrics': typeof AppMetricsRoute
   '/my-tasks': typeof AppMyTasksRoute
+  '/notifications': typeof AppNotificationsRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/planner': typeof AppPlannerRoute
   '/planning': typeof AppPlanningRouteWithChildren
+  '/portfolio': typeof AppPortfolioRoute
   '/queue': typeof AppQueueRoute
+  '/risks': typeof AppRisksRoute
+  '/roadmap': typeof AppRoadmapRoute
   '/sandbox': typeof AppSandboxRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/start': typeof AppStartRouteWithChildren
@@ -696,16 +759,25 @@ export interface FileRoutesByTo {
   '/audit': typeof AppAuditRoute
   '/bizzybots': typeof AppBizzybotsRoute
   '/calendar': typeof AppCalendarRoute
+  '/capacity': typeof AppCapacityRoute
   '/capture': typeof AppCaptureRoute
+  '/evidence': typeof AppEvidenceRoute
   '/flightdeck': typeof AppFlightdeckRoute
   '/import': typeof AppImportRoute
+  '/insights': typeof AppInsightsRoute
   '/measures': typeof AppMeasuresRoute
+  '/messages': typeof AppMessagesRoute
+  '/metrics': typeof AppMetricsRoute
   '/my-tasks': typeof AppMyTasksRoute
+  '/notifications': typeof AppNotificationsRoute
   '/people': typeof AppPeopleRoute
   '/pipeline': typeof AppPipelineRoute
   '/planner': typeof AppPlannerRoute
   '/planning': typeof AppPlanningRouteWithChildren
+  '/portfolio': typeof AppPortfolioRoute
   '/queue': typeof AppQueueRoute
+  '/risks': typeof AppRisksRoute
+  '/roadmap': typeof AppRoadmapRoute
   '/sandbox': typeof AppSandboxRoute
   '/start': typeof AppStartRouteWithChildren
   '/sweetcycle': typeof AppSweetcycleRoute
@@ -794,16 +866,25 @@ export interface FileRoutesById {
   '/_app/audit': typeof AppAuditRoute
   '/_app/bizzybots': typeof AppBizzybotsRoute
   '/_app/calendar': typeof AppCalendarRoute
+  '/_app/capacity': typeof AppCapacityRoute
   '/_app/capture': typeof AppCaptureRoute
+  '/_app/evidence': typeof AppEvidenceRoute
   '/_app/flightdeck': typeof AppFlightdeckRoute
   '/_app/import': typeof AppImportRoute
+  '/_app/insights': typeof AppInsightsRoute
   '/_app/measures': typeof AppMeasuresRoute
+  '/_app/messages': typeof AppMessagesRoute
+  '/_app/metrics': typeof AppMetricsRoute
   '/_app/my-tasks': typeof AppMyTasksRoute
+  '/_app/notifications': typeof AppNotificationsRoute
   '/_app/people': typeof AppPeopleRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/planner': typeof AppPlannerRoute
   '/_app/planning': typeof AppPlanningRouteWithChildren
+  '/_app/portfolio': typeof AppPortfolioRoute
   '/_app/queue': typeof AppQueueRoute
+  '/_app/risks': typeof AppRisksRoute
+  '/_app/roadmap': typeof AppRoadmapRoute
   '/_app/sandbox': typeof AppSandboxRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/start': typeof AppStartRouteWithChildren
@@ -893,16 +974,25 @@ export interface FileRouteTypes {
     | '/audit'
     | '/bizzybots'
     | '/calendar'
+    | '/capacity'
     | '/capture'
+    | '/evidence'
     | '/flightdeck'
     | '/import'
+    | '/insights'
     | '/measures'
+    | '/messages'
+    | '/metrics'
     | '/my-tasks'
+    | '/notifications'
     | '/people'
     | '/pipeline'
     | '/planner'
     | '/planning'
+    | '/portfolio'
     | '/queue'
+    | '/risks'
+    | '/roadmap'
     | '/sandbox'
     | '/settings'
     | '/start'
@@ -990,16 +1080,25 @@ export interface FileRouteTypes {
     | '/audit'
     | '/bizzybots'
     | '/calendar'
+    | '/capacity'
     | '/capture'
+    | '/evidence'
     | '/flightdeck'
     | '/import'
+    | '/insights'
     | '/measures'
+    | '/messages'
+    | '/metrics'
     | '/my-tasks'
+    | '/notifications'
     | '/people'
     | '/pipeline'
     | '/planner'
     | '/planning'
+    | '/portfolio'
     | '/queue'
+    | '/risks'
+    | '/roadmap'
     | '/sandbox'
     | '/start'
     | '/sweetcycle'
@@ -1087,16 +1186,25 @@ export interface FileRouteTypes {
     | '/_app/audit'
     | '/_app/bizzybots'
     | '/_app/calendar'
+    | '/_app/capacity'
     | '/_app/capture'
+    | '/_app/evidence'
     | '/_app/flightdeck'
     | '/_app/import'
+    | '/_app/insights'
     | '/_app/measures'
+    | '/_app/messages'
+    | '/_app/metrics'
     | '/_app/my-tasks'
+    | '/_app/notifications'
     | '/_app/people'
     | '/_app/pipeline'
     | '/_app/planner'
     | '/_app/planning'
+    | '/_app/portfolio'
     | '/_app/queue'
+    | '/_app/risks'
+    | '/_app/roadmap'
     | '/_app/sandbox'
     | '/_app/settings'
     | '/_app/start'
@@ -1268,11 +1376,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSandboxRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/roadmap': {
+      id: '/_app/roadmap'
+      path: '/roadmap'
+      fullPath: '/roadmap'
+      preLoaderRoute: typeof AppRoadmapRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/risks': {
+      id: '/_app/risks'
+      path: '/risks'
+      fullPath: '/risks'
+      preLoaderRoute: typeof AppRisksRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/queue': {
       id: '/_app/queue'
       path: '/queue'
       fullPath: '/queue'
       preLoaderRoute: typeof AppQueueRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/portfolio': {
+      id: '/_app/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof AppPortfolioRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/planning': {
@@ -1303,6 +1432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPeopleRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/my-tasks': {
       id: '/_app/my-tasks'
       path: '/my-tasks'
@@ -1310,11 +1446,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMyTasksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/metrics': {
+      id: '/_app/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof AppMetricsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/messages': {
+      id: '/_app/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AppMessagesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/measures': {
       id: '/_app/measures'
       path: '/measures'
       fullPath: '/measures'
       preLoaderRoute: typeof AppMeasuresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/insights': {
+      id: '/_app/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AppInsightsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/import': {
@@ -1331,11 +1488,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFlightdeckRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/evidence': {
+      id: '/_app/evidence'
+      path: '/evidence'
+      fullPath: '/evidence'
+      preLoaderRoute: typeof AppEvidenceRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/capture': {
       id: '/_app/capture'
       path: '/capture'
       fullPath: '/capture'
       preLoaderRoute: typeof AppCaptureRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/capacity': {
+      id: '/_app/capacity'
+      path: '/capacity'
+      fullPath: '/capacity'
+      preLoaderRoute: typeof AppCapacityRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/calendar': {
@@ -1982,16 +2153,25 @@ interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
   AppBizzybotsRoute: typeof AppBizzybotsRoute
   AppCalendarRoute: typeof AppCalendarRoute
+  AppCapacityRoute: typeof AppCapacityRoute
   AppCaptureRoute: typeof AppCaptureRoute
+  AppEvidenceRoute: typeof AppEvidenceRoute
   AppFlightdeckRoute: typeof AppFlightdeckRoute
   AppImportRoute: typeof AppImportRoute
+  AppInsightsRoute: typeof AppInsightsRoute
   AppMeasuresRoute: typeof AppMeasuresRoute
+  AppMessagesRoute: typeof AppMessagesRoute
+  AppMetricsRoute: typeof AppMetricsRoute
   AppMyTasksRoute: typeof AppMyTasksRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppPeopleRoute: typeof AppPeopleRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppPlannerRoute: typeof AppPlannerRoute
   AppPlanningRoute: typeof AppPlanningRouteWithChildren
+  AppPortfolioRoute: typeof AppPortfolioRoute
   AppQueueRoute: typeof AppQueueRoute
+  AppRisksRoute: typeof AppRisksRoute
+  AppRoadmapRoute: typeof AppRoadmapRoute
   AppSandboxRoute: typeof AppSandboxRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppStartRoute: typeof AppStartRouteWithChildren
@@ -2057,16 +2237,25 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuditRoute: AppAuditRoute,
   AppBizzybotsRoute: AppBizzybotsRoute,
   AppCalendarRoute: AppCalendarRoute,
+  AppCapacityRoute: AppCapacityRoute,
   AppCaptureRoute: AppCaptureRoute,
+  AppEvidenceRoute: AppEvidenceRoute,
   AppFlightdeckRoute: AppFlightdeckRoute,
   AppImportRoute: AppImportRoute,
+  AppInsightsRoute: AppInsightsRoute,
   AppMeasuresRoute: AppMeasuresRoute,
+  AppMessagesRoute: AppMessagesRoute,
+  AppMetricsRoute: AppMetricsRoute,
   AppMyTasksRoute: AppMyTasksRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppPeopleRoute: AppPeopleRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppPlannerRoute: AppPlannerRoute,
   AppPlanningRoute: AppPlanningRouteWithChildren,
+  AppPortfolioRoute: AppPortfolioRoute,
   AppQueueRoute: AppQueueRoute,
+  AppRisksRoute: AppRisksRoute,
+  AppRoadmapRoute: AppRoadmapRoute,
   AppSandboxRoute: AppSandboxRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppStartRoute: AppStartRouteWithChildren,
